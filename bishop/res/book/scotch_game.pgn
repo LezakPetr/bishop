@@ -1,0 +1,15 @@
+[Event "?"]
+[Site "?"]
+[Date "2013.06.14"]
+[Round "?"]
+[White "Player"]
+[Black "Player"]
+[Result "*"]
+
+1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Nxd4 Bc5 ( 4... Nf6 ( 4... Qh4 5. Nb5 Qxe4+ 6.
+Be3 Kd8 7. Nd2 Qg6 8. Nf3 a6 9. Nbd4 Nge7 10. Bd3 ) 5. Nc3 Bb4 6. Nxc6 bxc6 7.
+Bd3 d5 8. exd5 cxd5 9. O-O O-O 10. Bg5 Be6 ( 10... c6 ) ) 5. Be3 ( 5. Nxc6 ( 5.
+Nb3 Bb6 6. a4 a6 7. Nc3 Qf6 8. Qe2 Nge7 9. Nd5 Nxd5 10. exd5+ Ne7 11. a5 Ba7 12.
+h4 ) 5... Qf6 6. Qd2 Qxc6 ) 5... Qf6 6. c3 Nge7 7. Nc2 Bxe3 8. Nxe3 Qe5 9. Qf3
+O-O 10. Bc4 d6 11. Nd2 Be6 12. O-O *
+

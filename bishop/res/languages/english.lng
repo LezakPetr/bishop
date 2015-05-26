@@ -1,0 +1,149 @@
+Color.white=White
+Color.black=Black
+
+Button.ok.text=Ok
+Button.cancel.text=Cancel
+
+Messages.error=Error
+Messages.info=Info
+
+SideType.human=Human
+SideType.computer=Computer
+
+LicenseType.development=Development license
+LicenseType.gift=Given license
+LicenseType.trial=Trial license
+LicenseType.singleUser=Single user license
+LicenseType.multiUser=Multi user license
+
+LicenseReader.beforeMinDate=License is used before permitted
+LicenseReader.afterMaxDate=License expired
+LicenseReader.wrongRootUrl=License is used on URL that was not granted to
+LicenseReader.wrongProduct=License is not for Bishop
+
+MainFrame.title=Bishop
+MainFrame.invalidLicenseFile=Missing or corrupted license file
+
+Menu.game=Game
+Menu.game.gameSettings=Game settings
+Menu.game.newGame=New game
+Menu.game.loadGame=Load game
+Menu.game.saveGame=Save game
+Menu.game.editFen=Edit FEN
+Menu.game.editPosition=Edit position
+Menu.game.enableSearch=Start engine
+Menu.game.analysisMode=Analysis mode
+Menu.game.playMode=Play mode
+Menu.game.endingTraining=Ending training
+Menu.notation=Notation
+Menu.notation.editGameMenu=Edit game header
+Menu.notation.previousMove=Previous
+Menu.notation.nextMove=Next
+Menu.notation.deleteVariation=Delete
+Menu.notation.promoteVariation=Promote
+Menu.notation.editCommentary=Edit commentary
+Menu.problem=Problem
+Menu.problem.openProblem=Open file
+Menu.problem.selectProblem=Select problem
+Menu.settings=Settings
+Menu.settings.applicationSettings=Application settings
+Menu.settings.reverseDesk=Reverse desk
+Menu.settings.showDeskCoordinates=Show coordinates
+Menu.help=Help
+Menu.help.about=About
+Menu.help.showLog=Show log
+
+Application.newGameAction.confirm.message=Do you really want to discard current game and start new one?
+Application.newGameAction.confirm.title=Confirm discarding game
+
+RegimeProblem.invalidMove=Entered move is not solution of the problem
+RegimeProblem.problemSolved=Congratulations, problem solved
+
+PgnFileFilter.description=Saved games
+ProblemFileFilter.description=Problem files
+
+NotationTableModel.column.moveNumber=Number
+
+PositionEditorPanel.labelOnTurn.text=On turn
+PositionEditorPanel.labelEpFile.text=EP file
+PositionEditorPanel.panelCastlingRights.title=Castling rights
+PositionEditorPanel.buttonInitialize.text=Initialize
+PositionEditorPanel.buttonClear.text=Clear
+PositionEditorPanel.invalidPosition.title=Invalid position
+
+SearchInfoPanel.labelPrincipalVariation.text=Principal var:
+SearchInfoPanel.labelEvaluation.text=Evaluation:
+SearchInfoPanel.labelHorizon.text=Horizon:
+SearchInfoPanel.labelNodeCount.text=Node count:
+SearchInfoPanel.labelElapsedTime.text=Elapsed time:
+SearchInfoPanel.labelNodesPerSecond.text=Nodes/sec:
+
+ApplicationSettingDialog.title=Application settings
+ApplicationSettingDialog.tabEngineSettings.title=Engine
+ApplicationSettingDialog.tabGuiSettings.title=GUI
+
+EngineSettingPanel.labelThreadCount.text=Thread count:
+EngineSettingPanel.labelHashTableExponent.text=Hash table size:
+EngineSettingPanel.labelTablebaseDirectory.text=Tablebase directory:
+
+GuiSettingPanel.labelLanguage.text=Language
+
+GameSettingDialog.title=Game settings
+GameSettingDialog.labelGameType.text=Type of game:
+
+SideSettingPanel.labelSideType.text=Type:
+SideSettingPanel.labelTimeForMove.text=Time for move:
+
+MessagePositionValidator.errorKingCount=Each side must have exactly one king
+MessagePositionValidator.errorNotOnTurnCheck=King of side not on turn is in the check
+MessagePositionValidator.errorCastlingRights=There are impossible castling rights
+MessagePositionValidator.errorPawnsOnRank18=There are pawns on first or eight rank
+MessagePositionValidator.errorWrongEpFile=EP file is impossible
+
+AboutDialog.title=Bishop
+AboutDialog.labelProduct.textPrefix=Bishop version 
+AboutDialog.labelCopyright.text=Copyright 2014 Ing. Petr Ležák
+AboutDialog.labelUser.textPrefix=User: 
+AboutDialog.labelCompany.textPrefix=Company: 
+
+GameSelectorTableModel.columnGame.name=Game
+
+GameSelectorDialog.title=Select game
+
+GameHeaderDialog.title=Game header
+
+GameHeaderPanel.event=Event:
+GameHeaderPanel.site=Site:
+GameHeaderPanel.date=Date:
+GameHeaderPanel.round=Round:
+GameHeaderPanel.white=White:
+GameHeaderPanel.black=Black:
+GameHeaderPanel.result=Result:
+
+GameResult.gameInProgress=---
+GameResult.whiteWins=1-0
+GameResult.blackWins=0-1
+GameResult.draw=1/2-1/2
+
+FenDialog.title=Edit FEN
+FenDialog.labelFen=FEN:
+FenDialog.parseError=Wrong format of FEN
+
+CommentaryDialog.title=Edit commentary
+CommentaryPanel.labelAnnotation=Annotation:
+CommentaryPanel.labelCommentary=Commentary:
+
+GameType.play=Play
+GameType.analysis=Analysis
+GameType.endingTraining=Ending training
+
+ConfirmCloseApplicationDialog.title=Confirm close
+ConfirmCloseApplicationDialog.message=Do you really want to close the application?
+
+EndingTrainingDialog.title=Ending training
+EndingTrainingDialog.labelMaterial=Material:
+EndingTrainingDialog.labelSide=Side:
+EndingTrainingDialog.labelDifficulty=Difficulty:
+
+RegimeEndingTrainingView.wrongMoveMessage=Selected move decreases position evaluation
+RegimeEndingTrainingView.wrongMoveTitle=Wrong move
