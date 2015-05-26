@@ -1,0 +1,109 @@
+package bishop.engine;
+
+import bishop.base.BitBoard;
+import bishop.base.BoardConstants;
+import bishop.base.Color;
+import bishop.base.IPieceCounts;
+import bishop.base.PieceType;
+import bishop.base.Position;
+
+public class DrawChecker {
+	
+	public static final int LIVE_POSITION = 0;
+	public static final int THEORETICAL_DRAW = 1;
+	public static final int DEAD_POSITION = 2;
+	
+	// Types of pieces that can alone make a mate.
+	private static final int[] ALONE_MATING_PIECE_TYPES = {
+		PieceType.PAWN,
+		PieceType.ROOK,
+		PieceType.QUEEN
+	};
+	
+	public static final int evaluatePosition (final Position position) {
+		// Check alone mating pieces
+		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			for (int pieceType: ALONE_MATING_PIECE_TYPES) {
+				if (position.getPiecesMask(color, pieceType) != 0)
+					return LIVE_POSITION;
+			}
+		}
+		
+		// Now we have a position with just light figures
+		long allKnightMask = BitBoard.EMPTY;
+		long allBishopMask = BitBoard.EMPTY;
+		
+		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			final long knightMask = position.getPiecesMask(color, PieceType.KNIGHT);
+			allKnightMask |= knightMask;
+			
+			final long bishopMask = position.getPiecesMask(color, PieceType.BISHOP);
+			allBishopMask |= bishopMask;
+		}
+		
+		int effectiveCount = BitBoard.getSquareCount(allKnightMask);
+		
+		if ((allBishopMask & BoardConstants.WHITE_SQUARE_MASK) != 0)
+			effectiveCount++;
+		
+		if ((allBishopMask & BoardConstants.BLACK_SQUARE_MASK) != 0)
+			effectiveCount++;
+		
+		if (effectiveCount <= 1)
+			return DEAD_POSITION;
+		
+		return LIVE_POSITION;
+	}
+	
+	/**
+	 * Checks if one player can normally win the position.
+	 * @param position position to check
+	 * @return true if one player can theoretically force mate, false if not
+	 */
+	public static boolean isDraw (final Position position) {
+		final int evaluation = evaluatePosition(position);
+		
+		return evaluation != LIVE_POSITION;
+	}
+
+	/**
+	 * Checks if there is dead position.
+	 * @param position position to check
+	 * @return true if no player can be mated by any sequence of legal moves, false not
+	 */
+	public static boolean isDeadPosition (final Position position) {
+		final int evaluation = evaluatePosition(position);
+		
+		return evaluation == DEAD_POSITION;
+	}
+	
+	public static boolean hasMatingMaterial (final IPieceCounts pieceCounts, final int matingColor) {
+		if (pieceCounts.getPieceCount(matingColor, PieceType.PAWN) > 0)
+			return true;
+		
+		if (pieceCounts.getPieceCount(matingColor, PieceType.QUEEN) > 0)
+			return true;
+		
+		if (pieceCounts.getPieceCount(matingColor, PieceType.ROOK) > 0)
+			return true;
+		
+		// Two bishops
+		final int bishopCount = pieceCounts.getPieceCount(matingColor, PieceType.BISHOP);
+		
+		if (bishopCount >= 2)
+			return true;
+		
+		final int knightCount = pieceCounts.getPieceCount(matingColor, PieceType.KNIGHT);
+		
+		// Bishop and knight
+		if (bishopCount > 0 && knightCount > 0)
+			return true;
+		
+		// Three light figures
+		if (bishopCount + knightCount >= 3)
+			return true;
+		
+		return false;
+	}
+
+}

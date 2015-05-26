@@ -1,0 +1,314 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>license-bsd.txt &mdash; Java.net</title>
+    <link href="http://asset-0.java.net/stylesheets/print_packaged.css?20121116.2af7adc" media="print" rel="stylesheet" type="text/css" />
+    <script src="http://asset-2.java.net/javascripts/head_packaged.js?20121116.2af7adc" type="text/javascript"></script>
+    <script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+    <script type="text/javascript">
+        stLight.options({
+            publisher:'bcd30425-1749-43d6-a311-18a82f89771a'
+        });
+    </script>
+    <script type="text/javascript">
+//<![CDATA[
+var page={"token":"aGtjcnoxIOZfI+nzyDodgXile4lFSp+Pe//aZzdD9pY="};
+//]]>
+</script>
+    <script type="text/javascript" charset="utf-8">
+      function debug(m){}
+    </script>
+    
+    <link href="http://java.net/theme/stylesheets/java_net.css" media="screen" rel="stylesheet" type="text/css" />
+    <link href="http://java.net/theme/stylesheets/layout.css" media="screen" rel="stylesheet" type="text/css" />
+    <link href="http://asset-3.java.net/stylesheets/additions.css?20121116.2af7adc" media="screen" rel="stylesheet" type="text/css" />
+    <!--[if IE]><style type="text/css" media="all">@import "http://java.net/theme/stylesheets/ie.css";</style><![endif]-->
+    <!--[if lte IE 6]><style type="text/css" media="all">@import "http://java.net/theme/stylesheets/ie6.css";</style><![endif]-->
+    <!--[if IE 7]><style type="text/css" media="all">@import "http://java.net/theme/stylesheets/ie7.css";</style><![endif]-->
+    <!--[if IE 8]><style type="text/css" media="all">@import "http://java.net/theme/stylesheets/ie8.css";</style><![endif]-->
+
+    <meta name="keywords" content="" />
+  </head>
+  <body class="front not-logged-in article-type-page one-sidebar">
+      <div id="container">
+      
+      <div id="skip-nav" class="element-invisible">
+        <!-- To adjust the display of the skip link see the Advanced theme settings
+        (General settings), and never use display:none! -->
+        <a href="#main-content">Skip to main content</a>
+      </div>
+      <div id="leaderboard">
+        <div id="block-block-31"  class="block">
+          <div class="block-inner">
+            <div class="content">
+                <a href="http://java.net/people/new">Create Account</a>
+  <span class="separator"></span>
+  <a href="http://java.net/people/login?original_uri=http%3A%2F%2Fsvgsalamander.java.net%2Flicense%2Flicense-bsd.txt" rel="nofollow">Login</a>
+  <span class="separator"></span>
+  <a href="http://java.net/projects/help/pages/WebSite#WithNavigation" target="_blank">Help</a>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="header" class="clearfix">
+        <div id="branding">
+          <div class="logo-site-name">
+            <strong>
+              <span id="logo">
+                <a href="http://www.java.net/" rel="home" class="active">
+                  <img alt="java.net - Go to Homepage" border="0" class="logo-link" src="http://java.net/theme/images/logo.png" title="Java.net - Go to the Homepage" />
+                </a>
+              </span>
+            </strong>
+          </div>
+          <div id="site-slogan">The Source for Java Technology Collaboration</div>
+        </div>
+        <div id="search-box" class="hide-label">
+          <form action="http://www.java.net/search/node" method="post" id="search-theme-form">
+            <div id="search">
+              <input type="hidden" value="search_form" id="edit-search-form" name="form_id" />
+              <div style="margin-left: -10px;" class="checks">
+                <span><input type="checkbox" name="type[forum]" id="edit-forums" value="forum" /> Forums</span>
+                <span><input type="checkbox" name="type[blog]" id="edit-blogs" value="blog" /> Blogs</span>
+                <span><input type="checkbox" name="projects" id="edit-projects" value="project" /> Projects</span>
+                <span><input type="checkbox" name="people" id="edit-people" value="people" /> People</span>
+              </div>
+              <input type="text" class="form-text" id="edit-search-theme-form-1" value="Search All" size="15" onclick="this.value = ''" onblur="if (!this.value) this.value = ''" name="keys" />
+              <input type="submit" value="" name="op" title="Search" class="form-submit" alt="Search" />
+            </div>
+          </form>
+        </div>
+      </div>
+    <div id="primary" class="nav">
+      <div id="primary-inner">
+                <h2 class="element-invisible">Main Menu</h2>
+       <ul class="primary-links clearfix">
+          <li class=""><a href="http://www.java.net/" title="Return to the java.net homepage" class="active">Home</a></li>
+          <li class="active-trail"><a href="http://www.java.net/projects" title="View the projects hosted on java.net">Projects</a></li>
+          <li class=""><a href="http://www.java.net/forums" title="Participate in the java.net forums">Forums</a></li>
+          <li class=""><a href="http://java.net/people" title="View all the people involved with java.net">People</a></li>
+          <li class=""><a href="http://www.java.net/jugs/java-user-groups" title="Get involved in your local Java User Group (JUG)">Java User Groups</a></li>
+          <li class=""><a href="http://www.java.net/community/jcp" title="Get involved with the Java Community Process!">JCP</a></li>
+                  </ul>
+       </div>
+    </div>
+    <div id="columns">
+      <div class="columns-inner clearfix">
+        <div id="content-column">
+          <div class="content-inner">
+           <div id="navig-breadcrumbs">
+              <a href="http://java.net/">java.net</a><span>></span>  <a href="http://java.net/projects">projects</a> >
+  <a href="http://java.net/projects/svgsalamander">svgsalamander</a> >
+  <a href="http://java.net/projects/svgsalamander/content" class="current">Website</a>
+
+            </div>
+            <div id="block-quicktabs-2"  class="block">
+              <div class="block-inner">
+                <div class="content">
+                  <!-- BEGIN CONTENT AREA -->
+                  
+                  
+
+
+
+
+<div class="contentPadding website">
+            <pre>
+      Copyright (c) 2010, Mark McKay
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+    * Neither the name of the kitfox.com nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+      </pre>
+      </div>
+
+                  <!--END CONTENT AREA-->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="sidebar-first" class="sidebar">
+            <div class="vAccordion">      <div id="block-menu-menu-kenai-project-features" class="block">
+      <div class="block-inner">
+        <h2>Project Features</h2>
+        <div class="content" style="text-align: left; margin: 5px;">
+          <ul class="menu">
+                          <!-- % next unless features.first.provisioned? -% -->
+              
+                <li class="leaf">
+                  <a href="http://java.net/projects/svgsalamander/lists">Mailing Lists</a>
+                </li>
+                            
+                          <!-- % next unless features.first.provisioned? -% -->
+                            <li><a href="http://java.net/jira/browse/SVGSALAMANDER" target="_blank">&raquo; Bug Tracking (JIRA)</a></li>
+                          <!-- % next unless features.first.provisioned? -% -->
+                            <li><a href="http://java.net/projects/svgsalamander/sources/svn/show">&raquo; Subversion</a></li>
+                          <!-- % next unless features.first.provisioned? -% -->
+                            <li><a href="http://svgsalamander.java.net/">&raquo; SVG Salamander</a></li>
+                      </ul>
+        </div>
+      </div>
+    </div>
+    
+  <div id="block-menu-menu-kenai-project-features" class="block">
+    <div class="block-inner">
+      <h2>Project Links</h2>
+      <div class="content" style="text-align: left; margin: 5px;">
+        <ul class="menu">
+                      <li class="leaf">
+              <a href="http://www.kitfox.com" target="_NEW">My homepage</a>
+            </li>
+                  </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="block-menu-menu-kenai-project-about" class="block">
+    <div class="block-inner">
+      <h2>About this Project</h2>
+      <div class="content" style="text-align: left; margin: 5px;">
+        <a href="http://java.net/projects/svgsalamander">SVG Salamander</a>
+                  is a subproject of
+          <a href="http://java.net/projects/javadesktop">Javadesktop</a>,
+                was started in January 2011
+        and has <a href="http://java.net/projects/svgsalamander/members">79 members</a>.
+        The project administrator is
+        <a href="http://java.net/people/36381-kitfox"><span class="person -kenai-kitfox">kitfox</span></a>.
+        <br />
+        <ul class="menu">
+                                    <li class="leaf">
+                <a href="http://java.net/projects/svgsalamander/watch">Join This Project</a>
+              </li>
+                              </ul>
+              </div>
+    </div>
+  </div>
+</div>
+
+        </div>
+      </div>
+    </div>
+    <div id="tertiary-content">
+      <div id="block-menu-menu-footer-menu"  class="block">
+        <div class="block-inner">
+          <div class="content">
+            <ul class="menu">
+              <li class="leaf first">
+                <a href="http://www.java.net/contact" title="">Feedback</a>
+              </li>
+              <li class="leaf">
+                <a href="http://www.java.net/javanet-faq" title="">FAQ</a>
+              </li>
+              <li class="leaf">
+                <a href="http://www.java.net/javanet-web-site-terms-use" title="">Terms of Use</a>
+              </li>
+              <li class="leaf">
+                <a href="http://www.oracle.com/us/legal/privacy/index.html" title="">Privacy</a>
+              </li>
+              <li class="leaf last">
+                <a href="http://www.oracle.com/us/legal/third-party-trademarks/index.html" title="">Trademarks</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="footer">
+      <div id="footer-region">
+        <div class="block">
+          <div class="block-inner">
+            <div class="content">
+              <div style="width: 59%; float: left;">
+                <p>
+                  Your use of this web site or any of its content or software indicates
+                  your agreement to be bound by these
+                  <a href="http://www.java.net/javanet-web-site-terms-use">Terms of Participation</a>.
+                </p>
+                <p>
+                  Copyright © 2011, Oracle and/or its affiliates. All rights reserved.
+                  Oracle and Java are registered trademarks of Oracle and/or its affiliates.
+                  Other names may be trademarks of their respective owners.
+                </p>
+                <p>(<a href="http://java.net/projects/help/pages/ReleaseNotes">revision 20121116.2af7adc</a>)</p>
+              </div>
+              <div style="width: 310px; float: right; text-align: right; margin-right: 10px">
+                <div style="float: right;">
+                  <a href="http://www.oracle.com" title="Oracle"><img alt="" src="http://java.net/theme/images/oracle.png" /></a>
+                  <a href="http://kenai.com" title="Kenai.com"><img alt="" src="http://java.net/theme/images/kenai.png" /></a>
+                  <a href="http://www.cognisync.com" title="Cognisync"><img alt="" src="http://java.net/theme/images/cognisync.png" /></a>
+                  <br />
+                  <div class="powered-by">
+                    Powered by Oracle, Project Kenai and Cognisync
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+     </div>
+    </div>
+        <!-- popups that are anchored to specific elements -->
+    <div class="popupMenuShadow" id="contextMenuShadow"></div>
+    <div class="popupMenuContainer" id="contextMenu">
+      <div class="popupMenu inline">	
+        <div class="upArrow"></div>
+        <div class="header"></div>
+        <div class="contextMenuBody" id="contextMenuBody">&nbsp;</div>
+      </div>
+    </div> 
+    
+    <!-- large content loaded via ajax. Faded but not modal. -->
+    <div class="jqmWindow" id="jqm_large_overlay">
+      <div class="jqmHeader">
+        <div class="jqmTitle">&nbsp;</div>
+        <img alt="Close" class="jqmClose" src="http://asset-2.java.net/images/close.gif?20121116.2af7adc" />
+      </div>
+      <div class="jqmTarget">
+        <img alt="loading" src="http://asset-2.java.net/images/activity.gif?20121116.2af7adc" />
+      </div>
+      <div class="jqmFooter">
+      	<div class="jqmClose functionButtonContainer"><button class="functionButton" title="Done"> Done </button></div>
+      </div>
+    </div>
+    
+    <!-- confirmation dialogs with buttons. Faded and modal. -->
+    <div class="jqmWindow" id="jqm_dialog">
+      <div class="jqmHeader">
+        <div class="jqmTitle">Please Confirm</div>
+        <img alt="Close" class="jqmClose" src="http://asset-2.java.net/images/close.gif?20121116.2af7adc" />
+      </div>
+      <div class="jqmTarget">&nbsp;</div>
+      <div class="jqmFooter">
+      	<div class="jqmClose functionButtonContainer"><button class="functionButton" id="jq_no_button" title="No" onclick="Modal.no()"> No </button></div>
+      	<div class="jqmClose functionButtonContainer"><button class="functionButton" id="jq_yes_button" title="Yes" onclick="Modal.yes();"> Yes </button></div>
+      </div>
+    </div>    
+
+    <div id="jq-ui-autocomplete-parent"></div>
+    
+  
+    <script type="text/javascript">
+      var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+      document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+    <script type="text/javascript">
+      try {
+        var pageTracker = _gat._getTracker("UA-17414889-4");
+        pageTracker._trackPageview();
+      } catch(err) {}</script>
+  
+
+  </body>
+  <script src="http://asset-3.java.net/javascripts/body_packaged.js?20121116.2af7adc" type="text/javascript"></script>
+  <script src="http://java.net/theme/javascript/java_custom.js" type="text/javascript"></script>
+  
+</html>

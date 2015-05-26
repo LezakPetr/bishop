@@ -1,0 +1,150 @@
+Color.white=Bílý
+Color.black=Černý
+
+Button.ok.text=Potvrdit
+Button.cancel.text=Zrušit
+
+Messages.error=Chyba
+Messages.info=Informace
+
+SideType.human=Člověk
+SideType.computer=Počítač
+
+LicenseType.development=Vývojová licence
+LicenseType.gift=Darovaná licence
+LicenseType.trial=Zkušební licence
+LicenseType.singleUser=Jednouživatelská licence
+LicenseType.multiUser=Víceuživatelská licence
+
+LicenseReader.beforeMinDate=Licence je používána dříve než je povoleno
+LicenseReader.afterMaxDate=Licence vypršela
+LicenseReader.wrongRootUrl=Licence je používána mimo povolené URL
+LicenseReader.wrongProduct=Licence není pro program Bishop
+
+MainFrame.title=Bishop
+MainFrame.invalidLicenseFile=Chybějící nebo poškozený licenční soubor
+
+Menu.game=Hra
+Menu.game.gameSettings=Nastavení hry
+Menu.game.newGame=Nová hra
+Menu.game.loadGame=Nahrát hru
+Menu.game.saveGame=Uložit hru
+Menu.game.editFen=Upravit FEN
+Menu.game.editPosition=Upravit pozici
+Menu.game.enableSearch=Spustit motor
+Menu.game.analysisMode=Režim analýzy
+Menu.game.playMode=Režim hry
+Menu.game.endingTraining=Trénink koncovek
+Menu.notation=Notace
+Menu.notation.editGameMenu=Upravit hlavičku hry
+Menu.notation.previousMove=Tah zpět
+Menu.notation.nextMove=Tah vpřed
+Menu.notation.deleteVariation=Smazat variantu
+Menu.notation.promoteVariation=Povýšit variantu
+Menu.notation.editCommentary=Editovat komentář
+Menu.problem=Problém
+Menu.problem.openProblem=Otevřít soubor
+Menu.problem.selectProblem=Vybrat problém
+Menu.settings=Nastavení
+Menu.settings.applicationSettings=Nastavení aplikace
+Menu.settings.reverseDesk=Otočit šachovnici
+Menu.settings.showDeskCoordinates=Zobrazit souřadnice
+Menu.help=Pomoc
+Menu.help.about=O programu
+Menu.help.showLog=Zobrazit log
+
+Application.newGameAction.confirm.message=Opravdu si přejete zrušit současnou hru a rozehrát novou?
+Application.newGameAction.confirm.title=Potvrdit zrušení hry
+
+RegimeProblem.invalidMove=Zadaný tah není řešením problému
+RegimeProblem.problemSolved=Gratuluji, problém vyřešen
+
+PgnFileFilter.description=Uložené partie
+ProblemFileFilter.description=Soubory s problémy
+
+NotationTableModel.column.moveNumber=Číslo
+
+PositionEditorPanel.labelOnTurn.text=Na tahu
+PositionEditorPanel.labelEpFile.text=EP sloupec
+PositionEditorPanel.panelCastlingRights.title=Práva na rošádu
+PositionEditorPanel.buttonInitialize.text=Výchozí pozice
+PositionEditorPanel.buttonClear.text=Smazat
+PositionEditorPanel.invalidPosition.title=Chybná pozice
+
+SearchInfoPanel.labelPrincipalVariation.text=Hlavní varianta:
+SearchInfoPanel.labelEvaluation.text=Ocenění:
+SearchInfoPanel.labelHorizon.text=Horizont:
+SearchInfoPanel.labelNodeCount.text=Počet uzlů:
+SearchInfoPanel.labelElapsedTime.text=Spotřebovaný čas:
+SearchInfoPanel.labelNodesPerSecond.text=Uzlů/sec:
+
+ApplicationSettingDialog.title=Nastavení aplikace
+ApplicationSettingDialog.tabEngineSettings.title=Motor
+ApplicationSettingDialog.tabGuiSettings.title=Prostředí
+
+EngineSettingPanel.labelThreadCount.text=Počet vláken:
+EngineSettingPanel.labelHashTableExponent.text=Velikost hešovací tabulky:
+EngineSettingPanel.labelTablebaseDirectory.text=Adresář tablebase:
+
+GuiSettingPanel.labelLanguage.text=Jazyk
+
+GameSettingDialog.title=Nastavení hry
+GameSettingDialog.labelGameType.text=Typ hry:
+
+SideSettingPanel.labelSideType.text=Typ:
+SideSettingPanel.labelTimeForMove.text=Čas na tah:
+
+MessagePositionValidator.errorKingCount=Každá strana musí mít právě jednoho krále
+MessagePositionValidator.errorNotOnTurnCheck=Král strany, která není na tahu, je v šachu
+MessagePositionValidator.errorCastlingRights=Jsou zadána nemožná práva na rošádu
+MessagePositionValidator.errorPawnsOnRank18=Na první nebo osmé řadě jsou pěšci
+MessagePositionValidator.errorWrongEpFile=Nemožný sloupec braní mimochodem
+
+AboutDialog.title=Bishop
+AboutDialog.labelProduct.textPrefix=Bishop verze 
+AboutDialog.labelCopyright.text=Copyright 2014 Ing. Petr Ležák
+AboutDialog.labelUser.textPrefix=Uživatel: 
+AboutDialog.labelCompany.textPrefix=Společnost: 
+
+GameSelectorTableModel.columnGame.name=Hra
+
+GameSelectorDialog.title=Výběr hry
+
+GameHeaderDialog.title=Hlavička hry
+
+GameHeaderPanel.event=Událost:
+GameHeaderPanel.site=Místo konání:
+GameHeaderPanel.date=Datum:
+GameHeaderPanel.round=Kolo:
+GameHeaderPanel.white=Bílý:
+GameHeaderPanel.black=Černý:
+GameHeaderPanel.result=Výsledek:
+
+GameResult.gameInProgress=---
+GameResult.whiteWins=1-0
+GameResult.blackWins=0-1
+GameResult.draw=1/2-1/2
+
+FenDialog.title=Editace FEN
+FenDialog.labelFen=FEN:
+FenDialog.parseError=Chybný formát FEN
+
+CommentaryDialog.title=Editovat komentář
+CommentaryPanel.labelAnnotation=Anotace:
+CommentaryPanel.labelCommentary=Komentář:
+
+GameType.play=Hra
+GameType.analysis=Analýza
+GameType.endingTraining=Trénink koncovek
+
+ConfirmCloseApplicationDialog.title=Potvrdit ukončení aplikace
+ConfirmCloseApplicationDialog.message=Opravdu si přejete ukončit aplikaci?
+
+EndingTrainingDialog.title=Trénink koncovek
+EndingTrainingDialog.labelMaterial=Materiál:
+EndingTrainingDialog.labelSide=Strana:
+EndingTrainingDialog.labelDifficulty=Obtížnost:
+
+RegimeEndingTrainingView.wrongMoveMessage=Vybraný tah zhorší ocenění pozice
+RegimeEndingTrainingView.wrongMoveTitle=Chybný tah
+

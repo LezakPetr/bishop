@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<manifest file_type="raster_piece_set">
+	<info>
+		<name>Basic piece set</name>
+	</info>
+	<pieces>
+		<dimensions>
+			<size x="100" y="100"/>
+			<center x="49.5" y="49.5"/>
+		</dimensions>
+
+		<piece color="w" piece_type="p">wp.svg</piece>
+		<piece color="w" piece_type="n">wn.svg</piece>
+		<piece color="w" piece_type="b">wb.svg</piece>
+		<piece color="w" piece_type="r">wr.svg</piece>
+		<piece color="w" piece_type="q">wq.svg</piece>
+		<piece color="w" piece_type="k">wk.svg</piece>
+		<piece color="b" piece_type="p">bp.svg</piece>
+		<piece color="b" piece_type="n">bn.svg</piece>
+		<piece color="b" piece_type="b">bb.svg</piece>
+		<piece color="b" piece_type="r">br.svg</piece>
+		<piece color="b" piece_type="q">bq.svg</piece>
+		<piece color="b" piece_type="k">bk.svg</piece>
+	</pieces>
+</manifest>
+

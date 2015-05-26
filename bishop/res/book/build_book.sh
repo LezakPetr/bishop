@@ -1,0 +1,2 @@
+cat *.pgn > ../book.pgn
+
