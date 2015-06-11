@@ -18,13 +18,10 @@ import utils.HugeLongArray;
 import utils.IoUtils;
 import bishop.base.MaterialHash;
 import bishop.base.Position;
-import bishop.interpreter.Bytecode;
-import bishop.interpreter.Context;
-import bishop.interpreter.IExpression;
 
 public class TableWriter extends TableIo {
 	
-	public static final byte VERSION = 1;
+	public static final byte VERSION = 2;
 	
 	private static final int BLOCK_INDEX_EXPONENT = 12;
 	public static final int BLOCK_INDEX_LENGTH = 1 << BLOCK_INDEX_EXPONENT;
@@ -50,10 +47,7 @@ public class TableWriter extends TableIo {
 			probabilityModelMap.put(entry.getKey(), model);
 		}
 		
-		final int symbolCount = symbolToResultMap.length;
-		final MaterialHash materialHash = table.getDefinition().getMaterialHash();
-		
-		modelSelector = new PreviousSymbolProbabilityModelSelector(symbolCount, materialHash); 
+		modelSelector = statistics.getProbabilityModelSelector(); 
 	}
 	
 	public void writeTable (final ITable table, final OutputStream stream) throws IOException {
@@ -133,7 +127,6 @@ public class TableWriter extends TableIo {
 		stream.write(BLOCK_INDEX_EXPONENT);
 		stream.write(bytesPerBlockPosition);
 		
-						
 		for (long i = 0; i < blockPositionSize; i++) {
 			final long position = blockPositions.getAt(i);
 			
@@ -163,6 +156,13 @@ public class TableWriter extends TableIo {
 		System.out.println ("Chunk count: " + table.getDefinition().getChunkCount());
 		
 		IoUtils.writeNumberBinary(stream, symbolCount, SYMBOL_COUNT_SIZE);
+		
+		final ClassificationProbabilityModelSelector classificationSelector = (ClassificationProbabilityModelSelector) modelSelector;
+		final int classificationHistoryLength = classificationSelector.getClassificationHistoryLength();
+		final boolean previousWin = classificationSelector.isPreviousWin();
+		
+		final int dat = (classificationHistoryLength << HISTORY_LENGTH_SHIFT) | (previousWin ? PREVIOUS_WIN_MASK : 0);
+		stream.write(dat);
 
 		for (int symbol = 0; symbol < symbolCount; symbol++) {
 			final int result = symbolToResultMap[symbol];
@@ -235,10 +235,7 @@ public class TableWriter extends TableIo {
 		blockPositions = new HugeLongArray(blockCount + 1);
 		
 		final ITableIterator it = table.getIterator();
-		
 		final Position position = new Position();
-		final Context context = new Context();
-		context.setPosition(position);
 		
 		long blockPos = 0;
 		blockPositions.setAt(0, blockPos);

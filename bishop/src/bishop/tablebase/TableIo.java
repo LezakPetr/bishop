@@ -8,9 +8,6 @@ import range.RangeBase;
 import utils.ChecksumStream;
 import utils.IoUtils;
 import bishop.base.Position;
-import bishop.interpreter.Bytecode;
-import bishop.interpreter.ExpressionCreator;
-import bishop.interpreter.IExpression;
 
 public class TableIo {
 	
@@ -42,6 +39,10 @@ public class TableIo {
 	protected static final int ONE_COUNT_VALUE_MASK = 0x3F;
 	
 	protected static final int LAYER_LENGTH_BYTES = Long.SIZE / Byte.SIZE;
+	
+	protected static final int HISTORY_LENGTH_MASK = 0xFE;
+	protected static final int HISTORY_LENGTH_SHIFT = 1;
+	protected static final int PREVIOUS_WIN_MASK = 0x01;
 	
 	protected ITable table;
 	protected int[] symbolToResultMap;

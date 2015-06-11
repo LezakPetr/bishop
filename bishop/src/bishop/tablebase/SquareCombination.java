@@ -32,9 +32,12 @@ public class SquareCombination {
 		this.forwardSquareMapping = new int[Square.LAST];
 		this.backwardSquareMapping = new int[allowedSquareCount];
 		
+		final Piece piece = squareCombinationKey.getDefinition().getPiece();
 		int index = 0;
 		
-		for (int square = Square.FIRST; square < Square.LAST; square++) {
+		for (int sequenceIndex = SquareSequence.FIRST_INDEX; sequenceIndex < SquareSequence.LAST_INDEX; sequenceIndex++) {
+			final int square = SquareSequence.getSquareOnIndex(piece.getColor(), piece.getPieceType(), sequenceIndex);
+			
 			if ((allowedSquares & BitBoard.getSquareMask(square)) != 0) {
 				forwardSquareMapping[square] = index;
 				backwardSquareMapping[index] = square;

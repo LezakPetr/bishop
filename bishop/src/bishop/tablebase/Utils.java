@@ -67,4 +67,18 @@ public class Utils {
 		return i != 0;
 	}
 
+	public static int intPower(final int base, final int exponent) {
+		int res = 1;
+		
+		for (int i = 0; i < exponent; i++)
+			res *= base;
+		
+		return res;
+	}
+
+	public static void fillArray2D(final int[][] array, final int value) {
+		for (int[] subArray: array)
+			Arrays.fill(subArray, value);
+	}
+
 }
