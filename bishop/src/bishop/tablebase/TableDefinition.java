@@ -41,6 +41,11 @@ import bishop.tables.SymmetryTable;
  * @author Ing. Petr Ležák
  */
 public class TableDefinition {
+	
+	private static final int[] PIECE_TYPE_SEQUENCE = {
+		PieceType.PAWN, PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN
+	};
+	
 	private final int version;   // Version of the table format
 	private final int onTurn;   // Side on turn
 	private final CombinationDefinition[] definitionArray;   // Array of combination definitions
@@ -103,9 +108,11 @@ public class TableDefinition {
 	 */
 	private static CombinationDefinition[] calculateDefinitionArray(final MaterialHash materialHash) {
 		final List<CombinationDefinition> definitionList = new LinkedList<CombinationDefinition>();
+		final int onTurn = materialHash.getOnTurn();
+		final int[] colorSequence = {Color.getOppositeColor(onTurn), onTurn};
 		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			for (int pieceType = PieceType.VARIABLE_FIRST; pieceType < PieceType.VARIABLE_LAST; pieceType++) {
+		for (int pieceType: PIECE_TYPE_SEQUENCE) {
+			for (int color: colorSequence) {
 				final int count = materialHash.getPieceCount(color, pieceType);
 				
 				if (count > 0) {

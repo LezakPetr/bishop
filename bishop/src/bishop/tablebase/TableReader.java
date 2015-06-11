@@ -21,9 +21,6 @@ import bishop.base.MaterialHash;
 import bishop.base.Piece;
 import bishop.base.Position;
 import bishop.base.PositionValidator;
-import bishop.interpreter.Bytecode;
-import bishop.interpreter.Context;
-import bishop.interpreter.IExpression;
 
 public class TableReader extends TableIo {
 	
@@ -41,7 +38,7 @@ public class TableReader extends TableIo {
 	private final Position position;
 	
 	private static final int MIN_VERSION = 0;
-	private static final int MAX_VERSION = 1;
+	private static final int MAX_VERSION = 2;
 	
 	public TableReader(final File file) {
 		this.file = file;
@@ -252,40 +249,34 @@ public class TableReader extends TableIo {
 		final int modelCount;
 		
 		switch (version) {
-			case 0:
-				final Bytecode bytecode = Bytecode.readFromStream(stream);
-				modelSelector = new ExpressionProbabilityModelSelector(bytecode);
-				
-				symbolCount = (int) IoUtils.readNumberBinary(stream, SYMBOL_COUNT_SIZE);
-				modelCount = (int) IoUtils.readNumberBinary(stream, PROBABILITY_MODEL_COUNT_SIZE);
-				break;
-				
 			case 1:
 				symbolCount = (int) IoUtils.readNumberBinary(stream, SYMBOL_COUNT_SIZE);
 				modelSelector = new PreviousSymbolProbabilityModelSelector(symbolCount, tableDefinition.getMaterialHash());
+
+				modelCount = modelSelector.getModelCount();
+				readSymbolToResultMap(stream, symbolCount);
+
+				break;
+				
+			case 2:
+				symbolCount = (int) IoUtils.readNumberBinary(stream, SYMBOL_COUNT_SIZE);
+				
+				final byte dat = IoUtils.readByteBinary(stream);
+				final int historyLength = (dat & HISTORY_LENGTH_MASK) >>> HISTORY_LENGTH_SHIFT;
+				final boolean previousWin = (dat & PREVIOUS_WIN_MASK) != 0;
+				
+				readSymbolToResultMap(stream, symbolCount);
+				modelSelector = new ClassificationProbabilityModelSelector(symbolToResultMap, historyLength, previousWin, tableDefinition.getMaterialHash());
 
 				modelCount = modelSelector.getModelCount();
 				break;
 				
 			default:
 				throw new IOException("Unknown version");
-		}
+		}		
 		
-		symbolToResultMap = new int[symbolCount];
-		resultToSymbolMap = new TreeMap<Integer, Integer>();
 		symbolProbabilities = new HashMap<Long, int[]>();
 
-		for (int symbol = 0; symbol < symbolCount; symbol++) {
-			int result = (int) IoUtils.readNumberBinary(stream, RESULT_SIZE);
-			
-			if (result > Short.MAX_VALUE) {
-				result -= 1 << (Byte.SIZE * RESULT_SIZE);
-			}
-
-			symbolToResultMap[symbol] = result;
-			resultToSymbolMap.put(result, symbol);
-		}
-		
 		probabilityModelMap = new HashMap<Long, EnumerationProbabilityModel>();
 		
 		for (int modelIndex = 0; modelIndex < modelCount; modelIndex++) {
@@ -343,6 +334,23 @@ public class TableReader extends TableIo {
 			
 			final EnumerationProbabilityModel probabilityModel = new EnumerationProbabilityModel(probabilities);
 			probabilityModelMap.put(positionLabel, probabilityModel);
+		}
+	}
+
+	private void readSymbolToResultMap(final InputStream stream,
+			final int symbolCount) throws IOException {
+		symbolToResultMap = new int[symbolCount];
+		resultToSymbolMap = new TreeMap<Integer, Integer>();
+
+		for (int symbol = 0; symbol < symbolCount; symbol++) {
+			int result = (int) IoUtils.readNumberBinary(stream, RESULT_SIZE);
+			
+			if (result > Short.MAX_VALUE) {
+				result -= 1 << (Byte.SIZE * RESULT_SIZE);
+			}
+
+			symbolToResultMap[symbol] = result;
+			resultToSymbolMap.put(result, symbol);
 		}
 	}
 

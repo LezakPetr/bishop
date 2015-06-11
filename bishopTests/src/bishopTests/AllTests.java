@@ -37,7 +37,6 @@ public class AllTests {
 		PgnTest.class,
 		RangeTest.class,
 		PositionEvaluatorTest.class,
-		PositionInterpreterTest.class,
 		TableResultCompressionTest.class,
 		MateFinderTest.class,
 		TablebaseTest.class,

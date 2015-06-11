@@ -4,8 +4,6 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -20,37 +18,56 @@ public class TableStatistics {
 	private Map<Integer, Integer> resultToSymbolMap;
 	private long[][] symbolFrequencies;
 	private Map<Long, int[]> symbolProbabilities;
+	private IProbabilityModelSelector probabilityModelSelector;
 
-	public void calculate (final ITable table, final int blockLength) {
+	public void calculate (final ITableRead table, final int blockLength) {
 		final Set<Integer> resultSet = getResultSet(table);
 		fillSymbols(table, blockLength, resultSet);
 	}
 	
-	private long[][] calculateSymbolFrequencies(final ITable table, final int blockLength) {
-		final int symbolCount = symbolToResultMap.length;
-		final PreviousSymbolProbabilityModelSelector selector = new PreviousSymbolProbabilityModelSelector(symbolCount, table.getDefinition().getMaterialHash());
+	private static boolean isWinMoreProbableThanLose(final ITableRead table) {
+		long winCount = 0;
+		long loseCount = 0;
 		
-		final int modelCount = selector.getModelCount();
+		for (ITableIteratorRead it = table.getIterator(); it.isValid(); it.next()) {
+			final int result = it.getResult();
+			
+			if (TableResult.isWin(result))
+				winCount++;
+			
+			if (TableResult.isLose(result))
+				loseCount++;
+		}
+		
+		return winCount > loseCount;
+	}
+	
+	private long[][] calculateSymbolFrequencies(final ITableRead table, final int blockLength) {
+		final int symbolCount = symbolToResultMap.length;
+		final boolean previousWin = isWinMoreProbableThanLose(table);
+		probabilityModelSelector = new ClassificationProbabilityModelSelector(symbolToResultMap, ClassificationProbabilityModelSelector.DEFAULT_CLASSIFICATION_HISTORY_LENGTH, previousWin, table.getDefinition().getMaterialHash());
+		
+		final int modelCount = probabilityModelSelector.getModelCount();
 		final long[][] symbolFrequencies = new long[modelCount][symbolCount];
 		final Position position = new Position();
 		
 		long sampleCount = 0;
 		
-		for (ITableIterator it = table.getIterator(); it.isValid(); it.next()) {
+		for (ITableIteratorRead it = table.getIterator(); it.isValid(); it.next()) {
 			final int result = it.getResult();
 			
 			if (result != TableResult.ILLEGAL) {
 				it.fillPosition(position);
 
-				final int modelIndex = (int) selector.getModelIndex(position);
+				final int modelIndex = (int) probabilityModelSelector.getModelIndex(position);
 				final int symbol = resultToSymbolMap.get(result);
-				selector.addSymbol(position, symbol);
+				probabilityModelSelector.addSymbol(position, symbol);
 				
 				symbolFrequencies[modelIndex][symbol]++;
 			}
 			
 			if (sampleCount % blockLength == 0) {
-				selector.resetSymbols();
+				probabilityModelSelector.resetSymbols();
 			}
 			
 			sampleCount++;
@@ -59,10 +76,10 @@ public class TableStatistics {
 		return symbolFrequencies;
 	}
 	
-	private Set<Integer> getResultSet(final ITable table) {
+	private Set<Integer> getResultSet(final ITableRead table) {
 		final Set<Integer> resultSet = new TreeSet<Integer>();
 		
-		for (ITableIterator it = table.getIterator(); it.isValid(); it.next()) {
+		for (ITableIteratorRead it = table.getIterator(); it.isValid(); it.next()) {
 			final int result = it.getResult();
 			
 			if (result != TableResult.ILLEGAL) {
@@ -73,7 +90,7 @@ public class TableStatistics {
 		return resultSet;
 	}
 	
-	private void fillSymbols(final ITable table, final int blockLength, final Set<Integer> resultSet) {
+	private void fillSymbols(final ITableRead table, final int blockLength, final Set<Integer> resultSet) {
 		final int resultSize = resultSet.size();
 		
 		symbolToResultMap = new int[resultSize];
@@ -175,6 +192,10 @@ public class TableStatistics {
 			totalResultCount += symbolFrequency;
 		}
 		return totalResultCount;
+	}
+
+	public IProbabilityModelSelector getProbabilityModelSelector() {
+		return probabilityModelSelector;
 	}
 
 }
