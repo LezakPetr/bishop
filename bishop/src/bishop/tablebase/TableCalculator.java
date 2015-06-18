@@ -1,5 +1,7 @@
 package bishop.tablebase;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -20,7 +22,7 @@ public class TableCalculator {
 	private final MaterialHash[] materialHashArray;
 	private final ExecutorService executor;
 	private final int threadCount;
-	private final BothColorPositionResultSource<MemoryTable> bothTables;
+	private final BothColorPositionResultSource<PersistentTable> bothTables;
 	private final Position position;
 	private final TableSwitch resultSource;
 	
@@ -38,7 +40,7 @@ public class TableCalculator {
 		this.threadCount = threadCount;
 		this.position = new Position();
 		
-		this.bothTables = new BothColorPositionResultSource<MemoryTable>();
+		this.bothTables = new BothColorPositionResultSource<PersistentTable>();
 		
 		this.resultSource = new TableSwitch();
 	}
@@ -51,7 +53,7 @@ public class TableCalculator {
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
 			final TableDefinition tableDefinition = new TableDefinition(TableWriter.VERSION, materialHashArray[onTurn]);
 			final MaterialHash materialHash = tableDefinition.getMaterialHash();
-			final MemoryTable table = new FullMemoryTable(tableDefinition);
+			final PersistentTable table = new PersistentTable(tableDefinition, "/tmp/" + tableDefinition.getMaterialHash().toString());
 			
 			bothTables.setBaseSource(onTurn, table);
 			resultSource.addTable(materialHash, table);
@@ -72,7 +74,7 @@ public class TableCalculator {
 	}
 	
 	private void printData() {
-		final MemoryTable table = bothTables.getBaseSource(Color.WHITE);
+		final PersistentTable table = bothTables.getBaseSource(Color.WHITE);
 		long winCount = 0;
 		long loseCount = 0;
 		long drawCount = 0;
@@ -123,41 +125,61 @@ public class TableCalculator {
 		}
 	}
 
-	public BothColorPositionResultSource<MemoryTable> getTable() {
+	public BothColorPositionResultSource getTable() {
+		final BothColorPositionResultSource<ITable> copy = new BothColorPositionResultSource<>();
+		
+		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++)
+			copy.setBaseSource(onTurn, bothTables.getBaseSource(onTurn));
+		
 		return bothTables;
 	}
 	
-	private void initializeTable() {
+	private void initializeTable() throws FileNotFoundException, IOException {
 		final PositionValidator validator = new PositionValidator();
 		validator.setPosition(position);
 		
 		final LegalMoveFinder moveFinder = new LegalMoveFinder();
 		
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
-			final MemoryTable table = bothTables.getBaseSource(onTurn);
+			final PersistentTable table = bothTables.getBaseSource(onTurn);
 			
-			for (ITableIterator it = table.getIterator(); it.isValid(); it.next()) {
-				it.fillPosition(position);
-				
-				final boolean isValid = table.getDefinition().hasSameCountOfPieces(position) && validator.checkPosition();
-				final int result;
-				
-				if (isValid) {
-					if (moveFinder.existsLegalMove(position)) {
-						result = TableResult.DRAW;
-					}
-					else {
-						if (position.isCheck())
-							result = TableResult.MATE;
+			table.clear();
+			table.switchToModeWrite();
+			
+			while (true) {
+				try (
+					final OutputFileTableIterator it = table.getOutputBlock()
+				) {
+					if (it == null)
+						break;
+					
+					while (it.isValid()) {
+						it.fillPosition(position);
+						
+						final boolean isValid = table.getDefinition().hasSameCountOfPieces(position) && validator.checkPosition();
+						final int result;
+						
+						if (isValid) {
+							if (moveFinder.existsLegalMove(position)) {
+								result = TableResult.DRAW;
+							}
+							else {
+								if (position.isCheck())
+									result = TableResult.MATE;
+								else
+									result = TableResult.DRAW;						
+							}
+						}
 						else
-							result = TableResult.DRAW;						
+							result = TableResult.ILLEGAL;
+						
+						it.setResult(result);
+						it.next();
 					}
 				}
-				else
-					result = TableResult.ILLEGAL;
-				
-				it.setResult(result);
 			}
+			
+			table.moveOutputToInput();
 		}
 	}
 	
@@ -177,8 +199,8 @@ public class TableCalculator {
 			changeCount = 0;
 			
 			for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
-				final MemoryTable ownTable = bothTables.getBaseSource(onTurn);
-				final MemoryTable oppositeTable = bothTables.getBaseSource(Color.getOppositeColor(onTurn));
+				final PersistentTable ownTable = bothTables.getBaseSource(onTurn);
+				final PersistentTable oppositeTable = bothTables.getBaseSource(Color.getOppositeColor(onTurn));
 				final TableDefinition oppositeTableDefinition = oppositeTable.getDefinition();
 				final long ownItemCount = ownTable.getDefinition().getTableIndexCount();
 				
@@ -186,22 +208,13 @@ public class TableCalculator {
 				nextPositionsToCheck = new BitArray(itemCount);
 				
 				// Initialize
-				final ITableIterator iter = ownTable.getIterator();
-				long prevIndex = 0;
+				ownTable.switchToModeWrite();
+				oppositeTable.switchToModeRead();
 				
 				for (int i = 0; i < threadCount; i++) {
 					final CalculationTaskProcessor processor = processorList.get(i);
-					final long nextIndex = (i + 1) * ownItemCount / threadCount;
-					final long count = nextIndex - prevIndex;
-					
-					processor.initialize(firstIteration, oppositeTableDefinition, prevPositionsToCheck, iter, count);
-					
-					iter.moveForward(count);
-					prevIndex = nextIndex;
+					processor.initialize(firstIteration, oppositeTableDefinition, prevPositionsToCheck, ownTable);
 				}
-				
-				if (iter.isValid())
-					throw new RuntimeException("Not all items was calculated");
 				
 				// Execute
 				final List<Future<Object>> futureList = executor.invokeAll(processorList);
@@ -216,6 +229,7 @@ public class TableCalculator {
 					nextPositionsToCheck.assignOr (processor.getNextPositionsToCheck());
 				}
 				
+				ownTable.moveOutputToInput();
 				prevPositionsToCheck = nextPositionsToCheck;
 			}
 			

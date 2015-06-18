@@ -6,7 +6,7 @@ public interface IProbabilityModelSelector {
 
 	public int getModelCount();
 
-	public long getModelIndex(final Position position);
+	public int getModelIndex(final Position position);
 
 	public void addSymbol(final Position position, final int symbol);
 

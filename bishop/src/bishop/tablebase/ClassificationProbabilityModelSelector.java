@@ -77,12 +77,12 @@ public class ClassificationProbabilityModelSelector implements IProbabilityModel
 	}
 	
 	@Override
-	public long getModelIndex(final Position position) {
+	public int getModelIndex(final Position position) {
 		final int positionIndex = getPositionIndex(position);
 		final int previousSymbol = previousSymbols[positionIndex];
 		final int history = classificationHistory[positionIndex];
 		
-		long result = positionIndex;
+		int result = positionIndex;
 		
 		result *= (symbolCount + 1);
 		result += previousSymbol;

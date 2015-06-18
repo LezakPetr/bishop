@@ -17,7 +17,7 @@ public class TableStatistics {
 	private int[] symbolToResultMap;
 	private Map<Integer, Integer> resultToSymbolMap;
 	private long[][] symbolFrequencies;
-	private Map<Long, int[]> symbolProbabilities;
+	private Map<Integer, int[]> symbolProbabilities;
 	private IProbabilityModelSelector probabilityModelSelector;
 
 	public void calculate (final ITableRead table, final int blockLength) {
@@ -106,11 +106,11 @@ public class TableStatistics {
 		}
 
 		symbolFrequencies = calculateSymbolFrequencies(table, blockLength);
-		symbolProbabilities = new HashMap<Long, int[]>();
+		symbolProbabilities = new HashMap<Integer, int[]>();
 		
 		for (int modelIndex = 0; modelIndex < symbolFrequencies.length; modelIndex++) {
 			final int[] probabilities = EnumerationProbabilityModel.calculateSymbolProbabilities(symbolFrequencies[modelIndex]);
-			symbolProbabilities.put((long) modelIndex, probabilities);
+			symbolProbabilities.put(modelIndex, probabilities);
 		}
 	}
 	
@@ -122,7 +122,7 @@ public class TableStatistics {
 		return resultToSymbolMap;
 	}
 	
-	public Map<Long, int[]> getSymbolProbabilities() {
+	public Map<Integer, int[]> getSymbolProbabilities() {
 		return symbolProbabilities;
 	}
 	

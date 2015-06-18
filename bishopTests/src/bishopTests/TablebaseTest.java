@@ -15,6 +15,7 @@ import bishop.tablebase.BothColorPositionResultSource;
 import bishop.tablebase.FileNameCalculator;
 import bishop.tablebase.ITable;
 import bishop.tablebase.MemoryTable;
+import bishop.tablebase.PersistentTable;
 import bishop.tablebase.TableCalculator;
 import bishop.tablebase.TableReader;
 import bishop.tablebase.TableSwitch;
@@ -43,16 +44,18 @@ public class TablebaseTest {
 			
 			calculator.calculate();
 			
-			final BothColorPositionResultSource<MemoryTable> bothTables = calculator.getTable();
+			final BothColorPositionResultSource<PersistentTable> bothTables = calculator.getTable();
 			final BothColorPositionResultSource<ITable> bothTablesRead = new BothColorPositionResultSource<ITable>();
 			
 			for (int color = Color.FIRST; color < Color.LAST; color++) {
-				final TableWriter writer = new TableWriter();
+				final PersistentTable table = bothTables.getBaseSource(color);
+				table.switchToModeRead();
 				
+				final TableWriter writer = new TableWriter();
 				final File tmpFile = File.createTempFile("TablebaseTest", ".tbbs");
 				
 				try {
-					writer.writeTable(bothTables.getBaseSource(color), tmpFile);
+					writer.writeTable(table, tmpFile);
 					
 					final TableReader reader = new TableReader(tmpFile);
 					reader.readTable();

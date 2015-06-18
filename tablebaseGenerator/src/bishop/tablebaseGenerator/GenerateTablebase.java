@@ -34,7 +34,7 @@ public class GenerateTablebase {
 	
 	private TableBlockCache blockCache;
 	private TableSwitch resultSource;
-	private BothColorPositionResultSource<MemoryTable> bothTables;
+	private BothColorPositionResultSource<ITable> bothTables;
 	private String action;
 	private String directory;
 	private String definition;
@@ -51,7 +51,7 @@ public class GenerateTablebase {
 
 		calculator.calculate();
 		
-		bothTables = calculator.getTable();
+		bothTables = calculator.<ITable>getTable();
 	}
 
 	private void readSubTables() throws IOException {
@@ -103,9 +103,9 @@ public class GenerateTablebase {
 		bothTables.clear();
 		
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
-			final IPositionResultSource table = readOneTable(materialHashArray[onTurn]);
+			final ITable table = readOneTable(materialHashArray[onTurn]);
 			
-			bothTables.setBaseSource(onTurn, (MemoryTable) table);
+			bothTables.setBaseSource(onTurn, table);
 		}
 		
 		System.out.println("Table read");
@@ -165,7 +165,7 @@ public class GenerateTablebase {
 		}
 		
 		if (action.contains("v")) {
-			bothTables = new BothColorPositionResultSource<MemoryTable>();
+			bothTables = new BothColorPositionResultSource<ITable>();
 			
 			readTable();
 			validateTable();

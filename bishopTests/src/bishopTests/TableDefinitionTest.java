@@ -51,10 +51,9 @@ public class TableDefinitionTest {
 		}
 
 		@Override
-		public void setResult(long index, int result) {
+		public void setResult(long tableIndex, int result) {
 			throw new RuntimeException("Method not supported");
 		}
-		
 	}
 	
 	private void testTable (final ITable table, final int epFile) {

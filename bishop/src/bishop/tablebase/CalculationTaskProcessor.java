@@ -1,7 +1,6 @@
 package bishop.tablebase;
 
 import java.util.concurrent.Callable;
-
 import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
 import bishop.base.ReverseMoveGenerator;
@@ -20,8 +19,7 @@ public class CalculationTaskProcessor implements Callable<Object> {
 	private final ReverseTableWalker reverseMoveWalker;
 	
 	private long changeCount;
-	private ITableIterator iterator;
-	private long count;	
+	private PersistentTable ownTable;
 	
 	public CalculationTaskProcessor(final TableSwitch resultSource) {
 		this.position = new Position();
@@ -43,11 +41,10 @@ public class CalculationTaskProcessor implements Callable<Object> {
 		this.reverseMoveGenerator.setPosition(position);
 	}
 	
-	public void initialize(final boolean firstIteration, final TableDefinition oppositeTableDefinition, final BitArray prevPositionsToCheck, final ITableIterator beginIter, final long count) {
+	public void initialize(final boolean firstIteration, final TableDefinition oppositeTableDefinition, final BitArray prevPositionsToCheck, final PersistentTable ownTable) {
 		this.firstIteration = firstIteration;
 		this.prevPositionsToCheck = prevPositionsToCheck;
-		this.iterator = beginIter.copy();
-		this.count = count;
+		this.ownTable = ownTable;
 		
 		final long itemCount = oppositeTableDefinition.getTableIndexCount();
 				
@@ -77,29 +74,38 @@ public class CalculationTaskProcessor implements Callable<Object> {
 	@Override
 	public Object call() throws Exception {
 		try {
-			while (count > 0) {
-				if (firstIteration || prevPositionsToCheck.getAt(iterator.getTableIndex())) {
-					final int oldResult = iterator.getResult();
+			while (true) {
+				try (
+					final OutputFileTableIterator iterator = ownTable.getOutputBlock()
+				) {
 					
-					if (oldResult != TableResult.ILLEGAL) {
-						iterator.fillPosition(position);
-						
-						moveWalker.clear();
-						moveGenerator.generateMoves();
-						
-						final int result = moveWalker.getResult();
-						
-						if (result != oldResult && moveWalker.isMoveFound()) {
-							changeCount++;
+					if (iterator == null)
+						break;
+					
+					while (iterator.isValid()) {
+						if (firstIteration || prevPositionsToCheck.getAt(iterator.getTableIndex())) {
+							final int oldResult = iterator.getResult();
 							
-							iterator.setResult (result);
-							reverseMoveGenerator.generateMoves();
+							if (oldResult != TableResult.ILLEGAL) {
+								iterator.fillPosition(position);
+								
+								moveWalker.clear();
+								moveGenerator.generateMoves();
+								
+								final int result = moveWalker.getResult();
+								
+								if (result != oldResult && moveWalker.isMoveFound()) {
+									changeCount++;
+									
+									iterator.setResult (result);
+									reverseMoveGenerator.generateMoves();
+								}
+							}
 						}
+						
+						iterator.next();
 					}
 				}
-				
-				iterator.next();
-				count--;
 			}
 			
 			return null;
