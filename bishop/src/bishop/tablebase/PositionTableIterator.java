@@ -148,7 +148,7 @@ public class PositionTableIterator implements ITableIterator {
 
 	@Override
 	public void setResult(final int result) {
-		table.setResult (tableIndex, result);
+		throw new RuntimeException("PositionTableIterator.setResult not implemented"); 
 	}
 
 	@Override

@@ -50,7 +50,7 @@ public class PreviousSymbolProbabilityModelSelector implements IProbabilityModel
 	}
 	
 	@Override
-	public long getModelIndex(final Position position) {
+	public int getModelIndex(final Position position) {
 		final int positionIndex = getPositionIndex(position);
 		final int previousSymbol = previousSymbols[positionIndex];
 		

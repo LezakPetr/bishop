@@ -1,19 +1,28 @@
 package bishop.tablebase;
 
-public class TableIteratorImpl extends TableIteratorBase<ITable> implements ITableIterator {
+public class TableIteratorImpl extends TableIteratorBase implements ITableIterator {
 
+	private final ITable table;
+	
 	public TableIteratorImpl(final ITable table, final long beginIndex) {
-		super(table, beginIndex);
+		super(table.getDefinition(), beginIndex);
+		
+		this.table = table;
 	}
 
 	public TableIteratorImpl(final TableIteratorImpl orig) {
 		super (orig);
+		
+		this.table = orig.table;
+	}
+	
+	@Override
+	public int getResult() {
+		return table.getResult(getTableIndex());
 	}
 	
 	@Override
 	public void setResult(final int result) {
-		final ITable table = getTable();
-		
 		table.setResult(getTableIndex(), result);
 	}
 

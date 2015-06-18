@@ -47,10 +47,10 @@ public class TableIo {
 	protected ITable table;
 	protected int[] symbolToResultMap;
 	protected Map<Integer, Integer> resultToSymbolMap;
-	protected Map<Long, int[]> symbolProbabilities;
+	protected Map<Integer, int[]> symbolProbabilities;
 	protected IProbabilityModelSelector modelSelector;
 	
-	protected Map<Long, EnumerationProbabilityModel> probabilityModelMap;
+	protected Map<Integer, EnumerationProbabilityModel> probabilityModelMap;
 	
 	
 	public ITable getTable() {

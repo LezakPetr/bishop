@@ -164,7 +164,7 @@ public class TableReader extends TableIo {
 			int result = TableResult.ILLEGAL;
 			
 			if (isValid) {
-				final long positionLabel = modelSelector.getModelIndex(position);
+				final int positionLabel = modelSelector.getModelIndex(position);
 				final EnumerationProbabilityModel probabilityModel = probabilityModelMap.get(positionLabel);
 				final int symbol = decoder.decodeSymbol(probabilityModel);
 				result = symbolToResultMap[symbol];
@@ -275,18 +275,11 @@ public class TableReader extends TableIo {
 				throw new IOException("Unknown version");
 		}		
 		
-		symbolProbabilities = new HashMap<Long, int[]>();
+		symbolProbabilities = new HashMap<Integer, int[]>();
 
-		probabilityModelMap = new HashMap<Long, EnumerationProbabilityModel>();
+		probabilityModelMap = new HashMap<Integer, EnumerationProbabilityModel>();
 		
 		for (int modelIndex = 0; modelIndex < modelCount; modelIndex++) {
-			final long positionLabel;
-			
-			if (version == 0)
-				positionLabel = IoUtils.readNumberBinary(stream, POSITION_LABEL_SIZE);
-			else
-				positionLabel = modelIndex;
-			
 			final int[] probabilities = new int[symbolCount];
 			int symbol = 0;
 			
@@ -330,10 +323,10 @@ public class TableReader extends TableIo {
 				throw new RuntimeException("Wrong symbol count");
 			}
 			
-			symbolProbabilities.put(positionLabel, probabilities);
+			symbolProbabilities.put(modelIndex, probabilities);
 			
 			final EnumerationProbabilityModel probabilityModel = new EnumerationProbabilityModel(probabilities);
-			probabilityModelMap.put(positionLabel, probabilityModel);
+			probabilityModelMap.put(modelIndex, probabilityModel);
 		}
 	}
 

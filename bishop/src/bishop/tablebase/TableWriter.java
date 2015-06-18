@@ -39,9 +39,9 @@ public class TableWriter extends TableIo {
 		resultToSymbolMap = statistics.getResultToSymbolMap();
 		symbolProbabilities = statistics.getSymbolProbabilities();
 		
-		probabilityModelMap = new HashMap<Long, EnumerationProbabilityModel>();
+		probabilityModelMap = new HashMap<Integer, EnumerationProbabilityModel>();
 		
-		for (Entry<Long, int[]> entry: symbolProbabilities.entrySet()) {
+		for (Entry<Integer, int[]> entry: symbolProbabilities.entrySet()) {
 			EnumerationProbabilityModel model = new EnumerationProbabilityModel(entry.getValue());
 			
 			probabilityModelMap.put(entry.getKey(), model);
@@ -170,7 +170,7 @@ public class TableWriter extends TableIo {
 		}
 		
 		for (int modelIndex = 0; modelIndex < modelCount; modelIndex++) {
-			final int[] probabilities = symbolProbabilities.get((long) modelIndex);
+			final int[] probabilities = symbolProbabilities.get(modelIndex);
 			int oneCount = 0;
 			
 			for (int symbol = 0; symbol < symbolCount; symbol++) {
@@ -255,7 +255,7 @@ public class TableWriter extends TableIo {
 					final int symbol = resultToSymbolMap.get(result);
 					
 					it.fillPosition(position);
-					final long positionLabel = modelSelector.getModelIndex(position);
+					final int positionLabel = modelSelector.getModelIndex(position);
 					modelSelector.addSymbol(position, symbol);
 					
 					final EnumerationProbabilityModel probabilityModel = probabilityModelMap.get(positionLabel);

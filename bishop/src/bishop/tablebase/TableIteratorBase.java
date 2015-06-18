@@ -1,22 +1,17 @@
 package bishop.tablebase;
 
-import bishop.base.Color;
-import bishop.base.Piece;
-import bishop.base.PieceType;
 import bishop.base.Position;
 
-public abstract class TableIteratorBase<T extends ITableRead> implements ITableIteratorRead {
+public abstract class TableIteratorBase implements ITableIteratorRead {
 	
 	private final TableDefinition tableDefinition;
-	private final T table;
 	private final int[] combinationIndices;
 	private int chunkIndex;
 	private Chunk chunk;
 	private long tableIndex;
 	
-	public TableIteratorBase(final T table, final long beginIndex) {
-		this.table = table;
-		this.tableDefinition = table.getDefinition();
+	public TableIteratorBase(final TableDefinition tableDefinition, final long beginIndex) {
+		this.tableDefinition = tableDefinition;
 		
 		final int definitionCount = tableDefinition.getCombinationDefinitionCount();
 		this.combinationIndices = new int[definitionCount];
@@ -25,9 +20,8 @@ public abstract class TableIteratorBase<T extends ITableRead> implements ITableI
 		moveForward(beginIndex);
 	}
 	
-	public TableIteratorBase(final TableIteratorBase<T> orig) {
+	public TableIteratorBase(final TableIteratorBase orig) {
 		this.tableDefinition = orig.tableDefinition;
-		this.table = orig.table;
 		this.chunkIndex = orig.chunkIndex;
 		this.chunk = orig.chunk;
 		this.tableIndex = orig.tableIndex;
@@ -109,11 +103,6 @@ public abstract class TableIteratorBase<T extends ITableRead> implements ITableI
 		position.refreshCachedData();
 	}
 	
-	@Override
-	public int getResult() {
-		return table.getResult(tableIndex);
-	}
-	
 	private void updateCachedData() {
 		if (isValid()) {
 			chunk = tableDefinition.getChunkAt(chunkIndex);
@@ -138,10 +127,6 @@ public abstract class TableIteratorBase<T extends ITableRead> implements ITableI
 	@Override
 	public long getPositionCount() {
 		return tableDefinition.getTableIndexCount();
-	}
-
-	protected T getTable() {
-		return table;
 	}
 
 }

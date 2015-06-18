@@ -11,11 +11,6 @@ public interface ITable extends ITableRead {
 	 * @return table iterator
 	 */
 	public ITableIterator getIterator();
-	
-	/**
-	 * Sets result on given index.
-	 * @param index index of the result
-	 * @param result new result
-	 */
-	public void setResult(final long index, final int result);
+
+	public void setResult(final long tableIndex, final int result);
 }
