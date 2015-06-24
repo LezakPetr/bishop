@@ -139,6 +139,7 @@ public class PersistentTable implements ITable {
 			return null;
 		
 		final long offset = ((long) nextWriteBlockIndex) << BLOCK_SHIFT;
+		final long size = Math.min(BLOCK_SIZE, definition.getTableIndexCount() - offset);
 		final String inputPath = getBlockPath(nextWriteBlockIndex) + INPUT_SUFFIX;
 		final InputFileTableIterator inputIterator;
 		
@@ -147,7 +148,7 @@ public class PersistentTable implements ITable {
 		else
 			inputIterator = null;
 		
-		final OutputFileTableIterator outputIterator = new OutputFileTableIterator(inputIterator, getBlockPath(nextWriteBlockIndex) + OUTPUT_SUFFIX, definition, offset);
+		final OutputFileTableIterator outputIterator = new OutputFileTableIterator(inputIterator, getBlockPath(nextWriteBlockIndex) + OUTPUT_SUFFIX, definition, offset, size);
 		nextWriteBlockIndex++;
 		
 		return outputIterator;

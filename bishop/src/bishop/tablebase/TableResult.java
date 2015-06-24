@@ -2,9 +2,10 @@ package bishop.tablebase;
 
 public class TableResult {
 	
-	public static final int ILLEGAL = Short.MIN_VALUE;
+	public static final int BIT_COUNT = 14;   // Result is designed in a way that it can be written in 14 bits
+	public static final int ILLEGAL = -(1 << (BIT_COUNT - 1));
 	public static final int DRAW = 0;
-	public static final int MATE = Short.MIN_VALUE + 10;
+	public static final int MATE = ILLEGAL + 10;
 	
 	public static final byte COMPRESSED_ILLEGAL = Byte.MIN_VALUE;
 	public static final byte COMPRESSED_DRAW = 0;
