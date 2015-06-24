@@ -5,22 +5,29 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 
 import utils.IoUtils;
 
 public class InputFileTableIterator extends TableIteratorBase implements AutoCloseable {
 
 	private final String path;
-	private final InputStream stream;
+	private final PushbackInputStream stream;
 	private short result;
 	private boolean initialized;
+	private FileTableIteratorMode mode;
+	private int remainingCount;
+	private final FileTableIteratorChecksum checksum;
 	
 	public InputFileTableIterator (final String path, final TableDefinition tableDefinition, final long beginIndex) throws FileNotFoundException {
 		super(tableDefinition, beginIndex);
 		
 		this.path = path;
-		this.stream = new BufferedInputStream(new FileInputStream(path));
+		this.stream = new PushbackInputStream(new BufferedInputStream(new FileInputStream(path)));
 		this.initialized = true;
+		this.mode = null;
+		this.remainingCount = 0;
+		this.checksum = new FileTableIteratorChecksum();
 		
 		readResult();
 	}
@@ -47,7 +54,42 @@ public class InputFileTableIterator extends TableIteratorBase implements AutoClo
 	private void readResult() {
 		if (isValid()) {
 			try {
-				result = (short) IoUtils.readNumberBinary(stream, 2);
+				if (remainingCount <= 0) {
+					final int descriptor = IoUtils.readByteBinary(stream) & 0xFF;
+					mode = FileTableIteratorMode.forDescriptor (descriptor);
+					
+					if (mode == FileTableIteratorMode.FULL) {
+						stream.unread(descriptor);
+						remainingCount = 1;
+					}
+					else
+						remainingCount = mode.getCount (descriptor);
+				}
+				
+				switch (mode) {
+					case ILLEGAL:
+						result = TableResult.ILLEGAL;
+						break;
+						
+					case DRAW:
+						result = TableResult.DRAW;
+						break;
+						
+					case COMPRESSED:
+						result = (short) TableResult.decompress(IoUtils.readByteBinary(stream));
+						break;
+						
+					case FULL:
+						result = (short) IoUtils.readNumberBinary(stream, 2);
+						
+						if ((result & 0x2000) != 0)
+							result |= 0xC000;
+						
+						break;
+				}
+				
+				remainingCount--;
+				checksum.addResult(result);
 			}
 			catch (IOException ex) {
 				throw new RuntimeException("Cannot read result", ex);
@@ -60,22 +102,17 @@ public class InputFileTableIterator extends TableIteratorBase implements AutoClo
 	@Override
 	public void moveForward(final long count) {
 		if (initialized) {
-			super.moveForward(count - 1);
-			
-			try {
-				IoUtils.skip(stream, (count - 1) * 2);
-			}
-			catch (IOException ex) {
-				throw new RuntimeException("Cannot read result");
-			}
-	
-			next();
+			for (int i = 0; i < count; i++)
+				next();
 		}
 		else
 			super.moveForward(count);
 	}
 
 	public void close() throws IOException {
+		if (!checksum.validateCrcFromStream(stream))
+			throw new RuntimeException("Corrupted results");
+		
 		stream.close();
 	}
 }
