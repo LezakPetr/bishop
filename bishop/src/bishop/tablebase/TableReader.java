@@ -38,7 +38,7 @@ public class TableReader extends TableIo {
 	private final Position position;
 	
 	private static final int MIN_VERSION = 0;
-	private static final int MAX_VERSION = 2;
+	private static final int MAX_VERSION = 0;
 	
 	public TableReader(final File file) {
 		this.file = file;
@@ -197,6 +197,8 @@ public class TableReader extends TableIo {
 		if (version < MIN_VERSION || version > MAX_VERSION)
 			throw new RuntimeException("Unknown version of the table");
 		
+		final byte flags = IoUtils.readByteBinary(stream);
+		
 		readTableDefinition(version, stream);
 		readProbabilityModel(stream, version);
 		readBlockLengthConstants(stream);
@@ -249,16 +251,7 @@ public class TableReader extends TableIo {
 		final int modelCount;
 		
 		switch (version) {
-			case 1:
-				symbolCount = (int) IoUtils.readNumberBinary(stream, SYMBOL_COUNT_SIZE);
-				modelSelector = new PreviousSymbolProbabilityModelSelector(symbolCount, tableDefinition.getMaterialHash());
-
-				modelCount = modelSelector.getModelCount();
-				readSymbolToResultMap(stream, symbolCount);
-
-				break;
-				
-			case 2:
+			case 0:
 				symbolCount = (int) IoUtils.readNumberBinary(stream, SYMBOL_COUNT_SIZE);
 				
 				final byte dat = IoUtils.readByteBinary(stream);

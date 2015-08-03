@@ -21,7 +21,7 @@ import bishop.base.Position;
 
 public class TableWriter extends TableIo {
 	
-	public static final byte VERSION = 2;
+	public static final byte VERSION = 0;
 	
 	private static final int BLOCK_INDEX_EXPONENT = 12;
 	public static final int BLOCK_INDEX_LENGTH = 1 << BLOCK_INDEX_EXPONENT;
@@ -99,6 +99,9 @@ public class TableWriter extends TableIo {
 	private void writeHeaderToStream(final OutputStream stream) throws IOException {
 		stream.write(HEADER_MAGIC);
 		stream.write(VERSION);
+		
+		final byte flags = 0;
+		stream.write(flags);
 		
 		stream.write(table.getDefinition().getOnTurn());
 		

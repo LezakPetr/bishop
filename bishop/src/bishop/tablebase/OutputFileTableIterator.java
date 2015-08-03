@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.CRC32;
@@ -35,7 +36,7 @@ public class OutputFileTableIterator extends TableIteratorBase implements ITable
 		this.resultSet = new HashSet<>();
 		this.checksum = new FileTableIteratorChecksum();
 		this.remainingResults = size;
-		
+
 		readNextResult();
 	}
 
