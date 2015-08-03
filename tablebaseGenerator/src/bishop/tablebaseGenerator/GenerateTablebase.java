@@ -20,6 +20,7 @@ import bishop.tablebase.IPositionResultSource;
 import bishop.tablebase.ITable;
 import bishop.tablebase.ITableRead;
 import bishop.tablebase.MemoryTable;
+import bishop.tablebase.PersistentTable;
 import bishop.tablebase.TableBlockCache;
 import bishop.tablebase.TableCalculator;
 import bishop.tablebase.TableDefinition;
@@ -87,7 +88,10 @@ public class GenerateTablebase {
 			final FileOutputStream stream = new FileOutputStream(getFileName(materialHashArray[onTurn]));
 			
 			try {
-				writer.writeTable(bothTables.getBaseSource(onTurn), stream);
+				final PersistentTable table = (PersistentTable) bothTables.getBaseSource(onTurn);
+				table.switchToModeRead();
+
+				writer.writeTable(table, stream);
 			}
 			finally {
 				stream.close();

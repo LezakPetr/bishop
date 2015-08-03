@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.io.PushbackInputStream;
 
 import utils.IoUtils;
@@ -18,8 +19,9 @@ public class InputFileTableIterator extends TableIteratorBase implements AutoClo
 	private FileTableIteratorMode mode;
 	private int remainingCount;
 	private final FileTableIteratorChecksum checksum;
+	private long remainingResults;
 	
-	public InputFileTableIterator (final String path, final TableDefinition tableDefinition, final long beginIndex) throws FileNotFoundException {
+	public InputFileTableIterator (final String path, final TableDefinition tableDefinition, final long beginIndex, final long size) throws FileNotFoundException {
 		super(tableDefinition, beginIndex);
 		
 		this.path = path;
@@ -27,8 +29,9 @@ public class InputFileTableIterator extends TableIteratorBase implements AutoClo
 		this.initialized = true;
 		this.mode = null;
 		this.remainingCount = 0;
+		this.remainingResults = size;
 		this.checksum = new FileTableIteratorChecksum();
-		
+
 		readResult();
 	}
 	
@@ -52,7 +55,7 @@ public class InputFileTableIterator extends TableIteratorBase implements AutoClo
 	}
 
 	private void readResult() {
-		if (isValid()) {
+		if (isValid() && remainingResults > 0) {
 			try {
 				if (remainingCount <= 0) {
 					final int descriptor = IoUtils.readByteBinary(stream) & 0xFF;
@@ -89,6 +92,7 @@ public class InputFileTableIterator extends TableIteratorBase implements AutoClo
 				}
 				
 				remainingCount--;
+				remainingResults--;
 				checksum.addResult(result);
 			}
 			catch (IOException ex) {
@@ -110,9 +114,12 @@ public class InputFileTableIterator extends TableIteratorBase implements AutoClo
 	}
 
 	public void close() throws IOException {
-		if (!checksum.validateCrcFromStream(stream))
-			throw new RuntimeException("Corrupted results");
-		
-		stream.close();
+		try {
+			if (!checksum.validateCrcFromStream(stream))
+				throw new RuntimeException("Corrupted results");
+		}
+		finally {
+			stream.close();
+		}
 	}
 }

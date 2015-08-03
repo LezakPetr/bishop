@@ -109,7 +109,7 @@ public class PersistentTable implements ITable {
 			final TableReadBlock block = new TableReadBlock(offset, size);
 			
 			try (
-				final InputFileTableIterator it = new InputFileTableIterator(getBlockPath(i) + INPUT_SUFFIX, definition, block.getOffset())
+				final InputFileTableIterator it = new InputFileTableIterator(getBlockPath(i) + INPUT_SUFFIX, definition, block.getOffset(), size)
 			) {
 				block.read (it);
 			}
@@ -144,7 +144,7 @@ public class PersistentTable implements ITable {
 		final InputFileTableIterator inputIterator;
 		
 		if (new java.io.File(inputPath).exists())
-			inputIterator = new InputFileTableIterator(inputPath, definition, offset);
+			inputIterator = new InputFileTableIterator(inputPath, definition, offset, size);
 		else
 			inputIterator = null;
 		
