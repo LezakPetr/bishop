@@ -129,7 +129,7 @@ public abstract class MoveGeneratorTestBase {
 	@Test
 	public void speedTest() throws IOException {
 		final String testPosFen = "r2q1rk1/1b2p1bp/p2pp1p1/1p2B3/1P2P3/2P2B2/P2QNPPP/3R1RK1 w - - 0 1";
-		final int iterationCount = 1000000;
+		final int iterationCount = 2000000;
 		final Move generatedMove = new Move();
 
 		final Fen fen = new Fen();
@@ -140,6 +140,8 @@ public abstract class MoveGeneratorTestBase {
 		IMoveWalker walker = new IMoveWalker() {
 			public boolean processMove(final Move move) {
 				generatedMove.assign(move);
+				position.makeMove(generatedMove);
+				position.undoMove(generatedMove);
 				return true;
 			}
 		};
@@ -147,6 +149,9 @@ public abstract class MoveGeneratorTestBase {
 		final IMoveGenerator generator = getMoveGenerator();
 		generator.setPosition(position);
 		generator.setWalker(walker);
+
+		for (int i = 0; i < iterationCount; i++)
+			generator.generateMoves();
 
 		final long t1 = System.currentTimeMillis();
 

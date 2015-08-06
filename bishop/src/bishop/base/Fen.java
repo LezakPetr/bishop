@@ -12,7 +12,7 @@ import utils.IoUtils;
  */
 public class Fen {
 
-	private Position position = new Position();
+	private Position position = new Position(false);
 	private int halfMoveClock = 0;
 	private int moveNumber = 1;
 

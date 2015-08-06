@@ -4,6 +4,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 
+import sun.print.PSPrinterJob.EPSPrinter;
+
 import bishop.engine.Evaluation;
 import bishop.tables.BetweenTable;
 import bishop.tables.FigureAttackTable;
@@ -29,8 +31,7 @@ public final class Position implements IPieceCounts {
 	private final CastlingRights castlingRights = new CastlingRights();   // Rights for castling
 	private int epFile;   // File where pawn advanced by two squares in last move (or File.NONE)
 
-	private long hash;
-	private int materialEvaluation;
+	private IPositionCaching caching;
 	
 	public static final Position INITIAL_POSITION = createInitialPosition();
 	
@@ -38,6 +39,15 @@ public final class Position implements IPieceCounts {
 	 * Default constructor - creates empty position.
 	 */
 	public Position() {
+		this(false);
+	}
+	
+	public Position(final boolean nullCaching) {
+		if (nullCaching)
+			caching = new NullPositionCaching(this);
+		else
+			caching = new PositionCachingImpl();
+		
 		clearPosition();
 	}
 	
@@ -76,35 +86,33 @@ public final class Position implements IPieceCounts {
 		colorOccupancy[onTurn] ^= movingPieceChange;
 		occupancy &= ~beginSquareMask;
 		
-		hash ^= PieceHashTable.getItem(onTurn, movingPieceType, beginSquare);
-		hash ^= PieceHashTable.getItem(onTurn, movingPieceType, targetSquare);
+		caching.movePiece (onTurn, movingPieceType, beginSquare, targetSquare);
 
 		if (capturedPieceType != PieceType.NONE) {
 			pieces[getPieceMaskIndex (oppositeColor, capturedPieceType)] &= ~targetSquareMask;
 			colorOccupancy[oppositeColor] &= ~targetSquareMask;
 			
-			hash ^= PieceHashTable.getItem(oppositeColor, capturedPieceType, targetSquare);
-			materialEvaluation -= PieceTypeEvaluations.getPieceEvaluation(oppositeColor, capturedPieceType);
+			caching.removePiece (oppositeColor, capturedPieceType, targetSquare);
 		}
 		else
 			occupancy |= targetSquareMask;
 
 		// Update castling rights
 		if (!castlingRights.isEmpty() && (movingPieceChange & CastlingRights.AFFECTED_SQUARES) != 0) {
-			hash ^= HashConstants.getCastlingRightHash(castlingRights);
+			final int origCastlingRightIndex = castlingRights.getIndex();
 			
 			castlingRights.updateAfterSquareChange (beginSquare);
 			castlingRights.updateAfterSquareChange (targetSquare);
 			
-			hash ^= HashConstants.getCastlingRightHash(castlingRights);
+			caching.changeCastlingRights (origCastlingRightIndex, castlingRights.getIndex());
 		}
 
 		// On turn
 		onTurn = oppositeColor;
-		hash ^= HashConstants.getOnTurnHashDifference();
+		caching.swapOnTurn();
 
 		// Update EP file
-		hash ^= HashConstants.getEpFileHash(epFile);
+		final int origEpFile = epFile;
 				
 		if (movingPieceType == PieceType.PAWN && Math.abs(targetSquare - beginSquare) == 2 * File.LAST) {
 			epFile = Square.getFile(beginSquare);   // Needed by method isEnPassantPossible
@@ -115,7 +123,7 @@ public final class Position implements IPieceCounts {
 		else
 			epFile = File.NONE;
 		
-		hash ^= HashConstants.getEpFileHash(epFile);
+		caching.changeEpFile (origEpFile, epFile);
 	}
 
 	/**
@@ -136,7 +144,7 @@ public final class Position implements IPieceCounts {
 		
 		// On turn
 		onTurn = Color.getOppositeColor (oppositeColor);
-		hash ^= HashConstants.getOnTurnHashDifference();
+		caching.swapOnTurn();
 		
 		// Piece masks
 		final long movingPieceChange = beginSquareMask | targetSquareMask;
@@ -148,15 +156,13 @@ public final class Position implements IPieceCounts {
 		colorOccupancy[onTurn] ^= movingPieceChange;
 		occupancy |= beginSquareMask;
 		
-		hash ^= PieceHashTable.getItem(onTurn, movingPieceType, beginSquare);
-		hash ^= PieceHashTable.getItem(onTurn, movingPieceType, targetSquare);
+		caching.movePiece(onTurn, movingPieceType, targetSquare, beginSquare);
 
 		if (capturedPieceType != PieceType.NONE) {
 			pieces[getPieceMaskIndex (oppositeColor, capturedPieceType)] |= targetSquareMask;
 			colorOccupancy[oppositeColor] |= targetSquareMask;
 			
-			hash ^= PieceHashTable.getItem(oppositeColor, capturedPieceType, targetSquare);
-			materialEvaluation += PieceTypeEvaluations.getPieceEvaluation(oppositeColor, capturedPieceType);
+			caching.addPiece(oppositeColor, capturedPieceType, targetSquare);
 		}
 		else
 			occupancy &= ~targetSquareMask;
@@ -165,18 +171,16 @@ public final class Position implements IPieceCounts {
 		final int prevCastlingRightIndex = move.getPreviousCastlingRigthIndex();
 		
 		if (prevCastlingRightIndex != castlingRights.getIndex()) {
-			hash ^= HashConstants.getCastlingRightHash(castlingRights);
+			caching.changeCastlingRights(castlingRights.getIndex(), prevCastlingRightIndex);
 			castlingRights.setIndex (prevCastlingRightIndex);
-			hash ^= HashConstants.getCastlingRightHash(castlingRights);
 		}
 
 		// Update EP file
 		final int prevEpFile = move.getPreviousEpFile();
 		
 		if (prevEpFile != epFile) {
-			hash ^= HashConstants.getEpFileHash(epFile);
+			caching.changeEpFile(epFile, prevEpFile);
 			epFile = prevEpFile;
-			hash ^= HashConstants.getEpFileHash(epFile);
 		}
 	}
 
@@ -205,32 +209,28 @@ public final class Position implements IPieceCounts {
 		pieces[getPieceMaskIndex (onTurn, promotionPieceType)] |= targetSquareMask;
 		colorOccupancy[onTurn] |= targetSquareMask;
 		
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.PAWN, beginSquare);
-		hash ^= PieceHashTable.getItem(onTurn, promotionPieceType, targetSquare);
-		
-		materialEvaluation -= PieceTypeEvaluations.getPieceEvaluation(onTurn, PieceType.PAWN);
-		materialEvaluation += PieceTypeEvaluations.getPieceEvaluation(onTurn, promotionPieceType);
+		caching.removePiece(onTurn, PieceType.PAWN, beginSquare);
+		caching.addPiece(onTurn, promotionPieceType, targetSquare);
 		
 		if (capturedPieceType != PieceType.NONE) {
 			pieces[getPieceMaskIndex (oppositeColor, capturedPieceType)] &= ~targetSquareMask;
 			colorOccupancy[oppositeColor] &= ~targetSquareMask;
-			
-			hash ^= PieceHashTable.getItem(oppositeColor, capturedPieceType, targetSquare);
-			materialEvaluation -= PieceTypeEvaluations.getPieceEvaluation(oppositeColor, capturedPieceType);
+
+			caching.removePiece(oppositeColor, capturedPieceType, targetSquare);
 		}
 		else
 			occupancy |= targetSquareMask;
 
 		// Update castling rights - only by target square (begin square cannot change rights)
-		hash ^= HashConstants.getCastlingRightHash(castlingRights);
+		final int origCastlingRightIndex = castlingRights.getIndex();
 		castlingRights.updateAfterSquareChange (targetSquare);
-		hash ^= HashConstants.getCastlingRightHash(castlingRights);
+		caching.changeCastlingRights(origCastlingRightIndex, castlingRights.getIndex());
 		
-		hash ^= HashConstants.getEpFileHash(epFile);
+		caching.changeEpFile(epFile, File.NONE);
 		epFile = File.NONE;
 		
 		onTurn = oppositeColor;
-		hash ^= HashConstants.getOnTurnHashDifference();
+		caching.swapOnTurn();
 	}
 
 	/**
@@ -250,7 +250,7 @@ public final class Position implements IPieceCounts {
 		
 		// On turn
 		onTurn = Color.getOppositeColor (oppositeColor);
-		hash ^= HashConstants.getOnTurnHashDifference();
+		caching.swapOnTurn();
 
 		// Piece masks
 		pieceTypeOnSquares[beginSquare] = PieceType.PAWN;
@@ -263,18 +263,14 @@ public final class Position implements IPieceCounts {
 		pieces[getPieceMaskIndex (onTurn, promotionPieceType)] &= ~targetSquareMask;
 		colorOccupancy[onTurn] &= ~targetSquareMask;
 
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.PAWN, beginSquare);
-		hash ^= PieceHashTable.getItem(onTurn, promotionPieceType, targetSquare);
-
-		materialEvaluation += PieceTypeEvaluations.getPieceEvaluation(onTurn, PieceType.PAWN);
-		materialEvaluation -= PieceTypeEvaluations.getPieceEvaluation(onTurn, promotionPieceType);
+		caching.addPiece(onTurn, PieceType.PAWN, beginSquare);
+		caching.removePiece(onTurn, promotionPieceType, targetSquare);
 
 		if (capturedPieceType != PieceType.NONE) {
 			pieces[getPieceMaskIndex (oppositeColor, capturedPieceType)] |= targetSquareMask;
 			colorOccupancy[oppositeColor] |= targetSquareMask;
 			
-			hash ^= PieceHashTable.getItem(oppositeColor, capturedPieceType, targetSquare);
-			materialEvaluation += PieceTypeEvaluations.getPieceEvaluation(oppositeColor, capturedPieceType);
+			caching.addPiece(oppositeColor, capturedPieceType, targetSquare);
 		}
 		else
 			occupancy &= ~targetSquareMask;
@@ -283,14 +279,13 @@ public final class Position implements IPieceCounts {
 		final int prevCastlingRightIndex = move.getPreviousCastlingRigthIndex();
 		
 		if (prevCastlingRightIndex != castlingRights.getIndex()) {
-			hash ^= HashConstants.getCastlingRightHash(castlingRights);
 			castlingRights.setIndex (prevCastlingRightIndex);
-			hash ^= HashConstants.getCastlingRightHash(castlingRights);
+			caching.changeCastlingRights(prevCastlingRightIndex, castlingRights.getIndex());
 		}
 		
 		// EP file
-		epFile = move.getPreviousEpFile();		
-		hash ^= HashConstants.getEpFileHash(epFile);
+		epFile = move.getPreviousEpFile();
+		caching.changeEpFile(File.NONE, epFile);
 	}
 
 	/**
@@ -316,10 +311,8 @@ public final class Position implements IPieceCounts {
 		pieceTypeOnSquares[rookBeginSquare] = PieceType.NONE;
 		pieceTypeOnSquares[rookTargetSquare] = PieceType.ROOK;
 
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.KING, beginSquare);
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.KING, targetSquare);
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.ROOK, rookBeginSquare);
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.ROOK, rookTargetSquare);
+		caching.movePiece(onTurn, PieceType.KING, beginSquare, targetSquare);
+		caching.movePiece(onTurn, PieceType.ROOK, rookBeginSquare, rookTargetSquare);
 
 		pieces[getPieceMaskIndex (onTurn, PieceType.KING)] ^= kingChanges;
 		pieces[getPieceMaskIndex (onTurn, PieceType.ROOK)] ^= rookChanges;
@@ -327,19 +320,17 @@ public final class Position implements IPieceCounts {
 		occupancy ^= occupancyChanges;
 
 		// Castling rights
-		hash ^= HashConstants.getCastlingRightHash(castlingRights);
-		
+		final int origCastlingRightIndex = castlingRights.getIndex();
 		castlingRights.dropRightsForColor (onTurn);
-		
-		hash ^= HashConstants.getCastlingRightHash(castlingRights);
+		caching.changeCastlingRights(origCastlingRightIndex, castlingRights.getIndex());
 
 		// EP file
-		hash ^= HashConstants.getEpFileHash(epFile);
+		caching.changeEpFile(epFile, File.NONE);
 		epFile = File.NONE;
 		
 		// On turn
 		onTurn = oppositeColor;
-		hash ^= HashConstants.getOnTurnHashDifference();
+		caching.swapOnTurn();
 	}
 
 	/**
@@ -353,7 +344,7 @@ public final class Position implements IPieceCounts {
 		
 		// On turn
 		onTurn = Color.getOppositeColor (oppositeColor);
-		hash ^= HashConstants.getOnTurnHashDifference();
+		caching.swapOnTurn();
 
 		// Piece masks
 		final int castlingType = (beginSquare > targetSquare) ? CastlingType.LONG : CastlingType.SHORT;
@@ -370,10 +361,8 @@ public final class Position implements IPieceCounts {
 		pieceTypeOnSquares[rookBeginSquare] = PieceType.ROOK;
 		pieceTypeOnSquares[rookTargetSquare] = PieceType.NONE;
 
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.KING, beginSquare);
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.KING, targetSquare);
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.ROOK, rookBeginSquare);
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.ROOK, rookTargetSquare);
+		caching.movePiece(onTurn, PieceType.KING, targetSquare, beginSquare);
+		caching.movePiece(onTurn, PieceType.ROOK, rookTargetSquare, rookBeginSquare);
 
 		pieces[getPieceMaskIndex (onTurn, PieceType.KING)] ^= kingChanges;
 		pieces[getPieceMaskIndex (onTurn, PieceType.ROOK)] ^= rookChanges;
@@ -381,13 +370,13 @@ public final class Position implements IPieceCounts {
 		occupancy ^= occupancyChanges;
 
 		// Update castling rights
-		hash ^= HashConstants.getCastlingRightHash(castlingRights);
-		castlingRights.setIndex (move.getPreviousCastlingRigthIndex());
-		hash ^= HashConstants.getCastlingRightHash(castlingRights);
+		final int prevCastlingRightIndex = move.getPreviousCastlingRigthIndex();
+		caching.changeCastlingRights(prevCastlingRightIndex, castlingRights.getIndex());
+		castlingRights.setIndex (prevCastlingRightIndex);
 		
 		// EP file
 		epFile = move.getPreviousEpFile();		
-		hash ^= HashConstants.getEpFileHash(epFile);
+		caching.changeEpFile(File.NONE, epFile);
 	}
 
 	/**
@@ -421,19 +410,16 @@ public final class Position implements IPieceCounts {
 		colorOccupancy[oppositeColor] &= ~epSquareMask;
 		occupancy &= ~epSquareMask;
 		
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.PAWN, beginSquare);
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.PAWN, targetSquare);
-		hash ^= PieceHashTable.getItem(oppositeColor, PieceType.PAWN, epSquare);
+		caching.movePiece(onTurn, PieceType.PAWN, beginSquare, targetSquare);
+		caching.removePiece(oppositeColor, PieceType.PAWN, epSquare);
 		
-		materialEvaluation -= PieceTypeEvaluations.getPieceEvaluation(oppositeColor, PieceType.PAWN);
-
 		// EP file
-		hash ^= HashConstants.getEpFileHash(epFile);
+		caching.changeEpFile(epFile, File.NONE);
 		epFile = File.NONE;
 		
 		// On turn
 		onTurn = oppositeColor;
-		hash ^= HashConstants.getOnTurnHashDifference();
+		caching.swapOnTurn();
 	}
 
 	/**
@@ -450,11 +436,11 @@ public final class Position implements IPieceCounts {
 		
 		// On turn
 		onTurn = Color.getOppositeColor (oppositeColor);
-		hash ^= HashConstants.getOnTurnHashDifference();
+		caching.swapOnTurn();
 		
 		// EP file
 		epFile = move.getPreviousEpFile();
-		hash ^= HashConstants.getEpFileHash(epFile);
+		caching.changeEpFile(File.NONE, epFile);
 		
 		final int epSquare = Square.onFileRank(epFile, Square.getRank (beginSquare));
 		final long epSquareMask = BitBoard.getSquareMask(epSquare);
@@ -476,11 +462,8 @@ public final class Position implements IPieceCounts {
 		colorOccupancy[oppositeColor] |= epSquareMask;
 		occupancy |= epSquareMask;
 		
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.PAWN, beginSquare);
-		hash ^= PieceHashTable.getItem(onTurn, PieceType.PAWN, targetSquare);
-		hash ^= PieceHashTable.getItem(oppositeColor, PieceType.PAWN, epSquare);
-		
-		materialEvaluation += PieceTypeEvaluations.getPieceEvaluation(oppositeColor, PieceType.PAWN);
+		caching.movePiece(onTurn, PieceType.PAWN, targetSquare, beginSquare);
+		caching.addPiece(oppositeColor, PieceType.PAWN, epSquare);
 	}
 	
 	/**
@@ -489,12 +472,12 @@ public final class Position implements IPieceCounts {
 	 */
 	private void makeNullMove (final Move move) {
 		// EP file
-		hash ^= HashConstants.getEpFileHash(epFile);
+		caching.changeEpFile(epFile, File.NONE);
 		epFile = File.NONE;
 		
 		// On turn
 		onTurn = Color.getOppositeColor(onTurn);
-		hash ^= HashConstants.getOnTurnHashDifference();
+		caching.swapOnTurn();
 	}
 
 	/**
@@ -504,11 +487,11 @@ public final class Position implements IPieceCounts {
 	private void undoNullMove (final Move move) {
 		// On turn
 		onTurn = Color.getOppositeColor (onTurn);
-		hash ^= HashConstants.getOnTurnHashDifference();
+		caching.swapOnTurn();
 		
 		// EP file
 		epFile = move.getPreviousEpFile();
-		hash ^= HashConstants.getEpFileHash(epFile);
+		caching.changeEpFile(File.NONE, epFile);
 	}
 
 	/**
@@ -884,8 +867,8 @@ public final class Position implements IPieceCounts {
 		}
 	}
 	
-	private void updateHash() {
-		hash = 0;
+	public long calculateHash() {
+		long hash = 0;
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
@@ -899,11 +882,17 @@ public final class Position implements IPieceCounts {
 		
 		hash ^= HashConstants.getOnTurnHash(onTurn);
 		hash ^= HashConstants.getEpFileHash(epFile);
-		hash ^= HashConstants.getCastlingRightHash(castlingRights);
+		hash ^= HashConstants.getCastlingRightHash(castlingRights.getIndex());
+		
+		return hash;
 	}
-			
-	private void updateMaterialEvaluation() {
-		materialEvaluation = 0;
+	
+	private void updateHash() {
+		caching.setHash (calculateHash());
+	}
+	
+	public int calculateMaterialEvaluation() {
+		int materialEvaluation = 0;
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			for (int pieceType = PieceType.VARIABLE_FIRST; pieceType < PieceType.VARIABLE_LAST; pieceType++) {
@@ -912,6 +901,12 @@ public final class Position implements IPieceCounts {
 				materialEvaluation += BitBoard.getSquareCount (piecesMask) * PieceTypeEvaluations.getPieceEvaluation (color, pieceType);
 			}
 		}
+		
+		return materialEvaluation;
+	}
+			
+	private void updateMaterialEvaluation() {
+		caching.setMaterialEvaluation (calculateMaterialEvaluation());
 	}
 
 	/**
@@ -927,8 +922,7 @@ public final class Position implements IPieceCounts {
 		this.onTurn = orig.onTurn;
 		this.castlingRights.assign (orig.castlingRights);
 		this.epFile = orig.epFile;
-		this.hash = orig.hash;
-		this.materialEvaluation = orig.materialEvaluation;
+		this.caching = orig.caching.copy();
 	}
 	
 	/**
@@ -1029,17 +1023,17 @@ public final class Position implements IPieceCounts {
 		}
 		
 		// Hash
-		final long oldHash = hash;
+		final long oldHash = getHash();
 		updateHash();
 		
-		if (hash != oldHash)
+		if (getHash() != oldHash)
 			throw new RuntimeException("Hash was corrupted");
 
 		// Material evaluation
-		final int oldMaterialEvaluation = materialEvaluation;
+		final int oldMaterialEvaluation = getMaterialEvaluation();
 		updateMaterialEvaluation();
 		
-		if (materialEvaluation != oldMaterialEvaluation)
+		if (getMaterialEvaluation() != oldMaterialEvaluation)
 			throw new RuntimeException("Material evaluation was corrupted");
 	}
 	
@@ -1048,7 +1042,7 @@ public final class Position implements IPieceCounts {
 	 * @return position hash
 	 */
 	public long getHash() {
-		return hash;
+		return caching.getHash();
 	}
 
 	/**
@@ -1102,7 +1096,7 @@ public final class Position implements IPieceCounts {
     }
     
     public int getMaterialEvaluation() {
-    	return materialEvaluation;
+    	return caching.getMaterialEvaluation();
     }
     
     public MaterialHash getMaterialHash() {

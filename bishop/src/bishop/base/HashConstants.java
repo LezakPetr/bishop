@@ -75,8 +75,8 @@ public class HashConstants {
 		return (file != File.NONE) ? EP_FILE_HASHES[file] : 0;
 	}
 
-	public static long getCastlingRightHash (final CastlingRights rights) {
-		return CASTLING_RIGHT_HASHES[rights.getIndex()];
+	public static long getCastlingRightHash (final int rightIndex) {
+		return CASTLING_RIGHT_HASHES[rightIndex];
 	}
 	
 	public static long getOnTurnHash (final int onTurn) {

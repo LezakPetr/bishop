@@ -28,6 +28,8 @@ public class TablebaseTest {
 	
 	@Test
 	public void testTablebase() throws Exception {
+		final long t1 = System.currentTimeMillis();
+		
 		final int threadCount = Runtime.getRuntime().availableProcessors();
 		final ExecutorService executor = Executors.newFixedThreadPool(threadCount);
 
@@ -77,5 +79,8 @@ public class TablebaseTest {
 				tableSwitch.addTable(materialHashArray[color], bothTablesRead.getBaseSource(color));	
 			}			
 		}
+		
+		final long t2 = System.currentTimeMillis();
+		System.out.println ("TablebaseTest: "  + (t2 - t1) + "ms");
 	}
 }
