@@ -22,7 +22,7 @@ public class CalculationTaskProcessor implements Callable<Object> {
 	private PersistentTable ownTable;
 	
 	public CalculationTaskProcessor(final TableSwitch resultSource) {
-		this.position = new Position();
+		this.position = new Position(true);
 		
 		this.moveWalker = new ForwardTableWalker();
 		this.moveGenerator = new PseudoLegalMoveGenerator();
