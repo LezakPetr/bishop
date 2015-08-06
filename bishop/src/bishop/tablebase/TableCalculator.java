@@ -6,8 +6,12 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+
+import parallel.ParallelUtils;
 
 import bishop.base.Color;
 import bishop.base.Fen;
@@ -23,7 +27,6 @@ public class TableCalculator {
 	private final ExecutorService executor;
 	private final int threadCount;
 	private final BothColorPositionResultSource<PersistentTable> bothTables;
-	private final Position position;
 	private final TableSwitch resultSource;
 	
 	private BitArray prevPositionsToCheck;
@@ -38,7 +41,6 @@ public class TableCalculator {
 		
 		this.executor = executor;
 		this.threadCount = threadCount;
-		this.position = new Position();
 		
 		this.bothTables = new BothColorPositionResultSource<PersistentTable>();
 		
@@ -134,11 +136,48 @@ public class TableCalculator {
 		return bothTables;
 	}
 	
-	private void initializeTable() throws FileNotFoundException, IOException {
+	private static void initializeBlocks(final PersistentTable table) throws FileNotFoundException, IOException {
+		final LegalMoveFinder moveFinder = new LegalMoveFinder();
+		
+		final Position position = new Position();
 		final PositionValidator validator = new PositionValidator();
 		validator.setPosition(position);
 		
-		final LegalMoveFinder moveFinder = new LegalMoveFinder();
+		while (true) {
+			try (
+				final OutputFileTableIterator it = table.getOutputBlock()
+			) {
+				if (it == null)
+					break;
+		
+				while (it.isValid()) {
+					it.fillPosition(position);
+					
+					final boolean isValid = table.getDefinition().hasSameCountOfPieces(position) && validator.checkPosition();
+					final int result;
+					
+					if (isValid) {
+						if (moveFinder.existsLegalMove(position)) {
+							result = TableResult.DRAW;
+						}
+						else {
+							if (position.isCheck())
+								result = TableResult.MATE;
+							else
+								result = TableResult.DRAW;						
+						}
+					}
+					else
+						result = TableResult.ILLEGAL;
+					
+					it.setResult(result);
+					it.next();
+				}
+			}
+		}
+	}
+	
+	private void initializeTable() throws FileNotFoundException, IOException, InterruptedException, ExecutionException {
 		
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
 			final PersistentTable table = bothTables.getBaseSource(onTurn);
@@ -146,38 +185,14 @@ public class TableCalculator {
 			table.clear();
 			table.switchToModeWrite();
 			
-			while (true) {
-				try (
-					final OutputFileTableIterator it = table.getOutputBlock()
-				) {
-					if (it == null)
-						break;
+			ParallelUtils.runParallel(executor, threadCount, new Callable<Object>() {
+				@Override
+				public Object call() throws Exception {
+					initializeBlocks(table);
 					
-					while (it.isValid()) {
-						it.fillPosition(position);
-						
-						final boolean isValid = table.getDefinition().hasSameCountOfPieces(position) && validator.checkPosition();
-						final int result;
-						
-						if (isValid) {
-							if (moveFinder.existsLegalMove(position)) {
-								result = TableResult.DRAW;
-							}
-							else {
-								if (position.isCheck())
-									result = TableResult.MATE;
-								else
-									result = TableResult.DRAW;						
-							}
-						}
-						else
-							result = TableResult.ILLEGAL;
-						
-						it.setResult(result);
-						it.next();
-					}
+					return null;
 				}
-			}
+			});			
 			
 			table.moveOutputToInput();
 		}
@@ -202,7 +217,6 @@ public class TableCalculator {
 				final PersistentTable ownTable = bothTables.getBaseSource(onTurn);
 				final PersistentTable oppositeTable = bothTables.getBaseSource(Color.getOppositeColor(onTurn));
 				final TableDefinition oppositeTableDefinition = oppositeTable.getDefinition();
-				final long ownItemCount = ownTable.getDefinition().getTableIndexCount();
 				
 				final long itemCount = oppositeTableDefinition.getTableIndexCount();
 				nextPositionsToCheck = new BitArray(itemCount);
