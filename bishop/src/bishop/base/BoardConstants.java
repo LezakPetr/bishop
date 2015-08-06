@@ -423,6 +423,19 @@ public class BoardConstants {
 	}
 
 	/**
+	 * Returns union of masks obtained by calling getConnectedPawnSquareMask for every pawn in pawnMask.
+	 * @param pawnMask mask of pawns
+	 * @return mask of neighbor squares
+	 */
+	public static long getAllConnectedPawnSquareMask (final long pawnMask) {
+		final long previousColumn = (pawnMask & ~BoardConstants.FILE_A_MASK) >>> 1;
+		final long nextColumn = (pawnMask & ~BoardConstants.FILE_H_MASK) << 1;
+		final long result = previousColumn | nextColumn;
+		
+		return result;
+	}
+
+	/**
 	 * Returns mask of first rank of given side.
 	 * @param color color of side
 	 * @return first rank

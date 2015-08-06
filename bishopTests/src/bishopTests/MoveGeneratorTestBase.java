@@ -140,8 +140,6 @@ public abstract class MoveGeneratorTestBase {
 		IMoveWalker walker = new IMoveWalker() {
 			public boolean processMove(final Move move) {
 				generatedMove.assign(move);
-				position.makeMove(generatedMove);
-				position.undoMove(generatedMove);
 				return true;
 			}
 		};
