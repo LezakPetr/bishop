@@ -14,11 +14,10 @@ public class ReverseMoveGenerator implements IMoveGenerator {
 	public MoveGeneratorType getGeneratorType() {
 		return MoveGeneratorType.REVERSE;
 	}
-	
+
     // Generates moves of some figure.
     // Returns if generation should continue.
-    private boolean generateFigureMoves(final int figure) {
-    	final boolean isShortMovingFigure = PieceType.isShortMovingFigure(figure);
+    private boolean generateShortMovingFigureMoves(final int figure) {
     	final int onTurn = position.getOnTurn();
     	final int oppositeColor = Color.getOppositeColor(onTurn);
     	final long targetSquareMask = position.getPiecesMask(oppositeColor, figure);
@@ -36,12 +35,107 @@ public class ReverseMoveGenerator implements IMoveGenerator {
     		// Loop through all begin squares
     		for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
     			final int beginSquare = beginSquareLoop.getNextSquare();
-    			
-    			if (isShortMovingFigure || (BetweenTable.getItem(beginSquare, targetSquare) & occupancy) == 0) {
-    				if (!expandMove (figure, beginSquare, targetSquare)) {
-    					return false;
-    				}
-    			}
+			
+				if (!expandMove (figure, beginSquare, targetSquare))
+					return false;
+    		}
+    	}
+
+    	return true;
+    }
+
+    // Generates moves of some figure.
+    // Returns if generation should continue.
+    private boolean generateBishopMoves() {
+    	final int onTurn = position.getOnTurn();
+    	final int oppositeColor = Color.getOppositeColor(onTurn);
+    	final long targetSquareMask = position.getPiecesMask(oppositeColor, PieceType.BISHOP);
+    	final long occupancy = position.getOccupancy();
+    	final long emptySquares = ~occupancy;
+
+    	final BitLoop targetSquareLoop = new BitLoop();
+    	final BitLoop beginSquareLoop = new BitLoop();
+
+    	// Loop through all target squares
+    	for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+    		final int targetSquare = targetSquareLoop.getNextSquare();
+    		
+    		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, targetSquare, occupancy);
+    		final long beginSquareMask = LineAttackTable.getAttackMask(diagonalIndex) & emptySquares;
+    		
+    		// Loop through all begin squares
+    		for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
+    			final int beginSquare = beginSquareLoop.getNextSquare();
+			
+				if (!expandMove (PieceType.BISHOP, beginSquare, targetSquare))
+					return false;
+    		}
+    	}
+
+    	return true;
+    }
+
+    // Generates moves of some figure.
+    // Returns if generation should continue.
+    private boolean generateRookMoves() {
+    	final int onTurn = position.getOnTurn();
+    	final int oppositeColor = Color.getOppositeColor(onTurn);
+    	final long targetSquareMask = position.getPiecesMask(oppositeColor, PieceType.ROOK);
+    	final long occupancy = position.getOccupancy();
+    	final long emptySquares = ~occupancy;
+
+    	final BitLoop targetSquareLoop = new BitLoop();
+    	final BitLoop beginSquareLoop = new BitLoop();
+
+    	// Loop through all target squares
+    	for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+    		final int targetSquare = targetSquareLoop.getNextSquare();
+    		
+    		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, targetSquare, occupancy);
+    		final long beginSquareMask = LineAttackTable.getAttackMask(orthogonalIndex) & emptySquares;
+    		
+    		// Loop through all begin squares
+    		for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
+    			final int beginSquare = beginSquareLoop.getNextSquare();
+			
+				if (!expandMove (PieceType.ROOK, beginSquare, targetSquare))
+					return false;
+    		}
+    	}
+
+    	return true;
+    }
+
+    // Generates moves of some figure.
+    // Returns if generation should continue.
+    private boolean generateQueenMoves() {
+    	final int onTurn = position.getOnTurn();
+    	final int oppositeColor = Color.getOppositeColor(onTurn);
+    	final long targetSquareMask = position.getPiecesMask(oppositeColor, PieceType.QUEEN);
+    	final long occupancy = position.getOccupancy();
+    	final long emptySquares = ~occupancy;
+
+    	final BitLoop targetSquareLoop = new BitLoop();
+    	final BitLoop beginSquareLoop = new BitLoop();
+
+    	// Loop through all target squares
+    	for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+    		final int targetSquare = targetSquareLoop.getNextSquare();
+    		
+    		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, targetSquare, occupancy);
+    		final long diagonalMask = LineAttackTable.getAttackMask(diagonalIndex);
+    		
+    		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, targetSquare, occupancy);
+    		final long orthogonalMask = LineAttackTable.getAttackMask(orthogonalIndex);
+
+    		final long beginSquareMask = (diagonalMask | orthogonalMask) & emptySquares;
+    		
+    		// Loop through all begin squares
+    		for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
+    			final int beginSquare = beginSquareLoop.getNextSquare();
+			
+				if (!expandMove (PieceType.QUEEN, beginSquare, targetSquare))
+					return false;
     		}
     	}
 
@@ -102,20 +196,19 @@ public class ReverseMoveGenerator implements IMoveGenerator {
 		if (pieceType == PieceType.PAWN)
 			prevOppositePawnMask |= BitBoard.getSquareMask(beginSquare);
 		
-		for (BitLoop loop = new BitLoop(pawnMask); loop.hasNextSquare(); ) {
+		final long possibleEpSquares = pawnMask & BoardConstants.getAllConnectedPawnSquareMask(prevOppositePawnMask);
+		
+		for (BitLoop loop = new BitLoop(possibleEpSquares); loop.hasNextSquare(); ) {
 			final int epSquare = loop.getNextSquare();
 			final int epFile = Square.getFile(epSquare);
-			final long connectedSquareMask = BoardConstants.getConnectedPawnSquareMask(epSquare);
+		
+			move.initialize(castlingRights, epFile);
+			move.setBeginSquare(beginSquare);
+			move.setMovingPieceType(pieceType);
+			move.finishNormalMove(targetSquare, PieceType.NONE);
 			
-			if ((prevOppositePawnMask & connectedSquareMask) != 0) {
-				move.initialize(castlingRights, epFile);
-				move.setBeginSquare(beginSquare);
-				move.setMovingPieceType(pieceType);
-				move.finishNormalMove(targetSquare, PieceType.NONE);
-				
-				if (!walker.processMove(move))
-					return false;				
-			}			
+			if (!walker.processMove(move))
+				return false;							
 		}
 		
 		return true;
@@ -135,11 +228,21 @@ public class ReverseMoveGenerator implements IMoveGenerator {
 		final int epFile = position.getEpFile();
 		
 		if (epFile == File.NONE) {
-	    	for (int figure = PieceType.FIGURE_FIRST; figure < PieceType.FIGURE_LAST; figure++) {
-	    		if (!generateFigureMoves(figure))
-	    			return;
-	    	}
+	    	if (!generateShortMovingFigureMoves(PieceType.KING))
+	    		return;
 	    	
+	    	if (!generateShortMovingFigureMoves(PieceType.KNIGHT))
+	    		return;
+	    	
+	    	if (!generateQueenMoves())
+	    		return;
+	    	
+	    	if (!generateRookMoves())
+	    		return;
+	    	
+	    	if (!generateBishopMoves())
+	    		return;
+
 	    	generatePawnMoves();
 		}
 		else {

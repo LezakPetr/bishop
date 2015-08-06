@@ -9,14 +9,11 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
 
 	public static final int MAX_MOVES_IN_POSITION = 321;
 	
-	
     // Generates moves of some figure.
     // Returns if generation should continue.
-    private boolean generateFigureMoves(final int figure) {
-    	final boolean isShortMovingFigure = PieceType.isShortMovingFigure(figure);
+    private boolean generateShortMovingFigureMoves(final int figure) {
     	final int onTurn = position.getOnTurn();
     	final long beginSquareMask = position.getPiecesMask(onTurn, figure);
-    	final long occupancy = position.getOccupancy();
     	final long notOwnSquares = ~position.getColorOccupancy(onTurn);
     	
     	final BitLoop beginSquareLoop = new BitLoop();
@@ -34,16 +31,129 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     		// Loop through all target squares
     		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
     			final int targetSquare = targetSquareLoop.getNextSquare();
+				final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
 
-    			if (isShortMovingFigure || (BetweenTable.getItem(beginSquare, targetSquare) & occupancy) == 0) {
-    				final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
+				// Make and process move
+				move.finishNormalMove(targetSquare, capturedPieceType);
 
-    				// Make and process move
-    				move.finishNormalMove(targetSquare, capturedPieceType);
+				if (!walker.processMove(move))
+					return false;
+    		}
+    	}
 
-    				if (!walker.processMove(move))
-    					return false;
-    			}
+    	return true;
+    }
+	
+    // Generates moves of some figure.
+    // Returns if generation should continue.
+    private boolean generateBishopMoves() {
+    	final int onTurn = position.getOnTurn();
+    	final long beginSquareMask = position.getPiecesMask(onTurn, PieceType.BISHOP);
+    	final long occupancy = position.getOccupancy();
+    	final long notOwnSquares = ~position.getColorOccupancy(onTurn);
+    	
+    	final BitLoop beginSquareLoop = new BitLoop();
+    	final BitLoop targetSquareLoop = new BitLoop();
+    	
+    	move.setMovingPieceType(PieceType.BISHOP);
+
+    	// Loop through all squares with our figure
+    	for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
+    		final int beginSquare = beginSquareLoop.getNextSquare();
+    		move.setBeginSquare(beginSquare);
+    		
+    		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, beginSquare, occupancy);
+    		final long targetSquareMask = LineAttackTable.getAttackMask(diagonalIndex) & notOwnSquares;
+
+    		// Loop through all target squares
+    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+    			final int targetSquare = targetSquareLoop.getNextSquare();
+				final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
+
+				// Make and process move
+				move.finishNormalMove(targetSquare, capturedPieceType);
+
+				if (!walker.processMove(move))
+					return false;
+    		}
+    	}
+
+    	return true;
+    }
+    
+    // Generates moves of some figure.
+    // Returns if generation should continue.
+    private boolean generateRookMoves() {
+    	final int onTurn = position.getOnTurn();
+    	final long beginSquareMask = position.getPiecesMask(onTurn, PieceType.ROOK);
+    	final long occupancy = position.getOccupancy();
+    	final long notOwnSquares = ~position.getColorOccupancy(onTurn);
+    	
+    	final BitLoop beginSquareLoop = new BitLoop();
+    	final BitLoop targetSquareLoop = new BitLoop();
+    	
+    	move.setMovingPieceType(PieceType.ROOK);
+
+    	// Loop through all squares with our figure
+    	for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
+    		final int beginSquare = beginSquareLoop.getNextSquare();
+    		move.setBeginSquare(beginSquare);
+    		
+    		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, beginSquare, occupancy);
+    		final long targetSquareMask = LineAttackTable.getAttackMask(orthogonalIndex) & notOwnSquares;
+
+    		// Loop through all target squares
+    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+    			final int targetSquare = targetSquareLoop.getNextSquare();
+				final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
+
+				// Make and process move
+				move.finishNormalMove(targetSquare, capturedPieceType);
+
+				if (!walker.processMove(move))
+					return false;
+    		}
+    	}
+
+    	return true;
+    }
+    
+    // Generates moves of some figure.
+    // Returns if generation should continue.
+    private boolean generateQueenMoves() {
+    	final int onTurn = position.getOnTurn();
+    	final long beginSquareMask = position.getPiecesMask(onTurn, PieceType.QUEEN);
+    	final long occupancy = position.getOccupancy();
+    	final long notOwnSquares = ~position.getColorOccupancy(onTurn);
+    	
+    	final BitLoop beginSquareLoop = new BitLoop();
+    	final BitLoop targetSquareLoop = new BitLoop();
+    	
+    	move.setMovingPieceType(PieceType.QUEEN);
+
+    	// Loop through all squares with our figure
+    	for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
+    		final int beginSquare = beginSquareLoop.getNextSquare();
+    		move.setBeginSquare(beginSquare);
+    		
+    		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, beginSquare, occupancy);
+    		final long diagonalMask = LineAttackTable.getAttackMask(diagonalIndex);
+
+    		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, beginSquare, occupancy);
+    		final long orthogonalMask = LineAttackTable.getAttackMask(orthogonalIndex);
+    		
+    		final long targetSquareMask = (diagonalMask | orthogonalMask) & notOwnSquares;
+    		
+    		// Loop through all target squares
+    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+    			final int targetSquare = targetSquareLoop.getNextSquare();
+				final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
+
+				// Make and process move
+				move.finishNormalMove(targetSquare, capturedPieceType);
+
+				if (!walker.processMove(move))
+					return false;
     		}
     	}
 
@@ -155,11 +265,21 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
 
     	move.initialize(castlingRightIndex, epFile);
     	
-    	// Generate figure moves, starting with king - this speeds up legal move checking 
-    	for (int figure = PieceType.FIGURE_FIRST; figure < PieceType.FIGURE_LAST; figure++) {
-    		if (!generateFigureMoves(figure))
-    			return;
-    	}
+    	// Generate figure moves, starting with king - this speeds up legal move checking
+    	if (!generateShortMovingFigureMoves(PieceType.KING))
+    		return;
+    	
+    	if (!generateShortMovingFigureMoves(PieceType.KNIGHT))
+    		return;
+    	
+    	if (!generateQueenMoves())
+    		return;
+    	
+    	if (!generateRookMoves())
+    		return;
+    	
+    	if (!generateBishopMoves())
+    		return;
     	
     	if (!generatePawnMoves())
     		return;
