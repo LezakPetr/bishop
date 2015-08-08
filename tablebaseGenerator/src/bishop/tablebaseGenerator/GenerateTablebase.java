@@ -7,9 +7,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import parallel.Parallel;
 
 import bishop.base.Color;
 import bishop.base.MaterialHash;
@@ -40,8 +43,7 @@ public class GenerateTablebase {
 	private String directory;
 	private String definition;
 	private Map<MaterialHash, ITableRead> subtableMap;
-	private ExecutorService executor;
-	private int threadCount;
+	private Parallel parallel;
 	private TableCalculator calculator;
 	private MaterialHash[] materialHashArray;
 	
@@ -61,7 +63,7 @@ public class GenerateTablebase {
 		final MaterialHash materialHash = new MaterialHash(definition, Color.WHITE);
 		materialHashArray = materialHash.getBothSideHashes();
 		
-		calculator = new TableCalculator(materialHashArray, executor, threadCount);
+		calculator = new TableCalculator(materialHashArray, parallel);
 		
 		final List<MaterialHash> neededSubtables = calculator.getNeededSubtables();
 		subtableMap = new HashMap<MaterialHash, ITableRead>();
@@ -79,7 +81,7 @@ public class GenerateTablebase {
 		return file.getAbsolutePath();
 	}
 	
-	private void writeTable() throws IOException {
+	private void writeTable() throws IOException, InterruptedException, ExecutionException {
 		System.out.println("Writing table");
 		
 		final TableWriter writer = new TableWriter();
@@ -89,7 +91,7 @@ public class GenerateTablebase {
 			
 			try {
 				final PersistentTable table = (PersistentTable) bothTables.getBaseSource(onTurn);
-				table.switchToModeRead();
+				table.switchToModeRead(parallel);
 
 				writer.writeTable(table, stream);
 			}
@@ -130,7 +132,7 @@ public class GenerateTablebase {
 	}
 
 	private void validateTable() throws Exception {
-		final TableValidator validator = new TableValidator(resultSource, executor, threadCount);
+		final TableValidator validator = new TableValidator(resultSource, parallel);
 		
 		validator.setTable(bothTables);
 		
@@ -155,10 +157,9 @@ public class GenerateTablebase {
 		action = args[0];
 		directory = args[1];
 		definition = args[2];
-		threadCount = Runtime.getRuntime().availableProcessors();
-		executor = Executors.newFixedThreadPool(threadCount);
+		parallel = new Parallel();
 
-		System.out.println (threadCount + " threads");
+		System.out.println (parallel.getThreadCount() + " threads");
 		
 		blockCache = new TableBlockCache(CACHE_SIZE);
 		readSubTables();
@@ -175,8 +176,7 @@ public class GenerateTablebase {
 			validateTable();
 		}
 		
-		executor.shutdown();
-		executor.awaitTermination(1, TimeUnit.DAYS);
+		parallel.shutdown();
 	}
 	
 	public static void main (final String[] args) throws Exception {

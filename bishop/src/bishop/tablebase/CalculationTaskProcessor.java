@@ -5,7 +5,7 @@ import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
 import bishop.base.ReverseMoveGenerator;
 
-public class CalculationTaskProcessor implements Callable<Object> {
+public class CalculationTaskProcessor implements Callable<Throwable> {
 
 	private boolean firstIteration;
 	private BitArray prevPositionsToCheck;
@@ -72,7 +72,7 @@ public class CalculationTaskProcessor implements Callable<Object> {
 	}
 
 	@Override
-	public Object call() throws Exception {
+	public Throwable call() throws Exception {
 		try {
 			while (true) {
 				try (
@@ -112,7 +112,8 @@ public class CalculationTaskProcessor implements Callable<Object> {
 		}
 		catch (Exception ex) {
 			ex.printStackTrace();
-			throw ex;
+			
+			return ex;
 		}
 
 	}

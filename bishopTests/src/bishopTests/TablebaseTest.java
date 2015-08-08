@@ -9,6 +9,8 @@ import java.util.concurrent.Executors;
 import org.junit.Assert;
 import org.junit.Test;
 
+import parallel.Parallel;
+
 import bishop.base.Color;
 import bishop.base.MaterialHash;
 import bishop.tablebase.BothColorPositionResultSource;
@@ -30,15 +32,13 @@ public class TablebaseTest {
 	public void testTablebase() throws Exception {
 		final long t1 = System.currentTimeMillis();
 		
-		final int threadCount = Runtime.getRuntime().availableProcessors();
-		final ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-
 		final TableSwitch tableSwitch = new TableSwitch();
+		final Parallel parallel = new Parallel();
 
 		for (String definition: MATERIAL_HASHES) {
 			final MaterialHash materialHash = new MaterialHash(definition, Color.WHITE);
 			final MaterialHash[] materialHashArray = materialHash.getBothSideHashes();
-			final TableCalculator calculator = new TableCalculator(materialHashArray, executor, threadCount);
+			final TableCalculator calculator = new TableCalculator(materialHashArray, parallel);
 			
 			for (MaterialHash subHash: tableSwitch.getMaterialHashSet()) {
 				calculator.addSubTable(subHash, tableSwitch.getTable(subHash));
@@ -51,7 +51,7 @@ public class TablebaseTest {
 			
 			for (int color = Color.FIRST; color < Color.LAST; color++) {
 				final PersistentTable table = bothTables.getBaseSource(color);
-				table.switchToModeRead();
+				table.switchToModeRead(parallel);
 				
 				final TableWriter writer = new TableWriter();
 				final File tmpFile = File.createTempFile("TablebaseTest", ".tbbs");
@@ -70,7 +70,7 @@ public class TablebaseTest {
 				}
 			}
 			
-			final TableValidator validator = new TableValidator(tableSwitch, executor, threadCount);
+			final TableValidator validator = new TableValidator(tableSwitch, parallel);
 			validator.setTable(bothTablesRead);
 			
 			Assert.assertTrue("Table is invalid", validator.validateTable());

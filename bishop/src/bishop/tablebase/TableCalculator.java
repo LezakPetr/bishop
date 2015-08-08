@@ -8,11 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
-import parallel.ParallelUtils;
-
+import parallel.Parallel;
 import bishop.base.Color;
 import bishop.base.Fen;
 import bishop.base.LegalMoveFinder;
@@ -24,8 +21,7 @@ import bishop.base.PositionValidator;
 public class TableCalculator {
 	
 	private final MaterialHash[] materialHashArray;
-	private final ExecutorService executor;
-	private final int threadCount;
+	private final Parallel parallel;
 	private final BothColorPositionResultSource<PersistentTable> bothTables;
 	private final TableSwitch resultSource;
 	
@@ -33,15 +29,13 @@ public class TableCalculator {
 	private BitArray nextPositionsToCheck;
 
 	
-	public TableCalculator(final MaterialHash[] materialHashArray, final ExecutorService executor, final int threadCount) {
+	public TableCalculator(final MaterialHash[] materialHashArray, final Parallel parallel) {
 		this.materialHashArray = new MaterialHash[Color.LAST];
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++)
 			this.materialHashArray[color] = materialHashArray[color].copy();
 		
-		this.executor = executor;
-		this.threadCount = threadCount;
-		
+		this.parallel = parallel;		
 		this.bothTables = new BothColorPositionResultSource<PersistentTable>();
 		
 		this.resultSource = new TableSwitch();
@@ -185,9 +179,9 @@ public class TableCalculator {
 			table.clear();
 			table.switchToModeWrite();
 			
-			ParallelUtils.runParallel(executor, threadCount, new Callable<Object>() {
+			parallel.runParallel(new Callable<Throwable>() {
 				@Override
-				public Object call() throws Exception {
+				public Throwable call() throws Exception {
 					initializeBlocks(table);
 					
 					return null;
@@ -204,7 +198,7 @@ public class TableCalculator {
 		boolean firstIteration = true;
 		final List<CalculationTaskProcessor> processorList = new ArrayList<CalculationTaskProcessor>();
 		
-		for (int i = 0; i < threadCount; i++) {
+		for (int i = 0; i < parallel.getThreadCount(); i++) {
 			processorList.add (new CalculationTaskProcessor(resultSource));
 		}
 		
@@ -223,19 +217,15 @@ public class TableCalculator {
 				
 				// Initialize
 				ownTable.switchToModeWrite();
-				oppositeTable.switchToModeRead();
+				oppositeTable.switchToModeRead(parallel);
 				
-				for (int i = 0; i < threadCount; i++) {
+				for (int i = 0; i < processorList.size(); i++) {
 					final CalculationTaskProcessor processor = processorList.get(i);
 					processor.initialize(firstIteration, oppositeTableDefinition, prevPositionsToCheck, ownTable);
 				}
 				
 				// Execute
-				final List<Future<Object>> futureList = executor.invokeAll(processorList);
-				
-				for (Future<Object> future: futureList) {
-					future.get();
-				}
+				parallel.invokeAll (processorList);
 				
 				// Aggregate
 				for (CalculationTaskProcessor processor: processorList) {
