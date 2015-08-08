@@ -4,6 +4,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+
+import parallel.IForBody;
+import parallel.Parallel;
 import bishop.base.Position;
 
 public class PersistentTable implements ITable {
@@ -98,24 +102,30 @@ public class PersistentTable implements ITable {
 		return new TableIteratorImpl(this, 0);
 	}
 	
-	public synchronized void switchToModeRead() throws FileNotFoundException, IOException {
+	public synchronized void switchToModeRead(final Parallel parallel) throws FileNotFoundException, IOException, InterruptedException, ExecutionException {
 		if (mode == Mode.READ)
 			return;
 		
-		for (int i = 0; i < blockCount; i++) {
-			final long offset = ((long) i) << BLOCK_SHIFT;
-			final int size = (int) Math.min(definition.getTableIndexCount() - offset, BLOCK_SIZE);
-			
-			final TableReadBlock block = new TableReadBlock(offset, size);
-			
-			try (
-				final InputFileTableIterator it = new InputFileTableIterator(getBlockPath(i) + INPUT_SUFFIX, definition, block.getOffset(), size)
-			) {
-				block.read (it);
+		readBlock.clear();
+		readBlock.addAll(java.util.Collections.<TableReadBlock>nCopies(blockCount, null));
+		
+		parallel.parallelFor(0, blockCount, new IForBody() {
+			@Override
+			public void run(final int blockIndex) throws Exception {
+				final long offset = ((long) blockIndex) << BLOCK_SHIFT;
+				final int size = (int) Math.min(definition.getTableIndexCount() - offset, BLOCK_SIZE);
+				
+				final TableReadBlock block = new TableReadBlock(offset, size);
+				
+				try (
+					final InputFileTableIterator it = new InputFileTableIterator(getBlockPath(blockIndex) + INPUT_SUFFIX, definition, block.getOffset(), size)
+				) {
+					block.read (it);
+				}
+				
+				readBlock.set(blockIndex, block);
 			}
-			
-			readBlock.add(block);
-		}
+		});
 		
 		mode = Mode.READ;
 	}

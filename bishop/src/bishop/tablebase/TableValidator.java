@@ -5,21 +5,21 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import parallel.Parallel;
+
 import bishop.base.Color;
 import bishop.base.MaterialHash;
 
 public class TableValidator {
 	
-	private final ExecutorService executor;
-	private final int threadCount;
+	private final Parallel parallel;
 	private final TableSwitch resultSource;
 	private BothColorPositionResultSource<? extends ITable> bothTables;
 	
 	
-	public TableValidator(final TableSwitch resultSource, final ExecutorService executor, final int threadCount) {
-		this.executor = executor;
+	public TableValidator(final TableSwitch resultSource, final Parallel parallel) {
+		this.parallel = parallel;
 		this.resultSource = resultSource;
-		this.threadCount = threadCount;
 	}
 	
 	
@@ -30,7 +30,7 @@ public class TableValidator {
 	private boolean checkTable() throws Exception {
 		final List<ValidationTaskProcessor> processorList = new ArrayList<ValidationTaskProcessor>();
 		
-		for (int i = 0; i < threadCount; i++) {
+		for (int i = 0; i < parallel.getThreadCount(); i++) {
 			processorList.add (new ValidationTaskProcessor(resultSource));
 		}
 		
@@ -53,9 +53,11 @@ public class TableValidator {
 		final long itemCount = it.getPositionCount();
 		System.out.println ("Validating " + itemCount + " positions");
 		
-		for (int i = 0; i < threadCount; i++) {
+		final int processorCount = processorList.size();
+		
+		for (int i = 0; i < processorCount; i++) {
 			final ValidationTaskProcessor processor = processorList.get(i);
-			final long nextIndex = (i + 1) * itemCount / threadCount;
+			final long nextIndex = (i + 1) * itemCount / processorCount;
 			final long count = nextIndex - prevIndex;
 			
 			processor.initialize(table.getDefinition(), it, count);
@@ -68,7 +70,7 @@ public class TableValidator {
 			throw new RuntimeException("Not all items was validated");
 		
 		// Execute
-		final List<Future<Boolean>> futureList = executor.invokeAll(processorList);
+		final List<Future<Boolean>> futureList = parallel.getExecutor().invokeAll(processorList);
 		
 		for (Future<Boolean> future: futureList) {
 			if (!future.get())
