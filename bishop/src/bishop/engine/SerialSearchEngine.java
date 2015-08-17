@@ -1,5 +1,7 @@
 package bishop.engine;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Arrays;
 
 import utils.Logger;
@@ -33,6 +35,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		public final Move principalMove;
 		public int hashBestCompressedMove;
 		public int legalMoveCount;
+		public boolean allMovesGenerated;
 		public boolean isCheck;
 		public boolean checkCalculated;
 		public int maxExtension;
@@ -53,6 +56,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			this.evaluation.setAlpha(alpha);
 			this.evaluation.setBeta(beta);
 			this.legalMoveCount = 0;
+			this.allMovesGenerated = false;
 			this.checkCalculated = false;
 		}
 	}
@@ -257,12 +261,14 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final NodeRecord currentRecord = nodeStack[currentDepth];
 		final int onTurn = currentPosition.getOnTurn();
 		final boolean isQuiescenceSearch = (horizon < ISearchEngine.HORIZON_GRANULARITY);
+		final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
+		final boolean isCheckSearch = isQuiescenceSearch && horizon > -maxCheckSearchDepth && getIsCheck();
 		final boolean isLegalPosition = !currentPosition.isSquareAttacked(onTurn, currentPosition.getKingPosition(Color.getOppositeColor(onTurn)));
 		final int mateEvaluation = Evaluation.getMateEvaluation(currentDepth + depthAdvance);
 		
 		currentRecord.principalVariation.clear();
 
-		if (isLegalPosition) {
+		if (isLegalPosition) {;
 			final int initialAlpha = currentRecord.evaluation.getAlpha();
 			final int initialBeta = currentRecord.evaluation.getBeta();
 			
@@ -275,11 +281,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 						
 			currentRecord.moveListBegin = moveStackTop;
 			
+			// Try to find position in hash table
 			final HashRecord hashRecord = new HashRecord();
 			
 			if (updateRecordByHash(horizon, currentRecord, initialAlpha, initialBeta, hashRecord))
 				return;
 			
+			// Evaluate position
 			final int absoluteAlpha;
 			final int absoluteBeta;
 			
@@ -307,7 +315,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			final boolean isMaxDepth = (currentDepth >= maxTotalDepth - 1);
 			
-			if (isQuiescenceSearch || isMaxDepth) {
+			// Use position evaluation as initial evaluation
+			if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
 				currentRecord.evaluation.setEvaluation(positionEvaluation);
 				
 				nodeCount++;
@@ -321,14 +330,14 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			final int maxQuiescenceDepth = searchSettings.getMaxQuiescenceDepth();
 			
-			if (!isMaxDepth && horizon > -maxQuiescenceDepth && (!isQuiescenceSearch || !mateRequired)) {
+			if (!isMaxDepth && horizon > -maxQuiescenceDepth && (!isQuiescenceSearch || isCheckSearch || !mateRequired)) {
 				final NodeRecord nextRecord = nodeStack[currentDepth + 1];
 				
 				currentRecord.moveListBegin = moveStackTop;
 				currentRecord.moveListEnd = moveStackTop;
 				
 				// Null move heuristic
-				if (isNullSearchPossible()) {
+				if (!isQuiescenceSearch && isNullSearchPossible()) {
 					int nullHorizon = horizon - searchSettings.getNullMoveReduction();
 					final Move move = new Move();
 					move.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
@@ -373,7 +382,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 				// If P-var move didn't make beta cutoff try other moves
 				if (!precalculatedBetaCutoff) {
-					generateAndSortMoves(currentRecord, horizon, isQuiescenceSearch);
+					generateAndSortMoves(currentRecord, horizon, isQuiescenceSearch, isCheckSearch);
 					
 					while (currentRecord.moveListEnd > currentRecord.moveListBegin) {
 						final Move move = new Move();
@@ -460,9 +469,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 		boolean isMate = false;
 		
 		if (currentRecord.legalMoveCount == 0) {
-			final boolean isCheck = attackCalculator.isKingAttacked(onTurn);
+			final boolean isCheck = //attackCalculator.isKingAttacked(onTurn);
+			getIsCheck();
 			
-			if (horizon >= ISearchEngine.HORIZON_GRANULARITY) {
+			if (currentRecord.allMovesGenerated) {
 				final int evaluation;
 
 				if (isCheck) {
@@ -511,17 +521,21 @@ public final class SerialSearchEngine implements ISearchEngine {
 		return false;
 	}
 
-	private void generateAndSortMoves(final NodeRecord currentRecord, final int horizon, final boolean isQuiescenceSearch) {
+	private void generateAndSortMoves(final NodeRecord currentRecord, final int horizon, final boolean isQuiescenceSearch, final boolean isCheckSearch) {
 		currentRecord.moveListBegin = moveStackTop;
 		
-		if (isQuiescenceSearch) {
-			quiescenceLegalMoveGenerator.setGenerateChecks(horizon >= 0);
+		if (isQuiescenceSearch && !isCheckSearch) {
+			final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
+			
+			quiescenceLegalMoveGenerator.setGenerateChecks(horizon > -maxCheckSearchDepth);
 			quiescenceLegalMoveGenerator.setPosition(currentPosition);
-			quiescenceLegalMoveGenerator.generateMoves();						
+			quiescenceLegalMoveGenerator.generateMoves();
 		}
 		else {
 			pseudoLegalMoveGenerator.setPosition(currentPosition);
 			pseudoLegalMoveGenerator.generateMoves();
+			
+			currentRecord.allMovesGenerated = true;
 		}
 		
 		currentRecord.moveListEnd = moveStackTop;
@@ -970,6 +984,29 @@ public final class SerialSearchEngine implements ISearchEngine {
 			checkEngineState(EngineState.STOPPED);
 
 			this.finiteEvaluator.setTablebaseEvaluator(evaluator);
+		}
+	}
+	
+	@Override
+	public String toString() {
+		synchronized (monitor) {
+			final StringWriter result = new StringWriter();
+			final PrintWriter writer = new PrintWriter(result);
+			
+			for (int i = 0; i <= currentDepth; i++) {
+				final NodeRecord record = nodeStack[i];
+				
+				final Move move = new Move();
+				moveStack.getMove(record.moveListEnd - 1, move);
+				
+				writer.println("Current move: " + move);
+				writer.println("Evaluation: " + record.evaluation);
+				writer.println();
+			}
+			
+			writer.flush();
+			
+			return result.toString();
 		}
 	}
 

@@ -125,10 +125,12 @@ public class SearchEngineTest {
 			}
 			
 			engine.stopSearching();
-
-			Assert.assertEquals(testValue.positionFen, testValue.evaluation, result.getNodeEvaluation().getEvaluation());
+			
 			
 			final MoveList principalVariation = result.getPrincipalVariation();
+			System.out.println (principalVariation.toString());
+			
+			Assert.assertEquals(testValue.positionFen, testValue.evaluation, result.getNodeEvaluation().getEvaluation());
 			
 			if (testValue.moveString != null)
 				Assert.assertEquals(testValue.moveString, principalVariation.get(0).toString());

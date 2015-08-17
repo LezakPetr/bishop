@@ -25,6 +25,7 @@ public final class SearchSettings {
 	private int recaptureBeginMaxTreshold;
 	private int recaptureTargetTreshold;
 	private int pinExtension;
+	private int maxCheckSearchDepth;
 	
 
 	public SearchSettings() {
@@ -47,6 +48,7 @@ public final class SearchSettings {
 		recaptureBeginMinTreshold = (int) Math.round (2.25 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureBeginMaxTreshold = (int) Math.round (5 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureTargetTreshold = (int) Math.round (0.5 * PieceTypeEvaluations.PAWN_EVALUATION);
+		maxCheckSearchDepth = (int) Math.round (3.0 * ISearchEngine.HORIZON_GRANULARITY);
 	}
 	
 	public int getMaxQuiescenceDepth() {
@@ -185,6 +187,7 @@ public final class SearchSettings {
 		recaptureBeginMinTreshold = orig.recaptureBeginMinTreshold;
 		recaptureBeginMaxTreshold = orig.recaptureBeginMaxTreshold;
 		recaptureTargetTreshold = orig.recaptureTargetTreshold;
+		maxCheckSearchDepth = orig.maxCheckSearchDepth;
 	}
 
 	private static void printRelativeHorizon (final PrintWriter writer, final String name, final int value) {
@@ -225,6 +228,8 @@ public final class SearchSettings {
 			printRelativeEvaluation(printWriter, "recaptureBeginMaxTreshold", recaptureBeginMaxTreshold);
 			printRelativeEvaluation(printWriter, "recaptureTargetTreshold", recaptureTargetTreshold);
 
+			printRelativeHorizon(printWriter, "maxCheckSearchDepth", maxCheckSearchDepth);
+			
 			printWriter.flush();
 			return stringWriter.toString();
 		}
@@ -239,6 +244,14 @@ public final class SearchSettings {
 
 	public void setPinExtension(final int pinExtension) {
 		this.pinExtension = pinExtension;
+	}
+
+	public int getMaxCheckSearchDepth() {
+		return maxCheckSearchDepth;
+	}
+
+	public void setMaxCheckSearchDepth(final int maxCheckSearchDepth) {
+		this.maxCheckSearchDepth =  maxCheckSearchDepth;
 	}
 
 }
