@@ -279,8 +279,8 @@ public final class Position implements IPieceCounts {
 		final int prevCastlingRightIndex = move.getPreviousCastlingRigthIndex();
 		
 		if (prevCastlingRightIndex != castlingRights.getIndex()) {
+			caching.changeCastlingRights(castlingRights.getIndex(), prevCastlingRightIndex);
 			castlingRights.setIndex (prevCastlingRightIndex);
-			caching.changeCastlingRights(prevCastlingRightIndex, castlingRights.getIndex());
 		}
 		
 		// EP file

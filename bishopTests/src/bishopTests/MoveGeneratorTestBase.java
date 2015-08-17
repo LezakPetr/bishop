@@ -110,12 +110,14 @@ public abstract class MoveGeneratorTestBase {
 						copyPosition.makeMove(move);
 						copyPosition.checkIntegrity();
 						copyPosition.undoMove(move);
+						copyPosition.checkIntegrity();
 						break;
 						
 					case REVERSE:
 						copyPosition.undoMove(move);
 						copyPosition.checkIntegrity();
 						copyPosition.makeMove(move);
+						copyPosition.checkIntegrity();
 						break;
 				}
 				
