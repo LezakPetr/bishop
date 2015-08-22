@@ -80,5 +80,14 @@ public class Utils {
 		for (int[] subArray: array)
 			Arrays.fill(subArray, value);
 	}
+	
+	public static short[] intArrayToShort (final int[] orig) {
+		final short[] result = new short[orig.length];
+		
+		for (int i = 0; i < orig.length; i++)
+			result[i] = (short) orig[i];
+		
+		return result;
+	}
 
 }

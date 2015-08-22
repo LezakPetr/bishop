@@ -1,34 +1,41 @@
 package bishop.tablebase;
 
+import utils.BitNumberArray;
+import utils.INumberArray;
+
 public class CompressedMemoryTable extends MemoryTable {
 
-	private final byte[] table;
+	private final ISymbolToResultMap symbolToResultMap;
+	private final INumberArray table;
 	
-	public CompressedMemoryTable(final TableDefinition definition) {
-		this(definition, 0, Long.MAX_VALUE);
+	public CompressedMemoryTable(final TableDefinition definition, final ISymbolToResultMap symbolToResultMap) {
+		this(definition, 0, Long.MAX_VALUE, symbolToResultMap);
 	}
 	
-	public CompressedMemoryTable(final TableDefinition definition, final long offset, final long size) {
+	public CompressedMemoryTable(final TableDefinition definition, final long offset, final long size, final ISymbolToResultMap symbolToResultMap) {
 		super (definition, offset, size);
 		
-		this.table = new byte[(int) getItemCount()];
+		this.symbolToResultMap = symbolToResultMap;
+		
+		final int elementBits = Integer.SIZE - Integer.numberOfLeadingZeros(symbolToResultMap.getSymbolCount() - 1);
+		this.table = new BitNumberArray(getItemCount(), elementBits);
 	}
 	
 	public int getResult(final long index) {
 		if (index < 0)
 			return TableResult.ILLEGAL;
 		
-		final int innerIndex = (int) getInnerIndex(index);
-		final byte compressedResult = table[innerIndex];
+		final long innerIndex = getInnerIndex(index);
+		final int symbol = table.getAt(innerIndex);
 		
-		return TableResult.decompress(compressedResult);
+		return symbolToResultMap.symbolToResult(symbol);
 	}
 
 	public void setResult(final long index, final int result) {
-		final int innerIndex = (int) getInnerIndex(index);
-		final byte compressedResult = TableResult.compress(result);
+		final long innerIndex = getInnerIndex(index);
+		final int symbol = symbolToResultMap.resultToSymbol(result); 
 		
-		table[innerIndex] = compressedResult;
+		table.setAt(innerIndex, symbol);
 	}
 
 }

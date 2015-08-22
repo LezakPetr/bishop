@@ -8,6 +8,7 @@ import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
 import utils.Logger;
+import utilsTest.NumberArrayTest;
 import utilsTest.RangeTest;
 import bishop.base.GlobalSettings;
 
@@ -36,6 +37,7 @@ public class AllTests {
 		NotationTest.class,
 		PgnTest.class,
 		RangeTest.class,
+		NumberArrayTest.class,
 		PositionEvaluatorTest.class,
 		TableResultCompressionTest.class,
 		MateFinderTest.class,
