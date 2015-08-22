@@ -45,8 +45,7 @@ public class TableIo {
 	protected static final int PREVIOUS_WIN_MASK = 0x01;
 	
 	protected ITable table;
-	protected int[] symbolToResultMap;
-	protected Map<Integer, Integer> resultToSymbolMap;
+	protected ISymbolToResultMap symbolToResultMap;
 	protected Map<Integer, int[]> symbolProbabilities;
 	protected IProbabilityModelSelector modelSelector;
 	

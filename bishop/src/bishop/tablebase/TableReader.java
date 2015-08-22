@@ -70,25 +70,13 @@ public class TableReader extends TableIo {
 		}
 	}
 
-	private boolean canBeCompressed() {
-		for (int result: symbolToResultMap) {
-			if (!TableResult.canBeCompressed(result))
-				return false;
-		}
-		
-		return true;
-	}
-	
 	public void readTable () throws IOException {
 		final FileInputStream fileStream = new FileInputStream(file);
 		
 		try {
 			skipHeader(fileStream);
 			
-			if (canBeCompressed())
-				table = new CompressedMemoryTable(tableDefinition);
-			else
-				table = new FullMemoryTable(tableDefinition);
+			table = new CompressedMemoryTable(tableDefinition, new SymbolToResultMapWithIllegal(symbolToResultMap));
 			
 			readBlockLenghts(fileStream);
 			readSymbolsFromStream(fileStream);
@@ -124,10 +112,7 @@ public class TableReader extends TableIo {
 			
 			IoUtils.skip (countingStream, (blockPositionSize - blockIndex - 2) * bytesPerBlockPosition + prevPos);
 
-			if (canBeCompressed())
-				table = new CompressedMemoryTable(tableDefinition, blockOffset, blockIndexCount);
-			else
-				table = new FullMemoryTable(tableDefinition, blockOffset, blockIndexCount);
+			table = new CompressedMemoryTable(tableDefinition, blockOffset, blockIndexCount, new SymbolToResultMapWithIllegal(symbolToResultMap));
 
 			readOneBlock(countingStream, table.getIterator(), blockIndexCount, blockLength);
 		}
@@ -167,7 +152,7 @@ public class TableReader extends TableIo {
 				final int positionLabel = modelSelector.getModelIndex(position);
 				final EnumerationProbabilityModel probabilityModel = probabilityModelMap.get(positionLabel);
 				final int symbol = decoder.decodeSymbol(probabilityModel);
-				result = symbolToResultMap[symbol];
+				result = symbolToResultMap.symbolToResult(symbol);
 				
 				modelSelector.addSymbol(position, symbol);
 				updateCrcWithResult(checksumStream, position, result);
@@ -323,10 +308,8 @@ public class TableReader extends TableIo {
 		}
 	}
 
-	private void readSymbolToResultMap(final InputStream stream,
-			final int symbolCount) throws IOException {
-		symbolToResultMap = new int[symbolCount];
-		resultToSymbolMap = new TreeMap<Integer, Integer>();
+	private void readSymbolToResultMap(final InputStream stream, final int symbolCount) throws IOException {
+		final int[] symbolToResultTable = new int[symbolCount];
 
 		for (int symbol = 0; symbol < symbolCount; symbol++) {
 			int result = (int) IoUtils.readNumberBinary(stream, RESULT_SIZE);
@@ -335,9 +318,10 @@ public class TableReader extends TableIo {
 				result -= 1 << (Byte.SIZE * RESULT_SIZE);
 			}
 
-			symbolToResultMap[symbol] = result;
-			resultToSymbolMap.put(result, symbol);
+			symbolToResultTable[symbol] = result;
 		}
+		
+		symbolToResultMap = new SortedSymbolToResultMap(symbolToResultTable);
 	}
 
 	public TableDefinition getDefinition() {

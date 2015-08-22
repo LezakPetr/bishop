@@ -36,7 +36,6 @@ public class TableWriter extends TableIo {
 		statistics.calculate(table, BLOCK_INDEX_LENGTH);
 		
 		symbolToResultMap = statistics.getSymbolToResultMap();
-		resultToSymbolMap = statistics.getResultToSymbolMap();
 		symbolProbabilities = statistics.getSymbolProbabilities();
 		
 		probabilityModelMap = new HashMap<Integer, EnumerationProbabilityModel>();
@@ -152,7 +151,7 @@ public class TableWriter extends TableIo {
 	}
 	
 	private void writeProbabilityModel(final OutputStream stream) throws IOException {
-		final int symbolCount = symbolToResultMap.length;
+		final int symbolCount = symbolToResultMap.getSymbolCount();
 		final int modelCount = probabilityModelMap.size();
 		
 		System.out.println ("Writing " + modelCount + " models with " + symbolCount + " symbols");
@@ -168,7 +167,7 @@ public class TableWriter extends TableIo {
 		stream.write(dat);
 
 		for (int symbol = 0; symbol < symbolCount; symbol++) {
-			final int result = symbolToResultMap[symbol];
+			final int result = symbolToResultMap.symbolToResult(symbol);
 			IoUtils.writeNumberBinary(stream, result, RESULT_SIZE);
 		}
 		
@@ -255,7 +254,7 @@ public class TableWriter extends TableIo {
 				final int result = it.getResult();
 				
 				if (result != TableResult.ILLEGAL) {
-					final int symbol = resultToSymbolMap.get(result);
+					final int symbol = symbolToResultMap.resultToSymbol(result);
 					
 					it.fillPosition(position);
 					final int positionLabel = modelSelector.getModelIndex(position);

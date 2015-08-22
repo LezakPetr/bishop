@@ -1,9 +1,6 @@
 package bishop.tablebase;
 
 import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-
 import bishop.base.BitBoard;
 import bishop.base.BoardConstants;
 import bishop.base.Color;
@@ -29,8 +26,8 @@ public class ClassificationProbabilityModelSelector implements IProbabilityModel
 	private final int previousSymbolClassification;
 	private int[][] bishopPositionIndices;
 	
-	public ClassificationProbabilityModelSelector(final int[] symbolToResultMap, final int classificationHistoryLength, final boolean previousWin, final MaterialHash materialHash) {
-		this.symbolCount = symbolToResultMap.length;
+	public ClassificationProbabilityModelSelector(final ISymbolToResultMap symbolToResultMap, final int classificationHistoryLength, final boolean previousWin, final MaterialHash materialHash) {
+		this.symbolCount = symbolToResultMap.getSymbolCount();
 		this.classificationHistoryLength = classificationHistoryLength;
 		
 		final int positionIndexCount = initializeBishopPositionIndices (materialHash);
@@ -115,11 +112,12 @@ public class ClassificationProbabilityModelSelector implements IProbabilityModel
 		return classificationModulus * previousSymbols.length * (symbolCount + 1);
 	}
 	
-	private static byte[] createSymbolClassificationIndices (final int[] symbolToResultMap) {
-		final byte[] classificationIndices = new byte[symbolToResultMap.length];
+	private static byte[] createSymbolClassificationIndices (final ISymbolToResultMap symbolToResultMap) {
+		final int symbolCount = symbolToResultMap.getSymbolCount();
+		final byte[] classificationIndices = new byte[symbolCount];
 		
-		for (int i = 0; i < symbolToResultMap.length; i++) {
-			final int result = symbolToResultMap[i];
+		for (int i = 0; i < symbolCount; i++) {
+			final int result = symbolToResultMap.symbolToResult(i);
 			final byte classificationIndex;
 			
 			if (TableResult.isWin(result))

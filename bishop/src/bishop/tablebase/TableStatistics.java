@@ -14,8 +14,7 @@ import bishop.base.Position;
 
 public class TableStatistics {
 	
-	private int[] symbolToResultMap;
-	private Map<Integer, Integer> resultToSymbolMap;
+	private ISymbolToResultMap symbolToResultMap;
 	private long[][] symbolFrequencies;
 	private Map<Integer, int[]> symbolProbabilities;
 	private IProbabilityModelSelector probabilityModelSelector;
@@ -43,7 +42,7 @@ public class TableStatistics {
 	}
 	
 	private long[][] calculateSymbolFrequencies(final ITableRead table, final int blockLength) {
-		final int symbolCount = symbolToResultMap.length;
+		final int symbolCount = symbolToResultMap.getSymbolCount();
 		final boolean previousWin = isWinMoreProbableThanLose(table);
 		probabilityModelSelector = new ClassificationProbabilityModelSelector(symbolToResultMap, ClassificationProbabilityModelSelector.DEFAULT_CLASSIFICATION_HISTORY_LENGTH, previousWin, table.getDefinition().getMaterialHash());
 		
@@ -60,7 +59,7 @@ public class TableStatistics {
 				it.fillPosition(position);
 
 				final int modelIndex = (int) probabilityModelSelector.getModelIndex(position);
-				final int symbol = resultToSymbolMap.get(result);
+				final int symbol = symbolToResultMap.resultToSymbol(result);
 				probabilityModelSelector.addSymbol(position, symbol);
 				
 				symbolFrequencies[modelIndex][symbol]++;
@@ -92,19 +91,15 @@ public class TableStatistics {
 	
 	private void fillSymbols(final ITableRead table, final int blockLength, final Set<Integer> resultSet) {
 		final int resultSize = resultSet.size();
-		
-		symbolToResultMap = new int[resultSize];
-		resultToSymbolMap = new TreeMap<Integer, Integer>();
-		
+		final int[] symbolToResultTable = new int[resultSize];
 		int symbol = 0;
 		
 		for (int result: resultSet) {
-			symbolToResultMap[symbol] = result;
-			resultToSymbolMap.put(result, symbol);
-			
+			symbolToResultTable[symbol] = result;
 			symbol++;
 		}
-
+		
+		symbolToResultMap = new SortedSymbolToResultMap(symbolToResultTable);
 		symbolFrequencies = calculateSymbolFrequencies(table, blockLength);
 		symbolProbabilities = new HashMap<Integer, int[]>();
 		
@@ -114,12 +109,8 @@ public class TableStatistics {
 		}
 	}
 	
-	public int[] getSymbolToResultMap() {
-		return Arrays.copyOf(symbolToResultMap, symbolToResultMap.length);
-	}
-	
-	public Map<Integer, Integer> getResultToSymbolMap() {
-		return resultToSymbolMap;
+	public ISymbolToResultMap getSymbolToResultMap() {
+		return symbolToResultMap;
 	}
 	
 	public Map<Integer, int[]> getSymbolProbabilities() {
@@ -144,7 +135,7 @@ public class TableStatistics {
 					final double prob = (double) frequency / (double) labelSymbolCount;
 					labelShanons -= frequency * Math.log(prob) / Math.log(2);
 					
-					final String result = TableResult.toString (symbolToResultMap[symbol]);
+					final String result = TableResult.toString (symbolToResultMap.symbolToResult(symbol));
 					stream.println (result + ": " + frequency);
 				}
 			}
