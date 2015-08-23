@@ -720,12 +720,12 @@ public final class Position implements IPieceCounts {
 	}
 
 	/**
-	 * Checks if given square is attacked by some piece with given color.
+	 * Returns mask of pieces with given color that attacks given square.
 	 * @param color color of attacking pieces
 	 * @param square checked square
-	 * @return true if square is attacked, false if not
+	 * @return mask of attacking pieces
 	 */
-	public int getCountOfAttacks (final int color, final int square) {
+	public long getAttackingPieces (final int color, final int square) {
 		long attackingPieceMask = BitBoard.EMPTY;
 		
 		// Short move figures
@@ -749,6 +749,18 @@ public final class Position implements IPieceCounts {
 		
 		final long queenMask = orthogonalMask | diagonalMask;
 		attackingPieceMask |= pieces[getPieceMaskIndex (color, PieceType.QUEEN)] & queenMask;
+				
+		return attackingPieceMask;
+	}
+	
+	/**
+	 * Returns count of pieces with given color that attacks given square.
+	 * @param color color of attacking pieces
+	 * @param square checked square
+	 * @return count of attacking pieces
+	 */
+	public int getCountOfAttacks (final int color, final int square) {
+		final long attackingPieceMask = getAttackingPieces(color, square);
 				
 		return BitBoard.getSquareCount(attackingPieceMask);
 	}

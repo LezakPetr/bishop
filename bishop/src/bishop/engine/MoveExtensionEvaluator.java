@@ -22,7 +22,12 @@ public class MoveExtensionEvaluator {
 		if (movingPieceType == PieceType.PAWN) {
 			final int rank = Square.getRank(move.getTargetSquare());
 			
-			if (rank >= Rank.R7 || rank <= Rank.R2)
+			if (rank == Rank.R7 || rank == Rank.R2)
+				extension += settings.getPawnOnSevenRankExtension();
+
+			final int promotionPieceType = move.getPromotionPieceType();
+
+			if ((rank == Rank.R8 || rank == Rank.R1) && promotionPieceType == PieceType.QUEEN)
 				extension += settings.getPawnOnSevenRankExtension();
 		}
 		

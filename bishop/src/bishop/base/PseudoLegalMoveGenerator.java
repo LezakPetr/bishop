@@ -9,12 +9,13 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
 
 	public static final int MAX_MOVES_IN_POSITION = 321;
 	
+	private boolean reduceMovesInCheck;
+	
     // Generates moves of some figure.
     // Returns if generation should continue.
-    private boolean generateShortMovingFigureMoves(final int figure) {
+    private boolean generateShortMovingFigureMoves(final int figure, final long possibleDestinationSquares) {
     	final int onTurn = position.getOnTurn();
     	final long beginSquareMask = position.getPiecesMask(onTurn, figure);
-    	final long notOwnSquares = ~position.getColorOccupancy(onTurn);
     	
     	final BitLoop beginSquareLoop = new BitLoop();
     	final BitLoop targetSquareLoop = new BitLoop();
@@ -26,7 +27,7 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     		final int beginSquare = beginSquareLoop.getNextSquare();
     		move.setBeginSquare(beginSquare);
     		
-    		final long targetSquareMask = FigureAttackTable.getItem(figure, beginSquare) & notOwnSquares;
+    		final long targetSquareMask = FigureAttackTable.getItem(figure, beginSquare) & possibleDestinationSquares;
 
     		// Loop through all target squares
     		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
@@ -46,11 +47,10 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
 	
     // Generates moves of some figure.
     // Returns if generation should continue.
-    private boolean generateBishopMoves() {
+    private boolean generateBishopMoves(final long possibleDestinationSquares) {
     	final int onTurn = position.getOnTurn();
     	final long beginSquareMask = position.getPiecesMask(onTurn, PieceType.BISHOP);
     	final long occupancy = position.getOccupancy();
-    	final long notOwnSquares = ~position.getColorOccupancy(onTurn);
     	
     	final BitLoop beginSquareLoop = new BitLoop();
     	final BitLoop targetSquareLoop = new BitLoop();
@@ -63,7 +63,7 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     		move.setBeginSquare(beginSquare);
     		
     		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, beginSquare, occupancy);
-    		final long targetSquareMask = LineAttackTable.getAttackMask(diagonalIndex) & notOwnSquares;
+    		final long targetSquareMask = LineAttackTable.getAttackMask(diagonalIndex) & possibleDestinationSquares;
 
     		// Loop through all target squares
     		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
@@ -83,11 +83,10 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     
     // Generates moves of some figure.
     // Returns if generation should continue.
-    private boolean generateRookMoves() {
+    private boolean generateRookMoves(final long possibleDestinationSquares) {
     	final int onTurn = position.getOnTurn();
     	final long beginSquareMask = position.getPiecesMask(onTurn, PieceType.ROOK);
     	final long occupancy = position.getOccupancy();
-    	final long notOwnSquares = ~position.getColorOccupancy(onTurn);
     	
     	final BitLoop beginSquareLoop = new BitLoop();
     	final BitLoop targetSquareLoop = new BitLoop();
@@ -100,7 +99,7 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     		move.setBeginSquare(beginSquare);
     		
     		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, beginSquare, occupancy);
-    		final long targetSquareMask = LineAttackTable.getAttackMask(orthogonalIndex) & notOwnSquares;
+    		final long targetSquareMask = LineAttackTable.getAttackMask(orthogonalIndex) & possibleDestinationSquares;
 
     		// Loop through all target squares
     		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
@@ -120,11 +119,10 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     
     // Generates moves of some figure.
     // Returns if generation should continue.
-    private boolean generateQueenMoves() {
+    private boolean generateQueenMoves(final long possibleDestinationSquares) {
     	final int onTurn = position.getOnTurn();
     	final long beginSquareMask = position.getPiecesMask(onTurn, PieceType.QUEEN);
     	final long occupancy = position.getOccupancy();
-    	final long notOwnSquares = ~position.getColorOccupancy(onTurn);
     	
     	final BitLoop beginSquareLoop = new BitLoop();
     	final BitLoop targetSquareLoop = new BitLoop();
@@ -142,7 +140,7 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, beginSquare, occupancy);
     		final long orthogonalMask = LineAttackTable.getAttackMask(orthogonalIndex);
     		
-    		final long targetSquareMask = (diagonalMask | orthogonalMask) & notOwnSquares;
+    		final long targetSquareMask = (diagonalMask | orthogonalMask) & possibleDestinationSquares;
     		
     		// Loop through all target squares
     		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
@@ -162,7 +160,7 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
 
     // Generates moves of pawns.
     // Returns if generation should continue.
-    private boolean generatePawnMoves() {
+    private boolean generatePawnMoves(final long possibleDestinationSquares) {
     	final int onTurn = position.getOnTurn();
     	final int oppositeColor = Color.getOppositeColor(onTurn);
     	final long beginSquareMask = position.getPiecesMask(onTurn, PieceType.PAWN);
@@ -254,6 +252,39 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
 
     	return true;
     }
+    
+    /**
+     * Setting to true means that the generator will not generate moves that cannot stop check. 
+     * @param reduce true in case that moves will be reduced in case of check
+     */
+    public void setReduceMovesInCheck(final boolean reduce) {
+    	this.reduceMovesInCheck = reduce;
+    }
+    
+    private long calculatePossibleTargetSquares() {
+    	final int onTurn = position.getOnTurn();
+    	final long notOwnSquares = ~position.getColorOccupancy(onTurn);
+
+    	if (!reduceMovesInCheck)
+    		return notOwnSquares;
+
+    	final int notOnTurn = Color.getOppositeColor(onTurn);
+    	final int kingSquare = position.getKingPosition(onTurn);
+    	final long checkingPieces = position.getAttackingPieces(notOnTurn, kingSquare);
+    	
+    	if (checkingPieces == BitBoard.EMPTY)
+    		return notOwnSquares;   // No check
+    	
+		final int checkCount = BitBoard.getSquareCount(checkingPieces);
+		
+		if (checkCount == 1) {
+			final int checkingSquare = BitBoard.getFirstSquare(checkingPieces);
+			
+			return (checkingPieces | BetweenTable.getItem(kingSquare, checkingSquare)) & notOwnSquares;
+		}
+		else
+			return BitBoard.EMPTY;   // Double check => king must move
+    }
 
     /**
      * Generates all legal moves in the position.
@@ -262,26 +293,30 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     public void generateMoves() {
     	final int castlingRightIndex = position.getCastlingRights().getIndex();
     	final int epFile = position.getEpFile();
+    	final int onTurn = position.getOnTurn();
+    	final long notOwnSquares = ~position.getColorOccupancy(onTurn);
 
     	move.initialize(castlingRightIndex, epFile);
     	
+    	final long possibleDestinationSquares = calculatePossibleTargetSquares();
+    	    	
     	// Generate figure moves, starting with king - this speeds up legal move checking
-    	if (!generateShortMovingFigureMoves(PieceType.KING))
+    	if (!generateShortMovingFigureMoves(PieceType.KING, notOwnSquares))
     		return;
     	
-    	if (!generateShortMovingFigureMoves(PieceType.KNIGHT))
+    	if (!generateShortMovingFigureMoves(PieceType.KNIGHT, possibleDestinationSquares))
     		return;
     	
-    	if (!generateQueenMoves())
+    	if (!generateQueenMoves(possibleDestinationSquares))
     		return;
     	
-    	if (!generateRookMoves())
+    	if (!generateRookMoves(possibleDestinationSquares))
     		return;
     	
-    	if (!generateBishopMoves())
+    	if (!generateBishopMoves(possibleDestinationSquares))
     		return;
     	
-    	if (!generatePawnMoves())
+    	if (!generatePawnMoves(possibleDestinationSquares))
     		return;
 
     	if (!generateCastlingMoves())

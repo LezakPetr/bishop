@@ -26,6 +26,7 @@ public class AllTests {
 		FenTest.class,
 		LegalMoveGeneratorTest.class,
 		PseudoLegalMoveGeneratorTest.class,
+		CheckReducedPseudoLegalMoveGeneratorTest.class,
 		QuiescencePseudoLegalMoveGeneratorTest.class,
 		AttackCalculatorTest.class,
 		ReverseMoveGeneratorTest.class,
