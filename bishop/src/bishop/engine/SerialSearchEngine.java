@@ -116,7 +116,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 	// Supplementary objects
 	private final QuiescencePseudoLegalMoveGenerator quiescenceLegalMoveGenerator;
-	private final IMoveGenerator pseudoLegalMoveGenerator;
+	private final PseudoLegalMoveGenerator pseudoLegalMoveGenerator;
 	private final LegalMoveFinder legalMoveFinder;
 	private final MoveWalker moveWalker;
 	private final int[][] historyTable;
@@ -533,6 +533,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 		else {
 			pseudoLegalMoveGenerator.setPosition(currentPosition);
+			pseudoLegalMoveGenerator.setReduceMovesInCheck(getIsCheck());
 			pseudoLegalMoveGenerator.generateMoves();
 			
 			currentRecord.allMovesGenerated = true;

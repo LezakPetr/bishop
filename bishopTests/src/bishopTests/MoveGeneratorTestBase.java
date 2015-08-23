@@ -2,6 +2,7 @@ package bishopTests;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Assert;
@@ -17,11 +18,44 @@ public abstract class MoveGeneratorTestBase {
 
 	protected static class TestValue {
 		public final String positionFen;
-		public final Set<String> expectedMoves;
+		public final Set<String> minExpectedMoves;
+		public final Set<String> maxExpectedMoves;
 
-		public TestValue(final String positionFen, final String[] expectedMoveArray) {
+		public TestValue(final String positionFen, final Set<String> minExpectedMoves, final Set<String> maxExpectedMoves) {
 			this.positionFen = positionFen;
-			this.expectedMoves = new HashSet<String>(Arrays.asList(expectedMoveArray));
+			this.minExpectedMoves = minExpectedMoves;
+			this.maxExpectedMoves = maxExpectedMoves;
+		}
+
+		public TestValue(final String positionFen, final Set<String> expectedMoves) {
+			this (positionFen, expectedMoves, expectedMoves);
+		}
+
+		public TestValue(final String positionFen, final String minExpectedMoveStr, final String maxExpectedMoveStr) {
+			this.positionFen = positionFen;
+			this.minExpectedMoves = splitMoveList(minExpectedMoveStr);
+			this.maxExpectedMoves = splitMoveList(maxExpectedMoveStr);
+		}
+
+		public TestValue(final String positionFen, final String expectedMoveArray) {
+			this (positionFen, expectedMoveArray, expectedMoveArray);
+		}
+		
+		private static Set<String> splitMoveList(final String moveList) {
+			final Set<String> result = new HashSet<String>();
+			int index = 0;
+			
+			while (index < moveList.length()) {
+				int nextIndex = moveList.indexOf(',', index);
+				
+				if (nextIndex < 0)
+					nextIndex = moveList.length();
+				
+				result.add(moveList.substring(index, nextIndex).trim());
+				index = nextIndex + 1;
+			}
+			
+			return result;
 		}
 	}
 
@@ -70,13 +104,16 @@ public abstract class MoveGeneratorTestBase {
 		for (TestValue testValue: testValueArray) {
 			fen.readFenFromString(testValue.positionFen);
 			
+			if (!testValue.maxExpectedMoves.containsAll(testValue.minExpectedMoves))
+				throw new RuntimeException("Wrong test " + testValue.positionFen + " - minExpectedMoves is not subset of maxExpectedMoves!!!");
+			
 			final Position position = fen.getPosition();
 			final Set<String> moveNotationSet = getMoveNotationSet(position);
 
 			final Set<String> redundantMoves = new HashSet<String>(moveNotationSet);
-			redundantMoves.removeAll(testValue.expectedMoves);
+			redundantMoves.removeAll(testValue.maxExpectedMoves);
 
-			final Set<String> missingMoves = new HashSet<String>(testValue.expectedMoves);
+			final Set<String> missingMoves = new HashSet<String>(testValue.minExpectedMoves);
 			missingMoves.removeAll(moveNotationSet);
 
 			if (!redundantMoves.isEmpty() || !missingMoves.isEmpty()) {

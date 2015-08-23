@@ -82,5 +82,7 @@ public class TablebaseTest {
 		
 		final long t2 = System.currentTimeMillis();
 		System.out.println ("TablebaseTest: "  + (t2 - t1) + "ms");
+		
+		parallel.shutdown();
 	}
 }
