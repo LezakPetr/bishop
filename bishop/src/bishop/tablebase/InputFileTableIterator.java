@@ -69,27 +69,7 @@ public class InputFileTableIterator extends TableIteratorBase implements AutoClo
 						remainingCount = mode.getCount (descriptor);
 				}
 				
-				switch (mode) {
-					case ILLEGAL:
-						result = TableResult.ILLEGAL;
-						break;
-						
-					case DRAW:
-						result = TableResult.DRAW;
-						break;
-						
-					case COMPRESSED:
-						result = (short) TableResult.decompress(IoUtils.readByteBinary(stream));
-						break;
-						
-					case FULL:
-						result = (short) IoUtils.readNumberBinary(stream, 2);
-						
-						if ((result & 0x2000) != 0)
-							result |= 0xC000;
-						
-						break;
-				}
+				result = mode.read (stream);
 				
 				remainingCount--;
 				remainingResults--;
