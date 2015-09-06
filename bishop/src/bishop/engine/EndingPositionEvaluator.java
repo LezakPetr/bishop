@@ -21,6 +21,7 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 	
 	private final TablePositionEvaluator tableEvaluator;
 	private final BishopColorPositionEvaluator bishopColorPositionEvaluator;
+	private final PawnStructureEvaluator pawnStructureEvaluator;
 	
 	private final EndingPositionEvaluatorSettings settings;
 	
@@ -39,8 +40,8 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		this.settings = settings;
 		
 		tableEvaluator = new TablePositionEvaluator(settings.getTableSettings());
-		
 		bishopColorPositionEvaluator = new BishopColorPositionEvaluator();
+		pawnStructureEvaluator = new PawnStructureEvaluator(settings.getPawnStructureEvaluatorSettings());
 		
 		pawnPromotionDistances = new int[Color.LAST];
 		hasFigures = new boolean[Color.LAST];
@@ -53,6 +54,8 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		positionalEvaluation = 0;
 		evaluation = 0;
 		pawnEvaluation = 0;
+		
+		pawnStructureEvaluator.clear();
 	}
 	
 	private void calculateHasFigures() {
@@ -67,10 +70,7 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		}
 	}
 	
-	private void evaluatePawns() {
-		final long whiteRookMask = position.getPiecesMask(Color.WHITE, PieceType.ROOK);
-		final long blackRookMask = position.getPiecesMask(Color.BLACK, PieceType.ROOK);
-		
+	private void evaluatePawns(final AttackCalculator attackCalculator) {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int oppositeColor = Color.getOppositeColor(color);
 			
@@ -79,29 +79,11 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 			
 			for (BitLoop loop = new BitLoop(ownPawnMask); loop.hasNextSquare(); ) {
 				final int square = loop.getNextSquare();
-				final int rank = Square.getRank(square);
 				final long frontSquaresOnThreeFiles = BoardConstants.getFrontSquaresOnThreeFiles(color, square);
 				final long frontSquaresOnSameFile = FrontSquaresOnSameFileTable.getItem(color, square);
-				final long rearSquaresOnSameFile = FrontSquaresOnSameFileTable.getItem(oppositeColor, square);
 				
 				// Passed pawn
 				if ((oppositePawnMask & frontSquaresOnThreeFiles) == 0) {
-					final long neighbourSquares = BoardConstants.getConnectedPawnSquareMask(square);
-					
-					if ((ownPawnMask & neighbourSquares) != 0) {
-						pawnEvaluation += settings.getConnectedPassedPawnBonus (color, square);
-					}
-					else {
-						final long protectingSquares = PawnAttackTable.getItem(oppositeColor, square);
-						
-						if ((ownPawnMask & protectingSquares) != 0) {
-							pawnEvaluation += settings.getProtectedPassedPawnBonus(color, square);
-						}
-						else {
-							pawnEvaluation += settings.getSinglePassedPawnBonus(color, square);
-						}
-					}
-					
 					// Pawn out of square
 					if (!hasFigures[oppositeColor]) {
 						final long defendingSquares = RuleOfSquare.getKingDefendingSquares(color, position.getOnTurn(), square);
@@ -118,20 +100,6 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 							pawnPromotionDistances[color] = Math.min(pawnPromotionDistances[color], distance);
 						}
 					}
-					
-					// Pawn with rooks
-					if ((whiteRookMask & rearSquaresOnSameFile) != 0 && (blackRookMask & frontSquaresOnSameFile) != 0) {
-						pawnEvaluation += settings.getRookPawnBonus(color, rank);
-					}
-					
-					if ((blackRookMask & rearSquaresOnSameFile) != 0 && (whiteRookMask & frontSquaresOnSameFile) != 0) {
-						pawnEvaluation -= settings.getRookPawnBonus(color, rank);
-					}
-				}
-				
-				// Double pawn
-				if ((frontSquaresOnSameFile & ownPawnMask) != 0) {
-					pawnEvaluation += settings.getDoublePawnBonus(color);
 				}
 			}
 		}
@@ -171,7 +139,7 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 			return evaluation;
 		}
 
-		calculatePositionalEvaluation();
+		calculatePositionalEvaluation(attackCalculator);
 		
 		final int reducedPositionalEvaluation = Math.min (Math.max (positionalEvaluation, -MAX_POSITIONAL_EVALUATION), MAX_POSITIONAL_EVALUATION);
 		evaluation = materialEvaluation + reducedPositionalEvaluation;
@@ -179,14 +147,16 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		return evaluation;
 	}
 	
-	private void calculatePositionalEvaluation() {
+	private void calculatePositionalEvaluation(final AttackCalculator attackCalculator) {
 		calculateHasFigures();
+		pawnStructureEvaluator.calculate(position);
 		
 		positionalEvaluation += tableEvaluator.evaluatePosition(position);
 		positionalEvaluation += bishopColorPositionEvaluator.evaluatePosition(position);
 		
-		evaluatePawns();
+		evaluatePawns(attackCalculator);
 		positionalEvaluation += pawnEvaluation;
+		pawnEvaluation += pawnStructureEvaluator.evaluate(position, attackCalculator);
 	}
 
 	/**
@@ -196,6 +166,7 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 	public void writeLog (final PrintWriter writer) {
 		tableEvaluator.writeLog(writer);
 		bishopColorPositionEvaluator.writeLog(writer);
+		pawnStructureEvaluator.writeLog (writer);
 		
 		writer.println ("EndingPositionEvaluator");
 		writer.println ("=======================");

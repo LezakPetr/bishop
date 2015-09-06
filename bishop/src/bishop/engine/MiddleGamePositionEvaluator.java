@@ -1,21 +1,15 @@
 package bishop.engine;
 
 import java.io.PrintWriter;
-import java.util.Arrays;
 import bishop.base.BitBoard;
-import bishop.base.BitLoop;
 import bishop.base.BoardConstants;
 import bishop.base.CastlingType;
 import bishop.base.Color;
-import bishop.base.CrossDirection;
 import bishop.base.File;
-import bishop.base.LineAttackTable;
-import bishop.base.LineIndexer;
 import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
 import bishop.base.Square;
-import bishop.tables.FigureAttackTable;
 import bishop.tables.MainKingProtectionPawnsTable;
 import bishop.tables.SecondKingProtectionPawnsTable;
 
@@ -29,72 +23,30 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 	private final MobilityPositionEvaluator mobilityEvaluator;
 	
 	private final MiddleGameEvaluatorSettings settings;
+	private final PawnStructureEvaluator pawnStructureCalculator;
 	
-	// Contains 1 on squares without own pawn in front of them.
-	// Front pawn itself is also considered open. 
-	private final long[] openFileSquares;
-	
-	private final long[] oppositeFileSquares;
-
 	
 	public MiddleGamePositionEvaluator(final MiddleGameEvaluatorSettings settings) {
 		this.settings = settings;
 		
-		openFileSquares = new long[Color.LAST];
-		oppositeFileSquares = new long[Color.LAST];
-		
 		tablePositionEvaluator = new TablePositionEvaluator(settings.getTablePositionEvaluatorSettings());
 		bishopColorPositionEvaluator = new BishopColorPositionEvaluator();
 		mobilityEvaluator = new MobilityPositionEvaluator(settings.getMobilityEvaluatorSettings());
+		pawnStructureCalculator = new PawnStructureEvaluator(settings.getPawnStructureEvaluatorSettings());
 	}
 	
 	private void clear() {
-		Arrays.fill(openFileSquares, 0);
-		Arrays.fill(oppositeFileSquares, 0);
+		pawnStructureCalculator.clear();
 	}
 	
-	private void fillOpenFileSquares(final Position position) {
-		// White
-		long whiteNotFileOpenSquares = position.getPiecesMask(Color.WHITE, PieceType.PAWN);
-		whiteNotFileOpenSquares |= whiteNotFileOpenSquares >>> 8;
-		whiteNotFileOpenSquares |= whiteNotFileOpenSquares >>> 16;
-		whiteNotFileOpenSquares |= whiteNotFileOpenSquares >>> 32;
-		
-		openFileSquares[Color.WHITE] = ~(whiteNotFileOpenSquares >>> 8);
-		
-		// Black
-		long blackNotFileOpenSquares = position.getPiecesMask(Color.BLACK, PieceType.PAWN);
-		blackNotFileOpenSquares |= blackNotFileOpenSquares << 8;
-		blackNotFileOpenSquares |= blackNotFileOpenSquares << 16;
-		blackNotFileOpenSquares |= blackNotFileOpenSquares << 32;
-		
-		openFileSquares[Color.BLACK] = ~(blackNotFileOpenSquares << 8);
-	}
-
-	private void fillOppositeFileSquares(final Position position) {
-		// White
-		long whiteNotFileSquares = position.getPiecesMask(Color.WHITE, PieceType.PAWN);
-		whiteNotFileSquares |= whiteNotFileSquares << 8;
-		whiteNotFileSquares |= whiteNotFileSquares << 16;
-		whiteNotFileSquares |= whiteNotFileSquares << 32;
-		
-		oppositeFileSquares[Color.WHITE] = ~whiteNotFileSquares;
-		
-		// Black
-		long blackNotFileSquares = position.getPiecesMask(Color.BLACK, PieceType.PAWN);
-		blackNotFileSquares |= blackNotFileSquares >>> 8;
-		blackNotFileSquares |= blackNotFileSquares >>> 16;
-		blackNotFileSquares |= blackNotFileSquares >>> 32;
-		
-		oppositeFileSquares[Color.BLACK] = ~blackNotFileSquares;
-	}
-
+	
 	private int evaluateRooks(final Position position) {
 		int rookEvaluation = 0;
 		
+		// Rooks on open files
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final long rookMask = position.getPiecesMask(color, PieceType.ROOK);
-			final long openRooks = rookMask & openFileSquares[color];
+			final long openRooks = rookMask & pawnStructureCalculator.getOpenFileSquares(color);
 			
 			rookEvaluation += BitBoard.getSquareCount(openRooks) * settings.getRookOnOpenFileBonus(color);
 		}
@@ -102,37 +54,6 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 		return rookEvaluation;
 	}
 	
-	private int evaluateUnprotectedOpenFilePawns(final Position position, final AttackCalculator attackCalculator) {
-		int unprotectedOpenFilePawnsEvaluation = 0;
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int oppositeColor = Color.getOppositeColor(color);
-			final long oppositeRookMask = position.getPiecesMask(oppositeColor, PieceType.ROOK);
-			
-			if (oppositeRookMask != 0) {
-				final long ownPawnMask = position.getPiecesMask(color, PieceType.PAWN);
-				final long unprotectedPawnMask = ownPawnMask & ~attackCalculator.getPawnAttackedSquares(color);
-				final long unprotectedOpenPawnMask = unprotectedPawnMask & oppositeFileSquares[oppositeColor];
-				
-				unprotectedOpenFilePawnsEvaluation += BitBoard.getSquareCount(unprotectedOpenPawnMask) * settings.getUnprotectedOpenFilePawnBonus(color);
-			}
-		}
-		
-		return unprotectedOpenFilePawnsEvaluation;
-	}
-	
-	private int evaluateDoublePawns(final Position position) {
-		int doublePawnEvaluation = 0;
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final long ownPawnMask = position.getPiecesMask(color, PieceType.PAWN);
-			final long doublePawns = ownPawnMask & ~openFileSquares[color];
-			doublePawnEvaluation += BitBoard.getSquareCount(doublePawns) * settings.getDoublePawnBonus(color);
-		}
-		
-		return doublePawnEvaluation;
-	}
-
 	public int evaluatePosition(final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
 		clear();
 		
@@ -159,8 +80,7 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 	}
 
 	private int calculatePositionalEvaluation(final Position position, final AttackCalculator attackCalculator) {
-		fillOpenFileSquares(position);
-		fillOppositeFileSquares(position);
+		pawnStructureCalculator.calculate(position);
 
 		int positionalEvaluation = 0;
 		
@@ -169,8 +89,7 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 		
 		positionalEvaluation += evaluateRooks(position);
 		positionalEvaluation += evaluateKingFiles(position);
-		positionalEvaluation += evaluateUnprotectedOpenFilePawns(position, attackCalculator);
-		positionalEvaluation += evaluateDoublePawns(position);
+		positionalEvaluation += pawnStructureCalculator.evaluate(position, attackCalculator);
 		positionalEvaluation += attackCalculator.getAttackEvaluation();
 		positionalEvaluation += mobilityEvaluator.evaluatePosition(position, attackCalculator);
 		positionalEvaluation += evaluateQueenMove(position);
@@ -242,19 +161,8 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 
 	public void writeLog(final PrintWriter writer) {
 		tablePositionEvaluator.writeLog(writer);
-		bishopColorPositionEvaluator.writeLog(writer);
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			writer.print("Open file squares " + Color.getName(color) + ": ");
-			BitBoard.write(writer, openFileSquares[color]);
-			writer.println();			
-		}
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			writer.print("Opposite file squares " + Color.getName(color) + ": ");
-			BitBoard.write(writer, oppositeFileSquares[color]);
-			writer.println();			
-		}
+		bishopColorPositionEvaluator.writeLog(writer);		
+		pawnStructureCalculator.writeLog (writer);
 	}
 
 }
