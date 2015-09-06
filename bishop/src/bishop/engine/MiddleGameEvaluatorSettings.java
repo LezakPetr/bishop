@@ -18,18 +18,15 @@ public final class MiddleGameEvaluatorSettings {
 	private final int[] kingMainProtectionPawnBonus;
 	private final int[] kingSecondProtectionPawnBonus;
 	private final int[] queenMoveBonus;
-	private final int[] unprotectedOpenFilePawnBonus;
-	private final int[] doublePawnBonus;
 	private final int[] kingAttackBonus;
 	private final TablePositionEvaluatorSettings tablePositionEvaluatorSettings;
 	private final MobilityEvaluatorSettings mobilityEvaluatorSettings;
+	private final PawnStructureEvaluatorSettings pawnStructureEvaluatorSettings;
 	
 	private static final double ROOK_ON_OPEN_FILE_BONUS = 0.1;
 	private static final double KING_MAIN_PROTECTION_PAWN_BONUS = 0.3;
 	private static final double KING_SECOND_PROTECTION_PAWN_BONUS = 0.15;
 	private static final double QUEEN_MOVE_BONUS = -0.7;
-	private static final double UNPROTECTED_OPEN_FILE_PAWN_BONUS = -0.2;
-	private static final double DOUBLE_PAWN_BONUS = -0.3;
 	private static final double KING_ATTACK_BONUS = 0.05;
 	
 
@@ -38,11 +35,10 @@ public final class MiddleGameEvaluatorSettings {
 		kingMainProtectionPawnBonus = new int[Color.LAST];
 		kingSecondProtectionPawnBonus = new int[Color.LAST];
 		queenMoveBonus = new int[Color.LAST];
-		unprotectedOpenFilePawnBonus = new int[Color.LAST];
-		doublePawnBonus = new int[Color.LAST];
 		kingAttackBonus = new int[Color.LAST];
 		tablePositionEvaluatorSettings = new TablePositionEvaluatorSettings();
 		mobilityEvaluatorSettings = new MobilityEvaluatorSettings();
+		pawnStructureEvaluatorSettings = new PawnStructureEvaluatorSettings();
 		setDefaultTables();
 		calculateBonusTables();
 	}
@@ -175,21 +171,11 @@ public final class MiddleGameEvaluatorSettings {
 			kingMainProtectionPawnBonus[color] = (int) Math.round (pawnEvaluation * KING_MAIN_PROTECTION_PAWN_BONUS);
 			kingSecondProtectionPawnBonus[color] = (int) Math.round (pawnEvaluation * KING_SECOND_PROTECTION_PAWN_BONUS);
 			queenMoveBonus[color] = (int) Math.round (pawnEvaluation * QUEEN_MOVE_BONUS);
-			unprotectedOpenFilePawnBonus[color] = (int) Math.round (pawnEvaluation * UNPROTECTED_OPEN_FILE_PAWN_BONUS);
-			doublePawnBonus[color] = (int) Math.round (pawnEvaluation * DOUBLE_PAWN_BONUS);
 		}
 	}
 	
 	public int getRookOnOpenFileBonus (final int color) {
 		return rookOnOpenFileBonus[color];
-	}
-
-	public int getUnprotectedOpenFilePawnBonus (final int color) {
-		return unprotectedOpenFilePawnBonus[color];
-	}
-	
-	public int getDoublePawnBonus (final int color) {
-		return doublePawnBonus[color];
 	}
 
 	public int getKingMainProtectionPawnBonus (final int color) {
@@ -214,6 +200,10 @@ public final class MiddleGameEvaluatorSettings {
 
 	public MobilityEvaluatorSettings getMobilityEvaluatorSettings() {
 		return mobilityEvaluatorSettings;
+	}
+	
+	public PawnStructureEvaluatorSettings getPawnStructureEvaluatorSettings() {
+		return pawnStructureEvaluatorSettings;
 	}
 
 }
