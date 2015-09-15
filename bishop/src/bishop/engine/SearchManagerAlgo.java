@@ -515,7 +515,7 @@ public class SearchManagerAlgo {
 		hashTable.getRecord(position, hashRecord);
 		
 		final AttackCalculator attackCalculator = new AttackCalculator();
-		attackCalculator.calculate(position, AttackEvaluationTable.ZERO_TABLE);
+		attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 		
 		final int positionExtension = extensionCalculator.getExtension(position, isCheck, hashRecord, horizon, attackCalculator);
 		final int beginMaterialEvaluation = node.getPosition().getMaterialEvaluation();

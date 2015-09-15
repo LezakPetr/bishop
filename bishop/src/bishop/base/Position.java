@@ -644,6 +644,15 @@ public final class Position implements IPieceCounts {
 	public long getPiecesMask (final int color, final int type) {
 		return pieces[getPieceMaskIndex (color, type)];
 	}
+
+	/**
+	 * Returns mask of given piece regardless of their color.
+	 * @param type piece type
+	 * @return mask of given piece type
+	 */
+	public long getBothColorPiecesMask(final int type) {
+		return getPiecesMask(Color.WHITE, type) | getPiecesMask(Color.BLACK, type);
+	}
 	
 	/**
 	 * Returns mask of all occupied squares.

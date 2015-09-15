@@ -121,7 +121,7 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		
 		clear();
 		
-		attackCalculator.calculate(position, AttackEvaluationTable.ZERO_TABLE);
+		attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 		
 		materialEvaluation = position.getMaterialEvaluation();
 		
