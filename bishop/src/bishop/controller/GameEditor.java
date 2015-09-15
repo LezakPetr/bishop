@@ -1,5 +1,7 @@
 package bishop.controller;
 
+import java.io.PrintWriter;
+
 import bishop.base.Game;
 import bishop.base.HandlerRegistrarImpl;
 import bishop.base.IGameNode;
@@ -7,6 +9,10 @@ import bishop.base.IHandlerRegistrar;
 import bishop.base.ITreeIterator;
 import bishop.base.Move;
 import bishop.base.Position;
+import bishop.engine.AttackCalculator;
+import bishop.engine.Evaluation;
+import bishop.engine.PositionEvaluatorSwitch;
+import bishop.engine.PositionEvaluatorSwitchSettings;
 
 public class GameEditor {
 	
@@ -77,6 +83,8 @@ public class GameEditor {
 	private void notifyActualPositionChanged() {
 		for (IGameListener listener: gameListenerRegistrar.getHandlers())
 			listener.onActualPositionChanged();
+		
+		logPosition();
 	}
 
 	private void notifyGameChanged() {
@@ -87,6 +95,8 @@ public class GameEditor {
 	private void notifyMoveDone() {
 		for (IGameListener listener: gameListenerRegistrar.getHandlers())
 			listener.onMove();
+		
+		logPosition();
 	}
 
 	private IPositionSource actualPositionSource = new IPositionSource() {
@@ -138,5 +148,16 @@ public class GameEditor {
 		
 		notifyGameChanged();
 		notifyActualPositionChanged();
+	}
+	
+	private void logPosition() {
+		final Position position = actualPositionSource.getPosition();
+		final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(new PositionEvaluatorSwitchSettings());
+		final AttackCalculator attackCalculator = new AttackCalculator();
+		evaluator.evaluatePosition(position, Evaluation.MIN, Evaluation.MAX, attackCalculator);
+		
+		final PrintWriter writer = new PrintWriter(System.out);
+		evaluator.writeLog(writer);
+		writer.flush();
 	}
 }

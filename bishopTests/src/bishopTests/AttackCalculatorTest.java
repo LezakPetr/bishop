@@ -63,7 +63,7 @@ public class AttackCalculatorTest {
 			fen.readFenFromString(testValue.positionFen);
 			
 			final Position position = fen.getPosition();
-			calculator.calculate(position, AttackEvaluationTable.ZERO_TABLE);
+			calculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 			
 			for (int color = Color.FIRST; color < Color.LAST; color++) {
 				final long attackedSquares = calculator.getDirectlyAttackedSquares(color);
@@ -100,7 +100,7 @@ public class AttackCalculatorTest {
 			fen.readFenFromString(testValue.positionFen);
 			
 			final Position position = fen.getPosition();
-			calculator.calculate(position, AttackEvaluationTable.ZERO_TABLE);
+			calculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 			
 			Assert.assertEquals(testValue.canBeMate, calculator.getCanBeMate());
 		}

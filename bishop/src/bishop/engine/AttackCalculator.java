@@ -26,11 +26,11 @@ public class AttackCalculator {
 	private boolean canBeMate;
 	private boolean hasPin;
 	
-	public void calculate(final Position position, final AttackEvaluationTable attackTable) {
+	public void calculate(final Position position, final AttackEvaluationTable[] attackTables) {
 		fillKingMasks(position);
 		calculatePawnAttacks(position);
 		calculateMobility(position);
-		calculateAttacks(position, attackTable);
+		calculateAttacks(position, attackTables);
 		calculateCanBeMate(position);
 	}
 
@@ -148,13 +148,14 @@ public class AttackCalculator {
 		return false;
 	}
 
-	private void calculateAttacks(final Position position, final AttackEvaluationTable attackTable) {
-		final long blockingSquareMask = position.getPiecesMask(Color.WHITE, PieceType.PAWN) | position.getPiecesMask(Color.BLACK, PieceType.PAWN);
+	private void calculateAttacks(final Position position, final AttackEvaluationTable[] attackTables) {
+		final long blockingSquareMask = position.getBothColorPiecesMask(PieceType.PAWN);
 		final BitLoop sourceSquareLoop = new BitLoop();
 		
 		attackEvaluation = 0;
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			final AttackEvaluationTable attackTable = attackTables[color];
 			long ownAttackedSquares = BitBoard.EMPTY;
 			
 			// Bishop
@@ -164,7 +165,7 @@ public class AttackCalculator {
 				final int sourceSquare = sourceSquareLoop.getNextSquare();
 				
 				final int index = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, sourceSquare, blockingSquareMask);
-				attackEvaluation += attackTable.getAttackEvaluation (color, index);
+				attackEvaluation += attackTable.getAttackEvaluation (index);
 				
 				final long attack = LineAttackTable.getAttackMask(index);
 				ownAttackedSquares |= attack;
@@ -177,7 +178,7 @@ public class AttackCalculator {
 				final int sourceSquare = sourceSquareLoop.getNextSquare();
 				
 				final int index = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, sourceSquare, blockingSquareMask);
-				attackEvaluation += attackTable.getAttackEvaluation (color, index);
+				attackEvaluation += attackTable.getAttackEvaluation (index);
 				
 				final long attack = LineAttackTable.getAttackMask(index);
 				ownAttackedSquares |= attack;
@@ -190,10 +191,10 @@ public class AttackCalculator {
 				final int sourceSquare = sourceSquareLoop.getNextSquare();
 				
 				final int indexDiagonal = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, sourceSquare, blockingSquareMask);
-				attackEvaluation += attackTable.getAttackEvaluation (color, indexDiagonal);
+				attackEvaluation += attackTable.getAttackEvaluation (indexDiagonal);
 				
 				final int indexOrthogonal = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, sourceSquare, blockingSquareMask);
-				attackEvaluation += attackTable.getAttackEvaluation (color, indexOrthogonal);
+				attackEvaluation += attackTable.getAttackEvaluation (indexOrthogonal);
 				
 				final long attackDiagonal = LineAttackTable.getAttackMask(indexDiagonal);
 				final long attackOrthogonal = LineAttackTable.getAttackMask(indexOrthogonal);

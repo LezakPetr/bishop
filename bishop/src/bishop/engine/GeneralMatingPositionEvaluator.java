@@ -12,7 +12,7 @@ public final class GeneralMatingPositionEvaluator implements IPositionEvaluator 
 	private int evaluation; 
 	
 	public int evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
-		attackCalculator.calculate(position, AttackEvaluationTable.ZERO_TABLE);
+		attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 		
 		final int matingColor = position.getSideWithMorePieces();
 		final int matedColor = Color.getOppositeColor(matingColor);
