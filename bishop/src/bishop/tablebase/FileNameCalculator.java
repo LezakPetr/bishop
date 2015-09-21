@@ -88,5 +88,12 @@ public class FileNameCalculator {
 
 		return true;
 	}
+	
+	public static String getAbsolutePath(final String directory, final MaterialHash materialHash) {
+		final String fileName = FileNameCalculator.getFileName(materialHash);
+		final java.io.File file = new java.io.File (directory, fileName);
+		
+		return file.getAbsolutePath();
+	}
 
 }

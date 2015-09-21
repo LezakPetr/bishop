@@ -73,14 +73,11 @@ public class GenerateTablebase {
 			subtableMap.put(neededMaterialHash, table);
 		}
 	}
-	
+
 	private String getFileName(final MaterialHash materialHash) {
-		final String fileName = FileNameCalculator.getFileName(materialHash);
-		final java.io.File file = new java.io.File (directory, fileName);
-		
-		return file.getAbsolutePath();
+		return FileNameCalculator.getAbsolutePath(directory, materialHash);
 	}
-	
+
 	private void writeTable() throws IOException, InterruptedException, ExecutionException {
 		System.out.println("Writing table");
 		
