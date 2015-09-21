@@ -44,7 +44,7 @@ public class Rank {
 	 * @param rank coordinate of rank
 	 */
 	public static void write (final PrintWriter writer, final int rank) {
-		final char c = NOTATION[rank];
+		final char c = toChar(rank);
 		
 		writer.print(c);
 	}
@@ -62,5 +62,9 @@ public class Rank {
 		}
 		
 		throw new RuntimeException("Character does not correspond to any rank");
+	}
+
+	public static char toChar(final int rank) {
+		return NOTATION[rank];
 	}
 }
