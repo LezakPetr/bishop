@@ -131,4 +131,21 @@ public class BitBoard {
 		
 		return result;*/
 	}
+	
+	public static int getNthSquare(final long possibleSquares, final int index) {
+		long mask = possibleSquares;
+
+		for (int i = 0; i < index; i++)
+			mask &= Long.lowestOneBit(mask);
+		
+		return getFirstSquare(mask);
+	}
+
+	public static int getSquareIndex(final long possibleSquares, final int square) {
+		final long squareMask = getSquareMask(square);
+		final long preSquareMask = squareMask - 1;   // Contains 1 on squares lower than given square
+		
+		return getSquareCount(possibleSquares & preSquareMask);
+	}
+
 }

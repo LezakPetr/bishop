@@ -10,6 +10,8 @@ import java.util.TreeMap;
 import java.util.zip.CRC32;
 
 import range.EnumerationProbabilityModel;
+import range.IProbabilityModel;
+import range.ProbabilityModelFactory;
 import range.RangeBase;
 import range.RangeDecoder;
 import utils.ChecksumStream;
@@ -150,7 +152,7 @@ public class TableReader extends TableIo {
 			
 			if (isValid) {
 				final int positionLabel = modelSelector.getModelIndex(position);
-				final EnumerationProbabilityModel probabilityModel = probabilityModelMap.get(positionLabel);
+				final IProbabilityModel probabilityModel = probabilityModelMap.get(positionLabel);
 				final int symbol = decoder.decodeSymbol(probabilityModel);
 				result = symbolToResultMap.symbolToResult(symbol);
 				
@@ -255,7 +257,7 @@ public class TableReader extends TableIo {
 		
 		symbolProbabilities = new HashMap<Integer, int[]>();
 
-		probabilityModelMap = new HashMap<Integer, EnumerationProbabilityModel>();
+		probabilityModelMap = new HashMap<Integer, IProbabilityModel>();
 		
 		for (int modelIndex = 0; modelIndex < modelCount; modelIndex++) {
 			final int[] probabilities = new int[symbolCount];
@@ -303,7 +305,7 @@ public class TableReader extends TableIo {
 			
 			symbolProbabilities.put(modelIndex, probabilities);
 			
-			final EnumerationProbabilityModel probabilityModel = new EnumerationProbabilityModel(probabilities);
+			final IProbabilityModel probabilityModel = ProbabilityModelFactory.fromProbabilities(probabilities);
 			probabilityModelMap.put(modelIndex, probabilityModel);
 		}
 	}

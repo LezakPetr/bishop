@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import range.EnumerationProbabilityModel;
+import range.IProbabilityModel;
 import range.RangeBase;
 import utils.ChecksumStream;
 import utils.IoUtils;
@@ -49,7 +50,7 @@ public class TableIo {
 	protected Map<Integer, int[]> symbolProbabilities;
 	protected IProbabilityModelSelector modelSelector;
 	
-	protected Map<Integer, EnumerationProbabilityModel> probabilityModelMap;
+	protected Map<Integer, IProbabilityModel> probabilityModelMap;
 	
 	
 	public ITable getTable() {

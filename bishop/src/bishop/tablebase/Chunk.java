@@ -137,7 +137,7 @@ public class Chunk {
 		final int pieceType = piece.getPieceType();
 		final int notOnTurn = Color.getOppositeColor(onTurn);
 		
-		long mask = (pieceType == PieceType.PAWN) ? ~BoardConstants.RANK_18_MASK : BitBoard.FULL;
+		long mask = BoardConstants.getPieceAllowedSquares(pieceType);
 
 		if (epFile != File.NONE) {
 			mask &= ~EmptyEpMaskTable.getItem(notOnTurn, epFile);

@@ -1,6 +1,7 @@
 package range;
 
 
+
 public class EnumerationProbabilityModel implements IProbabilityModel {
 	
 	private static final int SYMBOL_MASK = RangeBase.MAX_SYMBOL_CDF - 1;
@@ -11,7 +12,7 @@ public class EnumerationProbabilityModel implements IProbabilityModel {
 	private final int[] cdf;   // Cumulative distribution function
 	private final short[] symbolsByCdf;   // Lowest symbol sharing some bit pattern 
 	
-	public EnumerationProbabilityModel(final int[] symbolProbabilities) {
+	EnumerationProbabilityModel(final int... symbolProbabilities) {
 		cdf = createCdf(symbolProbabilities);
 		symbolsByCdf = createSymbolsByCdf();
 	}
@@ -70,38 +71,4 @@ public class EnumerationProbabilityModel implements IProbabilityModel {
 		return symbolProbabilities;
 	}
 	
-	/**
-	 * Calculates probability array from given frequency array.
-	 * @param symbolFrequencies array of symbol frequencies
-	 * @return probability array
-	 */
-	public static int[] calculateSymbolProbabilities(final long[] symbolFrequencies) {
-		long frequencySum = 0;
-		
-		for (long frequency: symbolFrequencies)
-			frequencySum += frequency;
-		
-		final int symbolCount = symbolFrequencies.length;
-		final int[] symbolProbabilities = new int[symbolCount];
-		int remainingProbabilityRange = RangeBase.MAX_SYMBOL_CDF;
-		
-		for (int i = 0; i < symbolCount; i++) {
-			final long frequency = symbolFrequencies[i];
-			final double dblProbability = (double) frequency * (double) remainingProbabilityRange / (double) frequencySum;
-			int probability = (int) Math.round(dblProbability);
-			
-			final int remainingSymbolCount = symbolCount - i - 1;
-			probability = Math.min(probability, remainingProbabilityRange - remainingSymbolCount);
-			probability = Math.max (probability, RangeBase.MIN_SYMBOL_PROBABILITY);
-			
-			symbolProbabilities[i] = probability;
-			
-			remainingProbabilityRange -= probability;
-			frequencySum -= frequency;
-		}
-		
-		symbolProbabilities[symbolProbabilities.length - 1] += remainingProbabilityRange;
-		
-		return symbolProbabilities;
-	}
 }
