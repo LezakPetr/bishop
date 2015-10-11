@@ -9,6 +9,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import range.EnumerationProbabilityModel;
+import range.ProbabilityModelFactory;
 import utils.IoUtils;
 import bishop.base.Position;
 
@@ -104,7 +105,7 @@ public class TableStatistics {
 		symbolProbabilities = new HashMap<Integer, int[]>();
 		
 		for (int modelIndex = 0; modelIndex < symbolFrequencies.length; modelIndex++) {
-			final int[] probabilities = EnumerationProbabilityModel.calculateSymbolProbabilities(symbolFrequencies[modelIndex]);
+			final int[] probabilities = ProbabilityModelFactory.normalizeProbabilities(symbolFrequencies[modelIndex]);
 			symbolProbabilities.put(modelIndex, probabilities);
 		}
 	}

@@ -532,4 +532,13 @@ public class BoardConstants {
 		return NEXT_EP_FILE_MASK[color][file];
 	}
 
+	/**
+	 * Returns mask of squares where given piece can be placed.
+	 * @param pieceType type of piece
+	 * @return mask of allowed squares
+	 */
+	public static long getPieceAllowedSquares(final int pieceType) {
+		return (pieceType == PieceType.PAWN) ? ~BoardConstants.RANK_18_MASK : BitBoard.FULL;
+	}
+
 }

@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import range.EnumerationProbabilityModel;
 import range.IProbabilityModel;
+import range.ProbabilityModelFactory;
 import range.RangeDecoder;
 import range.RangeEncoder;
 
@@ -43,9 +44,9 @@ public class RangeTest {
 	public void correctnessTest() throws IOException {		
 		final Random rnd = new Random(12345);
 		final long[] frequencies = getRandomFrequencies(rnd);
-		final int[] probabilities = EnumerationProbabilityModel.calculateSymbolProbabilities(frequencies);
+		final int[] probabilities = ProbabilityModelFactory.normalizeProbabilities(frequencies);
 		
-		final IProbabilityModel model = new EnumerationProbabilityModel (probabilities);
+		final IProbabilityModel model = ProbabilityModelFactory.fromProbabilities(probabilities);
 		final int[] origSequence = getRandomArray (rnd, SEQUENCE_LENGTH, 0, SYMBOL_COUNT);
 		final long[] lowArray = new long[SEQUENCE_LENGTH];
 		final long[] highArray = new long[SEQUENCE_LENGTH];
@@ -89,9 +90,9 @@ public class RangeTest {
 	public void speedTest() throws IOException {
 		final Random rnd = new Random(12345);
 		final long[] frequencies = getRandomFrequencies(rnd);
-		final int[] probabilities = EnumerationProbabilityModel.calculateSymbolProbabilities(frequencies);
+		final int[] probabilities = ProbabilityModelFactory.normalizeProbabilities(frequencies);
 		
-		final IProbabilityModel model = new EnumerationProbabilityModel (probabilities);
+		final IProbabilityModel model = ProbabilityModelFactory.fromProbabilities (probabilities);
 		final int[] origSequence = getRandomArray (rnd, SEQUENCE_LENGTH, 0, SYMBOL_COUNT);
 		
 		// Encode

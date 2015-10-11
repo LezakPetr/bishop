@@ -20,6 +20,7 @@ public class Rank {
 	public static final int R8 = 7;
 	
 	public static final int LAST = 8;
+	public static final int COUNT = LAST - FIRST;
 	public static final int BIT_COUNT = 3;
 	
 	private static final char[] NOTATION = {'1', '2', '3', '4', '5', '6', '7', '8'};

@@ -123,5 +123,18 @@ public final class Piece {
 		return ((pieceType - PieceType.PROMOTION_FIGURE_FIRST) << Color.BIT_COUNT) + color;
 	}
 	
+	public static final Piece WHITE_PAWN = withColorAndType(Color.WHITE, PieceType.PAWN);
+	public static final Piece BLACK_PAWN = withColorAndType(Color.BLACK, PieceType.PAWN);
+	public static final Piece WHITE_KNIGHT = withColorAndType(Color.WHITE, PieceType.KNIGHT);
+	public static final Piece BLACK_KNIGHT = withColorAndType(Color.BLACK, PieceType.KNIGHT);
+	public static final Piece WHITE_BISHOP = withColorAndType(Color.WHITE, PieceType.BISHOP);
+	public static final Piece BLACK_BISHOP = withColorAndType(Color.BLACK, PieceType.BISHOP);
+	public static final Piece WHITE_ROOK = withColorAndType(Color.WHITE, PieceType.ROOK);
+	public static final Piece BLACK_ROOK = withColorAndType(Color.BLACK, PieceType.ROOK);
+	public static final Piece WHITE_QUEEN = withColorAndType(Color.WHITE, PieceType.QUEEN);
+	public static final Piece BLACK_QUEEN = withColorAndType(Color.BLACK, PieceType.QUEEN);
+	public static final Piece WHITE_KING = withColorAndType(Color.WHITE, PieceType.KING);
+	public static final Piece BLACK_KING = withColorAndType(Color.BLACK, PieceType.KING);
+	public static final Piece EMPTY = null;
 
 }

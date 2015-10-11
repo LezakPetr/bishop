@@ -88,6 +88,8 @@ public class Square {
 	// Range of squares where pawn can be placed
 	public static final int FIRST_PAWN_SQUARE = Square.A2;
 	public static final int LAST_PAWN_SQUARE = Square.H7 + 1;
+
+	public static final int COUNT = LAST - FIRST;
 	
 
 	/**

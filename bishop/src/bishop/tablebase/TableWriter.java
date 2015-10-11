@@ -11,6 +11,8 @@ import java.util.Map.Entry;
 import java.util.zip.CRC32;
 
 import range.EnumerationProbabilityModel;
+import range.IProbabilityModel;
+import range.ProbabilityModelFactory;
 import range.RangeBase;
 import range.RangeEncoder;
 import utils.ChecksumStream;
@@ -38,10 +40,10 @@ public class TableWriter extends TableIo {
 		symbolToResultMap = statistics.getSymbolToResultMap();
 		symbolProbabilities = statistics.getSymbolProbabilities();
 		
-		probabilityModelMap = new HashMap<Integer, EnumerationProbabilityModel>();
+		probabilityModelMap = new HashMap<Integer, IProbabilityModel>();
 		
 		for (Entry<Integer, int[]> entry: symbolProbabilities.entrySet()) {
-			EnumerationProbabilityModel model = new EnumerationProbabilityModel(entry.getValue());
+			final IProbabilityModel model = ProbabilityModelFactory.fromProbabilities(entry.getValue());
 			
 			probabilityModelMap.put(entry.getKey(), model);
 		}
@@ -260,8 +262,7 @@ public class TableWriter extends TableIo {
 					final int positionLabel = modelSelector.getModelIndex(position);
 					modelSelector.addSymbol(position, symbol);
 					
-					final EnumerationProbabilityModel probabilityModel = probabilityModelMap.get(positionLabel);
-					
+					final IProbabilityModel probabilityModel = probabilityModelMap.get(positionLabel);
 					encoder.encodeSymbol(probabilityModel, symbol);
 					
 					it.fillPosition(position);

@@ -73,23 +73,25 @@ public class PositionValidator {
 		final CastlingRights castlingRights = position.getCastlingRights();
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final long kingMask = position.getPiecesMask(color, PieceType.KING);
-			final long rookMask = position.getPiecesMask(color, PieceType.ROOK);
-			
 			for (int type = CastlingType.FIRST; type != CastlingType.LAST; type++) {
-				if (castlingRights.isRight(color, type)) {
-					final int rookBeginSquare = BoardConstants.getCastlingRookBeginSquare(color, type);
-					final int kingBeginSquare = BoardConstants.getCastlingKingBeginSquare(color);
-					
-					final boolean rookOk = (rookMask & BitBoard.getSquareMask(rookBeginSquare)) != 0;
-					final boolean kingOk = (kingMask & BitBoard.getSquareMask(kingBeginSquare)) != 0;
-					
-					if (!rookOk || !kingOk) {
-						errorSet.add(Error.CASTLING_RIGHTS);
-					}
+				if (castlingRights.isRight(color, type) && !isCastlingRightPossible (position, color, type)) {
+					errorSet.add(Error.CASTLING_RIGHTS);
 				}
 			}
 		}
+	}
+	
+	public static boolean isCastlingRightPossible (final Position position, final int color, final int type) {
+		final long kingMask = position.getPiecesMask(color, PieceType.KING);
+		final long rookMask = position.getPiecesMask(color, PieceType.ROOK);
+
+		final int rookBeginSquare = BoardConstants.getCastlingRookBeginSquare(color, type);
+		final int kingBeginSquare = BoardConstants.getCastlingKingBeginSquare(color);
+		
+		final boolean rookOk = (rookMask & BitBoard.getSquareMask(rookBeginSquare)) != 0;
+		final boolean kingOk = (kingMask & BitBoard.getSquareMask(kingBeginSquare)) != 0;
+		
+		return rookOk && kingOk;
 	}
 
 	private void checkPawnsOnBorderRanks() {
