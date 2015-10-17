@@ -11,9 +11,7 @@ import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
 import bishop.base.Rank;
-import bishop.base.Square;
 import bishop.tables.FrontSquaresOnSameFileTable;
-import bishop.tables.PawnAttackTable;
 
 public final class EndingPositionEvaluator implements IPositionEvaluator {
 	

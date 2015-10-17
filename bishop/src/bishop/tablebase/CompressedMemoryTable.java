@@ -2,6 +2,7 @@ package bishop.tablebase;
 
 import utils.BitNumberArray;
 import utils.INumberArray;
+import utils.IntUtils;
 
 public class CompressedMemoryTable extends MemoryTable {
 
@@ -17,7 +18,7 @@ public class CompressedMemoryTable extends MemoryTable {
 		
 		this.symbolToResultMap = symbolToResultMap;
 		
-		final int elementBits = Integer.SIZE - Integer.numberOfLeadingZeros(symbolToResultMap.getSymbolCount() - 1);
+		final int elementBits = IntUtils.ceilLog(symbolToResultMap.getSymbolCount());
 		this.table = new BitNumberArray(getItemCount(), elementBits);
 	}
 	

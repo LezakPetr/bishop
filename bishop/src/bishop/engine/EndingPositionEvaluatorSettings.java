@@ -1,11 +1,8 @@
 package bishop.engine;
 
-import bishop.base.BoardConstants;
 import bishop.base.Color;
 import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
-import bishop.base.Rank;
-import bishop.base.Square;
 
 public final class EndingPositionEvaluatorSettings {
 
@@ -15,7 +12,6 @@ public final class EndingPositionEvaluatorSettings {
 	private final int[] ruleOfSquareBonus;
 	
 	private final static double RULE_OF_SQUARE_BONUS = 5.0;
-	private final static double DOUBLE_PAWN_BONUS = -0.4;
 	
 	
 	public EndingPositionEvaluatorSettings() {

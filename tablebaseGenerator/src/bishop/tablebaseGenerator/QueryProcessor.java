@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import utils.IoUtils;
-
 import bishop.base.BitBoard;
 import bishop.base.BitLoop;
 import bishop.base.MaterialHash;
@@ -16,10 +14,8 @@ import bishop.base.Rank;
 import bishop.base.Square;
 import bishop.tablebase.FileNameCalculator;
 import bishop.tablebase.FilePositionResultSource;
-import bishop.tablebase.SquareCombination;
 import bishop.tablebase.TableBlockCache;
 import bishop.tablebase.TableResult;
-import bishop.tablebase.TableStatistics;
 import bishop.tablebase.VariationIterator;
 
 

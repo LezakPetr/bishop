@@ -13,7 +13,6 @@ import utils.ShortRingBuffer;
 
 public class OutputFileTableIterator extends TableIteratorBase implements ITableIterator, AutoCloseable {
 
-	private final String path;
 	private final InputFileTableIterator inputIterator;
 	private final OutputStream stream;
 	private int result;
@@ -26,7 +25,6 @@ public class OutputFileTableIterator extends TableIteratorBase implements ITable
 	public OutputFileTableIterator(final InputFileTableIterator inputIterator, final String path, final TableDefinition tableDefinition, final long beginIndex, final long size) throws FileNotFoundException {
 		super(tableDefinition, beginIndex);
 		
-		this.path = path;
 		this.buffer = new ShortRingBuffer(8);
 		this.stream = new BufferedOutputStream(new FileOutputStream(path));
 		this.inputIterator = inputIterator;

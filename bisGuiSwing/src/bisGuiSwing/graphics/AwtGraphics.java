@@ -1,19 +1,12 @@
 package bisGuiSwing.graphics;
 
 import java.awt.Graphics2D;
-import java.io.IOException;
-import java.io.InputStream;
-
-import javax.crypto.AEADBadTagException;
-import javax.imageio.ImageIO;
-
 import bisGui.graphics.Color;
 import bisGui.graphics.GraphicContext;
 import bisGui.graphics.IGraphics;
 import bisGui.graphics.IImage;
 import bisGui.math.IVector;
 import bisGui.math.Vector2D;
-import bisGui.math.Vectors;
 
 public class AwtGraphics implements IGraphics {
 

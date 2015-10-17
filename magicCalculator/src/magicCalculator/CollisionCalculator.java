@@ -4,7 +4,6 @@ package magicCalculator;
 import java.util.Arrays;
 
 import optimization.IEvaluator;
-import bishop.base.BitBoard;
 import bishop.base.BitBoardCombinator;
 import bishop.base.Square;
 

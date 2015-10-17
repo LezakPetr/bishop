@@ -2,21 +2,11 @@ package bishop.gui;
 
 import java.awt.Component;
 import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.io.PrintWriter;
-
-import javax.swing.JComponent;
 
 import utils.Logger;
 import bishop.base.BitBoard;

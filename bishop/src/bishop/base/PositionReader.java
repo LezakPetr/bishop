@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import range.IProbabilityModel;
-import range.ProbabilityModelFactory;
 import range.RangeDecoder;
 
 public class PositionReader extends PositionIo {

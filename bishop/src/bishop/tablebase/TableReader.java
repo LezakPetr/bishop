@@ -6,10 +6,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.TreeMap;
 import java.util.zip.CRC32;
 
-import range.EnumerationProbabilityModel;
 import range.IProbabilityModel;
 import range.ProbabilityModelFactory;
 import range.RangeBase;
@@ -108,8 +106,8 @@ public class TableReader extends TableIo {
 			
 			IoUtils.skip (countingStream, blockIndex * bytesPerBlockPosition);
 			
-			final long prevPos = IoUtils.readNumberBinary(countingStream, bytesPerBlockPosition);
-			final long nextPos = IoUtils.readNumberBinary(countingStream, bytesPerBlockPosition);
+			final long prevPos = IoUtils.readUnsignedNumberBinary(countingStream, bytesPerBlockPosition);
+			final long nextPos = IoUtils.readUnsignedNumberBinary(countingStream, bytesPerBlockPosition);
 			final int blockLength = (int) (nextPos - prevPos);
 			
 			IoUtils.skip (countingStream, (blockPositionSize - blockIndex - 2) * bytesPerBlockPosition + prevPos);
@@ -136,7 +134,7 @@ public class TableReader extends TableIo {
 		final byte[] blockData = IoUtils.readByteArray(stream, blockLength - CRC_SIZE);
 		final ByteArrayInputStream memoryStream = new ByteArrayInputStream(blockData);
 		
-		final long expectedCrc = IoUtils.readNumberBinary(stream, CRC_SIZE);
+		final long expectedCrc = IoUtils.readUnsignedNumberBinary(stream, CRC_SIZE);
 		final CRC32 crcChecksum = new CRC32();
 		final ChecksumStream checksumStream = new ChecksumStream(crcChecksum);
 				
@@ -172,19 +170,15 @@ public class TableReader extends TableIo {
 	}
 
 	private void readHeaderFromStream(final CountingInputStream stream) throws IOException {
-		for (int i = 0; i < HEADER_MAGIC.length; i++) {
-			final int headerByte = IoUtils.readByteBinary(stream);
-			
-			if (headerByte != HEADER_MAGIC[i])
-				throw new RuntimeException("Wrong magic");
-		}
+		if (!IoUtils.hasExpectedBytes(stream, HEADER_MAGIC))
+			throw new RuntimeException("Wrong magic");
 		
 		final byte version = IoUtils.readByteBinary(stream);
 		
 		if (version < MIN_VERSION || version > MAX_VERSION)
 			throw new RuntimeException("Unknown version of the table");
 		
-		final byte flags = IoUtils.readByteBinary(stream);
+		/*final byte flags = */IoUtils.readByteBinary(stream);
 		
 		readTableDefinition(version, stream);
 		readProbabilityModel(stream, version);
@@ -194,7 +188,7 @@ public class TableReader extends TableIo {
 	}
 
 	private void readBlockLengthConstants(final InputStream stream) throws IOException {
-		blockPositionSize = IoUtils.readNumberBinary(stream, LAYER_LENGTH_BYTES);
+		blockPositionSize = IoUtils.readUnsignedNumberBinary(stream, LAYER_LENGTH_BYTES);
 		blockIndexExponent = IoUtils.readByteBinary(stream);
 		bytesPerBlockPosition = IoUtils.readByteBinary(stream);
 		
@@ -205,7 +199,7 @@ public class TableReader extends TableIo {
 		blockPositions = new HugeLongArray(blockPositionSize);
 				
 		for (long blockIndex = 0; blockIndex < blockPositionSize; blockIndex++) {
-			final long position = IoUtils.readNumberBinary(stream, bytesPerBlockPosition);
+			final long position = IoUtils.readUnsignedNumberBinary(stream, bytesPerBlockPosition);
 			
 			blockPositions.setAt(blockIndex, position); 
 		}
@@ -239,7 +233,7 @@ public class TableReader extends TableIo {
 		
 		switch (version) {
 			case 0:
-				symbolCount = (int) IoUtils.readNumberBinary(stream, SYMBOL_COUNT_SIZE);
+				symbolCount = (int) IoUtils.readUnsignedNumberBinary(stream, SYMBOL_COUNT_SIZE);
 				
 				final byte dat = IoUtils.readByteBinary(stream);
 				final int historyLength = (dat & HISTORY_LENGTH_MASK) >>> HISTORY_LENGTH_SHIFT;
@@ -282,7 +276,7 @@ public class TableReader extends TableIo {
 					}
 					else {
 						 if (head == FULL_PROBABILITY_ID) {
-							final int movedProbability = (int) IoUtils.readNumberBinary(stream, FULL_PROBABILITY_SIZE);
+							final int movedProbability = (int) IoUtils.readUnsignedNumberBinary(stream, FULL_PROBABILITY_SIZE);
 							 
 							probabilities[symbol] = movedProbability + RangeBase.MIN_SYMBOL_PROBABILITY;
 							symbol++;
@@ -314,7 +308,7 @@ public class TableReader extends TableIo {
 		final int[] symbolToResultTable = new int[symbolCount];
 
 		for (int symbol = 0; symbol < symbolCount; symbol++) {
-			int result = (int) IoUtils.readNumberBinary(stream, RESULT_SIZE);
+			int result = (int) IoUtils.readUnsignedNumberBinary(stream, RESULT_SIZE);
 			
 			if (result > Short.MAX_VALUE) {
 				result -= 1 << (Byte.SIZE * RESULT_SIZE);

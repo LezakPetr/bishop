@@ -2,7 +2,6 @@ package bishopTests;
 
 import bishop.base.IMoveGenerator;
 import bishop.base.PseudoLegalMoveGenerator;
-import bishopTests.MoveGeneratorTestBase.TestValue;
 
 public class PseudoLegalMoveGeneratorTest extends MoveGeneratorTestBase {
 	

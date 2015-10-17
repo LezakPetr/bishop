@@ -5,7 +5,6 @@ import java.io.StringWriter;
 
 import utils.ICopyable;
 import bishop.tablebase.FileNameCalculator;
-import bishop.tablebase.TableDefinition;
 import bishop.tables.MaterialHashColorMaskTable;
 import bishop.tables.MaterialHashPieceOffsetTable;
 

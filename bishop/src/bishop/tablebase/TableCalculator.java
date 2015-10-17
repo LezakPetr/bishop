@@ -121,13 +121,9 @@ public class TableCalculator {
 		}
 	}
 
-	public BothColorPositionResultSource getTable() {
-		final BothColorPositionResultSource<ITable> copy = new BothColorPositionResultSource<>();
-		
+	public void assignTablesTo(final BothColorPositionResultSource<? super PersistentTable> result) {
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++)
-			copy.setBaseSource(onTurn, bothTables.getBaseSource(onTurn));
-		
-		return bothTables;
+			result.setBaseSource(onTurn, bothTables.getBaseSource(onTurn));
 	}
 	
 	private static void initializeBlocks(final PersistentTable table) throws FileNotFoundException, IOException {

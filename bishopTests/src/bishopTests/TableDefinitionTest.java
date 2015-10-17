@@ -8,7 +8,6 @@ import bishop.base.MaterialHash;
 import bishop.base.PieceType;
 import bishop.base.Position;
 import bishop.base.PositionValidator;
-import bishop.base.Square;
 import bishop.tablebase.ITable;
 import bishop.tablebase.ITableIterator;
 import bishop.tablebase.PositionTableIterator;

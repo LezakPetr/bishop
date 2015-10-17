@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.zip.CRC32;
 
-import range.EnumerationProbabilityModel;
 import range.IProbabilityModel;
 import range.ProbabilityModelFactory;
 import range.RangeBase;
@@ -18,7 +17,6 @@ import range.RangeEncoder;
 import utils.ChecksumStream;
 import utils.HugeLongArray;
 import utils.IoUtils;
-import bishop.base.MaterialHash;
 import bishop.base.Position;
 
 public class TableWriter extends TableIo {

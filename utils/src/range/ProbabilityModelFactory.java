@@ -84,7 +84,7 @@ public class ProbabilityModelFactory {
 			final long frequency = symbolFrequencies[i];
 			
 			// probability = round (frequency * remainingProbabilityRange / frequencySum)
-			int probability = (int) ((frequency * remainingProbabilityRange + frequencySum / 2) / frequencySum);
+			int probability = (frequency == 0) ? 0 : (int) ((frequency * remainingProbabilityRange + frequencySum / 2) / frequencySum);
 			
 			final int remainingSymbolCount = symbolCount - i - 1;
 			probability = Math.min(probability, remainingProbabilityRange - remainingSymbolCount);

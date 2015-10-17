@@ -1,17 +1,10 @@
 package bishopTests;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
 import bishop.base.Game;
-import bishop.base.IGameNode;
-import bishop.base.ITreeIterator;
-import bishop.base.Move;
-import bishop.base.PgnReader;
-import bishop.base.Position;
 import bishop.engine.TablebasePositionEvaluator;
 
 public abstract class EloTest extends SearchPerformanceTest {

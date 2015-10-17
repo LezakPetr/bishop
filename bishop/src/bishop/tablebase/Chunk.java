@@ -1,7 +1,5 @@
 package bishop.tablebase;
 
-import java.util.Arrays;
-
 import bishop.base.BitBoard;
 import bishop.base.BitLoop;
 import bishop.base.BoardConstants;
@@ -16,7 +14,6 @@ import bishop.tables.EmptyEpMaskTable;
 import bishop.tables.FigureAttackTable;
 import bishop.tables.PawnAttackTable;
 import bishop.tables.SquareSymmetryTable;
-import bishop.tables.SymmetryTable;
 
 /**
  * Chunk is a immutable mapping between positions and table indices. 

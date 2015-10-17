@@ -4,8 +4,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 
-import sun.print.PSPrinterJob.EPSPrinter;
-
 import bishop.engine.Evaluation;
 import bishop.tables.BetweenTable;
 import bishop.tables.FigureAttackTable;

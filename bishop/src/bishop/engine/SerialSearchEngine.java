@@ -9,7 +9,6 @@ import bishop.base.BitBoard;
 import bishop.base.Color;
 import bishop.base.HandlerRegistrarImpl;
 import bishop.base.IHandlerRegistrar;
-import bishop.base.IMoveGenerator;
 import bishop.base.IMoveWalker;
 import bishop.base.LegalMoveFinder;
 import bishop.base.Move;

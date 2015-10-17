@@ -5,14 +5,18 @@
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
     <manifest generateManifest="true" mainClassHandleIdentifier="=bishop/src&lt;bishop.gui{Main.java[Main" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
-        <sealing sealJar="false">
+        <sealing sealJar="true">
             <packagesToSeal/>
             <packagesToUnSeal/>
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <file path="/bisGuiSwing/.project"/>
+        <file path="/bisGuiSwing/.classpath"/>
+        <javaElement handleIdentifier="=bishop/res"/>
         <javaElement handleIdentifier="=utils/src"/>
         <javaElement handleIdentifier="=bishop/src"/>
-        <javaElement handleIdentifier="=crypto/src"/>
+        <javaElement handleIdentifier="=bisGuiSwing/src"/>
+        <javaElement handleIdentifier="=bisGui"/>
     </selectedElements>
 </jardesc>

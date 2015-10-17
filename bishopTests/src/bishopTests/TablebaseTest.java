@@ -1,11 +1,6 @@
 package bishopTests;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -14,9 +9,7 @@ import parallel.Parallel;
 import bishop.base.Color;
 import bishop.base.MaterialHash;
 import bishop.tablebase.BothColorPositionResultSource;
-import bishop.tablebase.FileNameCalculator;
 import bishop.tablebase.ITable;
-import bishop.tablebase.MemoryTable;
 import bishop.tablebase.PersistentTable;
 import bishop.tablebase.TableCalculator;
 import bishop.tablebase.TableReader;
@@ -46,7 +39,9 @@ public class TablebaseTest {
 			
 			calculator.calculate();
 			
-			final BothColorPositionResultSource<PersistentTable> bothTables = calculator.getTable();
+			final BothColorPositionResultSource<PersistentTable> bothTables = new BothColorPositionResultSource<>();
+			calculator.assignTablesTo(bothTables);
+			
 			final BothColorPositionResultSource<ITable> bothTablesRead = new BothColorPositionResultSource<ITable>();
 			
 			for (int color = Color.FIRST; color < Color.LAST; color++) {

@@ -4,15 +4,12 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
 import java.io.PushbackInputStream;
 
 import utils.IoUtils;
 
 public class InputFileTableIterator extends TableIteratorBase implements AutoCloseable {
-
-	private final String path;
+	
 	private final PushbackInputStream stream;
 	private short result;
 	private boolean initialized;
@@ -24,7 +21,6 @@ public class InputFileTableIterator extends TableIteratorBase implements AutoClo
 	public InputFileTableIterator (final String path, final TableDefinition tableDefinition, final long beginIndex, final long size) throws FileNotFoundException {
 		super(tableDefinition, beginIndex);
 		
-		this.path = path;
 		this.stream = new PushbackInputStream(new BufferedInputStream(new FileInputStream(path)));
 		this.initialized = true;
 		this.mode = null;

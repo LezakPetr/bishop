@@ -7,7 +7,7 @@ import java.util.Random;
 import bishop.base.Move;
 import bishop.base.Position;
 
-public final class BookRecord {
+public class BookRecord {
 
 	private final Position position;
 	private final List<BookMove> moveList;

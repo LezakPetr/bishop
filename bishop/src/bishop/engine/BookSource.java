@@ -1,5 +1,6 @@
 package bishop.engine;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,7 +12,7 @@ import bishop.base.ITreeIterator;
 import bishop.base.PgnReader;
 import bishop.base.Position;
 
-public final class BookSource implements IBook {
+public final class BookSource implements IBook<BookRecord> {
 
 	private final HashMap<Position, BookRecord> positionMap;
 	
@@ -93,5 +94,10 @@ public final class BookSource implements IBook {
 	
 	public int getPositionCount() {
 		return positionMap.size();
+	}
+
+	@Override
+	public Collection<BookRecord> getAllRecords() {
+		return positionMap.values();
 	}
 }

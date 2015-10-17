@@ -1,7 +1,5 @@
 package bisGui.graphics;
 
-import java.io.InputStream;
-
 import bisGui.math.IVector;
 
 

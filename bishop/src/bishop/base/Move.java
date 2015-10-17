@@ -33,7 +33,7 @@ public final class Move {
 	private static final int NOT_FINISH_MASK = ~FINISH_MASK;
 	
 	
-	private static final int COMPRESSED_MOVE_MASK = BEGIN_SQUARE_MASK | TARGET_SQUARE_MASK | PROMOTION_PIECE_TYPE_MASK;
+	public static final int COMPRESSED_MOVE_MASK = BEGIN_SQUARE_MASK | TARGET_SQUARE_MASK | PROMOTION_PIECE_TYPE_MASK;
 	
 	public static final int NONE_COMPRESSED_MOVE = 0;
 	
