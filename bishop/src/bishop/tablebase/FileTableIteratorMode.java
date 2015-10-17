@@ -12,7 +12,7 @@ public enum FileTableIteratorMode {
 	FULL (0, 64) {
 		@Override
 		public short read (final InputStream stream) throws IOException {
-			short result = (short) IoUtils.readNumberBinary(stream, 2);
+			short result = (short) IoUtils.readUnsignedNumberBinary(stream, 2);
 			
 			if ((result & 0x2000) != 0)
 				result |= 0xC000;

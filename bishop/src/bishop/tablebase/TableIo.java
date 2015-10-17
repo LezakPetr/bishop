@@ -3,7 +3,6 @@ package bishop.tablebase;
 import java.io.IOException;
 import java.util.Map;
 
-import range.EnumerationProbabilityModel;
 import range.IProbabilityModel;
 import range.RangeBase;
 import utils.ChecksumStream;

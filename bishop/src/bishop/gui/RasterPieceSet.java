@@ -1,6 +1,5 @@
 package bishop.gui;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 import zip.ZipReader;

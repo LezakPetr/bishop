@@ -6,7 +6,6 @@ import java.util.Random;
 
 import utils.Logger;
 
-import bishop.base.GlobalSettings;
 import bishop.base.Move;
 import bishop.base.MoveList;
 import bishop.base.Position;
@@ -22,7 +21,7 @@ public class SearchManagerAlgo {
 	private ISearchStrategy strategy;
 	private SearchSettings searchSettings;
 	private IHashTable hashTable;
-	private IBook book;
+	private IBook<?> book;
 	private boolean bookSearchEnabled;
 	private boolean singleMoveSearchEnabled;
 	private Position initialPosition;
@@ -71,11 +70,11 @@ public class SearchManagerAlgo {
 		this.strategy = strategy;
 	}
 
-	public IBook getBook() {
+	public IBook<?> getBook() {
 		return book;
 	}
 
-	public void setBook(IBook book) {
+	public void setBook(final IBook<?> book) {
 		this.book = book;
 	}
 	

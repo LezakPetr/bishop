@@ -2,10 +2,8 @@ package bishop.tablebaseGenerator;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import bishop.tablebase.ITable;
 import bishop.tablebase.TableReader;
-import bishop.tablebase.TableStatistics;
 import bishop.tablebase.TableWriter;
 
 public class TablebaseOptimizer {

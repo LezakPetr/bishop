@@ -3,7 +3,6 @@ package bishop.engine;
 import bishop.base.Color;
 import bishop.base.Move;
 import bishop.base.PieceType;
-import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
 import bishop.base.Rank;
 import bishop.base.Square;

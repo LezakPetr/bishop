@@ -30,7 +30,7 @@ public class FileTableIteratorChecksum {
 	}
 	
 	public boolean validateCrcFromStream (final InputStream stream) throws IOException {
-		final long crcVal = IoUtils.readNumberBinary(stream, CRC_SIZE);
+		final long crcVal = IoUtils.readUnsignedNumberBinary(stream, CRC_SIZE);
 		checksumStream.close();
 		
 		return crcVal == crc.getValue();

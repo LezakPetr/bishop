@@ -51,7 +51,7 @@ public interface ISearchManager {
 	 * Manager must be in STOPPED state.
 	 * @param book new book
 	 */
-	public void setBook (final IBook book);
+	public void setBook (final IBook<?> book);
 	
 	/**
 	 * Starts searching of given position.

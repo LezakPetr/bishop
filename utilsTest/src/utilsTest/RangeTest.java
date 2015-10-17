@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.Random;
 import org.junit.Assert;
 import org.junit.Test;
-import range.EnumerationProbabilityModel;
 import range.IProbabilityModel;
 import range.ProbabilityModelFactory;
 import range.RangeDecoder;

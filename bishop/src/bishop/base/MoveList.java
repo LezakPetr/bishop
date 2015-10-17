@@ -1,6 +1,5 @@
 package bishop.base;
 
-import java.util.Arrays;
 import java.util.Iterator;
 
 public class MoveList implements Iterable<Move> {

@@ -18,8 +18,6 @@ import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
 import bishop.base.Square;
 import bishop.base.StandardAlgebraicNotationReader;
-import bishop.engine.AttackCalculator;
-import bishop.engine.AttackEvaluationTable;
 
 
 public class PositionTest {

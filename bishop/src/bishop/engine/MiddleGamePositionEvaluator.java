@@ -9,7 +9,6 @@ import bishop.base.File;
 import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
-import bishop.base.Rank;
 import bishop.base.Square;
 import bishop.tables.MainKingProtectionPawnsTable;
 import bishop.tables.SecondKingProtectionPawnsTable;

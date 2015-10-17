@@ -46,4 +46,5 @@ public class Utils {
 			return 4 * capturedPieceEvaluation - movingPieceEvaluation;
 		}
 	}
+	
 }

@@ -15,7 +15,16 @@ public class UnaryProbabilityModel implements IProbabilityModel {
 
 	@Override
 	public int getCdfLowerBound(final int symbol) {
-		return 0;
+		switch (symbol) {
+			case 0:
+				return 0;
+				
+			case 1:
+				return RangeBase.MAX_SYMBOL_CDF;
+				
+			default:
+				throw new RuntimeException("Unknown symbol " + symbol);
+		}
 	}
 
 	@Override

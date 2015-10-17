@@ -3,8 +3,6 @@ package bishopTests;
 import org.junit.Assert;
 import org.junit.Test;
 
-import utils.IoUtils;
-
 import bishop.base.BitBoard;
 import bishop.base.BoardConstants;
 import bishop.base.Color;

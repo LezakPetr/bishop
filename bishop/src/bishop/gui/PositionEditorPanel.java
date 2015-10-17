@@ -7,7 +7,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -25,7 +24,6 @@ import javax.swing.JToggleButton;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
-import bisGui.graphics.IImage;
 import bisGui.widgets.MouseButton;
 import bisGuiSwing.graphics.AwtImage;
 import bishop.base.CastlingRights;

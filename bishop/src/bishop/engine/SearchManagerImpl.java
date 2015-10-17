@@ -19,7 +19,6 @@ import bishop.base.MoveList;
 import bishop.base.Position;
 import bishop.engine.ISearchEngine.EngineState;
 import bishop.engine.SearchNode.EvaluationState;
-import bishop.engine.SearchNode.TreeState;
 
 
 public final class SearchManagerImpl implements ISearchManager, ISearchStrategyHandler, ISearchManagerAlgoHandler {
@@ -154,7 +153,7 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 	 * Manager must be in STOPPED state.
 	 * @param book new book
 	 */
-	public void setBook (final IBook book) {
+	public void setBook (final IBook<?> book) {
 		synchronized (monitor) {
 			checkManagerState(ManagerState.STOPPED);
 			algo.setBook (book);

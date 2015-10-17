@@ -8,10 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
 import parallel.Parallel;
 
 import bishop.base.Color;
@@ -19,14 +15,11 @@ import bishop.base.MaterialHash;
 import bishop.tablebase.BothColorPositionResultSource;
 import bishop.tablebase.FileNameCalculator;
 import bishop.tablebase.FilePositionResultSource;
-import bishop.tablebase.IPositionResultSource;
 import bishop.tablebase.ITable;
 import bishop.tablebase.ITableRead;
-import bishop.tablebase.MemoryTable;
 import bishop.tablebase.PersistentTable;
 import bishop.tablebase.TableBlockCache;
 import bishop.tablebase.TableCalculator;
-import bishop.tablebase.TableDefinition;
 import bishop.tablebase.TableReader;
 import bishop.tablebase.TableSwitch;
 import bishop.tablebase.TableValidator;
@@ -54,7 +47,8 @@ public class GenerateTablebase {
 
 		calculator.calculate();
 		
-		bothTables = calculator.<ITable>getTable();
+		bothTables = new BothColorPositionResultSource<>();
+		calculator.assignTablesTo(bothTables);
 	}
 
 	private void readSubTables() throws IOException {

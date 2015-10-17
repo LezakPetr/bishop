@@ -9,8 +9,6 @@ import bishop.tablebase.FileNameCalculator;
 import bishop.tablebase.FilePositionResultSource;
 import bishop.tablebase.ITableRead;
 import bishop.tablebase.TableBlockCache;
-import bishop.tablebase.TableDefinition;
-import bishop.tablebase.TableDefinitionRegistrar;
 import bishop.tablebase.TableResult;
 import bishop.tablebase.TableSwitch;
 import bishop.tablebase.TablebaseFileNameFilter;

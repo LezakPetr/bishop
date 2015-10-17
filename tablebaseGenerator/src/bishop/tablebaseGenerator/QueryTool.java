@@ -1,24 +1,12 @@
 package bishop.tablebaseGenerator;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PushbackReader;
-import java.util.List;
-
-import java.util.ArrayList;
-
 import utils.IoUtils;
 
 import bishop.base.Color;
-import bishop.base.MaterialHash;
 import bishop.base.Piece;
-import bishop.base.PieceType;
-import bishop.base.Position;
-import bishop.base.Rank;
 import bishop.base.Square;
-import bishop.tablebase.FileNameCalculator;
-import bishop.tablebase.FilePositionResultSource;
-import bishop.tablebase.TableBlockCache;
 
 public class QueryTool {
 		

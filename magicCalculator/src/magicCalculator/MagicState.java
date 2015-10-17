@@ -2,8 +2,6 @@ package magicCalculator;
 
 import java.util.Random;
 
-import bishop.base.Square;
-
 import optimization.IState;
 
 public class MagicState implements IState<MagicState, MagicSettings> {

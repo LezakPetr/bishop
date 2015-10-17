@@ -21,6 +21,10 @@ public class IoUtils {
 	
 	private static final String BACKSLASHED_CHARACTERS = "=\n";
 	private static final String PLACEHOLDER_CHARACTERS = "=n";
+	
+	
+	public static final int INT_BYTES = Integer.SIZE / Byte.SIZE;
+	public static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
 
 	/**
 	 * Reads character from given reader and returns it.
@@ -341,7 +345,7 @@ public class IoUtils {
 		}
 	}
 
-	public static long readNumberBinary(final InputStream stream, final int length) throws IOException {
+	private static long readNumberBinary(final InputStream stream, final int length) throws IOException {
 		long num = 0;
 		
 		for (int i = 0; i < length; i++) {
@@ -351,6 +355,17 @@ public class IoUtils {
 		}
 		
 		return num;
+	}
+	
+	public static long readUnsignedNumberBinary(final InputStream stream, final int length) throws IOException {
+		return readNumberBinary(stream, length);
+	}
+	
+	public static long readSignedNumberBinary(final CountingInputStream stream, final int length) throws IOException {
+		final long number = readNumberBinary(stream, length);
+		final int shift = 8 * (LONG_BYTES - length);
+		
+		return (number << shift) >> shift;   // Sign extension
 	}
 	
 	public static void skip (final InputStream stream, final long count) throws IOException {
@@ -368,19 +383,6 @@ public class IoUtils {
 
 	public static PushbackReader getPushbackReader(final String str) {
 		return new PushbackReader(new StringReader(str));
-	}
-
-	public static void copyStream(final FileInputStream src, final OutputStream dst) throws IOException {
-		final byte[] buffer = new byte[1024];
-		
-		while (true) {
-			final int read = src.read(buffer);
-			
-			if (read < 0)
-				break;
-			
-			dst.write(buffer, 0, read);
-		}
 	}
 	
 	public static void writeSize (final PrintStream stream, final double size) {
@@ -406,4 +408,15 @@ public class IoUtils {
 		stream.format("%1$.2fGiB", size / giga);
 	}
 
+	public static boolean hasExpectedBytes (final InputStream stream, final byte[] expectedBytes) throws IOException {
+		boolean expected = true;
+		
+		for (int i = 0; i < expectedBytes.length; i++) {
+			final int readByte = IoUtils.readByteBinary(stream);
+			
+			expected = expected && (readByte == expectedBytes[i]);
+		}
+		
+		return expected;
+	}
 }
