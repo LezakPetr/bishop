@@ -19,7 +19,7 @@ public class CalculationTaskProcessor implements Callable<Throwable> {
 	private final ReverseTableWalker reverseMoveWalker;
 	
 	private long changeCount;
-	private PersistentTable ownTable;
+	private IStagedTable ownTable;
 	
 	public CalculationTaskProcessor(final TableSwitch resultSource) {
 		this.position = new Position(true);
@@ -41,7 +41,7 @@ public class CalculationTaskProcessor implements Callable<Throwable> {
 		this.reverseMoveGenerator.setPosition(position);
 	}
 	
-	public void initialize(final boolean firstIteration, final TableDefinition oppositeTableDefinition, final BitArray prevPositionsToCheck, final PersistentTable ownTable) {
+	public void initialize(final boolean firstIteration, final TableDefinition oppositeTableDefinition, final BitArray prevPositionsToCheck, final IStagedTable ownTable) {
 		this.firstIteration = firstIteration;
 		this.prevPositionsToCheck = prevPositionsToCheck;
 		this.ownTable = ownTable;
@@ -76,7 +76,7 @@ public class CalculationTaskProcessor implements Callable<Throwable> {
 		try {
 			while (true) {
 				try (
-					final OutputFileTableIterator iterator = ownTable.getOutputBlock()
+					final IClosableTableIterator iterator = ownTable.getOutputBlock()
 				) {
 					
 					if (iterator == null)

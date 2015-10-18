@@ -9,6 +9,8 @@ import parallel.Parallel;
 import bishop.base.Color;
 import bishop.base.MaterialHash;
 import bishop.tablebase.BothColorPositionResultSource;
+import bishop.tablebase.IPositionResultSource;
+import bishop.tablebase.IStagedTable;
 import bishop.tablebase.ITable;
 import bishop.tablebase.PersistentTable;
 import bishop.tablebase.TableCalculator;
@@ -39,13 +41,13 @@ public class TablebaseTest {
 			
 			calculator.calculate();
 			
-			final BothColorPositionResultSource<PersistentTable> bothTables = new BothColorPositionResultSource<>();
+			final BothColorPositionResultSource<IStagedTable> bothTables = new BothColorPositionResultSource<>();
 			calculator.assignTablesTo(bothTables);
 			
 			final BothColorPositionResultSource<ITable> bothTablesRead = new BothColorPositionResultSource<ITable>();
 			
 			for (int color = Color.FIRST; color < Color.LAST; color++) {
-				final PersistentTable table = bothTables.getBaseSource(color);
+				final IStagedTable table = bothTables.getBaseSource(color);
 				table.switchToModeRead(parallel);
 				
 				final TableWriter writer = new TableWriter();
