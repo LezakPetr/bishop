@@ -22,11 +22,13 @@ public class TableCalculator {
 	
 	private final MaterialHash[] materialHashArray;
 	private final Parallel parallel;
-	private final BothColorPositionResultSource<PersistentTable> bothTables;
+	private final BothColorPositionResultSource<IStagedTable> bothTables;
 	private final TableSwitch resultSource;
 	
 	private BitArray prevPositionsToCheck;
 	private BitArray nextPositionsToCheck;
+	
+	private boolean usePersistentTable = true;
 
 	
 	public TableCalculator(final MaterialHash[] materialHashArray, final Parallel parallel) {
@@ -36,7 +38,7 @@ public class TableCalculator {
 			this.materialHashArray[color] = materialHashArray[color].copy();
 		
 		this.parallel = parallel;		
-		this.bothTables = new BothColorPositionResultSource<PersistentTable>();
+		this.bothTables = new BothColorPositionResultSource<IStagedTable>();
 		
 		this.resultSource = new TableSwitch();
 	}
@@ -49,7 +51,7 @@ public class TableCalculator {
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
 			final TableDefinition tableDefinition = new TableDefinition(TableWriter.VERSION, materialHashArray[onTurn]);
 			final MaterialHash materialHash = tableDefinition.getMaterialHash();
-			final PersistentTable table = new PersistentTable(tableDefinition, "/tmp/" + tableDefinition.getMaterialHash().toString());
+			final IStagedTable table = createStagedTable(tableDefinition);
 			
 			bothTables.setBaseSource(onTurn, table);
 			resultSource.addTable(materialHash, table);
@@ -68,9 +70,16 @@ public class TableCalculator {
 		
 		printData();
 	}
+
+	private IStagedTable createStagedTable(final TableDefinition tableDefinition) {
+		if (usePersistentTable)
+			return new PersistentTable(tableDefinition, "/tmp/" + tableDefinition.getMaterialHash().toString());
+		else
+			return new MemoryStagedTable(tableDefinition);
+	}
 	
 	private void printData() {
-		final PersistentTable table = bothTables.getBaseSource(Color.WHITE);
+		final IStagedTable table = bothTables.getBaseSource(Color.WHITE);
 		long winCount = 0;
 		long loseCount = 0;
 		long drawCount = 0;
@@ -121,12 +130,12 @@ public class TableCalculator {
 		}
 	}
 
-	public void assignTablesTo(final BothColorPositionResultSource<? super PersistentTable> result) {
+	public void assignTablesTo(final BothColorPositionResultSource<? super IStagedTable> result) {
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++)
 			result.setBaseSource(onTurn, bothTables.getBaseSource(onTurn));
 	}
 	
-	private static void initializeBlocks(final PersistentTable table) throws FileNotFoundException, IOException {
+	private static void initializeBlocks(final IStagedTable table) throws FileNotFoundException, IOException {
 		final LegalMoveFinder moveFinder = new LegalMoveFinder();
 		
 		final Position position = new Position();
@@ -135,7 +144,7 @@ public class TableCalculator {
 		
 		while (true) {
 			try (
-				final OutputFileTableIterator it = table.getOutputBlock()
+				final IClosableTableIterator it = table.getOutputBlock()
 			) {
 				if (it == null)
 					break;
@@ -170,7 +179,7 @@ public class TableCalculator {
 	private void initializeTable() throws FileNotFoundException, IOException, InterruptedException, ExecutionException {
 		
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
-			final PersistentTable table = bothTables.getBaseSource(onTurn);
+			final IStagedTable table = bothTables.getBaseSource(onTurn);
 			
 			table.clear();
 			table.switchToModeWrite();
@@ -204,8 +213,8 @@ public class TableCalculator {
 			changeCount = 0;
 			
 			for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
-				final PersistentTable ownTable = bothTables.getBaseSource(onTurn);
-				final PersistentTable oppositeTable = bothTables.getBaseSource(Color.getOppositeColor(onTurn));
+				final IStagedTable ownTable = bothTables.getBaseSource(onTurn);
+				final IStagedTable oppositeTable = bothTables.getBaseSource(Color.getOppositeColor(onTurn));
 				final TableDefinition oppositeTableDefinition = oppositeTable.getDefinition();
 				
 				final long itemCount = oppositeTableDefinition.getTableIndexCount();

@@ -11,7 +11,7 @@ import java.util.Set;
 import utils.IoUtils;
 import utils.ShortRingBuffer;
 
-public class OutputFileTableIterator extends TableIteratorBase implements ITableIterator, AutoCloseable {
+public class OutputFileTableIterator extends TableIteratorBase implements IClosableTableIterator {
 
 	private final InputFileTableIterator inputIterator;
 	private final OutputStream stream;
