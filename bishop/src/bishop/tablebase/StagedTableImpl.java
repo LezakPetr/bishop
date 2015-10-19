@@ -9,6 +9,10 @@ import bishop.base.Position;
 
 import parallel.Parallel;
 
+/**
+ * Base class for staged tables.
+ * @author Ing. Petr Ležák
+ */
 public abstract class StagedTableImpl implements IStagedTable {
 	protected static final int PAGE_SHIFT = 20;
 	protected static final int PAGE_SIZE = 1 << PAGE_SHIFT;
@@ -18,7 +22,7 @@ public abstract class StagedTableImpl implements IStagedTable {
 		WRITE
 	};
 
-	protected final List<TablePage> readPages;
+	protected final List<TablePage> pages;
 	protected final TableDefinition definition;
 	protected final int pageCount; 
 	protected Mode mode;
@@ -28,7 +32,7 @@ public abstract class StagedTableImpl implements IStagedTable {
 		this.definition = definition;
 		this.pageCount = getPageCount();
 		
-		this.readPages = new ArrayList<>(pageCount);
+		this.pages = new ArrayList<>(pageCount);
 	}
 
 	@Override
@@ -39,7 +43,7 @@ public abstract class StagedTableImpl implements IStagedTable {
 	private TablePage getPage (final long index) {
 		final int pageIndex = (int) (index >>> PAGE_SHIFT);
 		
-		return readPages.get(pageIndex);
+		return pages.get(pageIndex);
 	}
 
 	@Override
@@ -83,14 +87,11 @@ public abstract class StagedTableImpl implements IStagedTable {
 	}
 	
 	@Override
-	public synchronized IClosableTableIterator getOutputBlock() throws IOException {
+	public synchronized IClosableTableIterator getOutputPage() throws IOException {
 		if (nextWritePageIndex >= pageCount)
 			return null;
 		
-		final long offset = ((long) nextWritePageIndex) << PAGE_SHIFT;
-		final long size = Math.min(PAGE_SIZE, definition.getTableIndexCount() - offset);
-		
-		final IClosableTableIterator iterator = getOutputBlockIterator (nextWritePageIndex, offset, size);
+		final IClosableTableIterator iterator = getOutputPageIterator (nextWritePageIndex);
 		nextWritePageIndex++;
 		
 		return iterator;
@@ -98,15 +99,23 @@ public abstract class StagedTableImpl implements IStagedTable {
 	
 	@Override
 	public synchronized void switchToModeWrite() {
-		readPages.clear();
+		pages.clear();
 		
 		nextWritePageIndex = 0;
 		mode = Mode.WRITE;
 	}
 	
+	protected TablePage createPage(final int pageIndex) {
+		final long offset = ((long) pageIndex) << PAGE_SHIFT;
+		final int size = (int) Math.min(definition.getTableIndexCount() - offset, PAGE_SIZE);
+		final TablePage page = new TablePage(offset, size);
+		
+		return page;
+	}
+	
 	@Override
 	public abstract void switchToModeRead(final Parallel parallel) throws IOException, InterruptedException, ExecutionException;
 
-	protected abstract IClosableTableIterator getOutputBlockIterator(final int blockIndex, final long offset, final long size) throws IOException;
+	protected abstract IClosableTableIterator getOutputPageIterator(final int pageIndex) throws IOException;
 
 }

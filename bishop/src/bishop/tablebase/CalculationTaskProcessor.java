@@ -76,7 +76,7 @@ public class CalculationTaskProcessor implements Callable<Throwable> {
 		try {
 			while (true) {
 				try (
-					final IClosableTableIterator iterator = ownTable.getOutputBlock()
+					final IClosableTableIterator iterator = ownTable.getOutputPage()
 				) {
 					
 					if (iterator == null)

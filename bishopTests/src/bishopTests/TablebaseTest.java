@@ -9,10 +9,8 @@ import parallel.Parallel;
 import bishop.base.Color;
 import bishop.base.MaterialHash;
 import bishop.tablebase.BothColorPositionResultSource;
-import bishop.tablebase.IPositionResultSource;
 import bishop.tablebase.IStagedTable;
 import bishop.tablebase.ITable;
-import bishop.tablebase.PersistentTable;
 import bishop.tablebase.TableCalculator;
 import bishop.tablebase.TableReader;
 import bishop.tablebase.TableSwitch;
@@ -23,8 +21,7 @@ public class TablebaseTest {
 
 	private static final String[] MATERIAL_HASHES = {"00000-00000", "10000-00000", "01000-00000", "00100-00000", "00010-00000", "00001-00000"};
 	
-	@Test
-	public void testTablebase() throws Exception {
+	private void testWithUsePersistentTable (final boolean usePersistentTable) throws Exception {
 		final long t1 = System.currentTimeMillis();
 		
 		final TableSwitch tableSwitch = new TableSwitch();
@@ -82,4 +79,15 @@ public class TablebaseTest {
 		
 		parallel.shutdown();
 	}
+	
+	@Test
+	public void testTablebaseWithPersistentTable() throws Exception {
+		testWithUsePersistentTable(true);
+	}
+	
+	@Test
+	public void testTablebaseWithMemoryTable() throws Exception {
+		testWithUsePersistentTable(false);
+	}
+
 }
