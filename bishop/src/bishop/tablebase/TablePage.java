@@ -10,7 +10,6 @@ public class TablePage {
 	public TablePage (final long offset, final int size) {
 		this.offset = offset;
 		this.results = new short[size];
-		Arrays.fill(results, (short) TableResult.ILLEGAL);
 	}
 	
 	public int getResult (final long index) {
@@ -25,11 +24,19 @@ public class TablePage {
 		return offset;
 	}
 
+	public long getSize() {
+		return results.length;
+	}
+
 	public void read(final ITableIteratorRead it) {
 		for (int i = 0; i < results.length; i++) {
 			results[i] = (short) it.getResult();
 			it.next();
 		}
+	}
+
+	public void clear() {
+		Arrays.fill(results, (short) TableResult.ILLEGAL);
 	}
 
 }

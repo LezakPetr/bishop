@@ -28,7 +28,7 @@ public class TableCalculator {
 	private BitArray prevPositionsToCheck;
 	private BitArray nextPositionsToCheck;
 	
-	private boolean usePersistentTable = true;
+	private boolean usePersistentTable = false;
 
 	
 	public TableCalculator(final MaterialHash[] materialHashArray, final Parallel parallel) {
@@ -48,6 +48,10 @@ public class TableCalculator {
 	}
 	
 	public void calculate() throws Exception {
+		boolean[] x = {true, false};
+		
+		for (int i = 0; i < x.length; i++) {
+		usePersistentTable = x[i];
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
 			final TableDefinition tableDefinition = new TableDefinition(TableWriter.VERSION, materialHashArray[onTurn]);
 			final MaterialHash materialHash = tableDefinition.getMaterialHash();
@@ -69,11 +73,12 @@ public class TableCalculator {
 		}
 		
 		printData();
+		}
 	}
 
 	private IStagedTable createStagedTable(final TableDefinition tableDefinition) {
 		if (usePersistentTable)
-			return new PersistentTable(tableDefinition, "/tmp/" + tableDefinition.getMaterialHash().toString());
+			return new PersistentStagedTable(tableDefinition, "/tmp/" + tableDefinition.getMaterialHash().toString());
 		else
 			return new MemoryStagedTable(tableDefinition);
 	}
@@ -144,7 +149,7 @@ public class TableCalculator {
 		
 		while (true) {
 			try (
-				final IClosableTableIterator it = table.getOutputBlock()
+				final IClosableTableIterator it = table.getOutputPage()
 			) {
 				if (it == null)
 					break;
@@ -193,10 +198,10 @@ public class TableCalculator {
 				}
 			});			
 			
-			table.moveOutputToInput();
+			//table.moveOutputToInput();
 		}
 	}
-	
+
 	private void generateTableBase() throws Exception {
 		initializeTable();
 		
@@ -238,7 +243,7 @@ public class TableCalculator {
 					nextPositionsToCheck.assignOr (processor.getNextPositionsToCheck());
 				}
 				
-				ownTable.moveOutputToInput();
+				//ownTable.moveOutputToInput();
 				prevPositionsToCheck = nextPositionsToCheck;
 			}
 			
@@ -303,4 +308,7 @@ public class TableCalculator {
 			neededSubtables.add(oppositeHash);
 	}
 
+	public void setUsePersistentTable (final boolean use) {
+		this.usePersistentTable = use;
+	}
 }

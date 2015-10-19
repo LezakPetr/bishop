@@ -17,7 +17,7 @@ import bishop.tablebase.FileNameCalculator;
 import bishop.tablebase.FilePositionResultSource;
 import bishop.tablebase.ITable;
 import bishop.tablebase.ITableRead;
-import bishop.tablebase.PersistentTable;
+import bishop.tablebase.PersistentStagedTable;
 import bishop.tablebase.TableBlockCache;
 import bishop.tablebase.TableCalculator;
 import bishop.tablebase.TableReader;
@@ -35,6 +35,7 @@ public class GenerateTablebase {
 	private String action;
 	private String directory;
 	private String definition;
+	private boolean usePersistentTable;
 	private Map<MaterialHash, ITableRead> subtableMap;
 	private Parallel parallel;
 	private TableCalculator calculator;
@@ -45,6 +46,7 @@ public class GenerateTablebase {
 			calculator.addSubTable (entry.getKey(), entry.getValue());
 		}
 
+		calculator.setUsePersistentTable(usePersistentTable);
 		calculator.calculate();
 		
 		bothTables = new BothColorPositionResultSource<>();
@@ -81,7 +83,7 @@ public class GenerateTablebase {
 			final FileOutputStream stream = new FileOutputStream(getFileName(materialHashArray[onTurn]));
 			
 			try {
-				final PersistentTable table = (PersistentTable) bothTables.getBaseSource(onTurn);
+				final PersistentStagedTable table = (PersistentStagedTable) bothTables.getBaseSource(onTurn);
 				table.switchToModeRead(parallel);
 
 				writer.writeTable(table, stream);
@@ -140,14 +142,15 @@ public class GenerateTablebase {
 	}
 	
 	private void doGeneration(final String[] args) throws Exception {
-		if (args.length != 3) {
-			System.err.println("GenerateTablebase action directory definition");
+		if (args.length != 3 || args.length != 4) {
+			System.err.println("GenerateTablebase action tableType directory definition");
 			throw new RuntimeException("Wrong parameters");
 		}
 		
 		action = args[0];
 		directory = args[1];
 		definition = args[2];
+		usePersistentTable = (args.length == 4 && args[3].contains("p"));
 		parallel = new Parallel();
 
 		System.out.println (parallel.getThreadCount() + " threads");
