@@ -142,7 +142,7 @@ public class GenerateTablebase {
 	}
 	
 	private void doGeneration(final String[] args) throws Exception {
-		if (args.length != 3 || args.length != 4) {
+		if (args.length != 3 && args.length != 4) {
 			System.err.println("GenerateTablebase action tableType directory definition");
 			throw new RuntimeException("Wrong parameters");
 		}
