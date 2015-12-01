@@ -15,9 +15,9 @@ import bishop.base.MaterialHash;
 import bishop.tablebase.BothColorPositionResultSource;
 import bishop.tablebase.FileNameCalculator;
 import bishop.tablebase.FilePositionResultSource;
+import bishop.tablebase.IStagedTable;
 import bishop.tablebase.ITable;
 import bishop.tablebase.ITableRead;
-import bishop.tablebase.PersistentStagedTable;
 import bishop.tablebase.TableBlockCache;
 import bishop.tablebase.TableCalculator;
 import bishop.tablebase.TableReader;
@@ -83,7 +83,7 @@ public class GenerateTablebase {
 			final FileOutputStream stream = new FileOutputStream(getFileName(materialHashArray[onTurn]));
 			
 			try {
-				final PersistentStagedTable table = (PersistentStagedTable) bothTables.getBaseSource(onTurn);
+				final IStagedTable table = (IStagedTable) bothTables.getBaseSource(onTurn);
 				table.switchToModeRead(parallel);
 
 				writer.writeTable(table, stream);

@@ -32,4 +32,12 @@ public class TablePageIterator extends TableIteratorBase implements IClosableTab
 		// No operation
 	}
 
+	@Override
+	public boolean isValid() {
+		if (!super.isValid())
+			return false;
+		
+		return page == null || getTableIndex() < page.getOffset() + page.getSize();
+	}
+
 }
