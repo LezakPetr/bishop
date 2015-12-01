@@ -68,4 +68,11 @@ public class BookRecord {
 		return this.getMoveAt(index);
 	}
 	
+	public void assign(final BookRecord orig) {
+		this.position.assign(orig.position);
+		
+		this.moveList.clear();
+		this.moveList.addAll(orig.moveList);
+	}
+	
 }

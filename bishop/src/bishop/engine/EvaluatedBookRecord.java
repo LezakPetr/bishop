@@ -12,5 +12,4 @@ public class EvaluatedBookRecord extends BookRecord {
 		this.evaluation = evaluation;
 	}
 	
-	
 }

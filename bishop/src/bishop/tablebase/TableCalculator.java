@@ -48,10 +48,6 @@ public class TableCalculator {
 	}
 	
 	public void calculate() throws Exception {
-		boolean[] x = {true, false};
-		
-		for (int i = 0; i < x.length; i++) {
-		usePersistentTable = x[i];
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
 			final TableDefinition tableDefinition = new TableDefinition(TableWriter.VERSION, materialHashArray[onTurn]);
 			final MaterialHash materialHash = tableDefinition.getMaterialHash();
@@ -70,9 +66,6 @@ public class TableCalculator {
 				
 				resultSource.removeSource(materialHash);
 			}
-		}
-		
-		printData();
 		}
 	}
 
@@ -197,8 +190,6 @@ public class TableCalculator {
 					return null;
 				}
 			});			
-			
-			//table.moveOutputToInput();
 		}
 	}
 
@@ -243,7 +234,6 @@ public class TableCalculator {
 					nextPositionsToCheck.assignOr (processor.getNextPositionsToCheck());
 				}
 				
-				//ownTable.moveOutputToInput();
 				prevPositionsToCheck = nextPositionsToCheck;
 			}
 			
