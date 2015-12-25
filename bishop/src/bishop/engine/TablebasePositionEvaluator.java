@@ -8,6 +8,7 @@ import bishop.base.Position;
 import bishop.tablebase.FileNameCalculator;
 import bishop.tablebase.FilePositionResultSource;
 import bishop.tablebase.ITableRead;
+import bishop.tablebase.LazyFilePositionResultSource;
 import bishop.tablebase.TableBlockCache;
 import bishop.tablebase.TableResult;
 import bishop.tablebase.TableSwitch;
@@ -34,7 +35,7 @@ public class TablebasePositionEvaluator {
 		
 		for (File file: files) {
 			final MaterialHash materialHash = FileNameCalculator.parseFileName(file.getName());
-			final ITableRead table = new FilePositionResultSource (file, blockCache);
+			final ITableRead table = new LazyFilePositionResultSource(file, blockCache);
 			
 			tableSwitch.addTable(materialHash, table);
 		}
