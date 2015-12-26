@@ -5,9 +5,16 @@ import java.lang.ref.SoftReference;
 
 import bishop.base.Position;
 
+/**
+ * Table that creates FilePositionResultSource when it is necessary.
+ * The FilePositionResultSource instance is held by soft reference.
+ * 
+ * @author Ing. Petr Ležák
+ */
 public class LazyFilePositionResultSource implements ITableRead {
 	
-	private static FilePositionResultSource lastUsedTable;   // Keep last used table reference to prevent collecting it
+	// Keep last used table reference to prevent collecting it
+	private static volatile FilePositionResultSource lastUsedTable;
 	
 	private final File file;
 	private final TableBlockCache blockCache;
@@ -19,7 +26,7 @@ public class LazyFilePositionResultSource implements ITableRead {
 		this.baseTableRef = new SoftReference<>(null);   // The reference will not be null
 	}
 	
-	private ITableRead getBaseTable() {
+	private synchronized ITableRead getBaseTable() {
 		FilePositionResultSource baseTable = baseTableRef.get();
 		
 		if (baseTable == null) {
