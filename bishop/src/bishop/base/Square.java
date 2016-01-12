@@ -3,6 +3,7 @@ package bishop.base;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.StringWriter;
 
 public class Square {
 
@@ -160,5 +161,15 @@ public class Square {
 		final int rank = Rank.read (reader);
 		
 		return Square.onFileRank(file, rank);
+	}
+	
+	public static final String toString (final int square) {
+		final StringWriter stringWriter = new StringWriter();
+		final PrintWriter printWriter = new PrintWriter(stringWriter);
+		write(printWriter, square);
+		printWriter.flush();
+		
+		return stringWriter.toString();
+		
 	}
 }
