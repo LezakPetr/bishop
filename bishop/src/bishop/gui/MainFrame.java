@@ -1,10 +1,16 @@
 package bishop.gui;
 
+import java.awt.Container;
+import java.awt.Image;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
@@ -15,28 +21,48 @@ import bishop.controller.Utils;
 
 @SuppressWarnings("serial")
 public class MainFrame extends JFrame implements ILocalizedComponent {
-	
+		
+	private static final String ICON_SUFFIX = ".png";
+	private static final String ICON_DIRECTORY = "graphics/icon";
+
 	private final ApplicationViewImpl applicationView;
+	private ILocalization localization;
 	
 	public MainFrame(final ApplicationViewImpl applicationView) throws IOException {
-		this.setSize(800, 700);
-		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		
-		Utils.centerWindow(this);
-		
-		this.addWindowListener(windowListener);
 		this.applicationView = applicationView;
-		
-		applicationView.setMainFrame(this);
-		
-		getContentPane().add(applicationView);
+		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-		this.setJMenuBar(applicationView.getApplicationMenuBar());
-		
-		applicationView.getApplication().getLocalizedComponentRegister().addComponent(this);
+		setApplicationIcons();
 	}
 	
+	public void setAboutPanel() {
+		final Container contentPane = this.getContentPane();
+		contentPane.removeAll();
+		contentPane.add(new AboutPanel(localization));
+		
+		this.setSize(300, 80);
+		Utils.centerWindow(this);
+	}
+
+	public void initialize() {
+		this.addWindowListener(windowListener);
+		
+		applicationView.setMainFrame(this);
+
+		final Container contentPane = this.getContentPane();
+		contentPane.removeAll();
+		contentPane.add(applicationView);
+
+		this.setJMenuBar(applicationView.getApplicationMenuBar());
+		applicationView.getApplication().getLocalizedComponentRegister().addComponent(this);
+		
+		this.setSize(800, 700);
+		Utils.centerWindow(this);
+	}
+
 	public void updateLanguage(final ILocalization localization) {
+		this.localization = localization;
+		
 		this.setTitle(localization.translateString("MainFrame.title"));
 	}
 
@@ -59,5 +85,20 @@ public class MainFrame extends JFrame implements ILocalizedComponent {
 		}
 	};
 	
+	private void setApplicationIcons() throws IOException {
+		final File currentDirectory = new File(".").getAbsoluteFile();
+		final File directory = new File (currentDirectory, ICON_DIRECTORY);
+		final List<Image> icons = new ArrayList<>();
+		
+		for (File file: directory.listFiles()) {
+			if (file.isFile() && file.getName().endsWith(ICON_SUFFIX)) {
+				final Image image = ImageIO.read(file);
+				icons.add(image);
+			}
+		}
+		
+		this.setIconImages(icons);
+	}
+
 
 }
