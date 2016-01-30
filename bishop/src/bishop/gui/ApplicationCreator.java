@@ -1,8 +1,13 @@
 package bishop.gui;
 
+import java.awt.Image;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
 
 import bishop.controller.ApplicationImpl;
@@ -10,7 +15,6 @@ import bishop.controller.SearchResources;
 
 public class ApplicationCreator {
 	
-	private AboutDialog aboutDialog;
 	private SearchResources searchResources;
 	private ApplicationImpl application;
 	private ApplicationViewImpl applicationView;
@@ -19,21 +23,24 @@ public class ApplicationCreator {
 	private void initializationWithDialog(final ApplicationImpl application) throws Exception {
 		SwingUtilities.invokeAndWait(new Runnable() {
 			public void run() {
-				aboutDialog = AboutDialog.createDialog(null, application.getLocalization(), false);
-				aboutDialog.setVisible(true);
+				createMainFrame();
 			}
 		});	
 
 		searchResources = new SearchResources(application);
 		applicationView.loadGraphics();
-		
-		SwingUtilities.invokeAndWait(new Runnable() {
-			public void run() {
-				aboutDialog.dispose();
-			}
-		});
-		
-		aboutDialog = null;
+	}
+	
+	private void createMainFrame() {
+		try {
+			mainFrame = new MainFrame(applicationView);
+			mainFrame.updateLanguage(application.getLocalization());
+			mainFrame.setAboutPanel();
+			mainFrame.setVisible(true);
+		}
+		catch (Exception ex) {
+			throw new RuntimeException (ex);
+		}
 	}
 	
 	public void createApplication() throws Exception {
@@ -68,17 +75,14 @@ public class ApplicationCreator {
 	private void finishInitialization() {
 		try {
 			application.setSearchResources(searchResources);
-			
-			mainFrame = new MainFrame(applicationView);
-			
+						
 			application.initialize();
 			applicationView.initialize();
 			
-			mainFrame.setVisible(true);
+			mainFrame.initialize();
 		}
 		catch (Exception ex) {
 			throw new RuntimeException("Cannot create application view", ex);
 		}
 	}
-
 }
