@@ -95,6 +95,12 @@ public interface ISearchManager {
 	public void setSearchStrategy (final ISearchStrategy strategy);
 	
 	/**
+	 * Returns hash table.
+	 * @returns hash table
+	 */
+	public IHashTable getHashTable();
+	
+	/**
 	 * Sets hash table for the manager.
 	 * Manager must be in STOPPED state.
 	 * @param table hash table

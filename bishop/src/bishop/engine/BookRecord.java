@@ -72,7 +72,13 @@ public class BookRecord {
 		this.position.assign(orig.position);
 		
 		this.moveList.clear();
-		this.moveList.addAll(orig.moveList);
+		
+		for (BookMove move: orig.moveList)
+			this.moveList.add(move.copy());
 	}
-	
+
+	public void removeAllMoves() {
+		this.moveList.clear();
+	}
+
 }
