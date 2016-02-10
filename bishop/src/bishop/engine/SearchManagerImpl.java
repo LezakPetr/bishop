@@ -679,6 +679,16 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 			algo.openNode(node);
 		}
 	}
+	
+	/**
+	 * Returns hash table.
+	 * @returns hash table
+	 */
+	public IHashTable getHashTable() {
+		synchronized (monitor) {
+			return algo.getHashTable();
+		}
+	}
 
 	/**
 	 * Sets hash table for the manager.

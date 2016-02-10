@@ -15,7 +15,6 @@ import bishop.base.PositionReader;
 
 public class BookReader extends BookIo implements IBook<EvaluatedBookRecord> {
 	
-
 	private final String path;
 	private CountingInputStream stream;
 	private int hashBits;
