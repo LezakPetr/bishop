@@ -19,8 +19,7 @@ public class OutputFileTableIterator extends TableIteratorBase implements IClosa
 	private final ShortRingBuffer buffer;
 	private final FileTableIteratorChecksum checksum;
 	private final Set<Short> resultSet;
-	private long remainingResults;
-	private FileTableIteratorMode mode;
+	private long remainingResults; 
 	
 	public OutputFileTableIterator(final InputFileTableIterator inputIterator, final String path, final TableDefinition tableDefinition, final long beginIndex, final long size) throws FileNotFoundException {
 		super(tableDefinition, beginIndex);
@@ -31,7 +30,7 @@ public class OutputFileTableIterator extends TableIteratorBase implements IClosa
 		this.resultSet = new HashSet<>();
 		this.checksum = new FileTableIteratorChecksum();
 		this.remainingResults = size;
-
+		
 		readNextResult();
 	}
 
@@ -77,7 +76,8 @@ public class OutputFileTableIterator extends TableIteratorBase implements IClosa
 				resultSet.add((short) result);
 				remainingResults--;
 				
-				flushBuffer();
+				if (buffer.getSize() >= buffer.getCapacity())
+					writeSequence();
 			}
 		}
 		catch (IOException ex) {
@@ -86,43 +86,37 @@ public class OutputFileTableIterator extends TableIteratorBase implements IClosa
 	}
 
 	private void flushBuffer() throws IOException {
-		while (writeSequence())
-			;
+		while (buffer.getSize() > 0)
+			writeSequence();
 	}
 	
-	private boolean writeSequence() throws IOException {
+	private void writeSequence() throws IOException {
 		final int size = buffer.getSize();
 		
 		if (size <= 0)
-			return false;
+			return;
 		
-		if (mode == null) {
-			final int firstSymbol = buffer.getAt(0);
-			
-			switch (firstSymbol) {
-				case TableResult.DRAW:
-					mode = FileTableIteratorMode.DRAW;
-					break;
-					
-				case TableResult.ILLEGAL:
-					mode = FileTableIteratorMode.ILLEGAL;
-					break;
-					
-				default:
-					if (TableResult.canBeCompressed(firstSymbol))
-						mode = FileTableIteratorMode.COMPRESSED;
-					else
-						mode = FileTableIteratorMode.FULL;
-					break;
-			}
+		final int firstResult = buffer.getAt(0);
+		final FileTableIteratorMode mode;
+		
+		switch (firstResult) {
+			case TableResult.DRAW:
+				mode = FileTableIteratorMode.DRAW;
+				break;
+				
+			case TableResult.ILLEGAL:
+				mode = FileTableIteratorMode.ILLEGAL;
+				break;
+				
+			default:
+				if (TableResult.canBeCompressed(firstResult))
+					mode = FileTableIteratorMode.COMPRESSED;
+				else
+					mode = FileTableIteratorMode.FULL;
+				break;
 		}
 		
-		if (mode.write(buffer, stream)) {
-			mode = null;
-			return true;
-		}
-		else
-			return false;
+		mode.write(buffer, stream);
 	}
 
 	@Override
@@ -136,9 +130,7 @@ public class OutputFileTableIterator extends TableIteratorBase implements IClosa
 			next();
 		
 		writeResult();
-		
-		if (buffer.getSize() > 0)
-			FileTableIteratorMode.writeFullSequence(buffer, stream, buffer.getSize());
+		flushBuffer();
 		
 		checksum.writeCrcToStream(stream);
 		IoUtils.writeNumberBinary(stream, resultSet.size(), 2);
