@@ -36,6 +36,7 @@ public class TablebaseTest {
 				calculator.addSubTable(subHash, tableSwitch.getTable(subHash));
 			}
 			
+			calculator.setUsePersistentTable(usePersistentTable);
 			calculator.calculate();
 			
 			final BothColorPositionResultSource<IStagedTable> bothTables = new BothColorPositionResultSource<>();

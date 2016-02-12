@@ -4,12 +4,11 @@ public class ShortRingBuffer {
 
 	private final short[] data;
 	private final int mask;
-	private final int capacity;
 	private int begin;
 	private int size;
 	
 	public ShortRingBuffer (final int exponent) {
-		capacity = 1 << exponent;
+		final int capacity = 1 << exponent;
 		mask = capacity - 1;
 		data = new short[capacity];
 		begin = 0;
@@ -30,7 +29,7 @@ public class ShortRingBuffer {
 	}
 	
 	public void push (final short value) {
-		if (size >= capacity)
+		if (size >= data.length)
 			throw new RuntimeException("Ring buffer is full");
 
 		final int dataIndex = getDataIndex(size);
@@ -54,6 +53,10 @@ public class ShortRingBuffer {
 
 	public int getSize() {
 		return size;
+	}
+
+	public int getCapacity() {
+		return data.length;
 	}
 
 }

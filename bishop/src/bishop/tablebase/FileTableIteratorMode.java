@@ -8,7 +8,6 @@ import utils.IoUtils;
 import utils.ShortRingBuffer;
 
 public enum FileTableIteratorMode {
-	
 	FULL (0, 64) {
 		@Override
 		public short read (final InputStream stream) throws IOException {
@@ -21,10 +20,8 @@ public enum FileTableIteratorMode {
 		}
 		
 		@Override
-		public boolean write (final ShortRingBuffer buffer, final OutputStream stream) throws IOException {
+		public void write (final ShortRingBuffer buffer, final OutputStream stream) throws IOException {
 			writeFullSequence(buffer, stream, 1);
-			
-			return true;
 		}
 	},
 	COMPRESSED (64, 128) {
@@ -34,27 +31,26 @@ public enum FileTableIteratorMode {
 		}
 
 		@Override
-		public boolean write (final ShortRingBuffer buffer, final OutputStream stream) throws IOException {
+		public void write (final ShortRingBuffer buffer, final OutputStream stream) throws IOException {
 			final int size = buffer.getSize();
-			final int lastSymbol = buffer.getAt(size - 1);
-
-			if (!TableResult.canBeCompressed(lastSymbol) || size >= getMaxCount()) {
-				writeCompressedSequence(buffer, stream, size - 1);
+			final int maxCount = Math.min(size, getMaxCount());
+			int length = 0;
+			
+			while (length < maxCount) {
+				final int result = buffer.getAt(length);
 				
-				return true;
+				if (!TableResult.canBeCompressed(result))
+					break;
+				
+				final int nextIndex = length + 1;
+				
+				if (nextIndex < size && (result == TableResult.ILLEGAL || result == TableResult.DRAW) && buffer.getAt(nextIndex) == result)
+					break;
+				
+				length = nextIndex;
 			}
 			
-			if (size >= 3 && (lastSymbol == TableResult.ILLEGAL || lastSymbol == TableResult.DRAW)) {
-				final short preLastSymbol = buffer.getAt(size - 2);
-				
-				if (preLastSymbol == lastSymbol) {
-					writeCompressedSequence(buffer, stream, size - 2);
-					
-					return true;
-				}
-			}
-			
-			return false;			
+			writeCompressedSequence(buffer, stream, length);
 		}		
 	},
 	DRAW (128, 192) {
@@ -64,18 +60,10 @@ public enum FileTableIteratorMode {
 		}
 
 		@Override
-		public boolean write (final ShortRingBuffer buffer, final OutputStream stream) throws IOException {
-			final int size = buffer.getSize();
-			final int lastSymbol = buffer.getAt(size - 1);
-			
-			if (lastSymbol != TableResult.DRAW || size >= getMaxCount()) {
-				stream.write(getDescriptor(size - 1));
-				buffer.pop(size - 1);
-				
-				return true;
-			}
-			else
-				return false;
+		public void write (final ShortRingBuffer buffer, final OutputStream stream) throws IOException {
+			final int length = getSequenceLength (buffer, TableResult.DRAW, getMaxCount());
+			stream.write(getDescriptor(length));
+			buffer.pop(length);
 		}
 	},
 	ILLEGAL (192, 256) {
@@ -85,19 +73,10 @@ public enum FileTableIteratorMode {
 		}
 
 		@Override
-		public boolean write (final ShortRingBuffer buffer, final OutputStream stream) throws IOException {
-			final int size = buffer.getSize();
-			final int lastSymbol = buffer.getAt(size - 1);
-
-			if (lastSymbol != TableResult.ILLEGAL || size >= FileTableIteratorMode.ILLEGAL.getMaxCount()) {
-				stream.write(getDescriptor(size - 1));
-				buffer.pop(size - 1);
-				
-				return true;
-			}
-			else
-				return false;
-
+		public void write (final ShortRingBuffer buffer, final OutputStream stream) throws IOException {
+			final int length = getSequenceLength (buffer, TableResult.ILLEGAL, getMaxCount());
+			stream.write(getDescriptor(length));
+			buffer.pop(length);
 		}
 	};
 	
@@ -108,7 +87,17 @@ public enum FileTableIteratorMode {
 	private FileTableIteratorMode (final int minDescriptor, final int maxDescriptor) {
 		this.minDescriptor = minDescriptor;
 		this.maxDescriptor = maxDescriptor;
-		this.maxCount = maxDescriptor - minDescriptor + 1;
+		this.maxCount = maxDescriptor - minDescriptor;
+	}
+
+	protected int getSequenceLength(final ShortRingBuffer buffer, final int result, final int modeMaxCount) {
+		final int maxCount = Math.min(buffer.getSize(), modeMaxCount);
+		int length = 0;
+		
+		while (length < maxCount && buffer.getAt(length) == result)
+			length++;
+		
+		return length;
 	}
 
 	public int getMinDescriptor() {
@@ -133,8 +122,8 @@ public enum FileTableIteratorMode {
 	}
 	
 	/**
-	 * Returns maximal count (exclusive).
-	 * @return maximal count (exclusive)
+	 * Returns maximal count (inclusive).
+	 * @return maximal count (inclusive)
 	 */
 	public int getMaxCount() {
 		return maxCount;
@@ -145,7 +134,7 @@ public enum FileTableIteratorMode {
 	}
 	
 	abstract public short read (final InputStream stream) throws IOException;
-	abstract public boolean write (final ShortRingBuffer buffer, final OutputStream stream) throws IOException;
+	abstract public void write (final ShortRingBuffer buffer, final OutputStream stream) throws IOException;
 	
 	public static void writeCompressedSequence(final ShortRingBuffer buffer, final OutputStream stream, final int size) throws IOException {
 		stream.write(FileTableIteratorMode.COMPRESSED.getDescriptor(size));

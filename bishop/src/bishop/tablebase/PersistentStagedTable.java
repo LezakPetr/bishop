@@ -52,6 +52,14 @@ public class PersistentStagedTable extends StagedTableImpl {
 	}
 	
 	@Override
+	public synchronized void switchToModeWrite() {
+		if (mode == Mode.WRITE)
+			moveOutputToInput();
+		
+		super.switchToModeWrite();
+	}
+	
+	@Override
 	protected IClosableTableIterator getOutputPageIterator(final int pageIndex) throws IOException {
 		final String inputPath = getPagePath(pageIndex) + INPUT_SUFFIX;
 		final InputFileTableIterator inputIterator;
