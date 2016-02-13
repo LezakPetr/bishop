@@ -74,6 +74,7 @@ public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, IL
 
 		fieldPrincipalVariation = new JTextField();
 		fieldPrincipalVariation.setEditable(false);
+		fieldPrincipalVariation.setHorizontalAlignment(JTextField.LEFT);
 		
 		fieldPrincipalVariation.setPreferredSize(new Dimension(100, 25));
 		
@@ -256,6 +257,7 @@ public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, IL
 			principalVariationStr = principalVariation.toString();
 		
 		fieldPrincipalVariation.setText(principalVariationStr);
+		fieldPrincipalVariation.setCaretPosition(0);
 		
 		fieldEvaluation.setText(Evaluation.toString(info.getEvaluation()));
 		fieldHorizon.setText(Integer.toString(info.getHorizon() / ISearchEngine.HORIZON_GRANULARITY));
