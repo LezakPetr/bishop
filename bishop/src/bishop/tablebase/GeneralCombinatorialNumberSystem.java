@@ -35,6 +35,10 @@ public final class GeneralCombinatorialNumberSystem implements ICombinatorialNum
 	 * @return mask with selected bits set
 	 */
 	public long getCombinationMask(final int combinationIndex) {
+		return getCombinationMask (n, k, combinationIndex);
+	}
+	
+	public static long getCombinationMask (final int n, final int k, final int combinationIndex) {
 		int index = combinationIndex;
 		int maxItem = n;
 		long mask = 0;
@@ -47,7 +51,7 @@ public final class GeneralCombinatorialNumberSystem implements ICombinatorialNum
 			mask |= BitBoard.getSquareMask(item);
 		}
 		
-		return mask;
+		return mask;		
 	}
 	
 	/**

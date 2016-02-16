@@ -19,7 +19,7 @@ import bishop.tablebase.TableWriter;
 
 public class TablebaseTest {
 
-	private static final String[] MATERIAL_HASHES = {"00000-00000", "10000-00000", "01000-00000", "00100-00000", "00010-00000", "00001-00000"};
+	private static final String[] MATERIAL_HASHES = {"00000-00000", "10000-00000", "01000-00000", "00100-00000", "00010-00000", "00001-00000", "20000-00000"};
 	
 	private void testWithUsePersistentTable (final boolean usePersistentTable) throws Exception {
 		final long t1 = System.currentTimeMillis();

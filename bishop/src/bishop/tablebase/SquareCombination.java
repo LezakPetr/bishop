@@ -55,40 +55,25 @@ public class SquareCombination {
 	public int getCount() {
 		return numberSystem.getCombinationCount();
 	}
-	
-	private int squareArrayToIndex(final int[] squareArray) {
-		final int[] transformedSquares = new int[squareArray.length];
-		
-		for (int i = 0; i < squareArray.length; i++) {
-			final int transformedSquare = forwardSquareMapping[squareArray[i]];
-			
-			if (transformedSquare < 0)
-				return -1;
-			
-			transformedSquares[i] = transformedSquare;
-		}
-		
-		return numberSystem.getCombinationIndex(transformedSquares);
-	}
-	
 
 	public int calculateIndex(final long piecesMask, final int symmetry) {
-		final int[] squareArray = new int[numberSystem.getK()];
+		final int[] combinationItems = new int[numberSystem.getK()];
 		
 		int index = 0;
 		
 		for (BitLoop loop = new BitLoop(piecesMask); loop.hasNextSquare(); ) {
 			final int square = loop.getNextSquare();
-			final int transformedSquare = SquareSymmetryTable.getItem(symmetry, square);
+			final int symmetryMappedSquare = SquareSymmetryTable.getItem(symmetry, square);
+			final int combinationItem = forwardSquareMapping[symmetryMappedSquare];
 			
-			if (index >= squareArray.length)
-				throw new RuntimeException();
+			if (combinationItem < 0)
+				return -1;
 			
-			squareArray[index] = transformedSquare;
+			combinationItems[index] = combinationItem;
 			index++;
 		}
 		
-		return squareArrayToIndex(squareArray);
+		return numberSystem.getCombinationIndex(combinationItems);
 	}
 
 	public void setToPosition(final Position position, final int combinationIndex) {
