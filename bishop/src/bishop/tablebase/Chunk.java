@@ -208,7 +208,7 @@ public class Chunk {
 	}
 
 	public long calculateTableIndex(final IPosition position, final int symmetry) {
-		final int[] combinationIndices = new int[combinationArray.length];
+		long index = beginIndex;
 		
 		for (int i = 0; i < combinationArray.length; i++) {
 			final SquareCombination combination = combinationArray[i];
@@ -218,10 +218,15 @@ public class Chunk {
 			if (piece.getPieceType() == PieceType.PAWN)
 				piecesMask &= ~fixedPawnMasks[symmetry][piece.getColor()];
 			
-			combinationIndices[i] = combination.calculateIndex (piecesMask, symmetry);
+			final int combinationIndex = combination.calculateIndex (piecesMask, symmetry);
+			
+			if (combinationIndex < 0)
+				return -1;
+
+			index += combinationIndex * getMultiplicatorAt (i);
 		}
 		
-		return calculateIndex (combinationIndices);
+		return index;
 	}
 	
 	public long calculateIndex(final int[] combinationIndices) {

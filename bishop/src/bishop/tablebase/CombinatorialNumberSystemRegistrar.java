@@ -18,7 +18,10 @@ public class CombinatorialNumberSystemRegistrar {
 					
 				case 1:
 					return new OneCombinatorialNumberSystem(key.getN());
-					
+
+				case 2:
+					return new TwoCombinatorialNumberSystem(key.getN());
+
 				default:
 					return new GeneralCombinatorialNumberSystem(key.getN(), key.getK());
 			}
