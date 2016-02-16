@@ -6,6 +6,7 @@ import bishop.base.Color;
 import bishop.base.File;
 import bishop.base.MaterialHash;
 import bishop.base.PieceType;
+import bishop.base.IPosition;
 import bishop.base.Position;
 import bishop.base.PositionValidator;
 import bishop.tablebase.ITable;
@@ -40,7 +41,7 @@ public class TableDefinitionTest {
 		}
 
 		@Override
-		public int getPositionResult(Position position) {
+		public int getPositionResult(IPosition position) {
 			throw new RuntimeException("Method not supported");
 		}
 

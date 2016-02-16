@@ -3,7 +3,7 @@ package bishop.tablebase;
 import java.io.File;
 import java.lang.ref.SoftReference;
 
-import bishop.base.Position;
+import bishop.base.IPosition;
 
 /**
  * Table that creates FilePositionResultSource when it is necessary.
@@ -40,7 +40,7 @@ public class LazyFilePositionResultSource implements ITableRead {
 	}
 	
 	@Override
-	public int getPositionResult(final Position position) {
+	public int getPositionResult(final IPosition position) {
 		return getBaseTable().getPositionResult(position);
 	}
 

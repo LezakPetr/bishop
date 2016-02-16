@@ -15,7 +15,7 @@ import bishop.tables.PieceHashTable;
  * generation of moves. 
  * @author Ing. Petr Ležák
  */
-public final class Position implements IPieceCounts {
+public final class Position implements IPosition {
 
 	// Primary piece information - the source of truth
 	private final byte[] pieceTypeOnSquares = new byte[Square.LAST];
@@ -1121,26 +1121,6 @@ public final class Position implements IPieceCounts {
     public MaterialHash getMaterialHash() {
     	return new MaterialHash (this, onTurn);
     }
-
-	public void assignMirror(final Position position) {
-		for (int square = Square.FIRST; square < Square.LAST; square++) {
-			final int oppositeSquare = Square.getOppositeSquare(square);
-			
-			this.pieceTypeOnSquares[oppositeSquare] = position.pieceTypeOnSquares[square];
-		}
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int oppositeColor = Color.getOppositeColor(color);
-
-			this.colorOccupancy[oppositeColor] = BitBoard.getMirrorBoard (position.colorOccupancy[color]);
-		}
-		
-		this.onTurn = Color.getOppositeColor(position.onTurn);
-		this.castlingRights.assignMirror (position.castlingRights);
-		this.epFile = position.epFile;
-		
-		this.refreshCachedData();
-	}
 	
 	public String toString() {
 		final Fen fen = new Fen();

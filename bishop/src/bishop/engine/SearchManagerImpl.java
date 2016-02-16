@@ -81,14 +81,16 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 			synchronized (monitor) {
 				final EngineRecord engineRecord = searchingEngineMap.get(engine);
 				
-				final ResultRecord resultRecord = new ResultRecord();
-				resultRecord.engineRecord = engineRecord;
-				resultRecord.result = result;
-				
-				resultRecordQueue.add(resultRecord);
-				monitor.notifyAll();
-				
-				Logger.logMessage("Results from engine " + engineRecord.index);
+				if (engineRecord != null) {
+					final ResultRecord resultRecord = new ResultRecord();
+					resultRecord.engineRecord = engineRecord;
+					resultRecord.result = result;
+					
+					resultRecordQueue.add(resultRecord);
+					monitor.notifyAll();
+					
+					Logger.logMessage("Results from engine " + engineRecord.index);
+				}
 			}
 		}
 	};
