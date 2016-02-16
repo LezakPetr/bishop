@@ -3,7 +3,7 @@ package bishop.tablebase;
 import java.io.File;
 import java.io.IOException;
 
-import bishop.base.Position;
+import bishop.base.IPosition;
 
 public class FilePositionResultSource implements ITableRead {
 	
@@ -35,7 +35,7 @@ public class FilePositionResultSource implements ITableRead {
 	}
 
 	@Override
-	public synchronized int getPositionResult(final Position position) {
+	public synchronized int getPositionResult(final IPosition position) {
 		final long tableIndex = definition.calculateTableIndex(position);
 		
 		return getResult(tableIndex);

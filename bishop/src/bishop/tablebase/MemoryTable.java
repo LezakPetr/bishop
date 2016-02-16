@@ -1,6 +1,6 @@
 package bishop.tablebase;
 
-import bishop.base.Position;
+import bishop.base.IPosition;
 
 public abstract class MemoryTable implements ITable {
 	
@@ -19,7 +19,7 @@ public abstract class MemoryTable implements ITable {
 	}
 
 	@Override
-	public int getPositionResult(final Position position) {
+	public int getPositionResult(final IPosition position) {
 		final long index = definition.calculateTableIndex(position);
 		
 		return getResult (index);

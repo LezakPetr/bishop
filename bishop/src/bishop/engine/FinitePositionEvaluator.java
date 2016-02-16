@@ -40,7 +40,7 @@ public final class FinitePositionEvaluator {
 		}
 		
 		// Tablebase
-		if (tablebaseEvaluator != null && (advancedDepth <= 1 || horizon > 3 * ISearchEngine.HORIZON_GRANULARITY)) {
+		if (tablebaseEvaluator != null && (advancedDepth <= 1 || horizon > 0 * ISearchEngine.HORIZON_GRANULARITY)) {
 			final MaterialHash materialHash = position.getMaterialHash();
 			
 			if (tablebaseEvaluator.canEvaluate(materialHash)) {

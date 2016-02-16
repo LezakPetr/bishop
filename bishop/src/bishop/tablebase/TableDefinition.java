@@ -9,7 +9,7 @@ import bishop.base.File;
 import bishop.base.MaterialHash;
 import bishop.base.Piece;
 import bishop.base.PieceType;
-import bishop.base.Position;
+import bishop.base.IPosition;
 import bishop.base.Square;
 import bishop.base.Symmetry;
 import bishop.tables.EmptyEpMaskTable;
@@ -402,7 +402,7 @@ public class TableDefinition {
 	 * @param position position
 	 * @return item index or -1 in some illegal positions
 	 */
-	public long calculateTableIndex (final Position position) {
+	public long calculateTableIndex (final IPosition position) {
 		final int whiteKingSquare = position.getKingPosition(Color.WHITE);
 		final int blackKingSquare = position.getKingPosition(Color.BLACK);
 		
@@ -418,7 +418,7 @@ public class TableDefinition {
 	 * @return item index or -1 in some illegal positions
 	 *  or positions with different symmetry
 	 */
-	private long calculateTableIndexForSymmetry(final Position position, final int symmetry) {
+	private long calculateTableIndexForSymmetry(final IPosition position, final int symmetry) {
 		final int whiteKingSquare = position.getKingPosition(Color.WHITE);
 		final int blackKingSquare = position.getKingPosition(Color.BLACK);
 		
@@ -488,7 +488,7 @@ public class TableDefinition {
 	 * @param groupIndices array of size MAX_GROUP_SIZE that will be filled with table indices
 	 * @return number of different table indices (valid elements of groupIndices array)
 	 */
-	public int calculateIndexGroup (final Position position, final long[] groupIndices) {
+	public int calculateIndexGroup (final IPosition position, final long[] groupIndices) {
 		final int whiteKingSquare = position.getKingPosition(Color.WHITE);
 		final int blackKingSquare = position.getKingPosition(Color.BLACK);
 		
@@ -572,7 +572,7 @@ public class TableDefinition {
 	 * @param position verified position
 	 * @return true if position has same count of pieces, false if not
 	 */
-	public boolean hasSameCountOfPieces (final Position position) {
+	public boolean hasSameCountOfPieces (final IPosition position) {
 		final int pieceCount = BitBoard.getSquareCount(position.getOccupancy());
 		
 		return getPieceCount() == pieceCount;

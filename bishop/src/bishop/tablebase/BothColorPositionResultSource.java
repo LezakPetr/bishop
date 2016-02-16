@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import bishop.base.Color;
-import bishop.base.Position;
+import bishop.base.IPosition;
 
 public class BothColorPositionResultSource<T extends IPositionResultSource> implements IPositionResultSource {
 	private final List<T> baseSources;
@@ -24,7 +24,7 @@ public class BothColorPositionResultSource<T extends IPositionResultSource> impl
 	}
 
 	@Override
-	public int getPositionResult(final Position position) {
+	public int getPositionResult(final IPosition position) {
 		final int onTurn = position.getOnTurn();
 		final IPositionResultSource baseSource = getBaseSource(onTurn);
 		

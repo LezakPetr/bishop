@@ -7,6 +7,7 @@ import bishop.base.Color;
 import bishop.base.File;
 import bishop.base.Piece;
 import bishop.base.PieceType;
+import bishop.base.IPosition;
 import bishop.base.Position;
 import bishop.base.Symmetry;
 import bishop.tables.BetweenTable;
@@ -206,7 +207,7 @@ public class Chunk {
 		return endIndex;
 	}
 
-	public long calculateTableIndex(final Position position, final int symmetry) {
+	public long calculateTableIndex(final IPosition position, final int symmetry) {
 		final int[] combinationIndices = new int[combinationArray.length];
 		
 		for (int i = 0; i < combinationArray.length; i++) {

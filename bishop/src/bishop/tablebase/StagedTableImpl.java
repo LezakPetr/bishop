@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import bishop.base.Position;
+import bishop.base.IPosition;
 
 import parallel.Parallel;
 
@@ -80,7 +80,7 @@ public abstract class StagedTableImpl implements IStagedTable {
 	}
 	
 	@Override
-	public int getPositionResult(final Position position) {
+	public int getPositionResult(final IPosition position) {
 		final long index = definition.calculateTableIndex(position);
 		
 		return getResult (index);

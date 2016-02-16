@@ -16,8 +16,8 @@ public class SquareCombination {
 	private final ICombinatorialNumberSystem numberSystem;
 	private final SquareCombinationKey squareCombinationKey;
 	
-	private final int[] forwardSquareMapping;
-	private final int[] backwardSquareMapping;
+	private final byte[] forwardSquareMapping;
+	private final byte[] backwardSquareMapping;
 	
 	public SquareCombination(final SquareCombinationKey squareCombinationKey) {
 		this.squareCombinationKey = squareCombinationKey;
@@ -29,18 +29,22 @@ public class SquareCombination {
 		final CombinatorialNumberSystemDefinition numberSystemDefinition = new CombinatorialNumberSystemDefinition(allowedSquareCount, pieceCount);
 		this.numberSystem = CombinatorialNumberSystemRegistrar.getInstance().getDefinition(numberSystemDefinition);
 		
-		this.forwardSquareMapping = new int[Square.LAST];
-		this.backwardSquareMapping = new int[allowedSquareCount];
+		this.forwardSquareMapping = new byte[Square.LAST];
+		this.backwardSquareMapping = new byte[allowedSquareCount];
 		
+		fillSquareMapping(allowedSquares);
+	}
+
+	public void fillSquareMapping(final long allowedSquares) {
 		final Piece piece = squareCombinationKey.getDefinition().getPiece();
-		int index = 0;
+		byte index = 0;
 		
 		for (int sequenceIndex = SquareSequence.FIRST_INDEX; sequenceIndex < SquareSequence.LAST_INDEX; sequenceIndex++) {
 			final int square = SquareSequence.getSquareOnIndex(piece.getColor(), piece.getPieceType(), sequenceIndex);
 			
 			if ((allowedSquares & BitBoard.getSquareMask(square)) != 0) {
 				forwardSquareMapping[square] = index;
-				backwardSquareMapping[index] = square;
+				backwardSquareMapping[index] = (byte) square;
 				index++;
 			}
 			else

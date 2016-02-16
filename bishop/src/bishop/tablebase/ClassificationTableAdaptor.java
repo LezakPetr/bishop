@@ -1,6 +1,6 @@
 package bishop.tablebase;
 
-import bishop.base.Position;
+import bishop.base.IPosition;
 
 public class ClassificationTableAdaptor implements ITableRead {
 	
@@ -15,7 +15,7 @@ public class ClassificationTableAdaptor implements ITableRead {
 	}
 	
 	@Override
-	public int getPositionResult(final Position position) {
+	public int getPositionResult(final IPosition position) {
 		return baseTable.getPositionResult(position);
 	}
 
