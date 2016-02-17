@@ -22,6 +22,7 @@ public class AllTests {
 	
 	private static final Class<?>[] classArray = {
 		BetweenTableTest.class,
+		CombinatorialNumberSystemTest.class,
 		LineIndexerTest.class,
 		FenTest.class,
 		LegalMoveGeneratorTest.class,
@@ -44,7 +45,8 @@ public class AllTests {
 		MateFinderTest.class,
 		TablebaseTest.class,
 		ChunkTest.class,
-		TableDefinitionTest.class
+		TableDefinitionTest.class,
+		HashTableTest.class
 	};
 	
 	public static final void main (final String[] args) {

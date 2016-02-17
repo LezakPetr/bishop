@@ -1,5 +1,7 @@
 package bishop.engine;
 
+import bishop.base.Move;
+
 public final class HashRecord {
 
 	private int horizon;
@@ -25,6 +27,8 @@ public final class HashRecord {
 	}
 
 	public void setEvaluation(final int evaluation) {
+		assert (evaluation >= Evaluation.MIN && evaluation <= Evaluation.MAX);
+		
 		this.evaluation = evaluation;
 	}
 	
@@ -33,6 +37,8 @@ public final class HashRecord {
 	}
 	
 	public void setType(final int type) {
+		assert (type >= HashRecordType.FIRST && type < HashRecordType.LAST);
+		
 		this.type = type;
 	}
 	
@@ -41,11 +47,14 @@ public final class HashRecord {
 	}
 
 	public void setCompressedBestMove(final int compressedBestMove) {
+		assert (compressedBestMove >= Move.FIRST_COMPRESSED_MOVE && compressedBestMove < Move.LAST_COMPRESSED_MOVE);
+		
 		this.compressedBestMove = compressedBestMove;
 	}
 		
 	public void setEvaluationAndType (final NodeEvaluation nodeEvaluation, final int currentDepth) {
 		evaluation = nodeEvaluation.getEvaluation();
+		assert (evaluation >= Evaluation.MIN && evaluation <= Evaluation.MAX);
 		
 		if (evaluation > nodeEvaluation.getBeta())
 			type = HashRecordType.LOWER_BOUND;
@@ -70,4 +79,17 @@ public final class HashRecord {
 		return evaluation;
 	}
 
+	public boolean equals(final Object obj) {
+		if (!(obj instanceof HashRecord))
+			return false;
+		
+		final HashRecord cmp = (HashRecord) obj;
+		
+		return this.horizon == cmp.horizon && this.evaluation == cmp.evaluation && this.compressedBestMove == cmp.compressedBestMove && this.type == cmp.type;
+	}
+	
+	@Override
+	public String toString() {
+		return "Horizon = " + horizon + ", evaluation = " + evaluation + ", bestMove = " + compressedBestMove + ", type = " + type;
+	}
 }

@@ -54,14 +54,11 @@ public final class HashTableImpl implements IHashTable {
 		return monitorArray[index >>> monitorShift];
 	}
 	
-	/**
-	 * Returns hash record for given position.
-	 * @param position position
-	 * @param record storage for the record
-	 * @return true if record is found, false if not
-	 */
 	public boolean getRecord (final Position position, final HashRecord record) {
-		final long hash = position.getHash();
+		return getRecord(position.getHash(), record);
+	}
+	
+	public boolean getRecord (final long hash, final HashRecord record) {
 		final int index = (int) (hash & indexMask);
 		final Object monitor = getMonitor (index);
 		
@@ -85,13 +82,11 @@ public final class HashTableImpl implements IHashTable {
 		}
 	}
 	
-	/**
-	 * Updates hash record for given position.
-	 * @param position position
-	 * @param record hash record
-	 */
 	public void updateRecord (final Position position, final HashRecord record) {
-		final long hash = position.getHash();
+		updateRecord(position.getHash(), record);
+	}
+	
+	public void updateRecord (final long hash, final HashRecord record) {
 		final int index = (int) (hash & indexMask);
 		final Object monitor = getMonitor (index);
 		
@@ -99,7 +94,7 @@ public final class HashTableImpl implements IHashTable {
 			final int oldHorizon = (int) ((table[index + 1] & HORIZON_MASK) >> HORIZON_SHIFT);
 			
 			if (record.getHorizon() >= oldHorizon) {
-				table[index] = position.getHash();
+				table[index] = hash;
 				
 				long data = 0;
 				
