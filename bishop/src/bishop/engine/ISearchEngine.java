@@ -13,6 +13,7 @@ public interface ISearchEngine {
 	
 	public static final int HORIZON_FRACTION_BITS = 4;
 	public static final int HORIZON_GRANULARITY = 1 << HORIZON_FRACTION_BITS;
+	public static final int MAX_HORIZON = 1 << (16 - HORIZON_FRACTION_BITS);
 	
 	/**
 	 * Starts the engine.

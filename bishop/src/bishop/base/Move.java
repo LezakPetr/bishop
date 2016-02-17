@@ -37,6 +37,9 @@ public final class Move {
 	
 	public static final int NONE_COMPRESSED_MOVE = 0;
 	
+	public static final int FIRST_COMPRESSED_MOVE = 0;
+	public static final int LAST_COMPRESSED_MOVE = COMPRESSED_MOVE_MASK + 1;
+	
 	
 	private int data;
 
