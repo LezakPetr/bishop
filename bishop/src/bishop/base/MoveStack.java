@@ -3,7 +3,7 @@ package bishop.base;
 import java.util.Arrays;
 
 
-public final class  MoveStack {
+public class MoveStack {
 	
 	private static final long MOVE_MASK = 0x00000000FFFFFFFFL;
 	
@@ -32,9 +32,31 @@ public final class  MoveStack {
 		
 		stack[index] = movePart | evaluationPart;
 	}
+	
+	public void copyRecords (final MoveStack source, final int srcIndex, final int dstIndex, final int size) {
+		System.arraycopy(source.stack, srcIndex, this.stack, dstIndex, size);
+	}
 
 	public void sortMoves(final int begin, final int end) {
+		// This is a little hack. Because evaluation is stored in MSB bytes,
+		// it drives order. So worst moves will be in the begin, best in the end,
 		Arrays.sort(stack, begin, end);
+	}
+	
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+		final Move move = new Move();
+		
+		for (int i = 0; i < stack.length; i++) {
+			if (i > 0)
+				builder.append(' ');
+			
+			getMove(i, move);
+			builder.append(move.toString());
+		}
+		
+		return builder.toString();
 	}
 
 }

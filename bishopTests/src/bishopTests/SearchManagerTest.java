@@ -5,6 +5,8 @@ import java.io.PushbackReader;
 import java.io.StringReader;
 import org.junit.Assert;
 import org.junit.Test;
+
+import parallel.Parallel;
 import utils.Logger;
 import bishop.base.Fen;
 import bishop.base.GlobalSettings;
@@ -18,7 +20,6 @@ import bishop.engine.ISearchEngine;
 import bishop.engine.ISearchManager;
 import bishop.engine.ISearchManagerHandler;
 import bishop.engine.MaterialPositionEvaluatorFactory;
-import bishop.engine.PrincipalVariationSplittingStrategy;
 import bishop.engine.SearchInfo;
 import bishop.engine.SearchManagerImpl;
 import bishop.engine.SearchResult;
@@ -65,7 +66,6 @@ public class SearchManagerTest {
 
 		final ISearchManager manager = new SearchManagerImpl();
 		manager.setEngineFactory(engineFactory);
-		manager.setSearchStrategy(new PrincipalVariationSplittingStrategy());
 		manager.setHashTable(hashTable);
 		
 		final Holder<Boolean> searchFinished = new Holder<Boolean>();
@@ -117,7 +117,6 @@ public class SearchManagerTest {
 	}
 
 	private void doSearch(final TestValue[] testValueArray,	final ISearchManager manager, final Holder<Boolean> searchFinished, final int threadCount) throws IOException, InterruptedException {
-		manager.setThreadCount(threadCount);
 		manager.start();
 		
 		for (TestValue testValue: testValueArray) {

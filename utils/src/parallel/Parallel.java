@@ -25,10 +25,14 @@ public class Parallel {
 		this.executor = executor;
 		this.threadCount = threadCount;
 	}
-	
+
+	public Parallel(final int threadCount) {
+		this.threadCount = threadCount;
+		this.executor = Executors.newFixedThreadPool(threadCount);
+	}
+
 	public Parallel() {
-		threadCount = Runtime.getRuntime().availableProcessors();
-		executor = Executors.newFixedThreadPool(threadCount);
+		this(Runtime.getRuntime().availableProcessors());
 	}
 
 	/**
@@ -50,6 +54,27 @@ public class Parallel {
 		
 		if (firstThrowable != null)
 			throw new RuntimeException("Inner exception", firstThrowable);
+	}
+	
+	public static void invokaAllSerial(List<Callable<Throwable>> callableList) {
+		Throwable firstThrowable = null;
+		
+		for (Callable<Throwable> callable: callableList) {
+			Throwable th;
+		
+			try {
+				th = callable.call();
+			}
+			catch (Throwable t) {
+				th = t;
+			}
+
+			if (firstThrowable == null && th != null)
+				firstThrowable = th;
+		}
+		
+		if (firstThrowable != null)
+			throw new RuntimeException("Inner exception", firstThrowable);			
 	}
 	
 	/**
@@ -127,4 +152,5 @@ public class Parallel {
 		executor.shutdown();
 		executor.awaitTermination(1, TimeUnit.DAYS);
 	}
+
 }

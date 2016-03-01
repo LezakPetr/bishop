@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
+import parallel.Parallel;
+
 import bishop.base.Game;
 import bishop.base.Holder;
 import bishop.base.IGameNode;
@@ -20,7 +22,6 @@ import bishop.engine.ISearchManager;
 import bishop.engine.ISearchManagerHandler;
 import bishop.engine.PositionEvaluatorSwitchFactory;
 import bishop.engine.PositionEvaluatorSwitchSettings;
-import bishop.engine.PrincipalVariationSplittingStrategy;
 import bishop.engine.SearchInfo;
 import bishop.engine.SearchManagerImpl;
 import bishop.engine.SerialSearchEngineFactory;
@@ -48,13 +49,11 @@ public class SearchPerformanceTest {
 		
 		manager.setTablebaseEvaluator(tablebaseEvaluator);
 		manager.setEngineFactory(engineFactory);
-		manager.setSearchStrategy(new PrincipalVariationSplittingStrategy());
 		manager.setHashTable(hashTable);
 		
 		final int threadCount = Runtime.getRuntime().availableProcessors();
 		System.out.println (threadCount);
 		
-		manager.setThreadCount(threadCount);
 		manager.setMaxTimeForMove(maxTimeForPosition);
 				
 		final ISearchManagerHandler handler = new ISearchManagerHandler() {

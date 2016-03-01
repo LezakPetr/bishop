@@ -1,7 +1,12 @@
 package bishop.engine;
 
+import java.util.List;
+
+import bishop.base.Move;
 import bishop.base.MoveList;
+import bishop.base.MoveStack;
 import bishop.base.Position;
+import bishop.base.PseudoLegalMoveGenerator;
 
 public final class SearchTask {
 
@@ -16,6 +21,8 @@ public final class SearchTask {
 	private boolean terminated;
 	private int rootMaterialEvaluation;
 	private int maxExtension;
+	private final Move move;
+	private final EvaluatedMoveList rootMoveList;   // Optional moves in the root sorted from worst to best ones
 	
 	public SearchTask() {
 		horizon = 0;
@@ -26,6 +33,8 @@ public final class SearchTask {
 		principalVariation = new MoveList();
 		initialSearch = true;
 		terminated = false;
+		move = new Move();
+		rootMoveList = new EvaluatedMoveList(PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
 	}
 	
 	public Position getPosition() {
@@ -123,6 +132,17 @@ public final class SearchTask {
 	public void setMaxExtension(int maxExtension) {
 		this.maxExtension = maxExtension;
 	}
+	
+	public Move getMove() {
+		return move;
+	}
+	
+	public void setMove (final Move move) {
+		this.move.assign(move);
+	}
 
+	public EvaluatedMoveList getRootMoveList() {
+		return rootMoveList;
+	}
 
 }

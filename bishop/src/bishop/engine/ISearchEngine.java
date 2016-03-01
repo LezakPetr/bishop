@@ -5,9 +5,7 @@ import bishop.base.IHandlerRegistrar;
 public interface ISearchEngine {
 	public enum EngineState {
 		STOPPED,
-		WAITING,
 		SEARCHING,
-		TERMINATING,
 		STOPPING
 	};
 	
@@ -15,25 +13,6 @@ public interface ISearchEngine {
 	public static final int HORIZON_GRANULARITY = 1 << HORIZON_FRACTION_BITS;
 	public static final int MAX_HORIZON = 1 << (16 - HORIZON_FRACTION_BITS);
 	
-	/**
-	 * Starts the engine.
-	 * Changes state from STOPPED to WAITING. 
-	 */
-	public void start();
-	
-	/**
-	 * Stops the engine.
-	 * Changes state from WAITING or SEARCHING to STOPPING and later to STOPPED.
-	 */
-	public void stop();
-
-	/**
-	 * Returns handler registrar of this engine.
-	 * Modification is enabled just in STOPPED state.
-	 * @return registrar
-	 */
-	public IHandlerRegistrar<ISearchEngineHandler> getHandlerRegistrar();
-
 	/**
 	 * Sets maximal total depth of the search.
 	 * Engine must be in STOPPED state.
@@ -56,13 +35,17 @@ public interface ISearchEngine {
 	public void setHashTable (final IHashTable table);
 	
 	/**
-	 * Sets task for searching. Changes state from WAITING to SEARCHING. 
+	 * Searches given task and returns results. Changes state from STOPPED
+	 * to SEARCHING and when search is finished changes state from SEARCHING
+	 * to STOPPED. 
 	 * @param task search task
 	 */
-	public void startSearching(final SearchTask task);
+	public SearchResult search(final SearchTask task);
 
 	/**
-	 * Stops the searching. Changes state from SEARCHING to TERMINATING and later to WAITING.
+	 * Stops the searching. If state is SEARCHING it is changed to STOPPING.
+	 * Method returns immediately and ensures that method search returns as soon
+	 * as possible in the future.
 	 */
 	public void stopSearching();
 		
@@ -74,18 +57,11 @@ public interface ISearchEngine {
 	
 	/**
 	 * Clips task boundaries.
-	 * Engine must be in SEARCHING state.
 	 * @param alpha lower boundary
 	 * @param beta upper boundary
 	 */
 	public void updateTaskBoundaries (final int alpha, final int beta);
-	
-	/**
-	 * Terminates the task.
-	 * Engine must be in SEARCHING state.
-	 */
-	public void terminateTask();
-	
+		
 	/**
 	 * Gets search settings.
 	 * @return search settings
@@ -105,4 +81,10 @@ public interface ISearchEngine {
 	 * @param evaluator evaluator
 	 */
 	public void setTablebaseEvaluator (final TablebasePositionEvaluator evaluator);
+
+	/**
+	 * Returns registrar for search engine handlers.
+	 * @return registrar
+	 */
+	public IHandlerRegistrar<ISearchEngineHandler> getHandlerRegistrar();
 }

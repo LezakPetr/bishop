@@ -1,20 +1,23 @@
 package bishop.engine;
 
 import bishop.base.MoveList;
+import bishop.base.PseudoLegalMoveGenerator;
 
-public final class SearchResult {
+public final class SearchResult implements ISearchResult {
 
 	private final NodeEvaluation nodeEvaluation;
 	private final MoveList principalVariation;
 	private long nodeCount;
 	private int horizon;
 	private boolean searchTerminated;
+	private final EvaluatedMoveList rootMoveList;   // List of evaluated moves in the root
 	
 	public SearchResult() {
 		this.nodeEvaluation = new NodeEvaluation();
 		this.principalVariation = new MoveList();
 		this.nodeCount = 0;
 		this.searchTerminated = false;
+		this.rootMoveList = new EvaluatedMoveList(PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
 	}
 	
 	public NodeEvaluation getNodeEvaluation() {
@@ -65,6 +68,10 @@ public final class SearchResult {
 
 	public void setHorizon(int horizon) {
 		this.horizon = horizon;
+	}
+
+	public EvaluatedMoveList getRootMoveList() {
+		return rootMoveList;
 	}
 
 }

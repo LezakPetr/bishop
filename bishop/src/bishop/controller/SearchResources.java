@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
+import parallel.Parallel;
+
 import bishop.base.PgnReader;
 import bishop.engine.BookSource;
 import bishop.engine.HashTableImpl;
 import bishop.engine.ISearchManager;
 import bishop.engine.PositionEvaluatorSwitchFactory;
 import bishop.engine.PositionEvaluatorSwitchSettings;
-import bishop.engine.PrincipalVariationSplittingStrategy;
 import bishop.engine.SearchManagerImpl;
 import bishop.engine.SerialSearchEngineFactory;
 import bishop.engine.TablebasePositionEvaluator;
@@ -32,6 +33,10 @@ public class SearchResources {
 		
 		searchEngineFactory = new SerialSearchEngineFactory();
 		
+		final int threadCount = application.getSettings().getEngineSettings().getThreadCount();
+		final Parallel parallel = new Parallel(threadCount);
+		searchEngineFactory.setParallel(parallel);
+		
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings);
 		
@@ -46,7 +51,6 @@ public class SearchResources {
 		
 		searchManager = new SearchManagerImpl();
 		searchManager.setEngineFactory(searchEngineFactory);
-		searchManager.setSearchStrategy(new PrincipalVariationSplittingStrategy());
 		searchManager.setHashTable(hashTable);
 		searchManager.setTablebaseEvaluator (tablebasePositionEvaluator);
 		
@@ -101,8 +105,6 @@ public class SearchResources {
 		final EngineSettings engineSettings = applicationSettings.getEngineSettings();
 		
 		hashTable.resize (engineSettings.getHashTableExponent());
-		
-		searchManager.setThreadCount(engineSettings.getThreadCount());
 	}
 
 }

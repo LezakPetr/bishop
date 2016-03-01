@@ -1,5 +1,6 @@
 package bishop.engine;
 
+import parallel.Parallel;
 import bishop.base.IHandlerRegistrar;
 import bishop.base.Position;
 
@@ -38,13 +39,6 @@ public interface ISearchManager {
 	 * @param time maximal time for search of one move
 	 */
 	public void setMaxTimeForMove (final long time);
-	
-	/**
-	 * Sets number of calculation threads.
-	 * Manager must be in STOPPED state.
-	 * @param threadCount number of threads
-	 */
-	public void setThreadCount (final int threadCount);
 	
 	/**
 	 * Sets book.
@@ -86,13 +80,6 @@ public interface ISearchManager {
 	 * @param factory search engine factory
 	 */
 	public void setEngineFactory (final ISearchEngineFactory factory);
-	
-	/**
-	 * Sets strategy of the search.
-	 * Manager must be in STOPPED state.
-	 * @param strategy search strategy
-	 */
-	public void setSearchStrategy (final ISearchStrategy strategy);
 	
 	/**
 	 * Returns hash table.
