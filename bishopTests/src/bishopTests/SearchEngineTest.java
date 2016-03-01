@@ -3,15 +3,19 @@ package bishopTests;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.junit.Assert;
 import org.junit.Test;
+
+import parallel.Parallel;
 import bishop.base.Fen;
-import bishop.base.Holder;
 import bishop.base.MoveList;
 import bishop.base.Position;
 import bishop.engine.Evaluation;
 import bishop.engine.ISearchEngine;
-import bishop.engine.ISearchEngineHandler;
 import bishop.engine.MaterialPositionEvaluator;
 import bishop.engine.RepeatedPositionRegister;
 import bishop.engine.SearchResult;
@@ -42,7 +46,7 @@ public class SearchEngineTest {
 		new TestValue("2k5/8/2K1R3/8/8/8/8/8 w - - 0 1", 0, Evaluation.getMateEvaluation(1), "e6e8"),
 		new TestValue("7k/8/8/6RK/8/8/8/8 w - - 0 1", 4, Evaluation.getMateEvaluation(5), "h5g6"),
 		new TestValue("8/8/8/8/6rk/8/8/7K b - - 0 1", 4, Evaluation.getMateEvaluation(5), "h4g3"),
-		new TestValue("8/1k1K4/7R/8/8/8/8/8 b - - 1 1", 5, -Evaluation.getMateEvaluation(6), "b7b8"),
+		new TestValue("8/1k1KQ3/8/8/8/8/8/8 b - - 0 1", 5, -Evaluation.getMateEvaluation(6), "b7b6"),
 		new TestValue("QR6/7k/8/8/7q/8/6P1/6K1 b - - 0 1", 4, Evaluation.DRAW, "h4e1"),
 		new TestValue("8/1k1K3R/8/8/8/8/8/8 w - - 0 1", 6, Evaluation.getMateEvaluation(7), "h7h6")
 	};
@@ -50,43 +54,50 @@ public class SearchEngineTest {
 
 	
 	@Test
-	public void searchEngineTest() throws Exception {
-		final SerialSearchEngine engine = new SerialSearchEngine();
-		final MaterialPositionEvaluator evaluator = new MaterialPositionEvaluator();
+	public void searchEngineTestSerial() throws Exception {
+		runTest(false);
+	}
 
-		final Holder<SearchResult> searchResult = new Holder<SearchResult>();
+	@Test
+	public void searchEngineTestParallel() throws Exception {
+		runTest(true);
+	}
+
+	public void runTest(final boolean runParallel) throws IOException, InterruptedException {
+		final SerialSearchEngine engine;
 		
-		final ISearchEngineHandler handler = new ISearchEngineHandler() {
-			public void onSearchComplete (final ISearchEngine engine, final SearchTask task, final SearchResult result) {
-				synchronized (searchResult) {
-					searchResult.setValue(result);
-					searchResult.notify();
-				}
+		if (runParallel) {
+			final int threadCount = 2;
+			final Parallel parallel = new Parallel(threadCount);
+			final List<ISearchEngine> childEngineList = new ArrayList<ISearchEngine>();
+			
+			for (int i = 0; i < threadCount; i++) {
+				final SerialSearchEngine childEngine = new SerialSearchEngine(null, Collections.<ISearchEngine>emptyList());
+				configureEngine(childEngine);
+	
+				childEngineList.add(childEngine);
 			}
-		};
+			
+			 engine = new SerialSearchEngine(parallel, childEngineList);
+		}
+		else
+			engine = new SerialSearchEngine(null, Collections.<ISearchEngine>emptyList());
 		
-		engine.getHandlerRegistrar().addHandler(handler);
-		engine.setPositionEvaluator(evaluator);
-		engine.setMaximalDepth(20);
-		engine.setSearchSettings(new SearchSettings());
-		engine.start();
+		configureEngine(engine);
 		
 		// Prewarm
 		for (int i = 0; i < 3; i++)
-			doCalculation(engine, searchResult);
+			doCalculation(engine);
 		
 		// Measure
 		final long beginTime = System.currentTimeMillis();
 		long nodeCount = 0;
 		
 		for (int i = 0; i < 3; i++)
-			nodeCount += doCalculation(engine, searchResult);
+			nodeCount += doCalculation(engine);
 		
 		final long endTime = System.currentTimeMillis();
-		
-		engine.stop();
-		engine.getHandlerRegistrar().removeHandler(handler);
-		
+				
 		final long time = endTime - beginTime;
 		final long nodesPerSec = 1000 * nodeCount / time;
 		
@@ -94,7 +105,16 @@ public class SearchEngineTest {
 	}
 
 
-	private long doCalculation(final SerialSearchEngine engine, final Holder<SearchResult> searchResult) throws IOException, InterruptedException {
+	public void configureEngine(final SerialSearchEngine engine) {
+		final MaterialPositionEvaluator evaluator = new MaterialPositionEvaluator();
+		
+		engine.setPositionEvaluator(evaluator);
+		engine.setMaximalDepth(20);
+		engine.setSearchSettings(new SearchSettings());
+	}
+
+
+	private long doCalculation(final SerialSearchEngine engine) throws IOException, InterruptedException {
 		long nodeCount = 0;
 		
 		for (TestValue testValue: TEST_VALUES) {	
@@ -114,18 +134,7 @@ public class SearchEngineTest {
 			task.getPosition().assign(position);
 			task.setRootMaterialEvaluation(position.getMaterialEvaluation());
 			
-			searchResult.setValue(null);
-			engine.startSearching(task);
-			
-			SearchResult result;
-			
-			synchronized (searchResult) {
-				while ((result = searchResult.getValue()) == null)
-					searchResult.wait();
-			}
-			
-			engine.stopSearching();
-			
+			final SearchResult result = engine.search(task);			
 			
 			final MoveList principalVariation = result.getPrincipalVariation();
 			System.out.println (principalVariation.toString());
@@ -133,7 +142,7 @@ public class SearchEngineTest {
 			Assert.assertEquals(testValue.positionFen, testValue.evaluation, result.getNodeEvaluation().getEvaluation());
 			
 			if (testValue.moveString != null)
-				Assert.assertEquals(testValue.moveString, principalVariation.get(0).toString());
+				Assert.assertEquals(testValue.positionFen, testValue.moveString, principalVariation.get(0).toString());
 			else
 				Assert.assertEquals(0, principalVariation.getSize());
 			

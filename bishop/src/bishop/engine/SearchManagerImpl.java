@@ -1,98 +1,61 @@
 package bishop.engine;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
 
 import utils.Logger;
-import bishop.base.GlobalSettings;
 import bishop.base.HandlerRegistrarImpl;
 import bishop.base.IHandlerRegistrar;
 import bishop.base.Move;
 import bishop.base.MoveList;
 import bishop.base.Position;
-import bishop.engine.ISearchEngine.EngineState;
-import bishop.engine.SearchNode.EvaluationState;
 
-
-public final class SearchManagerImpl implements ISearchManager, ISearchStrategyHandler, ISearchManagerAlgoHandler {
-	
-	static class EngineRecord {
-		public ISearchEngine engine;
-		public SearchNode node;
-		public int index;
-		public int taskAlpha;
-		public int taskBeta;
-		public boolean isSmallerWindow;
-	}
-	
-	static class ResultRecord {
-		public EngineRecord engineRecord;
-		public SearchResult result;
-	}
-	
+public final class SearchManagerImpl implements ISearchManager {
 	
 	private final static long SEARCH_INFO_TIMEOUT = 500;   // [ms] 
 	
 	// Settings
-	private int threadCount;
 	private ISearchEngineFactory engineFactory;
 	private int maxHorizon;
 	private long maxTimeForMove;
 	private HandlerRegistrarImpl<ISearchManagerHandler> handlerRegistrar;
 	private int minHorizon = 3 * ISearchEngine.HORIZON_GRANULARITY;
 	
+	private ISearchEngine searchEngine;
+	
 	// Data for the search
+	private SearchSettings searchSettings;
 	private long searchStartTime;
 	private long totalNodeCount;
 	private int startHorizon;
-	private final SearchManagerAlgo algo;
+	private boolean bookSearchEnabled;
+	private boolean singleSearchEnabled;
+	private IBook<?> book;
+	private IHashTable hashTable;
+	private TablebasePositionEvaluator tablebaseEvaluator;
 	
 	// Synchronization
-	private final List<EngineRecord> waitingEngineList;
-	private final Map<ISearchEngine, EngineRecord> searchingEngineMap;
-	
-	private Thread managerThread;
-	private final Queue<ResultRecord> resultRecordQueue;
+	private Thread searchingThread;
+	private Thread checkingThread;
 	private ManagerState managerState;
 	private final Object monitor;
 	
+	private final Position rootPosition;
+	private int horizon;
+	private SearchResult searchResult;
 	private boolean searchFinished;
 	private boolean isResultSent;
-	private boolean areEnginesTrimmed;
 	private boolean isSearchRunning;
 	private boolean searchInfoChanged;
 	private long lastSearchInfoTime;
 	
-	/**
-	 * Handler that processes results from search engines.
-	 */
-	private final ISearchEngineHandler engineHandler = new ISearchEngineHandler() {
-		/**
-		 * Method creates result record and pushes it into resultRecordQueue.
-		 */
-		public void onSearchComplete (final ISearchEngine engine, final SearchTask task, final SearchResult result) {
+	private ISearchEngineHandler engineHandler = new ISearchEngineHandler() {
+		@Override
+		public void onResultUpdate(final SearchResult result) {
 			synchronized (monitor) {
-				final EngineRecord engineRecord = searchingEngineMap.get(engine);
-				
-				if (engineRecord != null) {
-					final ResultRecord resultRecord = new ResultRecord();
-					resultRecord.engineRecord = engineRecord;
-					resultRecord.result = result;
-					
-					resultRecordQueue.add(resultRecord);
-					monitor.notifyAll();
-					
-					Logger.logMessage("Results from engine " + engineRecord.index);
-				}
+				searchResult = result;
+				searchInfoChanged = true;
 			}
 		}
+		
 	};
 	
 	
@@ -103,15 +66,12 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 		this.managerState = ManagerState.STOPPED;
 		this.monitor = new Object();
 		this.handlerRegistrar = new HandlerRegistrarImpl<ISearchManagerHandler>();
-		this.threadCount = 1;
 		
-		this.algo = new SearchManagerAlgo(this);
 		this.setMaxHorizon(256 * ISearchEngine.HORIZON_GRANULARITY);
 		this.maxTimeForMove = TIME_FOR_MOVE_INFINITY;
+		this.rootPosition = new Position();
 		
-		this.waitingEngineList = new ArrayList<EngineRecord>();
-		this.searchingEngineMap = new HashMap<ISearchEngine, EngineRecord>();
-		this.resultRecordQueue = new LinkedList<ResultRecord>();
+		this.searchSettings = new SearchSettings();
 	}
 	
 	/**
@@ -125,50 +85,24 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 			this.engineFactory = factory;
 		}
 	}
-
-	/**
-	 * Sets number of calculation threads.
-	 * Manager must be in STOPPED state.
-	 * @param threadCount number of threads
-	 */
-	public void setThreadCount (final int threadCount) {
-		synchronized (monitor) {
-			checkManagerState(ManagerState.STOPPED);
-			this.threadCount = threadCount;
-		}
-	}
-	
-	/**
-	 * Sets strategy of the search.
-	 * Manager must be in STOPPED state.
-	 * @param strategy search strategy
-	 */
-	public void setSearchStrategy (final ISearchStrategy strategy) {
-		synchronized (monitor) {
-			checkManagerState(ManagerState.STOPPED);
-			algo.setStrategy(strategy);
-		}
-	}
 	
 	/**
 	 * Sets book.
 	 * Manager must be in STOPPED state.
 	 * @param book new book
 	 */
+	@Override
 	public void setBook (final IBook<?> book) {
 		synchronized (monitor) {
 			checkManagerState(ManagerState.STOPPED);
-			algo.setBook (book);
+			this.book = book;
 		}
 	}
 
 	/**
 	 * Checks if search should finish and if so sets searchFinished flag.
 	 */
-	@Override
 	public void updateSearchFinished() {
-		final int horizon = algo.getHorizon();
-		
 		if (horizon > maxHorizon)
 			searchFinished = true;
 		
@@ -178,167 +112,6 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 		}
 	}
 	
-	/**
-	 * Method checks content of resultRecordQueue and processes records from it.
-	 */
-	private void processResults() {
-		synchronized (monitor) {
-			while (managerState == ManagerState.SEARCHING || managerState == ManagerState.WAITING || managerState == ManagerState.TERMINATING) {
-				try {
-					final ResultRecord resultRecord = resultRecordQueue.poll();
-					
-					if (resultRecord != null) {
-						stopEngine(resultRecord.engineRecord);
-						
-						totalNodeCount += resultRecord.result.getNodeCount();
-						
-						if (!searchFinished && managerState == ManagerState.SEARCHING) {
-							onMoveCalculated(resultRecord);
-						}
-					}
-					
-					updateSearchFinished();
-					
-					if (searchingEngineMap.isEmpty()) {
-						if (searchFinished) {
-							sendResult();
-						}
-						
-						isSearchRunning = false;
-						monitor.notifyAll();
-					}
-					
-					if (searchFinished || managerState == ManagerState.TERMINATING) {
-						trimEngines();
-					}
-					
-					final long currentTime = System.currentTimeMillis();
-					final long timeoutInfo = lastSearchInfoTime + SEARCH_INFO_TIMEOUT - currentTime;
-					
-					if (searchInfoChanged && timeoutInfo < 0) {
-						updateSearchInfo();
-					}
-					
-					// Wait for event
-					if (resultRecordQueue.isEmpty()) {
-						if (managerState == ManagerState.SEARCHING && !searchFinished && (algo.getHorizon() > startHorizon || searchInfoChanged)) {
-							final long timeoutSearch = searchStartTime + maxTimeForMove - currentTime;
-							final long timeout = Math.min(timeoutInfo, timeoutSearch);
-							
-							if (timeout > 0) {
-								monitor.wait(timeout);
-							}
-							else {
-								monitor.wait(1);   // We must unlock monitor for a short time
-							}
-						}
-						else {
-							monitor.wait();
-						}
-					}
-				}
-				catch (Throwable ex) {
-					Logger.logException(ex);
-				}
-			}
-		}
-	}
-
-	// Clip boundaries to fasten engine stop
-	private void trimEngines() {
-		if (!areEnginesTrimmed) {
-			for (EngineRecord record: searchingEngineMap.values()) {
-				Logger.logMessage("Clipping out engine " + record.index);
-				
-				record.engine.terminateTask();
-			}
-			
-			areEnginesTrimmed = true;
-		}
-	}
-	
-	private void onMoveCalculated(final ResultRecord resultRecord) {
-		// Stop searching of the engine
-		final EngineRecord engineRecord = resultRecord.engineRecord;
-		Logger.logMessage("Engine " + engineRecord.index + " stopped, evaluation " + resultRecord.result.getNodeEvaluation() + ", PVAR " + resultRecord.result.getPrincipalVariation());
-
-		if (resultRecord.result.isSearchTerminated())
-			return;
-		
-		// Store evaluation
-		final SearchNode calculatedNode = engineRecord.node;
-		final NodeEvaluation evaluation = resultRecord.result.getNodeEvaluation();
-		final boolean resultValid = !resultRecord.engineRecord.isSmallerWindow || evaluation.getEvaluation() >= resultRecord.engineRecord.taskBeta;
-		final MoveList principalVariation = resultRecord.result.getPrincipalVariation();
-		
-		searchInfoChanged = true;
-		algo.onMoveCalculated (calculatedNode, evaluation, principalVariation, resultValid);
-	}
-
-	private void stopEngine(final EngineRecord engineRecord) {
-		Logger.logMessage("Stopping engine " + engineRecord.index);
-		
-		engineRecord.engine.stopSearching();
-		searchingEngineMap.remove(engineRecord.engine);
-		waitingEngineList.add(engineRecord);
-	}
-	
-	/**
-	 * Updates alpha-beta boundaries of engines that calculates direct children
-	 * of given node as a result of node evaluation change.
-	 * @param node node which evaluation was changed
-	 */
-	@Override
-	public void updateEnginesTaskBoundaries(final SearchNode node) {
-		for (EngineRecord engineRecord: searchingEngineMap.values()) {
-			if (node == engineRecord.node.getParent() && engineRecord.engine.getEngineState() == EngineState.SEARCHING) {
-				final NodeEvaluation nodeEvaluation = node.getEvaluation();
-				engineRecord.engine.updateTaskBoundaries(-nodeEvaluation.getBeta(), -nodeEvaluation.getAlpha());
-			}
-		}
-	}
-	
-	private boolean isDeepParent(final SearchNode parent, final SearchNode child) {
-		SearchNode node = child;
-		
-		while (node != null && node.getDepth() > parent.getDepth()) {
-			node = node.getParent();
-		}
-		
-		return node == parent;
-	}
-	
-	/**
-	 * Stops engines that calculates direct or indirect children of given node.
-	 * @param parentNode parent node
-	 */
-	@Override
-	public void stopChildEngines (final SearchNode parentNode) {
-		final Set<ISearchEngine> stoppedEngines = new HashSet<ISearchEngine>();
-		
-		// Stop engines that are searching child nodes
-		for (Iterator<EngineRecord> it = searchingEngineMap.values().iterator(); it.hasNext(); ) {
-			final EngineRecord record = it.next();
-			
-			if (isDeepParent (parentNode, record.node)) {
-				record.engine.stopSearching();
-				
-				it.remove();
-				waitingEngineList.add(record);
-				stoppedEngines.add(record.engine);
-			}
-		}
-		
-		// Remove results from the queue
-		for (Iterator<ResultRecord> it = resultRecordQueue.iterator(); it.hasNext(); ) {
-			final ResultRecord record = it.next();
-			
-			if (stoppedEngines.contains(record.engineRecord.engine)) {
-				it.remove();
-			}
-		}
-	}
-
 	private void sendResult() {
 		if (!isResultSent) {
 			updateSearchInfo();
@@ -355,17 +128,18 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 	 * Sends updated search info to registered handlers.
 	 */
 	private void updateSearchInfo() {
-		final SearchResult searchResult = algo.getResult();
-		final SearchInfo info = new SearchInfo();
-		
-		info.setElapsedTime(System.currentTimeMillis() - searchStartTime);
-		info.setHorizon(searchResult.getHorizon());
-		info.setNodeCount(totalNodeCount);
-		info.setPrincipalVariation(searchResult.getPrincipalVariation());
-		info.setEvaluation(searchResult.getNodeEvaluation().getEvaluation());
-		
-		for (ISearchManagerHandler handler: handlerRegistrar.getHandlers())
-			handler.onSearchInfoUpdate(info);
+		if (searchResult != null && searchInfoChanged) {
+			final SearchInfo info = new SearchInfo();
+			
+			info.setElapsedTime(System.currentTimeMillis() - searchStartTime);
+			info.setHorizon(searchResult.getHorizon());
+			info.setNodeCount(totalNodeCount + searchResult.getNodeCount());
+			info.setPrincipalVariation(searchResult.getPrincipalVariation());
+			info.setEvaluation(searchResult.getNodeEvaluation().getEvaluation());
+			
+			for (ISearchManagerHandler handler: handlerRegistrar.getHandlers())
+				handler.onSearchInfoUpdate(info);
+		}
 		
 		searchInfoChanged = false;
 		lastSearchInfoTime = System.currentTimeMillis();
@@ -394,55 +168,173 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 		synchronized (monitor) {
 			checkManagerState (ManagerState.STOPPED);
 			
-			final ISearchStrategy strategy = algo.getStrategy();
-			
-			if (strategy == null)
-				throw new RuntimeException("Search strategy is not set");
-
 			if (engineFactory == null)
 				throw new RuntimeException("Engine factory is not set");
 
-			strategy.setHandler(this);
 			handlerRegistrar.setChangesEnabled(false);
-			
-			managerThread = new Thread(new Runnable() {
-				public void run() {
-					processResults();
-				}
-			});
-			
-			managerThread.setName("SearchManagerImpl thread");
-			managerThread.setDaemon(true);
-			managerThread.start();
-			
-			for (int i = 0; i < threadCount; i++) {
-				final ISearchEngine engine = engineFactory.createEngine();
 
-				engine.getHandlerRegistrar().addHandler(engineHandler);
-				engine.setHashTable(algo.getHashTable());
-				engine.setTablebaseEvaluator(algo.getTablebaseEvaluator());
-				engine.setSearchSettings(algo.getSearchSettings());
-				engine.start();
-				
-				final EngineRecord record = new EngineRecord();
-				record.engine = engine;
-				record.node = null;
-				record.index = i+1;
-				
-				waitingEngineList.add(record);
+			createSearchEngine();
+			createSearchingThread();
+			createCheckingThread();
+
+			managerState = ManagerState.WAITING;
+			monitor.notifyAll();
+		}
+	}
+
+	private void createSearchEngine() {
+		this.searchEngine = engineFactory.createEngine();
+		this.searchEngine.setSearchSettings(searchSettings);
+		this.searchEngine.getHandlerRegistrar().addHandler(engineHandler);
+		this.searchEngine.setTablebaseEvaluator(tablebaseEvaluator);
+		this.searchEngine.setHashTable(hashTable);
+	}
+
+	private void createCheckingThread() {
+		checkingThread = new Thread(new Runnable() {
+			public void run() {
+				try {
+					doChecking();
+				}
+				catch (Throwable ex) {
+					ex.printStackTrace();
+				}
+			}
+		});
+		
+		checkingThread.setName("SearchManagerImpl checkingThread");
+		checkingThread.setDaemon(true);
+		checkingThread.start();
+	}
+
+	private void createSearchingThread() {
+		searchingThread = new Thread(new Runnable() {
+			public void run() {
+				try {
+					doSearching();
+				}
+				catch (Throwable ex) {
+					ex.printStackTrace();
+				}
+			}
+		});
+		
+		searchingThread.setName("SearchManagerImpl searchingThread");
+		searchingThread.setDaemon(true);
+		searchingThread.start();
+	}
+	
+	private void doSearching() throws InterruptedException {
+		while (true) {
+			boolean shouldSearch = false;
+			
+			synchronized (monitor) {
+				switch (managerState) {
+					case STOPPING:
+					case STOPPED:
+						return;
+						
+					case WAITING:
+						monitor.wait();
+						break;
+						
+					case TERMINATING:
+						isSearchRunning = false;
+						monitor.notifyAll();
+						break;
+						
+					case SEARCHING:
+						shouldSearch = true;
+						searchFinished = false;
+						break;
+				}
 			}
 			
-			managerState = ManagerState.WAITING;
+			if (shouldSearch) {
+				search();
+				System.out.println("SEARCH FINISHED");
+				
+				synchronized (monitor) {
+					sendResult();
+					
+					while (managerState == ManagerState.SEARCHING)
+						monitor.wait();
+				}
+			}
 		}
 	}
 	
-	private List<EngineRecord> getAllEngineList() {
-		final List<EngineRecord> allEngineList = new ArrayList<EngineRecord>(waitingEngineList.size() + searchingEngineMap.size());
+	private void doChecking() throws InterruptedException {
+		while (true) {
+			synchronized (monitor) {
+				if (managerState == ManagerState.STOPPING)
+					break;
+				
+				if (managerState == ManagerState.SEARCHING && isSearchRunning)
+				{
+					final long timeout = lastSearchInfoTime + SEARCH_INFO_TIMEOUT - System.currentTimeMillis();
+					
+					if (timeout > 0)
+						monitor.wait(timeout);
+					
+					if (System.currentTimeMillis() > lastSearchInfoTime + SEARCH_INFO_TIMEOUT) {
+						updateSearchInfo();
+					}
+					
+					updateSearchFinished();
+					
+					if (searchFinished)
+						searchEngine.stopSearching();
+				}
+				else
+					monitor.wait();
+			}
+		}		
+	}
+	
+	private void search() {
+		boolean initialSearch = true;
 		
-		allEngineList.addAll(waitingEngineList);
-		allEngineList.addAll(searchingEngineMap.values());
+		horizon = startHorizon;
 		
-		return allEngineList;
+		EvaluatedMoveList previousEvaluatedMoveList = null;
+		
+		while (true) {
+			final SearchTask task = new SearchTask();
+			task.getPosition().assign(rootPosition);
+			task.setHorizon(horizon);
+			task.setInitialSearch(initialSearch);
+			task.setDepthAdvance(0);
+			task.setRootMaterialEvaluation(rootPosition.getMaterialEvaluation());
+			task.setRepeatedPositionRegister(new RepeatedPositionRegister());
+			
+			if (previousEvaluatedMoveList != null) {
+				final EvaluatedMoveList taskMoveList = task.getRootMoveList();
+				taskMoveList.assign(previousEvaluatedMoveList);
+				taskMoveList.sortMoves(0, taskMoveList.getSize());
+			}
+			
+			final SearchResult result = searchEngine.search(task);
+			previousEvaluatedMoveList = result.getRootMoveList();
+			
+			synchronized (monitor) {
+				updateSearchFinished();
+				
+				if (searchFinished || managerState != ManagerState.SEARCHING)
+					return;
+				
+				horizon += ISearchEngine.HORIZON_GRANULARITY;
+				initialSearch = false;
+				
+				if (!result.isSearchTerminated()) {   // TODO
+					this.searchResult = result;
+					this.searchInfoChanged = true;
+				}
+				
+				totalNodeCount += searchResult.getNodeCount();
+				this.searchResult.setNodeCount(0);
+			}
+		}
 	}
 	
 	/**
@@ -455,35 +347,15 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 			managerState = ManagerState.STOPPING;
 			monitor.notifyAll();
 		}
-		
-		final List<EngineRecord> allEngineList = getAllEngineList();
-		
-		for (EngineRecord engineRecord: allEngineList) {
-			engineRecord.engine.stop();
-		}
 
-		while (true) {
-			try {
-				managerThread.join();
-				break;
-			}
-			catch (InterruptedException ex) {
-			}
-		}
+		Utils.joinThread(checkingThread);
+		Utils.joinThread(searchingThread);
 		
 		synchronized (monitor) {
-			for (EngineRecord engineRecord: allEngineList) {
-				engineRecord.engine.getHandlerRegistrar().removeHandler(engineHandler);
-			}
-			
-			waitingEngineList.clear();
-			searchingEngineMap.clear();
 			handlerRegistrar.setChangesEnabled(true);
 			
-			managerThread = null;
-			resultRecordQueue.clear();
-			
-			algo.getStrategy().setHandler(null);
+			searchingThread = null;
+			checkingThread = null;
 			
 			managerState = ManagerState.STOPPED;
 		}
@@ -511,6 +383,38 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 			this.maxTimeForMove = time;
 		}
 	}
+	/*
+	public Move initializeSearch (final Position position, final int startHorizon) {
+		this.initialPosition.assign(position);
+		this.horizon = startHorizon - ISearchEngine.HORIZON_GRANULARITY;
+		
+		this.searchResult.clear();
+		
+		rootNode = new SearchNode(position, null, null);
+		rootNode.setMaxExtension(searchSettings.getMaxExtension());
+		
+		rootMaterialEvaluation = position.getMaterialEvaluation();
+		
+		if (singleMoveSearchEnabled) {
+			final Move singleMove = singleMoveSearch();
+			
+			if (singleMove != null) {
+				setBeforeSearchResult (singleMove);
+				return singleMove;
+			}
+		}
+		
+		if (bookSearchEnabled) {
+			final Move bookMove = bookSearch();
+			
+			if (bookMove != null) {
+				setBeforeSearchResult (bookMove);
+				return bookMove;
+			}
+		}
+				
+		return null;
+	}*/
 	
 	/**
 	 * Starts searching of given position.
@@ -526,22 +430,16 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 			this.startHorizon = Math.min(minHorizon, maxHorizon);
 			this.searchFinished = false;
 			this.isResultSent = false;
-			this.areEnginesTrimmed = false;
 			this.searchInfoChanged = false;
 			this.lastSearchInfoTime = 0;
 			this.isSearchRunning = true;
+			this.rootPosition.assign(position);
 			
 			searchStartTime = System.currentTimeMillis();
 			totalNodeCount = 0;
 			managerState = ManagerState.SEARCHING;
-
-			final Move bestMove = algo.initializeSearch(position, startHorizon);
 			
-			if (bestMove != null) {
-				//searchResult.getNodeEvaluation().setEvaluation(Evaluation.DRAW);
-				sendMoveBeforeSearch(bestMove);
-				this.isSearchRunning = false;
-			}
+			monitor.notifyAll();
 		}
 	}
 	
@@ -557,6 +455,9 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 			
 			managerState = ManagerState.TERMINATING;
 			monitor.notifyAll();
+			
+			if (searchEngine != null)
+				searchEngine.stopSearching();
 		
 			while (isSearchRunning) {
 				try {
@@ -590,7 +491,7 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 		synchronized (monitor) {
 			checkManagerState (ManagerState.WAITING);
 			
-			return algo.getResult();
+			return searchResult;
 		}
 	}
 	
@@ -604,91 +505,22 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 		}		
 	}
 	
-	/**
-	 * Returns number of waiting search engines.
-	 * @return number of search engines that are waiting for some task
-	 */
-	public int getWaitingEngineCount() {
-		synchronized (monitor) {
-			return waitingEngineList.size();
-		}
-	}
-	
-	/**
-	 * Returns total number of search engines.
-	 * @return total number of search engines
-	 */
-	public int getTotalEngineCount() {
-		synchronized (monitor) {
-			return waitingEngineList.size() + searchingEngineMap.size();
-		}
-	}
-	
 	private void sendMoveBeforeSearch (final Move move) {
-		final MoveList principalVariation = algo.getResult().getPrincipalVariation();
+		final MoveList principalVariation = searchResult.getPrincipalVariation();
 		principalVariation.clear();
 		principalVariation.add(move);
 		
 		searchFinished = true;
 		monitor.notify();
 	}
-	
-	/**
-	 * Adds task to some waiting search engine.
-	 * Throws an exception if there is no waiting engine.
-	 * @param node node to calculate
-	 */
-	public void calculateNode (final SearchNode node, final int alpha, final int beta, final boolean isSmallerWindow) {
-		synchronized (monitor) {
-			if (waitingEngineList.isEmpty())
-				throw new RuntimeException("There is no waiting search engine");
-			
-			final SearchTask task = algo.openTaskForNode(node, alpha, beta, isSmallerWindow);
-			
-			node.setEvaluationState(EvaluationState.EVALUATING);
-			
-			final EngineRecord engineRecord = waitingEngineList.remove (waitingEngineList.size() - 1);
-			searchingEngineMap.put(engineRecord.engine, engineRecord);
-
-			engineRecord.node = node;
-			engineRecord.taskAlpha = alpha;
-			engineRecord.taskBeta = beta;
-			engineRecord.isSmallerWindow = isSmallerWindow;
-			engineRecord.engine.startSearching(task);
-			
-			if (GlobalSettings.isDebug()) {
-				Logger.logMessage("Starting engine " + engineRecord.index + ", horizon " + algo.getHorizon() + ", move " + node.getMove() + "window <" + engineRecord.taskAlpha + ", " + engineRecord.taskBeta + ">");
-			}
-		}
-	}
-	
-	/**
-	 * Returns root node of the search.
-	 * @return root node of the search
-	 */
-	public SearchNode getRootNode() {
-		synchronized (monitor) {
-			return algo.getRootNode();
-		}
-	}
-	
-	/**
-	 * Opens given node.
-	 * @param node  node to open
-	 */
-	public void openNode (final SearchNode node) {
-		synchronized (monitor) {
-			algo.openNode(node);
-		}
-	}
-	
+		
 	/**
 	 * Returns hash table.
 	 * @returns hash table
 	 */
 	public IHashTable getHashTable() {
 		synchronized (monitor) {
-			return algo.getHashTable();
+			return hashTable;
 		}
 	}
 
@@ -704,7 +536,7 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 		synchronized (monitor) {
 			checkManagerState (ManagerState.STOPPED);
 
-			algo.setHashTable(table);
+			this.hashTable = table;
 		}
 	}
 	
@@ -717,7 +549,7 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 		synchronized (monitor) {
 			checkManagerState (ManagerState.STOPPED, ManagerState.WAITING);
 
-			algo.setBookSearchEnabled(enabled);
+			this.bookSearchEnabled = enabled;
 		}
 	}
 	
@@ -730,7 +562,7 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 		synchronized (monitor) {
 			checkManagerState (ManagerState.STOPPED, ManagerState.WAITING);
 
-			algo.setSingleMoveSearchEnabled(enabled);
+			this.singleSearchEnabled = enabled;
 		}
 	}
 
@@ -741,7 +573,7 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 	 */
 	public SearchSettings getSearchSettings() {
 		synchronized (monitor) {
-			return algo.getSearchSettings();
+			return searchSettings;
 		}
 	}
 
@@ -754,7 +586,7 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 		synchronized (monitor) {
 			checkManagerState(ManagerState.STOPPED);
 			
-			algo.setSearchSettings(searchSettings);
+			this.searchSettings = searchSettings;
 		}
 	}
 	
@@ -767,7 +599,7 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 		synchronized (monitor) {
 			checkManagerState(ManagerState.STOPPED);
 			
-			algo.setTablebaseEvaluator(tablebaseEvaluator);
+			this.tablebaseEvaluator = tablebaseEvaluator;
 		}
 	}
 	
@@ -775,10 +607,10 @@ public final class SearchManagerImpl implements ISearchManager, ISearchStrategyH
 	 * Check if calculation is finished.
 	 * @return true if searchFinished flag is set
 	 */
-	@Override
 	public boolean isSearchFinished() {
 		synchronized (monitor) {
 			return searchFinished;
 		}
 	}
+	
 }
