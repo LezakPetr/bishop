@@ -84,4 +84,12 @@ public class RepeatedPositionRegister {
 		return positionRepeatCount >= 3 || (positionRepeatCount >= 2 && depth > 2);
 	}
 
+	public RepeatedPositionRegister copy() {
+		final RepeatedPositionRegister result = new RepeatedPositionRegister();
+		result.clearAnsReserve(this.getSize());
+		result.pushAll(this);
+		
+		return result;
+	}
+
 }

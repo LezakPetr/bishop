@@ -56,7 +56,7 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 				}
 			}
 			else
-				childEngineList = null;
+				childEngineList = Collections.<ISearchEngine>emptyList();
 			
 			final SerialSearchEngine searchEngine = createSingleEngine(childEngineList);
 			

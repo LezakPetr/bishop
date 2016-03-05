@@ -9,11 +9,11 @@ import bishop.base.Square;
 public class CombinationNumberTable {
 	
 	public static final int MAX_N = Square.LAST - 1;
-	public static final int MAX_K = 3;
+	public static final int MAX_K = 4;
 	
 	private static final int N_SHIFT = 0;
 	private static final int K_SHIFT = N_SHIFT + Square.BIT_COUNT;
-	private static final int BIT_COUNT = K_SHIFT + 2;
+	private static final int BIT_COUNT = K_SHIFT + 3;
 	
 	private static final int[] table = createTable();
 	
