@@ -786,7 +786,6 @@ public final class Position implements IPosition {
 	 * @param move move
 	 */
 	public void makeMove (final Move move) {
-		checkIntegrity();
 		switch (move.getMoveType()) {
 			case MoveType.NORMAL:
 				makeNormalMove (move);
@@ -812,8 +811,6 @@ public final class Position implements IPosition {
 				// Bad move type
 				throw new RuntimeException("Bad type of move");
 		}
-		
-		checkIntegrity();
 	}
 
 	/**
@@ -821,7 +818,6 @@ public final class Position implements IPosition {
 	 * @param move move
 	 */
 	public void undoMove (final Move move) {
-		checkIntegrity();
 		switch (move.getMoveType()) {
 			case MoveType.NORMAL:
 				undoNormalMove (move);
@@ -847,7 +843,6 @@ public final class Position implements IPosition {
 				// Bad move type
 				throw new RuntimeException("Bad type of move");
 		}
-		checkIntegrity();
 	}
 	
 	/**

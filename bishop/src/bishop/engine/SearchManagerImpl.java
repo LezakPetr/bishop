@@ -1,9 +1,14 @@
 package bishop.engine;
 
 
+import java.util.Random;
+
 import utils.Logger;
 import bishop.base.HandlerRegistrarImpl;
+import bishop.base.Holder;
 import bishop.base.IHandlerRegistrar;
+import bishop.base.IMoveWalker;
+import bishop.base.LegalMoveGenerator;
 import bishop.base.Move;
 import bishop.base.MoveList;
 import bishop.base.Position;
@@ -46,6 +51,7 @@ public final class SearchManagerImpl implements ISearchManager {
 	private boolean isSearchRunning;
 	private boolean searchInfoChanged;
 	private long lastSearchInfoTime;
+	private Random random = new Random();
 	
 	private ISearchEngineHandler engineHandler = new ISearchEngineHandler() {
 		@Override
@@ -55,7 +61,6 @@ public final class SearchManagerImpl implements ISearchManager {
 				searchInfoChanged = true;
 			}
 		}
-		
 	};
 	
 	
@@ -252,7 +257,6 @@ public final class SearchManagerImpl implements ISearchManager {
 			
 			if (shouldSearch) {
 				search();
-				System.out.println("SEARCH FINISHED");
 				
 				synchronized (monitor) {
 					sendResult();
@@ -293,6 +297,17 @@ public final class SearchManagerImpl implements ISearchManager {
 	}
 	
 	private void search() {
+		final Move initialMove = initializeSearch();
+		
+		if (initialMove != null) {
+			searchResult = new SearchResult();
+			searchResult.getPrincipalVariation().add(initialMove);
+			
+			this.searchInfoChanged = true;
+			
+			return;
+		}
+		
 		boolean initialSearch = true;
 		
 		horizon = startHorizon;
@@ -306,7 +321,12 @@ public final class SearchManagerImpl implements ISearchManager {
 			task.setInitialSearch(initialSearch);
 			task.setDepthAdvance(0);
 			task.setRootMaterialEvaluation(rootPosition.getMaterialEvaluation());
-			task.setRepeatedPositionRegister(new RepeatedPositionRegister());
+			
+			final RepeatedPositionRegister repeatedPositionRegister = new RepeatedPositionRegister();
+			repeatedPositionRegister.clearAnsReserve(1);
+			repeatedPositionRegister.pushPosition(rootPosition, null);
+			
+			task.setRepeatedPositionRegister(repeatedPositionRegister);
 			
 			if (previousEvaluatedMoveList != null) {
 				final EvaluatedMoveList taskMoveList = task.getRootMoveList();
@@ -337,6 +357,72 @@ public final class SearchManagerImpl implements ISearchManager {
 		}
 	}
 	
+	private Move initializeSearch() {
+		this.horizon = startHorizon;
+		
+		this.searchResult = null;
+				
+		if (singleSearchEnabled) {
+			final Move singleMove = singleMoveSearch();
+			
+			if (singleMove != null)
+				return singleMove;
+		}
+		
+		if (bookSearchEnabled) {
+			final Move bookMove = bookSearch();
+			
+			if (bookMove != null)
+				return bookMove;
+		}
+
+		hashTable.clear();
+		
+		return null;
+	}
+
+	private Move bookSearch() {
+		if (book == null)
+			return null;
+		
+		final BookRecord record = book.getRecord(rootPosition);
+		
+		if (record == null)
+			return null;
+		
+		final BookMove bookMove = record.getRandomMove(random);
+		
+		if (bookMove == null)
+			return null;
+		
+		return bookMove.getMove();
+	}
+
+	private Move singleMoveSearch() {
+		final LegalMoveGenerator generator = new LegalMoveGenerator();
+		generator.setPosition(rootPosition);
+		
+		final Move lastMove = new Move();
+		final Holder<Integer> moveCount = new Holder<>(0);
+		
+		generator.setWalker(new IMoveWalker() {
+			@Override
+			public boolean processMove(final Move move) {
+				lastMove.assign(move);
+				
+				final int newCount = moveCount.getValue() + 1;
+				moveCount.setValue(newCount);
+				
+				return newCount > 1;
+			}
+		});
+		
+		if ((int) moveCount.getValue() == 1)
+			return lastMove;
+		else
+			return null;
+	}
+
 	/**
 	 * Stops the manager.
 	 * Changes state from WAITING or SEARCHING to STOPPING and later to STOPPED.

@@ -512,70 +512,18 @@ public final class SerialSearchEngine implements ISearchEngine {
 	}
 	
 	private boolean evaluateRestOfMovesParallelFinish(final List<Move> movesToRecalculate, final int horizon, final NodeRecord currentRecord, final int positionExtension, final NodeRecord nextRecord, final Move precalculatedMove) {
-		final List<Callable<Throwable>> evaluatorList = new ArrayList<>();
-		final Holder<Boolean> finish = new Holder<Boolean>(Boolean.FALSE);
-		final Holder<Boolean> returnVal = new Holder<Boolean>(Boolean.FALSE);
-		
 		for (final Move move: movesToRecalculate) {
-			final Callable<Throwable> moveEvaluator = new Callable<Throwable>() {
-				@Override
-				public Throwable call() throws Exception {
-					if (finish.getValue())
-						return null;
-					
-					ISearchEngine engine = null;
+			final int alpha = currentRecord.evaluation.getAlpha();
+			final int beta = currentRecord.evaluation.getBeta();
 
-					try {
-						final SearchTask subTask;
-						final int alpha;
-						final int beta;
+			final ISearchResult result = evaluateMove(move, horizon, positionExtension, alpha, beta, false);
 						
-						synchronized (monitor) {
-							alpha = currentRecord.evaluation.getAlpha();
-							beta = currentRecord.evaluation.getBeta();
-
-							engine = idleChildEngineList.remove(0);
-							
-							evaluateMove(move, horizon, positionExtension, alpha, beta, true);
-							
-							if (subTaskList.size() != 1)
-								throw new RuntimeException("Corrupted subTaskList");
-							
-							subTask = subTaskList.remove(0);
-						}
-						
-						final SearchResult result = engine.search(subTask);						
-						
-						synchronized (monitor) {
-							if (updateCurrentRecordAfterEvaluation(move, horizon, currentRecord, result)) {
-								finish.setValue(Boolean.TRUE);
-							}
-							
-							idleChildEngineList.add(engine);
-							engine = null;
-							
-							nodeCount += result.getNodeCount();
-						}
-
-						return null;
-					}
-					finally {
-						if (engine != null) {
-							synchronized (monitor) {
-								idleChildEngineList.add(engine);
-							}
-						}
-					}
-				}
-			};
-			
-			evaluatorList.add(moveEvaluator);			
+			if (updateCurrentRecordAfterEvaluation(move, horizon, currentRecord, result)) {
+				return true;
+			}
 		}
-		
-		invokeCallableList(evaluatorList);
-		subTaskList.clear();
-		
-		return returnVal.getValue();
+				
+		return false;
 	}
 	
 	public boolean evaluateRestOfMovesParallel(final int horizon, final NodeRecord currentRecord, final int positionExtension, final NodeRecord nextRecord, final Move precalculatedMove) {
@@ -613,7 +561,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	}
 
 	private boolean checkFiniteEvaluation(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta) {
-		if (finiteEvaluator.evaluate(currentPosition, currentDepth, horizon, initialAlpha, initialBeta)) {
+		if (currentDepth + depthAdvance > 0 && finiteEvaluator.evaluate(currentPosition, currentDepth, horizon, initialAlpha, initialBeta)) {
 			currentRecord.evaluation.setEvaluation(finiteEvaluator.getEvaluation());
 			
 			return true;
@@ -669,7 +617,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 	private boolean updateRecordByHash(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta, final HashRecord hashRecord) {
 		if (hashTable.getRecord(currentPosition, hashRecord)) {
-			if (hashRecord.getHorizon() >= horizon) {
+			if (currentDepth + depthAdvance > 0 && hashRecord.getHorizon() >= horizon) {
 				final int hashEvaluation = hashRecord.getNormalizedEvaluation(currentDepth + depthAdvance);
 				final int hashType = hashRecord.getType();
 
@@ -781,7 +729,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			task.setHorizon(subHorizon);
 			task.setInitialSearch(this.task.isInitialSearch());
 			task.setMaxExtension(maxExtension);
-			task.setRepeatedPositionRegister(repeatedPositionRegister);
+			task.setRepeatedPositionRegister(repeatedPositionRegister.copy());
 			task.setMove(move);
 			
 			subTaskList.add(task);

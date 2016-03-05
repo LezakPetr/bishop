@@ -32,7 +32,7 @@ public final class FinitePositionEvaluator {
 		// Repeated positions
 		final boolean isRepetition = repeatedPositionRegister.isDrawByRepetition(position, advancedDepth);
 		final boolean isDeadPosition = DrawChecker.isDeadPosition(position);
-		
+
 		if (isRepetition || isDeadPosition) {
 			evaluation = Evaluation.DRAW;
 
