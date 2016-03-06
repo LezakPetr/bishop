@@ -907,7 +907,7 @@ public final class Position implements IPosition {
 	}
 	
 	private void updateHash() {
-		caching.setHash (calculateHash());
+		caching.refreshHash(this);
 	}
 	
 	public int calculateMaterialEvaluation() {
@@ -925,7 +925,7 @@ public final class Position implements IPosition {
 	}
 			
 	private void updateMaterialEvaluation() {
-		caching.setMaterialEvaluation (calculateMaterialEvaluation());
+		caching.refreshMaterialEvaluation(this);
 	}
 
 	/**

@@ -136,7 +136,7 @@ public class TableCalculator {
 	private static void initializeBlocks(final IStagedTable table) throws FileNotFoundException, IOException {
 		final LegalMoveFinder moveFinder = new LegalMoveFinder();
 		
-		final Position position = new Position();
+		final Position position = new Position(true);
 		final PositionValidator validator = new PositionValidator();
 		validator.setPosition(position);
 		

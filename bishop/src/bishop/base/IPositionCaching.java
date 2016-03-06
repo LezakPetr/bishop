@@ -10,7 +10,9 @@ public interface IPositionCaching {
 	public void changeCastlingRights(final int fromIndex, final int toIndex);
 	public long getHash();
 	public void setHash(final long hash);
+	public void refreshHash(final Position position);
 	public int getMaterialEvaluation();
 	public void setMaterialEvaluation(final int evaluation);
+	public void refreshMaterialEvaluation(final Position position);
 	public IPositionCaching copy();
 }

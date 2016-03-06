@@ -49,6 +49,11 @@ public final class PositionCachingImpl implements IPositionCaching {
 	public void setHash(final long hash) {
 		this.hash = hash;
 	}
+	
+	@Override
+	public void refreshHash(final Position position) {
+		setHash(position.calculateHash());
+	}
 
 	@Override
 	public int getMaterialEvaluation() {
@@ -58,6 +63,11 @@ public final class PositionCachingImpl implements IPositionCaching {
 	@Override
 	public void setMaterialEvaluation(final int evaluation) {
 		this.materialEvaluation = evaluation;
+	}
+	
+	@Override
+	public void refreshMaterialEvaluation(final Position position) {
+		setMaterialEvaluation(position.calculateMaterialEvaluation());
 	}
 
 	@Override
