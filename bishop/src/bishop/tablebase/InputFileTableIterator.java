@@ -10,6 +10,8 @@ import utils.IoUtils;
 
 public class InputFileTableIterator extends TableIteratorBase implements AutoCloseable {
 	
+	private static final int BUFFER_SIZE = 65536;
+	
 	private final PushbackInputStream stream;
 	private short result;
 	private boolean initialized;
@@ -21,7 +23,7 @@ public class InputFileTableIterator extends TableIteratorBase implements AutoClo
 	public InputFileTableIterator (final String path, final TableDefinition tableDefinition, final long beginIndex, final long size) throws FileNotFoundException {
 		super(tableDefinition, beginIndex);
 		
-		this.stream = new PushbackInputStream(new BufferedInputStream(new FileInputStream(path)));
+		this.stream = new PushbackInputStream(new BufferedInputStream(new FileInputStream(path), BUFFER_SIZE));
 		this.initialized = true;
 		this.mode = null;
 		this.remainingCount = 0;

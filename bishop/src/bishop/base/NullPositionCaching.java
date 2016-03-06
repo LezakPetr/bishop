@@ -40,6 +40,10 @@ public class NullPositionCaching implements IPositionCaching {
 	@Override
 	public void setHash(final long hash) {
 	}
+	
+	@Override
+	public void refreshHash(final Position position) {
+	}
 
 	@Override
 	public int getMaterialEvaluation() {
@@ -48,6 +52,10 @@ public class NullPositionCaching implements IPositionCaching {
 
 	@Override
 	public void setMaterialEvaluation(final int evaluation) {
+	}
+	
+	@Override
+	public void refreshMaterialEvaluation(final Position position) {
 	}
 
 	@Override

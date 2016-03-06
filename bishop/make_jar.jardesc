@@ -11,12 +11,10 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <file path="/bisGuiSwing/.project"/>
-        <file path="/bisGuiSwing/.classpath"/>
-        <javaElement handleIdentifier="=bishop/res"/>
         <javaElement handleIdentifier="=utils/src"/>
+        <javaElement handleIdentifier="=bisGuiSwing"/>
         <javaElement handleIdentifier="=bishop/src"/>
-        <javaElement handleIdentifier="=bisGuiSwing/src"/>
+        <javaElement handleIdentifier="=bishop/res"/>
         <javaElement handleIdentifier="=bisGui"/>
     </selectedElements>
 </jardesc>

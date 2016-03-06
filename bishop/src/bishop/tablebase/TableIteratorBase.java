@@ -35,6 +35,10 @@ public abstract class TableIteratorBase implements ITableIteratorRead {
 	
 	@Override
 	public boolean isValid() {
+		return isValidChunk();
+	}
+
+	private boolean isValidChunk() {
 		return chunkIndex < tableDefinition.getChunkCount();
 	}
 	
@@ -105,7 +109,7 @@ public abstract class TableIteratorBase implements ITableIteratorRead {
 	}
 	
 	private void updateCachedData() {
-		if (isValid()) {
+		if (isValidChunk()) {
 			chunk = tableDefinition.getChunkAt(chunkIndex);
 			tableIndex = tableDefinition.calculateTableIndex(chunkIndex, combinationIndices);
 		}

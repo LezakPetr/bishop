@@ -13,6 +13,8 @@ import utils.ShortRingBuffer;
 
 public class OutputFileTableIterator extends TableIteratorBase implements IClosableTableIterator {
 
+	private static final int BUFFER_SIZE = 65536;
+	
 	private final InputFileTableIterator inputIterator;
 	private final OutputStream stream;
 	private int result;
@@ -25,7 +27,7 @@ public class OutputFileTableIterator extends TableIteratorBase implements IClosa
 		super(tableDefinition, beginIndex);
 		
 		this.buffer = new ShortRingBuffer(8);
-		this.stream = new BufferedOutputStream(new FileOutputStream(path));
+		this.stream = new BufferedOutputStream(new FileOutputStream(path), BUFFER_SIZE);
 		this.inputIterator = inputIterator;
 		this.resultSet = new HashSet<>();
 		this.checksum = new FileTableIteratorChecksum();
@@ -123,6 +125,11 @@ public class OutputFileTableIterator extends TableIteratorBase implements IClosa
 	public void moveForward(final long count) {
 		for (long i = 0; i < count; i++)
 			next();
+	}
+
+	@Override
+	public boolean isValid() {
+		return super.isValid() && remainingResults > 0;
 	}
 
 	public void close() throws IOException {
