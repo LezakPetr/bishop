@@ -6,6 +6,8 @@ import java.io.StringReader;
 import org.junit.Assert;
 import org.junit.Test;
 
+import parallel.Parallel;
+
 import utils.Logger;
 import bishop.base.Fen;
 import bishop.base.GlobalSettings;
@@ -50,21 +52,17 @@ public class SearchManagerTest {
 			new TestValue("3k2q1/8/8/8/8/8/1R6/K7 w - - 0 1", 2, PieceTypeEvaluations.getPieceTypeEvaluation(PieceType.ROOK), "b2b8"),
 			new TestValue("7k/4Np1p/q2n2p1/6P1/8/8/2R2PP1/2R3K1 w - - 0 1", 6, PieceTypeEvaluations.getPieceTypeEvaluation(PieceType.KNIGHT), "c2c8"),
 			new TestValue("8/1k1K3R/8/8/8/8/8/8 w - - 0 1", 6, Evaluation.getMateEvaluation(7), "h7h6"),   // Test of hash tables
-			new TestValue("QR6/7k/8/8/7q/8/6P1/6K1 b - - 0 1", 4, Evaluation.DRAW, "h4e1")   // Test of draw by repetition
+			new TestValue("QR6/7k/8/8/7q/8/6P1/6K1 b - - 0 1", 4, Evaluation.DRAW, "h4e1"),   // Test of draw by repetition
+			new TestValue("2N5/8/k2K4/8/p1PB4/P7/8/8 w - - 0 1", 7, Evaluation.getMateEvaluation(7), "d6c7"),
+			new TestValue("1k6/8/2n5/3KNB2/8/8/8/8 w - - 0 1", 11, Evaluation.getMateEvaluation(11), "d5c6")
 		};
 		
 		GlobalSettings.setDebug(true);
 		Logger.setStream(System.out);
-
-		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
-		
-		engineFactory.setPositionEvaluatorFactory(new MaterialPositionEvaluatorFactory());
-		engineFactory.setMaximalDepth(25);
 		
 		final HashTableImpl hashTable = new HashTableImpl(20);
 
 		final ISearchManager manager = new SearchManagerImpl();
-		manager.setEngineFactory(engineFactory);
 		manager.setHashTable(hashTable);
 		
 		final Holder<Boolean> searchFinished = new Holder<Boolean>();
@@ -116,6 +114,14 @@ public class SearchManagerTest {
 	}
 
 	private void doSearch(final TestValue[] testValueArray,	final ISearchManager manager, final Holder<Boolean> searchFinished, final int threadCount) throws IOException, InterruptedException {
+		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
+		
+		engineFactory.setPositionEvaluatorFactory(new MaterialPositionEvaluatorFactory());
+		engineFactory.setMaximalDepth(25);
+		engineFactory.setParallel(new Parallel(threadCount));
+
+		manager.setEngineFactory(engineFactory);
+
 		manager.start();
 		
 		for (TestValue testValue: testValueArray) {
