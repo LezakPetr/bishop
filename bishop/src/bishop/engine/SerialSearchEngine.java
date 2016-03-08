@@ -106,6 +106,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private static final int PRINCIPAL_MOVE_ESTIMATE = 10 * PieceTypeEvaluations.PAWN_EVALUATION;
 	private static final int HASH_BEST_MOVE_ESTIMATE = 30 * PieceTypeEvaluations.PAWN_EVALUATION;
 	private static final int MIN_PARALLEL_HORIZON = 3 * ISearchEngine.HORIZON_GRANULARITY;
+	private static final int MIN_PARALLEL_DEPTH = 0;
 	
 	// Settings
 	private int maxTotalDepth;
@@ -148,7 +149,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	
 	public SerialSearchEngine(final Parallel parallel, final List<ISearchEngine> childEngineList) {
 		this.parallel = parallel;
-		this.runningChildEngineList = new ArrayList<>(childEngineList);
+		this.runningChildEngineList = new ArrayList<>();
 		this.idleChildEngineList = new ArrayList<>(childEngineList);
 		this.subTaskList = new ArrayList<>();
 		this.evaluatedMoveList = new EvaluatedMoveList(PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
@@ -396,7 +397,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					final int idleEngineCount = idleChildEngineList.size();
 					final int runningEngineCount = runningChildEngineList.size();
 					
-					if (horizon > MIN_PARALLEL_HORIZON && idleEngineCount > 0 && runningEngineCount == 0)
+					if (currentDepth + depthAdvance >= MIN_PARALLEL_DEPTH && horizon > MIN_PARALLEL_HORIZON && idleEngineCount > 0 && runningEngineCount == 0)
 						evaluateRestOfMovesParallel(horizon, currentRecord,	positionExtension, nextRecord, precalculatedMove);
 					else
 						evaluateRestOfMovesSerial(horizon, currentRecord, positionExtension, nextRecord, precalculatedMove);
@@ -518,7 +519,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 							
 							for (ISearchEngine siblingEngine: runningChildEngineList) {
 								if (siblingEngine != engine)
-									siblingEngine.updateTaskBoundaries(childEvaluation, Evaluation.MAX);
+									siblingEngine.updateTaskBoundaries(Evaluation.MIN, -childEvaluation);
 							}
 						}
 
@@ -972,6 +973,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 			synchronized (monitor) {
 				this.task = null;
 				this.engineState = EngineState.STOPPED;
+				
+				if (runningChildEngineList.size() > 0)
+					throw new RuntimeException("SerialSearchEngine interna error - some engines are still running");
 			}
 		}
 	}
@@ -1067,7 +1071,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			this.hashTable = table;
 			
-			for (ISearchEngine childEngine: runningChildEngineList)
+			for (ISearchEngine childEngine: idleChildEngineList)
 				childEngine.setHashTable(table);
 		}
 	}
@@ -1086,7 +1090,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			extensionCalculator.setSearchSettings(searchSettings);
 			moveExtensionEvaluator.setSettings(searchSettings);
 			
-			for (ISearchEngine childEngine: runningChildEngineList)
+			for (ISearchEngine childEngine: idleChildEngineList)
 				childEngine.setSearchSettings(searchSettings);
 		}
 	}
@@ -1098,7 +1102,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			this.finiteEvaluator.setTablebaseEvaluator(evaluator);
 			
-			for (ISearchEngine childEngine: runningChildEngineList)
+			for (ISearchEngine childEngine: idleChildEngineList)
 				childEngine.setTablebaseEvaluator(evaluator);
 		}
 	}
