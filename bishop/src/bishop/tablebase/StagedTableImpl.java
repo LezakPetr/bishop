@@ -22,17 +22,19 @@ public abstract class StagedTableImpl implements IStagedTable {
 		WRITE
 	};
 
-	protected final List<TablePage> pages;
+	protected final List<ITablePage> pages;
 	protected final TableDefinition definition;
 	protected final int pageCount; 
 	protected Mode mode;
 	protected int nextWritePageIndex;
+	private boolean compressedPages;
 	
-	public StagedTableImpl(final TableDefinition definition) {
+	public StagedTableImpl(final TableDefinition definition, final boolean compressedPages) {
 		this.definition = definition;
 		this.pageCount = getPageCount();
 		
 		this.pages = new ArrayList<>(pageCount);
+		this.compressedPages = compressedPages;
 	}
 
 	@Override
@@ -40,7 +42,7 @@ public abstract class StagedTableImpl implements IStagedTable {
 		return definition;
 	}
 	
-	private TablePage getPage (final long index) {
+	private ITablePage getPage (final long index) {
 		final int pageIndex = (int) (index >>> PAGE_SHIFT);
 		
 		return pages.get(pageIndex);
@@ -54,7 +56,7 @@ public abstract class StagedTableImpl implements IStagedTable {
 		if (index < 0)
 			return TableResult.ILLEGAL;
 		
-		final TablePage page = getPage(index);
+		final ITablePage page = getPage(index);
 		
 		return page.getResult(index);
 	}
@@ -105,12 +107,14 @@ public abstract class StagedTableImpl implements IStagedTable {
 		mode = Mode.WRITE;
 	}
 	
-	protected TablePage createPage(final int pageIndex) {
+	protected ITablePage createPage(final int pageIndex) {
 		final long offset = ((long) pageIndex) << PAGE_SHIFT;
 		final int size = (int) Math.min(definition.getTableIndexCount() - offset, PAGE_SIZE);
-		final TablePage page = new TablePage(offset, size);
 		
-		return page;
+		if (compressedPages)
+			return new CompressedTablePage(offset, size);
+		else
+			return new FullTablePage(offset, size);
 	}
 	
 	@Override

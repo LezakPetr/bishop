@@ -18,7 +18,7 @@ public class PersistentStagedTable extends StagedTableImpl {
 	private final String pathPrefix;
 	
 	public PersistentStagedTable(final TableDefinition definition, final String pathPrefix) {
-		super (definition);
+		super (definition, false);
 
 		this.pathPrefix = pathPrefix;
 	}
@@ -31,12 +31,12 @@ public class PersistentStagedTable extends StagedTableImpl {
 		moveOutputToInput();
 		
 		pages.clear();
-		pages.addAll(java.util.Collections.<TablePage>nCopies(pageCount, null));
+		pages.addAll(java.util.Collections.<ITablePage>nCopies(pageCount, null));
 		
 		parallel.parallelFor(0, pageCount, new IForBody() {
 			@Override
 			public void run(final int blockIndex) throws Exception {
-				final TablePage page = createPage(blockIndex);
+				final ITablePage page = createPage(blockIndex);
 				
 				try (
 					final InputFileTableIterator it = new InputFileTableIterator(getPagePath(blockIndex) + INPUT_SUFFIX, definition, page.getOffset(), page.getSize())

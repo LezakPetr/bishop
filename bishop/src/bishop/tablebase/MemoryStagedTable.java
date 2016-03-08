@@ -8,8 +8,8 @@ import parallel.Parallel;
 
 public class MemoryStagedTable extends StagedTableImpl {
 	
-	public MemoryStagedTable(final TableDefinition definition) {
-		super(definition);
+	public MemoryStagedTable(final TableDefinition definition, final boolean compressedPages) {
+		super(definition, compressedPages);
 		
 		this.pages.clear();
 		

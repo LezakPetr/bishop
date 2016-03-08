@@ -21,7 +21,7 @@ public class TablebaseTest {
 
 	private static final String[] MATERIAL_HASHES = {"00000-00000", "10000-00000", "01000-00000", "00100-00000", "00010-00000", "00001-00000", "20000-00000"};
 	
-	private void testWithUsePersistentTable (final boolean usePersistentTable) throws Exception {
+	private void testWithUsePersistentTable (final boolean usePersistentTable, final boolean useCompressedTable) throws Exception {
 		final long t1 = System.currentTimeMillis();
 		
 		final TableSwitch tableSwitch = new TableSwitch();
@@ -37,6 +37,7 @@ public class TablebaseTest {
 			}
 			
 			calculator.setUsePersistentTable(usePersistentTable);
+			calculator.setUseCompressedTable(useCompressedTable);
 			calculator.calculate();
 			
 			final BothColorPositionResultSource<IStagedTable> bothTables = new BothColorPositionResultSource<>();
@@ -83,12 +84,17 @@ public class TablebaseTest {
 	
 	@Test
 	public void testTablebaseWithPersistentTable() throws Exception {
-		testWithUsePersistentTable(true);
+		testWithUsePersistentTable(true, false);
 	}
 	
 	@Test
-	public void testTablebaseWithMemoryTable() throws Exception {
-		testWithUsePersistentTable(false);
+	public void testTablebaseWithFullMemoryTable() throws Exception {
+		testWithUsePersistentTable(false, false);
+	}
+
+	@Test
+	public void testTablebaseWithCompressedMemoryTable() throws Exception {
+		testWithUsePersistentTable(false, true);
 	}
 
 }
