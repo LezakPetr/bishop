@@ -36,6 +36,7 @@ public class GenerateTablebase {
 	private String directory;
 	private String definition;
 	private boolean usePersistentTable;
+	private boolean useCompressedTable;
 	private Map<MaterialHash, ITableRead> subtableMap;
 	private Parallel parallel;
 	private TableCalculator calculator;
@@ -47,6 +48,7 @@ public class GenerateTablebase {
 		}
 
 		calculator.setUsePersistentTable(usePersistentTable);
+		calculator.setUsePersistentTable(useCompressedTable);
 		calculator.calculate();
 		
 		bothTables = new BothColorPositionResultSource<>();
@@ -150,7 +152,15 @@ public class GenerateTablebase {
 		action = args[0];
 		directory = args[1];
 		definition = args[2];
-		usePersistentTable = (args.length == 4 && args[3].contains("p"));
+		
+		if (args.length == 4) {
+			if (args[3].contains("p"))
+				usePersistentTable = true;
+
+			if (args[3].contains("c"))
+				useCompressedTable = true;
+		}
+
 		parallel = new Parallel();
 
 		System.out.println (parallel.getThreadCount() + " threads");

@@ -4,9 +4,9 @@ import java.io.IOException;
 
 public class TablePageIterator extends TableIteratorBase implements IClosableTableIterator {
 	
-	private final TablePage page;
+	private final ITablePage page;
 	
-	public TablePageIterator(final TableDefinition tableDefinition, final TablePage page) {
+	public TablePageIterator(final TableDefinition tableDefinition, final ITablePage page) {
 		super(tableDefinition, page.getOffset());
 		
 		this.page = page;

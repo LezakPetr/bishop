@@ -29,6 +29,7 @@ public class TableCalculator {
 	private BitArray nextPositionsToCheck;
 	
 	private boolean usePersistentTable = false;
+	private boolean useCompressedTable = false;
 
 	
 	public TableCalculator(final MaterialHash[] materialHashArray, final Parallel parallel) {
@@ -73,7 +74,7 @@ public class TableCalculator {
 		if (usePersistentTable)
 			return new PersistentStagedTable(tableDefinition, "/tmp/" + tableDefinition.getMaterialHash().toString());
 		else
-			return new MemoryStagedTable(tableDefinition);
+			return new MemoryStagedTable(tableDefinition, useCompressedTable);
 	}
 	
 	private void printData() {
@@ -301,4 +302,9 @@ public class TableCalculator {
 	public void setUsePersistentTable (final boolean use) {
 		this.usePersistentTable = use;
 	}
+	
+	public void setUseCompressedTable (final boolean use) {
+		this.useCompressedTable = use;
+	}
+
 }
