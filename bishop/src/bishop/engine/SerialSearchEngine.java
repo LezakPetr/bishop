@@ -2,11 +2,8 @@ package bishop.engine;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 import parallel.Parallel;
@@ -14,7 +11,6 @@ import parallel.Parallel;
 import bishop.base.BitBoard;
 import bishop.base.Color;
 import bishop.base.HandlerRegistrarImpl;
-import bishop.base.Holder;
 import bishop.base.IHandlerRegistrar;
 import bishop.base.IMoveWalker;
 import bishop.base.LegalMoveFinder;
@@ -105,8 +101,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private static final int KILLER_MOVE_ESTIMATE = 5 * PieceTypeEvaluations.PAWN_EVALUATION;
 	private static final int PRINCIPAL_MOVE_ESTIMATE = 10 * PieceTypeEvaluations.PAWN_EVALUATION;
 	private static final int HASH_BEST_MOVE_ESTIMATE = 30 * PieceTypeEvaluations.PAWN_EVALUATION;
-	private static final int MIN_PARALLEL_HORIZON = 3 * ISearchEngine.HORIZON_GRANULARITY;
-	private static final int MIN_PARALLEL_DEPTH = 0;
 	
 	// Settings
 	private int maxTotalDepth;
@@ -141,17 +135,11 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final MoveExtensionEvaluator moveExtensionEvaluator;
 	private SearchTask task;
 	private IPositionEvaluator positionEvaluator;
-	private final List<ISearchEngine> runningChildEngineList;
-	private final List<ISearchEngine> idleChildEngineList;
-	private final List<SearchTask> subTaskList;
 	private final HandlerRegistrarImpl<ISearchEngineHandler> handlerRegistrar;
 
 	
 	public SerialSearchEngine(final Parallel parallel, final List<ISearchEngine> childEngineList) {
 		this.parallel = parallel;
-		this.runningChildEngineList = new ArrayList<>();
-		this.idleChildEngineList = new ArrayList<>(childEngineList);
-		this.subTaskList = new ArrayList<>();
 		this.evaluatedMoveList = new EvaluatedMoveList(PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
 		this.handlerRegistrar = new HandlerRegistrarImpl<>();
 		
@@ -325,7 +313,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					final Move move = new Move();
 					move.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
 					
-					evaluateMove(move, nullHorizon, 0, initialBeta, initialBeta + 1, false);
+					evaluateMove(move, nullHorizon, 0, initialBeta, initialBeta + 1);
 					
 					final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
 					
@@ -351,7 +339,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					final int alpha = currentRecord.evaluation.getAlpha();
 					final int beta = currentRecord.evaluation.getBeta();
 					
-					evaluateMove(precalculatedMove, horizon, positionExtension, alpha, beta, false);
+					evaluateMove(precalculatedMove, horizon, positionExtension, alpha, beta);
 					
 					if (currentDepth > closeToDepth)
 						return;
@@ -372,35 +360,34 @@ public final class SerialSearchEngine implements ISearchEngine {
 						final int alpha = currentRecord.evaluation.getAlpha();
 						final int beta = currentRecord.evaluation.getBeta();
 
-						if (currentRecord.legalMoveCount == 0 || beta - alpha == 1)
-							break;
-						
 						final Move move = new Move();
 						moveStack.getMove(currentRecord.moveListEnd - 1, move);
 						
 						if (!move.equals(precalculatedMove)) {
-							evaluateMove(move, horizon, positionExtension, alpha, beta, false);
-							
+							if (currentRecord.legalMoveCount > 0 && beta - alpha != 1) {
+								evaluateMove(move, horizon, positionExtension, alpha, alpha + 1);
+								
+								final int childEvaluation = -nextRecord.evaluation.getEvaluation();
+								
+								if (childEvaluation > alpha && beta - alpha != 1)
+									evaluateMove(move, horizon, positionExtension, alpha, beta);
+							}
+							else {
+								evaluateMove(move, horizon, positionExtension, alpha, beta);
+							}
+
 							if (currentDepth > closeToDepth)
 								return;
-							else
+							else {
 								closeToDepth = Integer.MAX_VALUE;
 							
-							if (updateCurrentRecordAfterEvaluation(move, horizon, currentRecord, nextRecord))
-								break;
+								if (updateCurrentRecordAfterEvaluation(move, horizon, currentRecord, nextRecord))
+									break;
+							}
 						}
 						
 						currentRecord.moveListEnd--;
 					}
-					
-					// Rest
-					final int idleEngineCount = idleChildEngineList.size();
-					final int runningEngineCount = runningChildEngineList.size();
-					
-					if (currentDepth + depthAdvance >= MIN_PARALLEL_DEPTH && horizon > MIN_PARALLEL_HORIZON && idleEngineCount > 0 && runningEngineCount == 0)
-						evaluateRestOfMovesParallel(horizon, currentRecord,	positionExtension, nextRecord, precalculatedMove);
-					else
-						evaluateRestOfMovesSerial(horizon, currentRecord, positionExtension, nextRecord, precalculatedMove);
 				}
 				
 				checkMate(onTurn, horizon, currentRecord, mateEvaluation, currentRecord.attackCalculator);
@@ -412,153 +399,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			currentRecord.evaluation.setEvaluation(Evaluation.MAX);
 	}
 	
-	public boolean evaluateRestOfMovesSerial(final int horizon, final NodeRecord currentRecord, final int positionExtension, final NodeRecord nextRecord, final Move precalculatedMove) {
-		while (currentRecord.moveListEnd > currentRecord.moveListBegin) {
-			final Move move = new Move();
-			moveStack.getMove(currentRecord.moveListEnd - 1, move);
-			
-			if (!move.equals(precalculatedMove)) {
-				final int alpha = currentRecord.evaluation.getAlpha();
-				final int beta = currentRecord.evaluation.getBeta();
-						
-				evaluateMove(move, horizon, positionExtension, alpha, alpha + 1, false);
-				
-				final int childEvaluation = -nextRecord.evaluation.getEvaluation();
-				
-				if (childEvaluation > alpha)
-					evaluateMove(move, horizon, positionExtension, alpha, beta, false);
-
-				if (currentDepth > closeToDepth)
-					return true;
-				else {
-					closeToDepth = Integer.MAX_VALUE;
-				
-					if (updateCurrentRecordAfterEvaluation(move, horizon, currentRecord, nextRecord))
-						break;
-				}
-			}
-			
-			currentRecord.moveListEnd--;
-		}
-				
-		return false;
-	}
-		
-	public boolean evaluateRestOfMovesParallel(final int horizon, final NodeRecord currentRecord, final int positionExtension, final NodeRecord nextRecord, final Move precalculatedMove) {
-		final List<Move> movesToCheck = getRemainingMoveList(currentRecord,precalculatedMove);
-		
-		subTaskList.clear();
-		
-		final List<Callable<Throwable>> evaluatorList = new ArrayList<>();
-		final Holder<Boolean> betaCutoff = new Holder<>(false);
-		
-		for (final Move move: movesToCheck) {
-			final Callable<Throwable> moveEvaluator = new Callable<Throwable>() {
-				@Override
-				public Throwable call() throws Exception {
-					final SearchTask closedWindowSubTask;
-					ISearchEngine engine = null;
-					
-					try {
-						final int origAlpha;
-						final int beta;
-						
-						// Evaluate with closed window
-						synchronized (monitor) {
-							if (betaCutoff.getValue())
-								return null;
-							
-							origAlpha = currentRecord.evaluation.getAlpha();
-							beta = currentRecord.evaluation.getBeta();
-							
-							evaluateMove(move, horizon, positionExtension, origAlpha, origAlpha + 1, true);
-							
-							closedWindowSubTask = getSingleSubTask();
-							engine = idleChildEngineList.remove(0);
-							runningChildEngineList.add(engine);
-						}
-						
-						final SearchResult closedWindowResult = engine.search(closedWindowSubTask);						
-						final int closedWindowChildEvaluation = -closedWindowResult.getNodeEvaluation().getEvaluation();
-						
-						// Recalculate with open window
-						final SearchResult recalculateResult;
-						final SearchResult totalResult;
-						
-						if (closedWindowChildEvaluation > origAlpha) {
-							final SearchTask recalculateSubTask;
-							
-							synchronized (monitor) {
-								if (betaCutoff.getValue())
-									return null;
-								
-								final int newAlpha = currentRecord.evaluation.getAlpha();
-								evaluateMove(move, horizon, positionExtension, newAlpha, beta, true);
-								
-								recalculateSubTask = getSingleSubTask();
-							}
-							
-							recalculateResult = engine.search(recalculateSubTask);
-							totalResult = recalculateResult;
-						}
-						else {
-							recalculateResult = null;
-							totalResult = closedWindowResult;
-						}
-
-						synchronized (monitor) {
-							if (updateCurrentRecordAfterEvaluation(move, horizon, currentRecord, totalResult))
-								betaCutoff.setValue(Boolean.TRUE);
-							
-							nodeCount += closedWindowResult.getNodeCount();
-							
-							if (recalculateResult != null)
-								nodeCount += recalculateResult.getNodeCount();
-							
-							final int childEvaluation = -totalResult.getNodeEvaluation().getEvaluation();
-							
-							for (ISearchEngine siblingEngine: runningChildEngineList) {
-								if (siblingEngine != engine)
-									siblingEngine.updateTaskBoundaries(Evaluation.MIN, -childEvaluation);
-							}
-						}
-
-						return null;
-					}
-					finally {
-						if (engine != null) {
-							synchronized (monitor) {
-								idleChildEngineList.add(engine);
-								runningChildEngineList.remove(engine);
-							}
-						}
-					}
-				}
-			};
-			
-			evaluatorList.add(moveEvaluator);			
-		}
-
-		invokeCallableList(evaluatorList);
-		
-		return betaCutoff.getValue();
-	}
-
-	private List<Move> getRemainingMoveList(final NodeRecord currentRecord, final Move precalculatedMove) {
-		final List<Move> movesToCheck = new ArrayList<>();
-		
-		while (currentRecord.moveListEnd > currentRecord.moveListBegin) {
-			final Move move = new Move();
-			moveStack.getMove(currentRecord.moveListEnd - 1, move);
-			
-			if (!move.equals(precalculatedMove))
-				movesToCheck.add(move);
-			
-			currentRecord.moveListEnd--;
-		}
-		return movesToCheck;
-	}
-
 	public void invokeCallableList(final List<Callable<Throwable>> evaluatorList) {
 		try {
 			parallel.invokeAll(evaluatorList);
@@ -703,9 +543,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 * @param horizon needed horizon
 	 * @param alpha alpha from current view
 	 * @param beta alpha from current view
-	 * @return true in case of beta cutoff
 	 */
-	private ISearchResult evaluateMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta, final boolean runParallel) {
+	private ISearchResult evaluateMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta) {
 		final NodeRecord currentRecord = nodeStack[currentDepth];
 		final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
 		
@@ -746,33 +585,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		moveStackTop = currentRecord.moveListEnd;
 
-		if (runParallel) {
-			final SearchTask task = new SearchTask();
-			task.setAlpha(-beta);
-			task.setBeta(-alpha);
-			task.setRootMaterialEvaluation(this.task.getRootMaterialEvaluation());
-			task.getPosition().assign(currentPosition);
-			task.setDepthAdvance(subAdvancedDepth);
-			task.setHorizon(subHorizon);
-			task.setInitialSearch(this.task.isInitialSearch());
-			task.setMaxExtension(maxExtension);
-			task.setRepeatedPositionRegister(repeatedPositionRegister.copy());
-			task.setMove(move);
-			
-			subTaskList.add(task);
-			result = null;
-		}
-		else {
-			final NodeRecord nextRecord = nodeStack[currentDepth + 1];
-			nextRecord.openNode(-beta, -alpha);
-			nextRecord.maxExtension = maxExtension - totalExtension;
+		final NodeRecord nextRecord = nodeStack[currentDepth + 1];
+		nextRecord.openNode(-beta, -alpha);
+		nextRecord.maxExtension = maxExtension - totalExtension;
 
-			currentDepth++;
-			alphaBeta(subHorizon);
-			currentDepth--;
-			
-			result = nextRecord;
-		}
+		currentDepth++;
+		alphaBeta(subHorizon);
+		currentDepth--;
+		
+		result = nextRecord;
 		
 		moveStackTop = currentRecord.moveListEnd;
 		
@@ -973,9 +794,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			synchronized (monitor) {
 				this.task = null;
 				this.engineState = EngineState.STOPPED;
-				
-				if (runningChildEngineList.size() > 0)
-					throw new RuntimeException("SerialSearchEngine interna error - some engines are still running");
 			}
 		}
 	}
@@ -994,12 +812,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 				
 				if (task != null)
 					task.setTerminated(true);
-				
-				final Set<ISearchEngine> runningEngines = new HashSet<>(runningChildEngineList);
-				runningEngines.removeAll(idleChildEngineList);
-				
-				for (ISearchEngine engine: runningEngines)
-					engine.stopSearching();
 			}
 		}
 	}
@@ -1070,9 +882,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			checkEngineState(EngineState.STOPPED);
 
 			this.hashTable = table;
-			
-			for (ISearchEngine childEngine: idleChildEngineList)
-				childEngine.setHashTable(table);
 		}
 	}
 
@@ -1089,9 +898,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			this.searchSettings = searchSettings;
 			extensionCalculator.setSearchSettings(searchSettings);
 			moveExtensionEvaluator.setSettings(searchSettings);
-			
-			for (ISearchEngine childEngine: idleChildEngineList)
-				childEngine.setSearchSettings(searchSettings);
 		}
 	}
 	
@@ -1101,9 +907,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			checkEngineState(EngineState.STOPPED);
 
 			this.finiteEvaluator.setTablebaseEvaluator(evaluator);
-			
-			for (ISearchEngine childEngine: idleChildEngineList)
-				childEngine.setTablebaseEvaluator(evaluator);
 		}
 	}
 	
@@ -1136,13 +939,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 */
 	public IHandlerRegistrar<ISearchEngineHandler> getHandlerRegistrar() {
 		return handlerRegistrar;
-	}
-
-	private SearchTask getSingleSubTask() {
-		if (subTaskList.size() != 1)
-			throw new RuntimeException("Corrupted subtask list");
-		
-		return subTaskList.remove(0);
 	}
 
 }

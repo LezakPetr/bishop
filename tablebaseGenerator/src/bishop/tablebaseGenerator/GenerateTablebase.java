@@ -48,7 +48,7 @@ public class GenerateTablebase {
 		}
 
 		calculator.setUsePersistentTable(usePersistentTable);
-		calculator.setUsePersistentTable(useCompressedTable);
+		calculator.setUseCompressedTable(useCompressedTable);
 		calculator.calculate();
 		
 		bothTables = new BothColorPositionResultSource<>();
