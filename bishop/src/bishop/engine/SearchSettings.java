@@ -31,8 +31,8 @@ public final class SearchSettings {
 	public SearchSettings() {
 		maxQuiescenceDepth = (int) Math.round (5.0 * ISearchEngine.HORIZON_GRANULARITY);
 		nullMoveReduction = (int) Math.round (2.0 * ISearchEngine.HORIZON_GRANULARITY);
-		minExtensionHorizon = (int) Math.round (4.0 * ISearchEngine.HORIZON_GRANULARITY);
-		maxExtension = (int) Math.round (7.0 * ISearchEngine.HORIZON_GRANULARITY);
+		minExtensionHorizon = (int) Math.round (3.0 * ISearchEngine.HORIZON_GRANULARITY);
+		maxExtension = (int) Math.round (5.0 * ISearchEngine.HORIZON_GRANULARITY);
 		simpleCheckExtension = (int) Math.round (0.5 * ISearchEngine.HORIZON_GRANULARITY);
 		attackCheckExtension = (int) Math.round (1.0 * ISearchEngine.HORIZON_GRANULARITY);
 		forcedMoveExtension = (int) Math.round (0.8125 * ISearchEngine.HORIZON_GRANULARITY);

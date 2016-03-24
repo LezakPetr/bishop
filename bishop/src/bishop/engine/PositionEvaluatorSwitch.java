@@ -1,6 +1,8 @@
 package bishop.engine;
 
 import java.io.PrintWriter;
+
+import parallel.Parallel;
 import bishop.base.Color;
 import bishop.base.IPieceCounts;
 import bishop.base.PieceType;
@@ -100,14 +102,14 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 	 * @param position position to evaluate
 	 * @return evaluation from view of white side
 	 */
-	public int evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
+	public int evaluatePosition (final Parallel parallel, final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
 		this.position = position;
 		
 		calculatePieceCounts();
 		calculateHasMatingMaterial();
 		selectCurrentEvaluator();
 		
-		evaluation = currentEvaluator.evaluatePosition(position, alpha, beta, attackCalculator);
+		evaluation = currentEvaluator.evaluatePosition(parallel, position, alpha, beta, attackCalculator);
 		this.position = null;
 		
 		return evaluation;

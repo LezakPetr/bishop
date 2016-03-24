@@ -3,6 +3,8 @@ package bishop.engine;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
+import parallel.Parallel;
+
 import bishop.base.BitBoard;
 import bishop.base.BitLoop;
 import bishop.base.BoardConstants;
@@ -114,7 +116,7 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		}
 	}
 	
-	public int evaluatePosition(final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
+	public int evaluatePosition(final Parallel parallel, final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
 		this.position = position;
 		
 		clear();

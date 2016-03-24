@@ -81,7 +81,7 @@ public class SearchEngineTest {
 			 engine = new SerialSearchEngine(parallel, childEngineList);
 		}
 		else
-			engine = new SerialSearchEngine(null, Collections.<ISearchEngine>emptyList());
+			engine = new SerialSearchEngine(new Parallel(1), Collections.<ISearchEngine>emptyList());
 		
 		configureEngine(engine);
 		

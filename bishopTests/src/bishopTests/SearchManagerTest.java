@@ -92,7 +92,7 @@ public class SearchManagerTest {
 		
 		System.out.println("Searchching");
 		
-		for (int threadCount = 1; threadCount <= 4; threadCount++) {
+		for (int threadCount = 1; threadCount <= Runtime.getRuntime().availableProcessors(); threadCount++) {
 			final long beginTime = System.currentTimeMillis();
 			
 			doSearch(testValueArray, manager, searchFinished, threadCount);

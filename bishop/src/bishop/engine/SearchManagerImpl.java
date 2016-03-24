@@ -525,6 +525,8 @@ public final class SearchManagerImpl implements ISearchManager {
 			totalNodeCount = 0;
 			managerState = ManagerState.SEARCHING;
 			
+			hashTable.clear();
+			
 			monitor.notifyAll();
 		}
 	}

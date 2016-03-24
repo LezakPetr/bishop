@@ -18,21 +18,39 @@ import javax.xml.ws.Holder;
  */
 public class Parallel {
 	
+	public static final int DEFAULT_RUNNER_COUNT = 16;
+	
 	private final ExecutorService executor;
 	private final int threadCount;
 	
-	public Parallel (final ExecutorService executor, final int threadCount) {
+	private final ITaskRunner[] allTaskRunners;
+	private final ParallelTaskRunner[] parallelTaskRunners;
+	
+	public Parallel (final ExecutorService executor, final int threadCount, final int allRunnerCount, final int parallelRunnerCount) {
 		this.executor = executor;
 		this.threadCount = threadCount;
+		this.allTaskRunners = new ITaskRunner[allRunnerCount];
+		this.parallelTaskRunners = new ParallelTaskRunner[parallelRunnerCount];
+		
+		for (int i = 0; i < parallelRunnerCount; i++) {
+			parallelTaskRunners[i] = new ParallelTaskRunner();
+			allTaskRunners[i] = parallelTaskRunners[i];
+		}
+		
+		for (int i = parallelRunnerCount; i < allRunnerCount; i++)
+			allTaskRunners[i] = new SerialTaskRunner();
 	}
 
-	public Parallel(final int threadCount) {
-		this.threadCount = threadCount;
-		this.executor = Executors.newFixedThreadPool(threadCount);
+	public Parallel(final int threadCount, final int allRunnerCount, final int parallelRunnerCount) {
+		this (Executors.newFixedThreadPool(threadCount), threadCount, allRunnerCount, parallelRunnerCount);
 	}
 
 	public Parallel() {
-		this(Runtime.getRuntime().availableProcessors());
+		this(Runtime.getRuntime().availableProcessors(), DEFAULT_RUNNER_COUNT, 0);
+	}
+
+	public Parallel(final int threadCount) {
+		this(threadCount, DEFAULT_RUNNER_COUNT, threadCount - 1);
 	}
 
 	/**
@@ -151,6 +169,20 @@ public class Parallel {
 	public void shutdown() throws InterruptedException {
 		executor.shutdown();
 		executor.awaitTermination(1, TimeUnit.DAYS);
+	}
+	
+	public void startTaskRunners() {
+		for (ParallelTaskRunner runner: parallelTaskRunners)
+			runner.start();
+	}
+
+	public void stopTaskRunners() {
+		for (ParallelTaskRunner runner: parallelTaskRunners)
+			runner.stop();
+	}
+	
+	public ITaskRunner getTaskRunner (final int index) {
+		return allTaskRunners[index];
 	}
 
 }

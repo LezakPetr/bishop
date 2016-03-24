@@ -463,6 +463,7 @@ public class DeskImpl2D implements IDesk {
 	
 	private void logPositionEvaluation() {
 		try {
+			/*
 			position.refreshCachedData();
 			
 			final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
@@ -474,6 +475,7 @@ public class DeskImpl2D implements IDesk {
 			evaluator.writeLog(writer);
 			writer.println ("Material evaluation: " + Evaluation.toString(position.getMaterialEvaluation()));
 			writer.flush();
+			*/
 		}
 		catch (Throwable th) {
 			Logger.logException(th);

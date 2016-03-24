@@ -2,6 +2,8 @@ package bishopTests;
 
 import org.junit.Test;
 
+import parallel.Parallel;
+
 import bishop.base.Position;
 import bishop.engine.AttackCalculator;
 import bishop.engine.EndingPositionEvaluator;
@@ -13,12 +15,12 @@ import bishop.engine.PositionEvaluatorSwitchSettings;
 
 public class PositionEvaluatorTest {
 	
-	private void testPositionEvaluatorSpeed (final Position position, final IPositionEvaluator evaluator) {
+	private void testPositionEvaluatorSpeed (final Parallel parallel, final Position position, final IPositionEvaluator evaluator) {
 		final int iterationCount = 2000000;
 		final long t1 = System.currentTimeMillis();
 
 		for (int i = 0; i < iterationCount; i++)
-			evaluator.evaluatePosition(position, Evaluation.MIN, Evaluation.MAX, new AttackCalculator());
+			evaluator.evaluatePosition(parallel, position, Evaluation.MIN, Evaluation.MAX, new AttackCalculator());
 
 		final long t2 = System.currentTimeMillis();
 		final double iterPerSec = (double) iterationCount * 1000 / (t2 - t1);
@@ -33,8 +35,17 @@ public class PositionEvaluatorTest {
 		
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 		
-		testPositionEvaluatorSpeed (position, new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings()));
-		testPositionEvaluatorSpeed (position, new EndingPositionEvaluator(settings.getEndingPositionEvaluatorSettings()));
-		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings));
+		for (int threadCount = 1; threadCount <= Runtime.getRuntime().availableProcessors(); threadCount++) {
+			System.out.println("Thread count = " + threadCount);
+			
+			final Parallel parallel = new Parallel(threadCount);
+			parallel.startTaskRunners();
+			
+			testPositionEvaluatorSpeed (parallel, position, new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings()));
+			testPositionEvaluatorSpeed (parallel, position, new EndingPositionEvaluator(settings.getEndingPositionEvaluatorSettings()));
+			testPositionEvaluatorSpeed (parallel, position, new PositionEvaluatorSwitch(settings));
+			
+			parallel.stopTaskRunners();
+		}
 	}
 }

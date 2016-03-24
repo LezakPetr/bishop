@@ -32,17 +32,24 @@ public final class BishopColorPositionEvaluator {
 		evaluation = 0;
 		
 		for (int pieceColor = Color.FIRST; pieceColor < Color.LAST; pieceColor++) {
-			final long bishopMask = position.getPiecesMask(pieceColor, PieceType.BISHOP);
+			evaluation += evaluatePositionForColor(position, pieceColor);
+		}
+		
+		return evaluation;
+	}
+	
+	public int evaluatePositionForColor(final Position position, final int pieceColor) {
+		final long bishopMask = position.getPiecesMask(pieceColor, PieceType.BISHOP);
+		evaluation = 0;
+		
+		for (int squareColor = SquareColor.FIRST; squareColor < SquareColor.LAST; squareColor++) {
+			final long squareMask = BoardConstants.getSquareColorMask(squareColor);
 			
-			for (int squareColor = SquareColor.FIRST; squareColor < SquareColor.LAST; squareColor++) {
-				final long squareMask = BoardConstants.getSquareColorMask(squareColor);
+			if ((bishopMask & squareMask) != 0) {
+				final long pawnMask = position.getPiecesMask(pieceColor, PieceType.PAWN);
+				final int pawnCount = BitBoard.getSquareCount(pawnMask & squareMask);
 				
-				if ((bishopMask & squareMask) != 0) {
-					final long pawnMask = position.getPiecesMask(pieceColor, PieceType.PAWN);
-					final int pawnCount = BitBoard.getSquareCount(pawnMask & squareMask);
-					
-					evaluation += pawnCount * pawnOnSameColorBonus[pieceColor];
-				}
+				evaluation += pawnCount * pawnOnSameColorBonus[pieceColor];
 			}
 		}
 		
