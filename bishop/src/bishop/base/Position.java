@@ -4,6 +4,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 
+import utils.IAssignable;
+import utils.ICopyable;
+
 import bishop.engine.Evaluation;
 import bishop.tables.BetweenTable;
 import bishop.tables.FigureAttackTable;
@@ -15,7 +18,7 @@ import bishop.tables.PieceHashTable;
  * generation of moves. 
  * @author Ing. Petr Ležák
  */
-public final class Position implements IPosition {
+public final class Position implements IPosition, ICopyable<Position>, IAssignable<Position> {
 
 	// Primary piece information - the source of truth
 	private final byte[] pieceTypeOnSquares = new byte[Square.LAST];

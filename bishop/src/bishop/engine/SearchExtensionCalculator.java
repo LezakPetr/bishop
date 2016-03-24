@@ -16,8 +16,13 @@ public class SearchExtensionCalculator {
 	private static final int MIN_NULL_MATE_DEPTH = 1;
 	private static final int NULL_MATE_REDUCTION = 2;
 	
+	private static final int MIN_KING_ESCAPE_SQUARE_COUNT = 1;
+	private static final int MAX_KING_ESCAPE_SQUARE_COUNT = 3;
+	
 	private final MateFinder finder;
 	private SearchSettings settings;
+	
+	private int[] checkExtensionByEscapeSquares = new int[MAX_KING_ESCAPE_SQUARE_COUNT + 1];
 	
 	public SearchExtensionCalculator() {
 		finder = new MateFinder();
@@ -26,10 +31,14 @@ public class SearchExtensionCalculator {
 	
 	public int getExtension (final Position position, final boolean isCheck, final HashRecord hashRecord, final int horizon, final AttackCalculator attackCalculator) {
 		if (isCheck) {
-			if (isKingAttacked(position) || isDoubleCheck(position))
-				return settings.getAttackCheckExtension();
+			final int freeSquareCount;
+			
+			if (isDoubleCheck(position))
+				freeSquareCount = 0;
 			else
-				return settings.getSimpleCheckExtension();
+				freeSquareCount = getKingEscapeSquareCount(position);
+			
+			return checkExtensionByEscapeSquares[freeSquareCount];
 		}
 		else {
 			if (isNullMate(position, horizon))
@@ -71,7 +80,7 @@ public class SearchExtensionCalculator {
 		return attackCount >= 2;
 	}
 
-	private boolean isKingAttacked(final Position position) {
+	private int getKingEscapeSquareCount(final Position position) {
 		final int onTurn = position.getOnTurn();
 		final int notOnTurn = Color.getOppositeColor(onTurn);
 		final int kingSquare = position.getKingPosition(onTurn);
@@ -85,11 +94,11 @@ public class SearchExtensionCalculator {
 			if ((ownOccupancy & BitBoard.getSquareMask(square)) == 0 && !position.isSquareAttacked(notOnTurn, square))
 				escapeSquareCount++;
 			
-			if (escapeSquareCount > 1)
-				return false;
+			if (escapeSquareCount >= MAX_KING_ESCAPE_SQUARE_COUNT)
+				break;
 		}
 		
-		return true;
+		return escapeSquareCount;
 	}
 	
 	private boolean isRankAttack(final Position position) {
@@ -112,5 +121,15 @@ public class SearchExtensionCalculator {
 	
 	public void setSearchSettings(final SearchSettings settings) {
 		this.settings = settings;
+		
+		final double y1 = settings.getAttackCheckExtension();
+		final double y2 = settings.getSimpleCheckExtension();
+		
+		for (int i = 0; i <= MAX_KING_ESCAPE_SQUARE_COUNT; i++) {
+			final int count = Math.max(i, MIN_KING_ESCAPE_SQUARE_COUNT);
+			final double extension = y1 + (y2 - y1) * (count - MIN_KING_ESCAPE_SQUARE_COUNT) / (MAX_KING_ESCAPE_SQUARE_COUNT - MIN_KING_ESCAPE_SQUARE_COUNT);
+			
+			checkExtensionByEscapeSquares[i] = (int) Math.round(extension);
+		}
 	}
 }

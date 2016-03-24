@@ -2,6 +2,8 @@ package bishop.engine;
 
 import java.io.PrintWriter;
 
+import parallel.Parallel;
+
 import bishop.base.Color;
 import bishop.base.Position;
 import bishop.tables.MatedKingEvaluationTable;
@@ -11,7 +13,7 @@ public final class GeneralMatingPositionEvaluator implements IPositionEvaluator 
 	
 	private int evaluation; 
 	
-	public int evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
+	public int evaluatePosition (final Parallel parallel, final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
 		attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 		
 		final int matingColor = position.getSideWithMorePieces();

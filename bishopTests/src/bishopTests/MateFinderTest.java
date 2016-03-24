@@ -18,7 +18,7 @@ public class MateFinderTest {
 	}
 	
 	@Test
-	public void searchEngineTest() throws Exception {
+	public void testIsWin() throws Exception {
 		final TestValue[] testValueArray = {
 			new TestValue("k7/7Q/2K5/8/8/1n6/8/8 w - - 0 1", 1),
 			new TestValue("k7/7Q/2K5/2n5/8/8/8/8 w - - 0 1", 2),

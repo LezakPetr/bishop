@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import parallel.Parallel;
+import parallel.ParallelTaskRunner;
 
 import bishop.base.BitBoard;
 import bishop.base.Color;
@@ -38,8 +39,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		public int hashBestCompressedMove;
 		public int legalMoveCount;
 		public boolean allMovesGenerated;
-		public boolean isCheck;
-		public boolean checkCalculated;
 		public int maxExtension;
 		public final AttackCalculator attackCalculator;
 
@@ -59,7 +58,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			this.evaluation.setBeta(beta);
 			this.legalMoveCount = 0;
 			this.allMovesGenerated = false;
-			this.checkCalculated = false;
 		}
 		
 		public NodeEvaluation getNodeEvaluation() {
@@ -197,7 +195,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 	}
 	
-	private boolean isNullSearchPossible() {
+	private boolean isNullSearchPossible(final boolean isCheck) {
+		if (isCheck)
+			return false;
+
 		if (currentDepth > 0) {
 			final Move lastMove = nodeStack[currentDepth - 1].currentMove;
 			
@@ -209,10 +210,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		if (beta > Evaluation.MATE_ZERO_DEPTH)
 			return false;
-		
-		if (getIsCheck())
-			return false;
-		
+				
 		// Check position - at least two figures are needed
 		final int onTurn = currentPosition.getOnTurn();
 		long figureMask = BitBoard.EMPTY;
@@ -233,7 +231,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final int onTurn = currentPosition.getOnTurn();
 		final boolean isQuiescenceSearch = (horizon < ISearchEngine.HORIZON_GRANULARITY);
 		final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
-		final boolean isCheckSearch = isQuiescenceSearch && horizon > -maxCheckSearchDepth && getIsCheck();
+		final boolean isCheck = currentPosition.isCheck();
+		final boolean isCheckSearch = isQuiescenceSearch && horizon > -maxCheckSearchDepth && isCheck;
 		final boolean isLegalPosition = !currentPosition.isSquareAttacked(onTurn, currentPosition.getKingPosition(Color.getOppositeColor(onTurn)));
 		final int mateEvaluation = Evaluation.getMateEvaluation(currentDepth + depthAdvance);
 		
@@ -271,14 +270,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 				absoluteBeta = -initialAlpha;				
 			}
 
-			final int whitePositionEvaluation = positionEvaluator.evaluatePosition(currentPosition, absoluteAlpha, absoluteBeta, currentRecord.attackCalculator);
+			final int whitePositionEvaluation = positionEvaluator.evaluatePosition(parallel, currentPosition, absoluteAlpha, absoluteBeta, currentRecord.attackCalculator);
 			final int positionEvaluation = Evaluation.getRelative(whitePositionEvaluation, onTurn);
 			
 			final int positionExtension;
 			
 			if (horizon >= searchSettings.getMinExtensionHorizon()) {
-				final boolean isCheck = getIsCheck();
-				
 				positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, hashRecord, horizon, currentRecord.attackCalculator);
 			}
 			else
@@ -308,7 +305,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				currentRecord.moveListEnd = moveStackTop;
 				
 				// Null move heuristic
-				if (!isQuiescenceSearch && isNullSearchPossible()) {
+				if (!isQuiescenceSearch && isNullSearchPossible(isCheck)) {
 					int nullHorizon = horizon - searchSettings.getNullMoveReduction();
 					final Move move = new Move();
 					move.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
@@ -390,7 +387,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					}
 				}
 				
-				checkMate(onTurn, horizon, currentRecord, mateEvaluation, currentRecord.attackCalculator);
+				checkMate(onTurn, isCheck, horizon, currentRecord, mateEvaluation, currentRecord.attackCalculator);
 			}
 			
 			updateHashRecord(currentRecord, horizon);
@@ -399,26 +396,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			currentRecord.evaluation.setEvaluation(Evaluation.MAX);
 	}
 	
-	public void invokeCallableList(final List<Callable<Throwable>> evaluatorList) {
-		try {
-			parallel.invokeAll(evaluatorList);
-		}
-		catch (Exception ex) {
-			throw new RuntimeException(ex);
-		}
-	}
-
-	private boolean getIsCheck() {
-		final NodeRecord currentRecord = nodeStack[currentDepth];
-		
-		if (!currentRecord.checkCalculated) {
-			currentRecord.isCheck = currentPosition.isCheck();
-			currentRecord.checkCalculated = true;
-		}
-		
-		return currentRecord.isCheck;
-	}
-
 	private static boolean isLoseMateSearch(final int beta) {
 		return beta < -Evaluation.MATE_MIN && beta >= -Evaluation.MATE_ZERO_DEPTH;
 	}
@@ -442,18 +419,16 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 * At zero horizon method checks legal moves itself, otherwise it uses number of moves
 	 * stored in current node record.
 	 * @param horizon horizon
+	 * @param isCheck if there is check in the position
 	 * @param currentRecord current node record
 	 * @param mateEvaluation evaluation of the mate
 	 * @param isCheck if there is check in the position
 	 * @return if there is a mate
 	 */
-	private boolean checkMate(final int onTurn, final int horizon, final NodeRecord currentRecord, final int mateEvaluation, final AttackCalculator attackCalculator) {
+	private boolean checkMate(final int onTurn, final boolean isCheck, final int horizon, final NodeRecord currentRecord, final int mateEvaluation, final AttackCalculator attackCalculator) {
 		boolean isMate = false;
 		
 		if (currentRecord.legalMoveCount == 0) {
-			final boolean isCheck = //attackCalculator.isKingAttacked(onTurn);
-			getIsCheck();
-			
 			if (currentRecord.allMovesGenerated) {
 				final int evaluation;
 
@@ -525,7 +500,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			}
 			else {
 				pseudoLegalMoveGenerator.setPosition(currentPosition);
-				pseudoLegalMoveGenerator.setReduceMovesInCheck(getIsCheck());
+				pseudoLegalMoveGenerator.setReduceMovesInCheck(isCheckSearch);
 				pseudoLegalMoveGenerator.generateMoves();
 				
 				currentRecord.allMovesGenerated = true;
@@ -783,6 +758,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 		
 		try {
+			parallel.startTaskRunners();
+			
 			final RepeatedPositionRegister taskRepeatedPositionRegister = task.getRepeatedPositionRegister();
 			
 			repeatedPositionRegister.clearAnsReserve(taskRepeatedPositionRegister.getSize() + maxTotalDepth);
@@ -791,6 +768,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return searchOneTask();
 		}
 		finally {
+			parallel.stopTaskRunners();
+			
 			synchronized (monitor) {
 				this.task = null;
 				this.engineState = EngineState.STOPPED;

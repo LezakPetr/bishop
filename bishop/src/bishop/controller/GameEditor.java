@@ -150,7 +150,7 @@ public class GameEditor {
 		notifyActualPositionChanged();
 	}
 	
-	private void logPosition() {
+	private void logPosition() {/*
 		final Position position = actualPositionSource.getPosition();
 		final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(new PositionEvaluatorSwitchSettings());
 		final AttackCalculator attackCalculator = new AttackCalculator();
@@ -158,6 +158,6 @@ public class GameEditor {
 		
 		final PrintWriter writer = new PrintWriter(System.out);
 		evaluator.writeLog(writer);
-		writer.flush();
+		writer.flush();*/
 	}
 }
