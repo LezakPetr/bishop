@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PushbackReader;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.util.Stack;
 
 import utils.CharacterFilters;
@@ -17,31 +18,53 @@ public class PgnReader extends Pgn {
 	
 	
 	public void readPgnFromStream (final InputStream stream) throws IOException {
-		final InputStreamReader streamReader = new InputStreamReader(stream, PGN_ENCODING);
-		final PushbackReader pushbackReader = new PushbackReader(streamReader);
+		final PushbackReader pushbackReader = createPushbackReader(stream);
 		
 		readPgn(pushbackReader);
+	}
+
+	public Game readSingleGame (final PushbackReader reader) throws IOException {
+		try {
+			gameList.clear();
+			
+			if (readSingleGameInternal(reader))
+				return gameList.get(0);
+		}
+		catch (Throwable th) {
+			throwExceptionWithInfo(reader, th);
+		}
+		
+		return null;
 	}
 
 	public void readPgn (final PushbackReader reader) throws IOException {
 		try {
 			gameList.clear();
 			
-			while (true) {
-				IoUtils.skipWhiteSpace(reader);
-				
-				if (IoUtils.isEndOfStream(reader))
-					break;
-				
-				final Game game = readGame(reader);
-				gameList.add(game);
-			}
+			while (readSingleGameInternal(reader))
+				;
 		}
 		catch (Throwable th) {
-			final String next = IoUtils.readString(reader, CharacterFilters.getNonEndOfLineFilter());
-
-			throw new RuntimeException("Cannot read PGN, error before " + next, th);
+			throwExceptionWithInfo(reader, th);
 		}
+	}
+
+	private void throwExceptionWithInfo(final PushbackReader reader, Throwable th) throws IOException {
+		final String next = IoUtils.readString(reader, CharacterFilters.getNonEndOfLineFilter());
+
+		throw new RuntimeException("Cannot read PGN, error before " + next, th);
+	}
+
+	private boolean readSingleGameInternal(final PushbackReader reader) throws IOException {
+		IoUtils.skipWhiteSpace(reader);
+		
+		if (IoUtils.isEndOfStream(reader))
+			return false;
+		
+		final Game game = readGame(reader);
+		gameList.add(game);
+		
+		return true;
 	}
 	
 	private Game readGame(final PushbackReader reader) throws IOException {
@@ -225,4 +248,11 @@ public class PgnReader extends Pgn {
 		game.newGame(fen.getPosition());
 	}
 
+	public static PushbackReader createPushbackReader(final InputStream stream) throws UnsupportedEncodingException {
+		final InputStreamReader streamReader = new InputStreamReader(stream, PGN_ENCODING);
+		final PushbackReader pushbackReader = new PushbackReader(streamReader);
+		
+		return pushbackReader;
+	}
+	
 }

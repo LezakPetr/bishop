@@ -153,12 +153,15 @@ public class IoUtils {
 		final StringBuilder builder = new StringBuilder();
 		
 		while (true) {
-			final char ch = readChar(reader);
+			char ch = readChar(reader);
 			
 			if (ch == QUOTE_CHAR)
 				break;
-			else
-				builder.append(ch);
+			
+			if (ch == '\\')
+				ch = readChar(reader);
+			
+			builder.append(ch);
 		}
 		
 		return builder.toString();

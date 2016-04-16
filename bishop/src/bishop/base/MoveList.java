@@ -143,9 +143,25 @@ public class MoveList implements Iterable<Move> {
 	public int hashCode() {
 		int code = 0;
 		
-		for (int val: data)
-			code = Integer.rotateLeft(code, 7) ^ val;
+		for (int i = 0; i < size; i++)
+			code = Integer.rotateLeft(code, 7) ^ data[i];
 		
 		return code;
+	}
+
+	/**
+	 * Finds first occurrence of given move or return -1 if not found. 
+	 * @param move move to find
+	 * @return index of move
+	 */
+	public int indexOf(final Move move) {
+		final int expecetdData = move.getData();
+		
+		for (int i = 0; i < size; i++) {
+			if (data[i] == expecetdData)
+				return i;
+		}
+		
+		return -1;
 	}
 }
