@@ -817,7 +817,17 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final NodeEvaluation nodeEvaluation = currentRecord.evaluation;
 
 		record.setEvaluationAndType(nodeEvaluation, currentDepth + depthAdvance);
-		record.setHorizon(horizon);
+		
+		final int evaluation = nodeEvaluation.getEvaluation();
+		final int effectiveHorizon;
+		
+		if (evaluation >= Evaluation.MATE_MIN || evaluation <= -Evaluation.MATE_MIN) {
+			effectiveHorizon = ISearchEngine.MAX_HORIZON - 1;
+		}
+		else
+			effectiveHorizon = horizon;
+		
+		record.setHorizon(effectiveHorizon);
 
 		if (currentRecord.principalVariation.getSize() > 0) {
 			record.setCompressedBestMove(currentRecord.principalVariation.get(0).getCompressedMove());

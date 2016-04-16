@@ -19,6 +19,8 @@ public class Color {
 	
 	public static final int LAST = 2;
 	
+	public static final int NONE = 15;
+	
 	// Number of bits to store color
 	public static final int BIT_COUNT = 1;
 	

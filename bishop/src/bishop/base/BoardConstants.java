@@ -513,6 +513,21 @@ public class BoardConstants {
 	}
 	
 	/**
+	 * Returns all squares where pawns can move by single step.
+	 * @param color color of the pawn
+	 * @param pawnsMask pawn mask
+	 * @return mask of target squares
+	 */
+	public static long getPawnSingleMoveSquares (final int color, final long pawnsMask) {
+    	if (color == Color.WHITE) {
+    		return pawnsMask << 8;
+    	}
+    	else {
+    		return pawnsMask >>> 8;
+    	}
+	}
+	
+	/**
 	 * Returns mask of square on file preceding EP file on EP rank. 
 	 * @param color color of the pawn that has moved by two squares
 	 * @param file EP file

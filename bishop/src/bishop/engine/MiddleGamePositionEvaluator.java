@@ -47,7 +47,7 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 		// Rooks on open files
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final long rookMask = position.getPiecesMask(color, PieceType.ROOK);
-			final long openRooks = rookMask & pawnStructureCalculator.getOpenFileSquares(color);
+			final long openRooks = rookMask & ~pawnStructureCalculator.getBackSquares(color);
 			
 			rookEvaluation += BitBoard.getSquareCount(openRooks) * settings.getRookOnOpenFileBonus(color);
 		}
