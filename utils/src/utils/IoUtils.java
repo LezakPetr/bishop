@@ -143,7 +143,16 @@ public class IoUtils {
 	
 	public static void writeQuotedString(final PrintWriter writer, final String value) {
 		writer.print(QUOTE_CHAR);
-		writer.print(value);
+		
+		for (int i = 0; i < value.length(); i++) {
+			final char ch = value.charAt(i);
+			
+			if (ch == QUOTE_CHAR || ch == BACKSLASH_CHAR)
+				writer.print(BACKSLASH_CHAR);
+			
+			writer.print(ch);
+		}
+		
 		writer.print(QUOTE_CHAR);
 	}
 	
@@ -158,7 +167,7 @@ public class IoUtils {
 			if (ch == QUOTE_CHAR)
 				break;
 			
-			if (ch == '\\')
+			if (ch == BACKSLASH_CHAR)
 				ch = readChar(reader);
 			
 			builder.append(ch);
