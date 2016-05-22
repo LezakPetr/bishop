@@ -90,4 +90,8 @@ public class Utils {
 		return result;
 	}
 
+	public static long divideRoundUp(final long a, final long b) {
+		return (a + b - 1) / b;
+	}
+
 }

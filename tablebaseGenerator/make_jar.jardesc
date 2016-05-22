@@ -11,8 +11,8 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <javaElement handleIdentifier="=tablebaseGenerator/src"/>
         <javaElement handleIdentifier="=utils/src"/>
         <javaElement handleIdentifier="=bishop/src"/>
-        <javaElement handleIdentifier="=tablebaseGenerator/src"/>
     </selectedElements>
 </jardesc>

@@ -5,37 +5,61 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CompressedTablePage implements ITablePage {
+	
+	private static final int MAX_SLICE_COUNT = 16;
+	
 	private final long offset;
-	private final byte[] symbols;
-	private final short[] symbolToResultMap;
-	private Map<Short, Byte> resultToSymbolMap;
+	private final long size;
+	private final int sliceSize;
+	private int sliceCount;
+	private final long[][] slices;
+	private short[] symbolToResultMap;
+	private Map<Short, Short> resultToSymbolMap;
 	private int nextSymbol;
 	
-	private static final byte SYMBOL_ILLEGAL = 0;
+	private static final short SYMBOL_ILLEGAL = 0;
 	
 	public CompressedTablePage (final long offset, final int size) {
 		this.offset = offset;
-		this.symbols = new byte[size];
+		this.size = size;
+		this.sliceSize = (int) Utils.divideRoundUp(size, Long.SIZE);
+		this.slices = new long[MAX_SLICE_COUNT][];
+		this.slices[0] = new long[sliceSize];
+		this.sliceCount = 1;
 		
 		this.resultToSymbolMap = new HashMap<>();
 		this.resultToSymbolMap.put((short) TableResult.ILLEGAL, SYMBOL_ILLEGAL);
 		
-		this.symbolToResultMap = new short[1 << Byte.SIZE];
+		this.symbolToResultMap = new short[2];
 		this.symbolToResultMap[SYMBOL_ILLEGAL] = (short) TableResult.ILLEGAL;
 		this.nextSymbol = SYMBOL_ILLEGAL + 1;
 	}
 	
 	public int getResult (final long index) {
-		final int symbol = symbols[(int) (index - offset)] & 0xFF;
+		final long baseIndex = index - offset;
+		final long bitIndex = baseIndex % Long.SIZE;
+		final int cellIndex = (int) (baseIndex / Long.SIZE);
+		int symbol = 0;
+		
+		for (int i = 0; i < sliceCount; i++) {
+			symbol += ((slices[i][cellIndex] >>> bitIndex) & 0x01) << i;
+		}
 		
 		return symbolToResultMap[symbol];
 	}
 	
 	public void setResult (final long index, final int result) {
-		Byte symbol = resultToSymbolMap.get((short) result);
+		Short symbol = resultToSymbolMap.get((short) result);
 		
 		if (symbol == null) {
-			symbol = (byte) nextSymbol;
+			symbol = (short) nextSymbol;
+						
+			if (nextSymbol >= symbolToResultMap.length) {
+				slices[sliceCount] = new long[sliceSize];
+				sliceCount++;
+				
+				symbolToResultMap = Arrays.copyOf(symbolToResultMap, 1 << sliceCount);
+			}
 			
 			resultToSymbolMap.put((short) result, symbol);
 			symbolToResultMap[nextSymbol] = (short) result;
@@ -43,7 +67,17 @@ public class CompressedTablePage implements ITablePage {
 			nextSymbol++;
 		}
 		
-		symbols[(int) (index - offset)] = symbol;
+		final long baseIndex = index - offset;
+		final long bitIndex = baseIndex % Long.SIZE;
+		final int cellIndex = (int) (baseIndex / Long.SIZE);
+		final long mask = 1L << bitIndex;
+		
+		for (int i = 0; i < sliceCount; i++) {
+			if (((symbol >> i) & 0x01) != 0)
+				slices[i][cellIndex] |= mask;
+			else
+				slices[i][cellIndex] &= ~mask;
+		}
 	}
 	
 	public long getOffset() {
@@ -51,11 +85,11 @@ public class CompressedTablePage implements ITablePage {
 	}
 
 	public long getSize() {
-		return symbols.length;
+		return size;
 	}
 
 	public void read(final ITableIteratorRead it) {
-		for (int i = 0; i < symbols.length; i++) {
+		for (int i = 0; i < size; i++) {
 			setResult(offset + i, it.getResult());
 			it.next();
 		}
@@ -63,6 +97,9 @@ public class CompressedTablePage implements ITablePage {
 	
 	@Override
 	public void clear() {
-		Arrays.fill(symbols, SYMBOL_ILLEGAL);
+		Arrays.fill(slices[0], 0);
+		
+		for (int i = 1; i < MAX_SLICE_COUNT; i++)
+			slices[i] = null;
 	}
 }

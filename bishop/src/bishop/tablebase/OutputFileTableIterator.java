@@ -123,8 +123,16 @@ public class OutputFileTableIterator extends TableIteratorBase implements IClosa
 
 	@Override
 	public void moveForward(final long count) {
-		for (long i = 0; i < count; i++)
-			next();
+		if (inputIterator != null || remainingResults > 0) {
+			for (long i = 0; i < count; i++)
+				next();
+		}
+		else {
+			if (count > 0) {
+				super.moveForward(count - 1);
+				next();
+			}
+		}
 	}
 
 	@Override
