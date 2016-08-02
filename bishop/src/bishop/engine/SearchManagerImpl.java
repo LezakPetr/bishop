@@ -319,7 +319,6 @@ public final class SearchManagerImpl implements ISearchManager {
 			task.getPosition().assign(rootPosition);
 			task.setHorizon(horizon);
 			task.setInitialSearch(initialSearch);
-			task.setDepthAdvance(0);
 			task.setRootMaterialEvaluation(rootPosition.getMaterialEvaluation());
 			
 			final RepeatedPositionRegister repeatedPositionRegister = new RepeatedPositionRegister();

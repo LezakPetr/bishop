@@ -5,8 +5,8 @@ import java.io.IOException;
 import zip.ZipReader;
 import bishop.base.Color;
 import bishop.controller.Utils;
-import bisGui.math.IVector;
-import bisGui.math.Vector2D;
+import math.IVector;
+import math.Vector2D;
 import bisGuiSwing.graphics.AwtImage;
 
 import com.kitfox.svg.SVGDiagram;

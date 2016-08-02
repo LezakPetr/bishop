@@ -16,9 +16,9 @@ import zip.ZipReader;
 import zip.ZipRecord;
 import bishop.base.Color;
 import bishop.controller.Utils;
-import bisGui.math.IVector;
-import bisGui.math.Vector2D;
-import bisGui.math.Vectors;
+import math.IVector;
+import math.Vector2D;
+import math.Vectors;
 
 public abstract class BoardBase implements IBoard {
 	private String name;

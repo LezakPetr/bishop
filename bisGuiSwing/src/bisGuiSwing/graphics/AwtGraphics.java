@@ -5,8 +5,8 @@ import bisGui.graphics.Color;
 import bisGui.graphics.GraphicContext;
 import bisGui.graphics.IGraphics;
 import bisGui.graphics.IImage;
-import bisGui.math.IVector;
-import bisGui.math.Vector2D;
+import math.IVector;
+import math.Vector2D;
 
 public class AwtGraphics implements IGraphics {
 

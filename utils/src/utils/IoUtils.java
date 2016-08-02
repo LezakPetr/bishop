@@ -335,18 +335,35 @@ public class IoUtils {
 	 */
 	public static byte[] readByteArray(final InputStream stream, final int length) throws IOException {
 		final byte[] array = new byte[length];
+		int bytesRead = tryReadByteArray(stream, array);
+		
+		if (bytesRead < length)
+			throw new IOException("End of stream reached");
+		
+		return array;
+	}
+
+	/**
+	 * Tries to read byte array from given input stream.
+	 * Method tries to read as much as possible and can read smaller number of bytes only in case of end-of-stream.
+	 * @param stream source stream
+	 * @param array target array
+	 * @return number of bytes read
+	 * @throws IOException when IO failure occurs
+	 */
+	public static int tryReadByteArray(final InputStream stream, final byte[] array) throws IOException {
 		int bytesRead = 0;
 		
-		while (bytesRead < length) {
-			final int ret = stream.read(array, bytesRead, length - bytesRead);
+		while (bytesRead < array.length) {
+			final int ret = stream.read(array, bytesRead, array.length - bytesRead);
 			
 			if (ret < 0)
-				throw new IOException("End of stream reached");
+				break;
 			
 			bytesRead += ret;
 		}
 		
-		return array;
+		return bytesRead;
 	}
 	
 	public static void writeNumberBinary(final OutputStream stream, final long num, final int length) throws IOException {

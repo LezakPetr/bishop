@@ -1,5 +1,8 @@
 package bisGui.math;
 
+import math.IMatrix;
+import math.IVector;
+
 public interface ILinearCoordinateTransformation extends ICoordinateTransformation {
 	/**
 	 * Returns origin of the inner coordinate system.

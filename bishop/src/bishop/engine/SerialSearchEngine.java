@@ -4,10 +4,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import parallel.Parallel;
-import parallel.ParallelTaskRunner;
 
 import bishop.base.BitBoard;
 import bishop.base.Color;
@@ -110,7 +108,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private MoveStack moveStack;
 	private final Position currentPosition;
 	private int currentDepth;
-	private int depthAdvance;
 	private int closeToDepth;
 	private int moveStackTop;
 	private long nodeCount;
@@ -153,7 +150,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		engineState = EngineState.STOPPED;
 		monitor = new Object();
-		depthAdvance = 0;
 		historyTable = new int[Square.LAST][Square.LAST];
 		
 		currentPosition = new Position();
@@ -189,8 +185,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			synchronized (monitor) {
 				if (task.isTerminated())
 					throw new SearchTerminatedException();
-				
-				updateBoundariesInNodes();
 			}
 		}
 	}
@@ -229,171 +223,175 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		final NodeRecord currentRecord = nodeStack[currentDepth];
 		final int onTurn = currentPosition.getOnTurn();
-		final boolean isQuiescenceSearch = (horizon < ISearchEngine.HORIZON_GRANULARITY);
-		final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
-		final boolean isCheck = currentPosition.isCheck();
-		final boolean isCheckSearch = isQuiescenceSearch && horizon > -maxCheckSearchDepth && isCheck;
 		final boolean isLegalPosition = !currentPosition.isSquareAttacked(onTurn, currentPosition.getKingPosition(Color.getOppositeColor(onTurn)));
-		final int mateEvaluation = Evaluation.getMateEvaluation(currentDepth + depthAdvance);
 		
 		currentRecord.principalVariation.clear();
 
-		if (isLegalPosition) {
-			final int initialAlpha = currentRecord.evaluation.getAlpha();
-			final int initialBeta = currentRecord.evaluation.getBeta();
+		if (isLegalPosition)
+			alphaBetaInLegalPosition(horizon);
+		else
+			currentRecord.evaluation.setEvaluation(Evaluation.MAX);
+	}
+
+	public void alphaBetaInLegalPosition(final int horizon) {
+		final NodeRecord currentRecord = nodeStack[currentDepth];
+		final int onTurn = currentPosition.getOnTurn();
+		final int initialAlpha = currentRecord.evaluation.getAlpha();
+		final int initialBeta = currentRecord.evaluation.getBeta();
+		
+		if (checkFiniteEvaluation(horizon, currentRecord, initialAlpha, initialBeta))
+			return;
+		
+		currentRecord.moveListBegin = moveStackTop;
+		
+		// Try to find position in hash table
+		final HashRecord hashRecord = new HashRecord();
+		
+		if (updateRecordByHash(horizon, currentRecord, initialAlpha, initialBeta, hashRecord))
+			return;
+		
+		// Evaluate position
+		final int absoluteAlpha;
+		final int absoluteBeta;
+		
+		if (onTurn == Color.WHITE) {
+			absoluteAlpha = initialAlpha;
+			absoluteBeta = initialBeta;
+		}
+		else {
+			absoluteAlpha = -initialBeta;
+			absoluteBeta = -initialAlpha;				
+		}
+
+		final int whitePositionEvaluation = positionEvaluator.evaluatePosition(parallel, currentPosition, absoluteAlpha, absoluteBeta, currentRecord.attackCalculator);
+		final int positionEvaluation = Evaluation.getRelative(whitePositionEvaluation, onTurn);
+		final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
+		final boolean isCheck = currentPosition.isCheck();
+		final boolean isQuiescenceSearch = (horizon < ISearchEngine.HORIZON_GRANULARITY);
+		final boolean isCheckSearch = isQuiescenceSearch && horizon > -maxCheckSearchDepth && isCheck;
+
+		final int positionExtension;
+		
+		if (horizon >= searchSettings.getMinExtensionHorizon())
+			positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, hashRecord, horizon, currentRecord.attackCalculator);
+		else
+			positionExtension = 0;
+
+		final boolean isMaxDepth = (currentDepth >= maxTotalDepth - 1);
+		
+		// Use position evaluation as initial evaluation
+		if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
+			currentRecord.evaluation.setEvaluation(positionEvaluation);
 			
-			if (checkFiniteEvaluation(horizon, currentRecord, initialAlpha, initialBeta))
+			nodeCount++;
+
+			if (currentRecord.evaluation.updateBoundaries (positionEvaluation)) {
+				currentRecord.evaluation.setAlpha(positionEvaluation);
+
 				return;
+			}
+		}
+
+		final int maxQuiescenceDepth = searchSettings.getMaxQuiescenceDepth();
+		final boolean winMateRequired = isWinMateSearch(initialAlpha);
+		final boolean loseMateRequired = isLoseMateSearch(initialBeta);
+		final boolean mateRequired = winMateRequired || loseMateRequired;
+		
+		if (!isMaxDepth && horizon > -maxQuiescenceDepth && (!isQuiescenceSearch || isCheckSearch || !mateRequired)) {
+			final NodeRecord nextRecord = nodeStack[currentDepth + 1];
 			
-			final boolean winMateRequired = isWinMateSearch(initialAlpha);
-			final boolean loseMateRequired = isLoseMateSearch(initialBeta);
-			final boolean mateRequired = winMateRequired || loseMateRequired;
-						
 			currentRecord.moveListBegin = moveStackTop;
+			currentRecord.moveListEnd = moveStackTop;
 			
-			// Try to find position in hash table
-			final HashRecord hashRecord = new HashRecord();
-			
-			if (updateRecordByHash(horizon, currentRecord, initialAlpha, initialBeta, hashRecord))
-				return;
-			
-			// Evaluate position
-			final int absoluteAlpha;
-			final int absoluteBeta;
-			
-			if (onTurn == Color.WHITE) {
-				absoluteAlpha = initialAlpha;
-				absoluteBeta = initialBeta;
-			}
-			else {
-				absoluteAlpha = -initialBeta;
-				absoluteBeta = -initialAlpha;				
-			}
-
-			final int whitePositionEvaluation = positionEvaluator.evaluatePosition(parallel, currentPosition, absoluteAlpha, absoluteBeta, currentRecord.attackCalculator);
-			final int positionEvaluation = Evaluation.getRelative(whitePositionEvaluation, onTurn);
-			
-			final int positionExtension;
-			
-			if (horizon >= searchSettings.getMinExtensionHorizon()) {
-				positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, hashRecord, horizon, currentRecord.attackCalculator);
-			}
-			else
-				positionExtension = 0;
-
-			final boolean isMaxDepth = (currentDepth >= maxTotalDepth - 1);
-			
-			// Use position evaluation as initial evaluation
-			if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
-				currentRecord.evaluation.setEvaluation(positionEvaluation);
+			// Null move heuristic
+			if (!isQuiescenceSearch && isNullSearchPossible(isCheck)) {
+				int nullHorizon = horizon - searchSettings.getNullMoveReduction();
+				final Move move = new Move();
+				move.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
 				
-				nodeCount++;
-
-				if (currentRecord.evaluation.updateBoundaries (positionEvaluation)) {
-					currentRecord.evaluation.setAlpha(positionEvaluation);
-
+				evaluateMove(move, nullHorizon, 0, initialBeta, initialBeta + 1);
+				
+				final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
+				
+				if (parentEvaluation.getEvaluation() > initialBeta) {
+					currentRecord.evaluation.update(parentEvaluation);
 					return;
 				}
 			}
-
-			final int maxQuiescenceDepth = searchSettings.getMaxQuiescenceDepth();
 			
-			if (!isMaxDepth && horizon > -maxQuiescenceDepth && (!isQuiescenceSearch || isCheckSearch || !mateRequired)) {
-				final NodeRecord nextRecord = nodeStack[currentDepth + 1];
-				
-				currentRecord.moveListBegin = moveStackTop;
-				currentRecord.moveListEnd = moveStackTop;
-				
-				// Null move heuristic
-				if (!isQuiescenceSearch && isNullSearchPossible(isCheck)) {
-					int nullHorizon = horizon - searchSettings.getNullMoveReduction();
-					final Move move = new Move();
-					move.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
-					
-					evaluateMove(move, nullHorizon, 0, initialBeta, initialBeta + 1);
-					
-					final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
-					
-					if (parentEvaluation.getEvaluation() > initialBeta) {
-						currentRecord.evaluation.update(parentEvaluation);
-						return;
-					}
-				}
-				
-				// Try P-var move first
-				final Move precalculatedMove = new Move();
-				final boolean precalculatedMoveFound;
-				boolean precalculatedBetaCutoff = false;
-				
-				if (currentRecord.hashBestCompressedMove != Move.NONE_COMPRESSED_MOVE) {
-					precalculatedMoveFound = precalculatedMove.uncompressMove(currentRecord.hashBestCompressedMove, currentPosition);
-				}
-				else {
-					precalculatedMoveFound = precalculatedMove.uncompressMove(currentRecord.principalMove.getCompressedMove(), currentPosition);
-				}
-				
-				if (precalculatedMoveFound) {
-					final int alpha = currentRecord.evaluation.getAlpha();
-					final int beta = currentRecord.evaluation.getBeta();
-					
-					evaluateMove(precalculatedMove, horizon, positionExtension, alpha, beta);
-					
-					if (currentDepth > closeToDepth)
-						return;
-					else
-						closeToDepth = Integer.MAX_VALUE;
-					
-					if (updateCurrentRecordAfterEvaluation(precalculatedMove, horizon, currentRecord, nextRecord)) {
-						precalculatedBetaCutoff = true;
-					}
-				}
-
-				// If P-var move didn't make beta cutoff try other moves
-				if (!precalculatedBetaCutoff) {
-					generateAndSortMoves(currentRecord, horizon, isQuiescenceSearch, isCheckSearch);
-					
-					// First legal move
-					while (currentRecord.moveListEnd > currentRecord.moveListBegin) {
-						final int alpha = currentRecord.evaluation.getAlpha();
-						final int beta = currentRecord.evaluation.getBeta();
-
-						final Move move = new Move();
-						moveStack.getMove(currentRecord.moveListEnd - 1, move);
-						
-						if (!move.equals(precalculatedMove)) {
-							if (currentRecord.legalMoveCount > 0 && beta - alpha != 1) {
-								evaluateMove(move, horizon, positionExtension, alpha, alpha + 1);
-								
-								final int childEvaluation = -nextRecord.evaluation.getEvaluation();
-								
-								if (childEvaluation > alpha && beta - alpha != 1)
-									evaluateMove(move, horizon, positionExtension, alpha, beta);
-							}
-							else {
-								evaluateMove(move, horizon, positionExtension, alpha, beta);
-							}
-
-							if (currentDepth > closeToDepth)
-								return;
-							else {
-								closeToDepth = Integer.MAX_VALUE;
-							
-								if (updateCurrentRecordAfterEvaluation(move, horizon, currentRecord, nextRecord))
-									break;
-							}
-						}
-						
-						currentRecord.moveListEnd--;
-					}
-				}
-				
-				checkMate(onTurn, isCheck, horizon, currentRecord, mateEvaluation, currentRecord.attackCalculator);
+			// Try P-var move first
+			final Move precalculatedMove = new Move();
+			final boolean precalculatedMoveFound;
+			boolean precalculatedBetaCutoff = false;
+			
+			if (currentRecord.hashBestCompressedMove != Move.NONE_COMPRESSED_MOVE) {
+				precalculatedMoveFound = precalculatedMove.uncompressMove(currentRecord.hashBestCompressedMove, currentPosition);
+			}
+			else {
+				precalculatedMoveFound = precalculatedMove.uncompressMove(currentRecord.principalMove.getCompressedMove(), currentPosition);
 			}
 			
-			updateHashRecord(currentRecord, horizon);
+			if (precalculatedMoveFound) {
+				final int alpha = currentRecord.evaluation.getAlpha();
+				final int beta = currentRecord.evaluation.getBeta();
+				
+				evaluateMove(precalculatedMove, horizon, positionExtension, alpha, beta);
+				
+				if (currentDepth > closeToDepth)
+					return;
+				else
+					closeToDepth = Integer.MAX_VALUE;
+				
+				if (updateCurrentRecordAfterEvaluation(precalculatedMove, horizon, currentRecord, nextRecord)) {
+					precalculatedBetaCutoff = true;
+				}
+			}
+
+			// If precalculated move didn't make beta cutoff try other moves
+			if (!precalculatedBetaCutoff) {
+				generateAndSortMoves(currentRecord, horizon, isQuiescenceSearch, isCheckSearch);
+				
+				// First legal move
+				while (currentRecord.moveListEnd > currentRecord.moveListBegin) {
+					final int alpha = currentRecord.evaluation.getAlpha();
+					final int beta = currentRecord.evaluation.getBeta();
+
+					final Move move = new Move();
+					moveStack.getMove(currentRecord.moveListEnd - 1, move);
+					
+					if (!move.equals(precalculatedMove)) {
+						if (currentRecord.legalMoveCount > 0 && beta - alpha != 1) {
+							evaluateMove(move, horizon, positionExtension, alpha, alpha + 1);
+							
+							final int childEvaluation = -nextRecord.evaluation.getEvaluation();
+							
+							if (childEvaluation > alpha && beta - alpha != 1)
+								evaluateMove(move, horizon, positionExtension, alpha, beta);
+						}
+						else {
+							evaluateMove(move, horizon, positionExtension, alpha, beta);
+						}
+
+						if (currentDepth > closeToDepth)
+							return;
+						else {
+							closeToDepth = Integer.MAX_VALUE;
+						
+							if (updateCurrentRecordAfterEvaluation(move, horizon, currentRecord, nextRecord))
+								break;
+						}
+					}
+					
+					currentRecord.moveListEnd--;
+				}
+			}
+			
+			final int mateEvaluation = Evaluation.getMateEvaluation(currentDepth);
+			
+			checkMate(onTurn, isCheck, horizon, currentRecord, mateEvaluation, currentRecord.attackCalculator);
 		}
-		else
-			currentRecord.evaluation.setEvaluation(Evaluation.MAX);
+		
+		updateHashRecord(currentRecord, horizon);
 	}
 	
 	private static boolean isLoseMateSearch(final int beta) {
@@ -405,7 +403,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	}
 
 	private boolean checkFiniteEvaluation(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta) {
-		if (currentDepth + depthAdvance > 0 && finiteEvaluator.evaluate(currentPosition, currentDepth, horizon, initialAlpha, initialBeta)) {
+		if (currentDepth > 0 && finiteEvaluator.evaluate(currentPosition, currentDepth, horizon, initialAlpha, initialBeta)) {
 			currentRecord.evaluation.setEvaluation(finiteEvaluator.getEvaluation());
 			
 			return true;
@@ -459,8 +457,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 	private boolean updateRecordByHash(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta, final HashRecord hashRecord) {
 		if (hashTable.getRecord(currentPosition, hashRecord)) {
-			if (currentDepth + depthAdvance > 0 && hashRecord.getHorizon() >= horizon) {
-				final int hashEvaluation = hashRecord.getNormalizedEvaluation(currentDepth + depthAdvance);
+			if (currentDepth > 0 && hashRecord.getHorizon() >= horizon) {
+				final int hashEvaluation = hashRecord.getNormalizedEvaluation(currentDepth);
 				final int hashType = hashRecord.getType();
 
 				if (hashType == HashRecordType.VALUE || (hashType == HashRecordType.LOWER_BOUND && hashEvaluation > initialBeta) || (hashType == HashRecordType.UPPER_BOUND && hashEvaluation < initialAlpha)) {
@@ -532,7 +530,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		else
 			moveExtension = 0;
 		
-		final int subAdvancedDepth = currentDepth + depthAdvance + 1;
+		final int subAdvancedDepth = currentDepth + 1;
 		final int subMateEvaluation = Evaluation.getMateEvaluation(subAdvancedDepth);
 		final int maxExtension = currentRecord.maxExtension;
 		final int totalExtension = Math.min(Math.min(positionExtension + moveExtension, ISearchEngine.HORIZON_GRANULARITY), maxExtension);
@@ -631,8 +629,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		currentDepth = 0;
 		moveStackTop = 0;
-		depthAdvance = task.getDepthAdvance();
-		finiteEvaluator.setDepthAdvance(depthAdvance);
 		evaluatedMoveList.clear();
 
 		for (int i = 0; i < maxTotalDepth; i++)
@@ -672,25 +668,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		result.setSearchTerminated(terminated);
 		
 		return result;
-	}
-
-	private void updateBoundariesInNodes() {
-		int taskAlpha = task.getAlpha();
-		int taskBeta = task.getBeta();
-		
-		for (int depth = 0; depth <= currentDepth; depth++) {
-			final NodeRecord nodeRecord = nodeStack[depth];
-			
-			if (nodeRecord.evaluation.clipBoundaries(taskAlpha, taskBeta)) {
-				final int pomAlpha = taskAlpha;
-				taskAlpha = -taskBeta;
-				taskBeta = -pomAlpha;
-				
-				closeToDepth = depth;
-			}
-			else
-				break;
-		}
 	}
 
 	/**
@@ -816,7 +793,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final HashRecord record = new HashRecord();
 		final NodeEvaluation nodeEvaluation = currentRecord.evaluation;
 
-		record.setEvaluationAndType(nodeEvaluation, currentDepth + depthAdvance);
+		record.setEvaluationAndType(nodeEvaluation, currentDepth);
 		
 		final int evaluation = nodeEvaluation.getEvaluation();
 		final int effectiveHorizon;

@@ -2,9 +2,10 @@ package bishopTests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import bisGui.math.IMatrix;
-import bisGui.math.Matrices;
-import bisGui.math.MatrixImpl;
+
+import math.IMatrix;
+import math.Matrices;
+import math.MatrixImpl;
 
 public class MatrixTest {
 

@@ -1,7 +1,7 @@
 package bishop.gui;
 
-import bisGui.math.IVector;
-import bisGui.math.Vector2D;
+import math.IVector;
+import math.Vector2D;
 
 class Utils {
 
