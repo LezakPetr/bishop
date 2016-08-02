@@ -9,9 +9,9 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JComponent;
 
-import bisGui.math.IVector;
-import bisGui.math.Vector2D;
 import bisGui.widgets.Widget;
+import math.IVector;
+import math.Vector2D;
 import bisGui.widgets.MouseButton;
 
 @SuppressWarnings("serial")

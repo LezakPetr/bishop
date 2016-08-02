@@ -1,10 +1,7 @@
 package bishop.engine;
 
-import java.util.List;
-
 import bishop.base.Move;
 import bishop.base.MoveList;
-import bishop.base.MoveStack;
 import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
 
@@ -12,7 +9,6 @@ public final class SearchTask {
 
 	private final Position position;
 	private int horizon;
-	private int depthAdvance;
 	private int alpha;
 	private int beta;
 	private final MoveList principalVariation;   // Hint from previous iteration
@@ -26,7 +22,6 @@ public final class SearchTask {
 	
 	public SearchTask() {
 		horizon = 0;
-		depthAdvance = 0;
 		position = new Position();
 		alpha = Evaluation.MIN;
 		beta = Evaluation.MAX;
@@ -49,22 +44,6 @@ public final class SearchTask {
 		this.horizon = horizon;
 	}
 	
-	/**
-	 * Returns initial depth of searched position. This affects evaluation of the mate.
-	 * @return depth advance
-	 */
-	public int getDepthAdvance() {
-		return depthAdvance;
-	}
-	
-	/**
-	 * Sets initial depth of searched position. This affects evaluation of the mate.
-	 * @param depthAdvance depth advance
-	 */
-	public void setDepthAdvance(int depthAdvance) {
-		this.depthAdvance = depthAdvance;
-	}
-
 	public int getAlpha() {
 		return alpha;
 	}

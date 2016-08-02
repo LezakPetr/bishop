@@ -1,5 +1,10 @@
 package bisGui.math;
 
+import math.IMatrix;
+import math.IVector;
+import math.Matrices;
+import math.Vectors;
+
 public class Transformations {
 
 	/**

@@ -8,13 +8,12 @@ public final class FinitePositionEvaluator {
 	
 	private RepeatedPositionRegister repeatedPositionRegister;
 	private TablebasePositionEvaluator tablebaseEvaluator;
-	private int depthAdvance;
 	private int evaluation;
 	
 	
 	public boolean evaluate (final Position position, final int depth, final int horizon, final int alpha, final int beta) {
 		// Mate depth pruning
-		final int advancedDepth = depth + depthAdvance;
+		final int advancedDepth = depth;
 		final int mateEvaluation = Evaluation.getMateEvaluation(advancedDepth);
 		
 		if (alpha > Evaluation.MATE_MIN && mateEvaluation < alpha) {
@@ -60,10 +59,6 @@ public final class FinitePositionEvaluator {
 		
 	public void setRepeatedPositionRegister (final RepeatedPositionRegister register) {
 		this.repeatedPositionRegister = register;
-	}
-	
-	public void setDepthAdvance (final int depthAdvance) {
-		this.depthAdvance = depthAdvance;
 	}
 	
 	public void setTablebaseEvaluator (final TablebasePositionEvaluator evaluator) {

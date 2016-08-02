@@ -4,7 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import bisGui.graphics.IGraphics;
-import bisGui.math.IVector;
+import math.IVector;
 
 public class Container extends Widget {
 	

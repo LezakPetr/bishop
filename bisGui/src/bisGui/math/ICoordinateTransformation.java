@@ -1,5 +1,7 @@
 package bisGui.math;
 
+import math.IVector;
+
 public interface ICoordinateTransformation {
 	/**
 	 * Transforms point by this transformation.

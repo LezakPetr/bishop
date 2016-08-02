@@ -1,7 +1,7 @@
 package bisGui.widgets;
 
 import bisGui.graphics.IGraphics;
-import bisGui.math.IVector;
+import math.IVector;
 
 public abstract class Widget {
 	

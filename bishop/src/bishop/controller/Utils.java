@@ -24,8 +24,8 @@ import zip.ZipReader;
 import zip.ZipRecord;
 import bisGui.graphics.GraphicContext;
 import bisGui.graphics.IImage;
-import bisGui.math.IVector;
-import bisGui.math.Vector2D;
+import math.IVector;
+import math.Vector2D;
 
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGException;

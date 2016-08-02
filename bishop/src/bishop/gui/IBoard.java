@@ -1,6 +1,6 @@
 package bishop.gui;
 
-import bisGui.math.IVector;
+import math.IVector;
 
 public interface IBoard {
 	/**
