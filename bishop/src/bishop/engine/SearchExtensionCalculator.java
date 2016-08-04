@@ -64,7 +64,7 @@ public class SearchExtensionCalculator {
 		position.makeMove(move);
 		
 		finder.setPosition(position);
-		final boolean isWin = finder.isWin(depthInMoves);
+		final boolean isWin = finder.findWin(depthInMoves) >= Evaluation.MATE_MIN;
 		
 		position.undoMove(move);
 		

@@ -50,5 +50,13 @@ public class Evaluation {
 		else
 			return -relativeEvaluation;
 	}
+
+	public static boolean isLoseMateSearch(final int beta) {
+		return beta < -MATE_MIN && beta >= -MATE_ZERO_DEPTH;
+	}
+
+	public static boolean isWinMateSearch(final int alpha) {
+		return alpha > MATE_MIN && alpha <= MATE_ZERO_DEPTH;
+	}
 	
 }
