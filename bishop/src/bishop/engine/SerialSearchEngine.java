@@ -293,8 +293,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 
 		final int maxQuiescenceDepth = searchSettings.getMaxQuiescenceDepth();
-		final boolean winMateRequired = isWinMateSearch(initialAlpha);
-		final boolean loseMateRequired = isLoseMateSearch(initialBeta);
+		final boolean winMateRequired = Evaluation.isWinMateSearch(initialAlpha);
+		final boolean loseMateRequired = Evaluation.isLoseMateSearch(initialBeta);
 		final boolean mateRequired = winMateRequired || loseMateRequired;
 		
 		if (!isMaxDepth && horizon > -maxQuiescenceDepth && (!isQuiescenceSearch || isCheckSearch || !mateRequired)) {
@@ -394,14 +394,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		updateHashRecord(currentRecord, horizon);
 	}
 	
-	private static boolean isLoseMateSearch(final int beta) {
-		return beta < -Evaluation.MATE_MIN && beta >= -Evaluation.MATE_ZERO_DEPTH;
-	}
-
-	private static boolean isWinMateSearch(final int alpha) {
-		return alpha > Evaluation.MATE_MIN && alpha <= Evaluation.MATE_ZERO_DEPTH;
-	}
-
 	private boolean checkFiniteEvaluation(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta) {
 		if (currentDepth > 0 && finiteEvaluator.evaluate(currentPosition, currentDepth, horizon, initialAlpha, initialBeta)) {
 			currentRecord.evaluation.setEvaluation(finiteEvaluator.getEvaluation());
@@ -530,26 +522,11 @@ public final class SerialSearchEngine implements ISearchEngine {
 		else
 			moveExtension = 0;
 		
-		final int subAdvancedDepth = currentDepth + 1;
-		final int subMateEvaluation = Evaluation.getMateEvaluation(subAdvancedDepth);
 		final int maxExtension = currentRecord.maxExtension;
 		final int totalExtension = Math.min(Math.min(positionExtension + moveExtension, ISearchEngine.HORIZON_GRANULARITY), maxExtension);
 		
 		int subHorizon = horizon + totalExtension - ISearchEngine.HORIZON_GRANULARITY;
-		
-		if (isWinMateSearch(alpha)) {
-			// Alpha is set to mate evaluation - calculate the difference between mate evaluation
-			// in sub depth and alpha and this is the maximal horizon to search.
-			final int maxHorizon = (subMateEvaluation - alpha) * ISearchEngine.HORIZON_GRANULARITY;
-			subHorizon = Math.min(subHorizon, maxHorizon);
-		}
-
-		if (isLoseMateSearch(beta)) {
-			// Beta is set to negative mate evaluation - calculate the difference between
-			// mate evaluation and negative beta and this is the maximal horizon to search.
-			final int maxHorizon = (subMateEvaluation + beta) * ISearchEngine.HORIZON_GRANULARITY;
-			subHorizon = Math.min(subHorizon, maxHorizon);
-		}
+		subHorizon = matePrunning(currentDepth, subHorizon, alpha, beta, ISearchEngine.HORIZON_GRANULARITY);
 
 		repeatedPositionRegister.pushPosition (currentPosition, move);
 		currentRecord.currentMove.assign(move);
@@ -575,6 +552,26 @@ public final class SerialSearchEngine implements ISearchEngine {
 		currentPosition.undoMove(move);
 		
 		return result;
+	}
+
+	public static int matePrunning(final int currentDepth, int subHorizon, final int alpha, final int beta, final int granularity) {
+		final int subAdvancedDepth = currentDepth + 1;
+		final int subMateEvaluation = Evaluation.getMateEvaluation(subAdvancedDepth);
+		
+		if (Evaluation.isWinMateSearch(alpha)) {
+			// Alpha is set to mate evaluation - calculate the difference between mate evaluation
+			// in sub depth and alpha and this is the maximal horizon to search.
+			final int maxHorizon = (subMateEvaluation - alpha) * granularity;
+			subHorizon = Math.min(subHorizon, maxHorizon);
+		}
+
+		if (Evaluation.isLoseMateSearch(beta)) {
+			// Beta is set to negative mate evaluation - calculate the difference between
+			// mate evaluation and negative beta and this is the maximal horizon to search.
+			final int maxHorizon = (subMateEvaluation + beta) * granularity;
+			subHorizon = Math.min(subHorizon, maxHorizon);
+		}
+		return subHorizon;
 	}
 
 	private boolean updateCurrentRecordAfterEvaluation(final Move move, final int horizon, final NodeRecord currentRecord, final ISearchResult result) {
