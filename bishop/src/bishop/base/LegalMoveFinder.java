@@ -11,10 +11,15 @@ public class LegalMoveFinder {
 	
 	private LegalMoveGenerator generator;
 	private boolean legalMoveFound;
-	
+
 	public LegalMoveFinder() {
+		this(false);
+	}
+
+	public LegalMoveFinder(final boolean reduceMovesInCheck) {
 		generator = new LegalMoveGenerator();
 		generator.setWalker(walker);
+		generator.setReduceMovesInCheck(reduceMovesInCheck);
 	}
 	
 	public boolean existsLegalMove (final Position position) {

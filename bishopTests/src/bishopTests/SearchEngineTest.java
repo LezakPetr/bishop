@@ -64,24 +64,9 @@ public class SearchEngineTest {
 	}
 
 	public void runTest(final boolean runParallel) throws IOException, InterruptedException {
-		final SerialSearchEngine engine;
-		
-		if (runParallel) {
-			final int threadCount = 2;
-			final Parallel parallel = new Parallel(threadCount);
-			final List<ISearchEngine> childEngineList = new ArrayList<ISearchEngine>();
-			
-			for (int i = 0; i < threadCount; i++) {
-				final SerialSearchEngine childEngine = new SerialSearchEngine(null, Collections.<ISearchEngine>emptyList());
-				configureEngine(childEngine);
-	
-				childEngineList.add(childEngine);
-			}
-			
-			 engine = new SerialSearchEngine(parallel, childEngineList);
-		}
-		else
-			engine = new SerialSearchEngine(new Parallel(1), Collections.<ISearchEngine>emptyList());
+		final int threadCount = (runParallel) ? 4 : 1;
+		final Parallel parallel = new Parallel(threadCount);
+		final SerialSearchEngine engine = new SerialSearchEngine(parallel);
 		
 		configureEngine(engine);
 		

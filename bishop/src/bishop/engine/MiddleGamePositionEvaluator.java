@@ -55,7 +55,7 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 		return rookEvaluation;
 	}
 	
-	public int evaluatePosition(final Parallel parallel, final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
+	public int evaluatePosition(final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
 		clear();
 				
 		final int materialEvaluation = position.getMaterialEvaluation();
@@ -74,7 +74,7 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 			return upperBound;
 		}
 		
-		final int positionalEvaluation = calculatePositionalEvaluation(parallel, position, attackCalculator);
+		final int positionalEvaluation = calculatePositionalEvaluation(position, attackCalculator);
 		
 		final int reducedPositionalEvaluation = Math.min (Math.max (positionalEvaluation, -MAX_POSITIONAL_EVALUATION), MAX_POSITIONAL_EVALUATION);
 		final int evaluation = materialEvaluation + reducedPositionalEvaluation;
@@ -88,63 +88,28 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 		
 		attackCalculator.calculate(position, settings.getAttackTable(whiteKingFile, blackKingFile));
 	}
-	
-	private class FirstEvaluationTask implements Runnable {
-		public Position position;
-		public int evaluation;
-		
-		@Override
-		public void run() {
-			evaluation = 0;
-			
-			evaluation += tablePositionEvaluator.evaluatePosition(position);
-			evaluation += bishopColorPositionEvaluator.evaluatePosition(position);
-			
-			evaluation += evaluateRooks(position);
-			evaluation += evaluateKingFiles(position);
-			
-			evaluation += evaluateQueenMove(position);
-			evaluation += evaluateSecureFigures(position);
-		}
-	}
-	
-	private class SecondEvaluationTask implements Runnable {
-		public Position position;
-		public AttackCalculator attackCalculator;
-		public int evaluation;
-		
-		@Override
-		public void run() {
-			evaluation = 0;
-			
-			calculateAttacks(position, attackCalculator);
-			
-			evaluation += pawnStructureCalculator.evaluate(position, attackCalculator);
-			evaluation += attackCalculator.getAttackEvaluation();
-			evaluation += mobilityEvaluator.evaluatePosition(position, attackCalculator);
-		}
-	}
 
-	private final FirstEvaluationTask firstTask = new FirstEvaluationTask();
-	private final SecondEvaluationTask secondTask = new SecondEvaluationTask();
-
-	private int calculatePositionalEvaluation(final Parallel parallel, final Position position, final AttackCalculator attackCalculator) {
+	private int calculatePositionalEvaluation(final Position position, final AttackCalculator attackCalculator) {
 		pawnStructureCalculator.calculate(position);
 
-		firstTask.position = position;
-		secondTask.position = position;
-		secondTask.attackCalculator = attackCalculator;
+		int evaluation = 0;
 		
-		final ITaskRunner runner0 = parallel.getTaskRunner(0);
-		runner0.startTask(firstTask);
+		evaluation += tablePositionEvaluator.evaluatePosition(position);
+		evaluation += bishopColorPositionEvaluator.evaluatePosition(position);
+		
+		evaluation += evaluateRooks(position);
+		evaluation += evaluateKingFiles(position);
+		
+		evaluation += evaluateQueenMove(position);
+		evaluation += evaluateSecureFigures(position);
+		
+		calculateAttacks(position, attackCalculator);
+		
+		evaluation += pawnStructureCalculator.evaluate(position, attackCalculator);
+		evaluation += attackCalculator.getAttackEvaluation();
+		evaluation += mobilityEvaluator.evaluatePosition(position, attackCalculator);
 
-		final ITaskRunner runner1 = parallel.getTaskRunner(1);
-		runner1.startTask(secondTask);
-
-		runner1.joinTask();
-		runner0.joinTask();
-
-		return firstTask.evaluation + secondTask.evaluation;
+		return evaluation;
 	}
 	
 	private int evaluateSecureFigures(final Position position) {

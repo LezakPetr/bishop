@@ -3,8 +3,9 @@ package bishop.engine;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.List;
+import java.util.function.IntConsumer;
 
+import parallel.ITaskRunner;
 import parallel.Parallel;
 
 import bishop.base.BitBoard;
@@ -39,6 +40,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		public boolean allMovesGenerated;
 		public int maxExtension;
 		public final AttackCalculator attackCalculator;
+		public boolean isQuiescenceSearch;
 
 		public NodeRecord(final int maxPrincipalDepth) {
 			currentMove = new Move();
@@ -108,7 +110,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private MoveStack moveStack;
 	private final Position currentPosition;
 	private int currentDepth;
-	private int closeToDepth;
 	private int moveStackTop;
 	private long nodeCount;
 	private final RepeatedPositionRegister repeatedPositionRegister;
@@ -131,9 +132,77 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private SearchTask task;
 	private IPositionEvaluator positionEvaluator;
 	private final HandlerRegistrarImpl<ISearchEngineHandler> handlerRegistrar;
+	
+	private final ITaskRunner winMateRunner;
+	private final ITaskRunner loseMateRunner;
+	
+	private static final int WIN_MATE_DEPTH_IN_MOVES = 1;
+	private static final int WIN_MAX_EXTENSION = 2;
+	
+	private static final int LOSE_MATE_DEPTH_IN_MOVES = 1;
+	private static final int LOSE_MAX_EXTENSION = 0;
+	
+	abstract private class MateTaskBase implements Runnable {
+		protected final MateFinder finder = new MateFinder();
+		public final Position position = new Position();
+		public int evaluation;
+		public long timeSpent;
+		
+		public MateTaskBase (final int maxDepth, final int maxExtension) {
+			finder.setMaxDepth(maxDepth, maxTotalDepth);
+			finder.setPosition(position);
+			finder.setMaxExtension(maxExtension);
+		}
+	
+		public void setDepthAdvance (final int depthAdvance) {
+			finder.setDepthAdvance(depthAdvance);
+		}
+		
+		public void clear() {
+			finder.clearKillerMoves();
+			timeSpent = 0;
+		}
+
+		@Override
+		public void run() {
+			final long t1 = System.currentTimeMillis();
+			evaluation = find();
+			final long t2 = System.currentTimeMillis();
+			
+			timeSpent += t2 - t1;
+		}
+		
+		abstract protected int find();
+	};
+	
+	private class WinMateTask extends MateTaskBase {
+		public WinMateTask() {
+			super (WIN_MATE_DEPTH_IN_MOVES, WIN_MAX_EXTENSION);
+		}
+		
+		
+		@Override
+		public int find() {
+			return finder.findWin(WIN_MATE_DEPTH_IN_MOVES);
+		}
+	}
+	
+	private class LoseMateTask extends MateTaskBase {
+		public LoseMateTask() {
+			super (LOSE_MATE_DEPTH_IN_MOVES, LOSE_MAX_EXTENSION);
+		}
+		
+		@Override
+		public int find() {
+			return finder.findLose(LOSE_MATE_DEPTH_IN_MOVES);
+		}
+	}
+
+	private WinMateTask winMateTask;
+	private LoseMateTask loseMateTask;
 
 	
-	public SerialSearchEngine(final Parallel parallel, final List<ISearchEngine> childEngineList) {
+	public SerialSearchEngine(final Parallel parallel) {
 		this.parallel = parallel;
 		this.evaluatedMoveList = new EvaluatedMoveList(PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
 		this.handlerRegistrar = new HandlerRegistrarImpl<>();
@@ -162,6 +231,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 		moveExtensionEvaluator = new MoveExtensionEvaluator();
 		
 		setHashTable(new NullHashTable());
+		
+		this.winMateRunner = parallel.getTaskRunner(0);
+		this.loseMateRunner = parallel.getTaskRunner(1);
 
 		task = null;
 	}
@@ -232,7 +304,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		else
 			currentRecord.evaluation.setEvaluation(Evaluation.MAX);
 	}
-
+	
 	public void alphaBetaInLegalPosition(final int horizon) {
 		final NodeRecord currentRecord = nodeStack[currentDepth];
 		final int onTurn = currentPosition.getOnTurn();
@@ -250,148 +322,171 @@ public final class SerialSearchEngine implements ISearchEngine {
 		if (updateRecordByHash(horizon, currentRecord, initialAlpha, initialBeta, hashRecord))
 			return;
 		
-		// Evaluate position
-		final int absoluteAlpha;
-		final int absoluteBeta;
-		
-		if (onTurn == Color.WHITE) {
-			absoluteAlpha = initialAlpha;
-			absoluteBeta = initialBeta;
-		}
-		else {
-			absoluteAlpha = -initialBeta;
-			absoluteBeta = -initialAlpha;				
-		}
-
-		final int whitePositionEvaluation = positionEvaluator.evaluatePosition(parallel, currentPosition, absoluteAlpha, absoluteBeta, currentRecord.attackCalculator);
-		final int positionEvaluation = Evaluation.getRelative(whitePositionEvaluation, onTurn);
-		final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
-		final boolean isCheck = currentPosition.isCheck();
 		final boolean isQuiescenceSearch = (horizon < ISearchEngine.HORIZON_GRANULARITY);
-		final boolean isCheckSearch = isQuiescenceSearch && horizon > -maxCheckSearchDepth && isCheck;
-
-		final int positionExtension;
+		currentRecord.isQuiescenceSearch = isQuiescenceSearch;
 		
-		if (horizon >= searchSettings.getMinExtensionHorizon())
-			positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, hashRecord, horizon, currentRecord.attackCalculator);
-		else
-			positionExtension = 0;
-
-		final boolean isMaxDepth = (currentDepth >= maxTotalDepth - 1);
+		final boolean shouldFindMate = isQuiescenceSearch && currentDepth > 0 && !nodeStack[currentDepth - 1].isQuiescenceSearch;
 		
-		// Use position evaluation as initial evaluation
-		if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
-			currentRecord.evaluation.setEvaluation(positionEvaluation);
+		if (shouldFindMate) {
+			winMateTask.position.assign(currentPosition);
+			winMateTask.setDepthAdvance(currentDepth);
+			winMateRunner.startTask(winMateTask);
 			
-			nodeCount++;
-
-			if (currentRecord.evaluation.updateBoundaries (positionEvaluation)) {
-				currentRecord.evaluation.setAlpha(positionEvaluation);
-
-				return;
-			}
+			loseMateTask.position.assign(currentPosition);
+			loseMateTask.setDepthAdvance(currentDepth);
+			loseMateRunner.startTask(loseMateTask);
 		}
-
-		final int maxQuiescenceDepth = searchSettings.getMaxQuiescenceDepth();
-		final boolean winMateRequired = Evaluation.isWinMateSearch(initialAlpha);
-		final boolean loseMateRequired = Evaluation.isLoseMateSearch(initialBeta);
-		final boolean mateRequired = winMateRequired || loseMateRequired;
 		
-		if (!isMaxDepth && horizon > -maxQuiescenceDepth && (!isQuiescenceSearch || isCheckSearch || !mateRequired)) {
-			final NodeRecord nextRecord = nodeStack[currentDepth + 1];
+		try {
+			// Evaluate position
+			final int absoluteAlpha;
+			final int absoluteBeta;
 			
-			currentRecord.moveListBegin = moveStackTop;
-			currentRecord.moveListEnd = moveStackTop;
-			
-			// Null move heuristic
-			if (!isQuiescenceSearch && isNullSearchPossible(isCheck)) {
-				int nullHorizon = horizon - searchSettings.getNullMoveReduction();
-				final Move move = new Move();
-				move.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
-				
-				evaluateMove(move, nullHorizon, 0, initialBeta, initialBeta + 1);
-				
-				final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
-				
-				if (parentEvaluation.getEvaluation() > initialBeta) {
-					currentRecord.evaluation.update(parentEvaluation);
-					return;
-				}
-			}
-			
-			// Try P-var move first
-			final Move precalculatedMove = new Move();
-			final boolean precalculatedMoveFound;
-			boolean precalculatedBetaCutoff = false;
-			
-			if (currentRecord.hashBestCompressedMove != Move.NONE_COMPRESSED_MOVE) {
-				precalculatedMoveFound = precalculatedMove.uncompressMove(currentRecord.hashBestCompressedMove, currentPosition);
+			if (onTurn == Color.WHITE) {
+				absoluteAlpha = initialAlpha;
+				absoluteBeta = initialBeta;
 			}
 			else {
-				precalculatedMoveFound = precalculatedMove.uncompressMove(currentRecord.principalMove.getCompressedMove(), currentPosition);
+				absoluteAlpha = -initialBeta;
+				absoluteBeta = -initialAlpha;				
 			}
+
+			final int whitePositionEvaluation = positionEvaluator.evaluatePosition(currentPosition, absoluteAlpha, absoluteBeta, currentRecord.attackCalculator);
+			final int positionEvaluation = Evaluation.getRelative(whitePositionEvaluation, onTurn);
+			final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
+			final boolean isCheck = currentPosition.isCheck();
 			
-			if (precalculatedMoveFound) {
-				final int alpha = currentRecord.evaluation.getAlpha();
-				final int beta = currentRecord.evaluation.getBeta();
+			final boolean isCheckSearch = isQuiescenceSearch && horizon > -maxCheckSearchDepth && isCheck;
+	
+			final int positionExtension;
+			
+			if (horizon >= searchSettings.getMinExtensionHorizon())
+				positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, hashRecord, horizon, currentRecord.attackCalculator);
+			else
+				positionExtension = 0;
+	
+			final boolean isMaxDepth = (currentDepth >= maxTotalDepth - 1);
+		
+			// Use position evaluation as initial evaluation
+			if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
+				currentRecord.evaluation.setEvaluation(positionEvaluation);
 				
-				evaluateMove(precalculatedMove, horizon, positionExtension, alpha, beta);
-				
-				if (currentDepth > closeToDepth)
+				nodeCount++;
+	
+				if (currentRecord.evaluation.updateBoundaries (positionEvaluation)) {
+					currentRecord.evaluation.setAlpha(positionEvaluation);
 					return;
-				else
-					closeToDepth = Integer.MAX_VALUE;
-				
-				if (updateCurrentRecordAfterEvaluation(precalculatedMove, horizon, currentRecord, nextRecord)) {
-					precalculatedBetaCutoff = true;
 				}
 			}
-
-			// If precalculated move didn't make beta cutoff try other moves
-			if (!precalculatedBetaCutoff) {
-				generateAndSortMoves(currentRecord, horizon, isQuiescenceSearch, isCheckSearch);
+	
+			final int maxQuiescenceDepth = searchSettings.getMaxQuiescenceDepth();
+			final boolean winMateRequired = Evaluation.isWinMateSearch(initialAlpha);
+			final boolean loseMateRequired = Evaluation.isLoseMateSearch(initialBeta);
+			final boolean mateRequired = winMateRequired || loseMateRequired;
+			
+			if (!isMaxDepth && horizon > -maxQuiescenceDepth && (!isQuiescenceSearch || isCheckSearch || !mateRequired)) {
+				final NodeRecord nextRecord = nodeStack[currentDepth + 1];
 				
-				// First legal move
-				while (currentRecord.moveListEnd > currentRecord.moveListBegin) {
+				currentRecord.moveListBegin = moveStackTop;
+				currentRecord.moveListEnd = moveStackTop;
+				
+				// Null move heuristic
+				if (!isQuiescenceSearch && isNullSearchPossible(isCheck)) {
+					int nullHorizon = horizon - searchSettings.getNullMoveReduction();
+					final Move move = new Move();
+					move.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
+					
+					evaluateMove(move, nullHorizon, 0, initialBeta, initialBeta + 1);
+					
+					final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
+					
+					if (parentEvaluation.getEvaluation() > initialBeta) {
+						currentRecord.evaluation.update(parentEvaluation);
+						return;
+					}
+				}
+				
+				// Try P-var move first
+				final Move precalculatedMove = new Move();
+				final boolean precalculatedMoveFound;
+				boolean precalculatedBetaCutoff = false;
+				
+				if (currentRecord.hashBestCompressedMove != Move.NONE_COMPRESSED_MOVE) {
+					precalculatedMoveFound = precalculatedMove.uncompressMove(currentRecord.hashBestCompressedMove, currentPosition);
+				}
+				else {
+					precalculatedMoveFound = precalculatedMove.uncompressMove(currentRecord.principalMove.getCompressedMove(), currentPosition);
+				}
+				
+				if (precalculatedMoveFound) {
 					final int alpha = currentRecord.evaluation.getAlpha();
 					final int beta = currentRecord.evaluation.getBeta();
-
-					final Move move = new Move();
-					moveStack.getMove(currentRecord.moveListEnd - 1, move);
 					
-					if (!move.equals(precalculatedMove)) {
-						if (currentRecord.legalMoveCount > 0 && beta - alpha != 1) {
-							evaluateMove(move, horizon, positionExtension, alpha, alpha + 1);
-							
-							final int childEvaluation = -nextRecord.evaluation.getEvaluation();
-							
-							if (childEvaluation > alpha && beta - alpha != 1)
-								evaluateMove(move, horizon, positionExtension, alpha, beta);
-						}
-						else {
-							evaluateMove(move, horizon, positionExtension, alpha, beta);
-						}
-
-						if (currentDepth > closeToDepth)
-							return;
-						else {
-							closeToDepth = Integer.MAX_VALUE;
+					evaluateMove(precalculatedMove, horizon, positionExtension, alpha, beta);
+					
+					if (updateCurrentRecordAfterEvaluation(precalculatedMove, horizon, currentRecord, nextRecord)) {
+						precalculatedBetaCutoff = true;
+					}
+				}
+	
+				// If precalculated move didn't make beta cutoff try other moves
+				if (!precalculatedBetaCutoff) {
+					generateAndSortMoves(currentRecord, horizon, isQuiescenceSearch, isCheckSearch);
+					
+					// First legal move
+					while (currentRecord.moveListEnd > currentRecord.moveListBegin) {
+						final int alpha = currentRecord.evaluation.getAlpha();
+						final int beta = currentRecord.evaluation.getBeta();
+	
+						final Move move = new Move();
+						moveStack.getMove(currentRecord.moveListEnd - 1, move);
 						
+						if (!move.equals(precalculatedMove)) {
+							if (currentRecord.legalMoveCount > 0 && beta - alpha != 1) {
+								evaluateMove(move, horizon, positionExtension, alpha, alpha + 1);
+								
+								final int childEvaluation = -nextRecord.evaluation.getEvaluation();
+								
+								if (childEvaluation > alpha && beta - alpha != 1)
+									evaluateMove(move, horizon, positionExtension, alpha, beta);
+							}
+							else {
+								evaluateMove(move, horizon, positionExtension, alpha, beta);
+							}
+	
 							if (updateCurrentRecordAfterEvaluation(move, horizon, currentRecord, nextRecord))
 								break;
 						}
+						
+						currentRecord.moveListEnd--;
 					}
+				}
+				
+				final int mateEvaluation = Evaluation.getMateEvaluation(currentDepth);
+				
+				checkMate(onTurn, isCheck, horizon, currentRecord, mateEvaluation, currentRecord.attackCalculator);
+			}
+		}
+		finally {
+			if (shouldFindMate) {
+				winMateRunner.joinTask();
+				loseMateRunner.joinTask();
+				
+				if (winMateTask.evaluation >= Evaluation.MATE_MIN || loseMateTask.evaluation <= -Evaluation.MATE_MIN) {
+					if (winMateTask.evaluation >= Evaluation.MATE_MIN)
+						currentRecord.evaluation.setEvaluation(winMateTask.evaluation);
+					else
+						currentRecord.evaluation.setEvaluation(loseMateTask.evaluation);
 					
-					currentRecord.moveListEnd--;
+					currentRecord.evaluation.setAlpha(Evaluation.MIN);
+					currentRecord.evaluation.setBeta(Evaluation.MAX);
+					currentRecord.principalVariation.clear();
 				}
 			}
+
 			
-			final int mateEvaluation = Evaluation.getMateEvaluation(currentDepth);
-			
-			checkMate(onTurn, isCheck, horizon, currentRecord, mateEvaluation, currentRecord.attackCalculator);
+			updateHashRecord(currentRecord, horizon);
 		}
-		
-		updateHashRecord(currentRecord, horizon);
 	}
 	
 	private boolean checkFiniteEvaluation(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta) {
@@ -645,10 +740,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 				Arrays.fill(historyTable[i], 0);
 			}
 		}
+		
+		winMateTask.clear();
+		loseMateTask.clear();
 
 		// Do the search
 		currentDepth = 0;
-		closeToDepth = Integer.MAX_VALUE;
 		boolean terminated = false;
 		
 		try {
@@ -663,6 +760,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		final SearchResult result = getResult(task.getHorizon());
 		result.setSearchTerminated(terminated);
+		
+		System.out.println("Time in win mate search: " + winMateTask.timeSpent + "ms");
+		System.out.println("Time in lose mate search: " + loseMateTask.timeSpent + "ms");
 		
 		return result;
 	}
@@ -699,6 +799,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			for (int i = 0; i < nodeStack.length; i++)
 				this.nodeStack[i] = new NodeRecord(maxTotalDepth - i - 1);
+			
+			this.winMateTask = new WinMateTask();
+			this.loseMateTask = new LoseMateTask();
 		}
 	}
 

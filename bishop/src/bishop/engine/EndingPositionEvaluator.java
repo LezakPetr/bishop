@@ -116,7 +116,7 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		}
 	}
 	
-	public int evaluatePosition(final Parallel parallel, final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
+	public int evaluatePosition(final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
 		this.position = position;
 		
 		clear();

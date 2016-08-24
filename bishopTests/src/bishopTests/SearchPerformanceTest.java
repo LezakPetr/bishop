@@ -42,6 +42,7 @@ public class SearchPerformanceTest {
 		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings);
 
 		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();		
+		engineFactory.setParallel(new Parallel());
 		engineFactory.setPositionEvaluatorFactory(evaluatorFactory);
 		engineFactory.setMaximalDepth(25);
 		
