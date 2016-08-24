@@ -44,21 +44,7 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 	 */
 	public ISearchEngine createEngine() {
 		try {
-			final int threadCount = (parallel != null) ? parallel.getThreadCount() : 1;
-			final List<ISearchEngine> childEngineList;
-			
-			if (threadCount > 1) {
-				childEngineList = new ArrayList<>(threadCount);
-				
-				for (int i = 0; i < threadCount; i++) {
-					final SerialSearchEngine childEngine = createSingleEngine(Collections.<ISearchEngine>emptyList());
-					childEngineList.add(childEngine);
-				}
-			}
-			else
-				childEngineList = Collections.<ISearchEngine>emptyList();
-			
-			final SerialSearchEngine searchEngine = createSingleEngine(childEngineList);
+			final SerialSearchEngine searchEngine = createSingleEngine();
 			
 			return searchEngine;
 		}
@@ -67,9 +53,9 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 		}
 	}
 
-	private SerialSearchEngine createSingleEngine(final List<ISearchEngine> childEngineList) {
+	private SerialSearchEngine createSingleEngine() {
 		final IPositionEvaluator evaluator = createPositionEvaluator();
-		final SerialSearchEngine searchEngine = new SerialSearchEngine(parallel, childEngineList);
+		final SerialSearchEngine searchEngine = new SerialSearchEngine(parallel);
 		
 		searchEngine.setPositionEvaluator(evaluator);
 		searchEngine.setMaximalDepth(maximalDepth);

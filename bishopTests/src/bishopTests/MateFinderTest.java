@@ -33,7 +33,7 @@ public class MateFinderTest {
 		
 		final Fen fen = new Fen();
 		final MateFinder finder = new MateFinder();
-		finder.setMaxDepth(maxDepth);
+		finder.setMaxDepth(maxDepth, 0);
 		
 		for (TestValue testValue: testValueArray) {
 			fen.readFenFromString(testValue.positionFen);
@@ -61,7 +61,7 @@ public class MateFinderTest {
 		
 		final Fen fen = new Fen();
 		final MateFinder finder = new MateFinder();
-		finder.setMaxDepth(maxDepth);
+		finder.setMaxDepth(maxDepth, 0);
 		
 		for (TestValue testValue: testValueArray) {
 			fen.readFenFromString(testValue.positionFen);

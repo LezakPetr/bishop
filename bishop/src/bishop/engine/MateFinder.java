@@ -15,6 +15,10 @@ public class MateFinder {
 	private MoveStack moveStack;
 	private int moveStackTop;
 	private int[] killerMoves;
+	private int depthAdvance;
+	private int maxExtension;
+	
+	private static final int CHECK_EXTENSION = 2;
 	
 	private final IMoveWalker walker = new IMoveWalker() {
 		public boolean processMove(final Move move) {
@@ -27,7 +31,7 @@ public class MateFinder {
 
 	
 	private final PseudoLegalMoveGenerator moveGenerator;
-	private final LegalMoveFinder legalMoveFinder = new LegalMoveFinder();
+	private final LegalMoveFinder legalMoveFinder = new LegalMoveFinder(true);
 	
 	private Position position;
 	
@@ -46,20 +50,21 @@ public class MateFinder {
 		return position.isCheck() && !legalMoveFinder.existsLegalMove(position);
 	}
 	
-	private int findMate(final int depth, final int horizon, final int alpha, final int beta) {
+	private int findMate(final int depth, final int horizon, final int maxCheckExtensions, final int alpha, final int beta) {
 		if (position.isKingNotOnTurnAttacked())
 			return Evaluation.MAX;
 		
 		if (horizon < 0)
-			return (isMate()) ? -Evaluation.getMateEvaluation(depth) : Evaluation.DRAW;
+			return (isMate()) ? -Evaluation.getMateEvaluation(depth + depthAdvance) : Evaluation.DRAW;
 		
+		final boolean isCheck = position.isCheck();
 		final Move killerMove = new Move();
 		boolean existLegalMove = false;
 		int updatedAlpha = alpha;
 		int evaluation = Evaluation.MIN;
 		
-		if (killerMove.uncompressMove(killerMoves[depth], position)) {
-			final int subEvaluation = evaluateMove(depth, horizon, updatedAlpha, beta, killerMove);
+		if (killerMove.uncompressMove(killerMoves[depth + depthAdvance], position)) {
+			final int subEvaluation = evaluateMove(depth, horizon, maxCheckExtensions, isCheck, updatedAlpha, beta, killerMove);
 			
 			if (subEvaluation > beta)
 				return subEvaluation;
@@ -79,12 +84,12 @@ public class MateFinder {
 			moveStack.getMove(i, move);
 			
 			if (!move.equals(killerMove)) {
-				final int subEvaluation = evaluateMove(depth, horizon, updatedAlpha, beta, move);
+				final int subEvaluation = evaluateMove(depth, horizon, maxCheckExtensions, isCheck, updatedAlpha, beta, move);
 				
 				evaluation = Math.max(evaluation, subEvaluation);
 				
 				if (subEvaluation > beta) {
-					killerMoves[depth] = move.getCompressedMove();
+					killerMoves[depth + depthAdvance] = move.getCompressedMove();
 					moveStackTop = moveStackBegin;
 					
 					return evaluation;
@@ -101,18 +106,20 @@ public class MateFinder {
 			return evaluation;
 		else {
 			if (position.isCheck())
-				return -Evaluation.getMateEvaluation(depth);
+				return -Evaluation.getMateEvaluation(depth + depthAdvance);
 			else
 				return Evaluation.DRAW;
 		}
 	}
 
-	public int evaluateMove(final int depth, final int horizon, int alpha, final int beta, final Move move) {
+	public int evaluateMove(final int depth, final int horizon, final int maxExtension, final boolean isCheck, int alpha, final int beta, final Move move) {
 		position.makeMove(move);
 		
-		final int subHorizon = SerialSearchEngine.matePrunning(depth, horizon - 1, alpha, beta, 1);
-		final int subEvaluation = -findMate(depth + 1, subHorizon, -beta, -alpha);
+		final int extension = (isCheck && maxExtension >= CHECK_EXTENSION) ? CHECK_EXTENSION : 0;
+		final int subHorizon = SerialSearchEngine.matePrunning(depth, horizon + extension - 1, alpha, beta, 1);
+		final int subEvaluation = -findMate(depth + 1, subHorizon, maxExtension - extension, -beta, -alpha);
 		position.undoMove(move);
+		
 		return subEvaluation;
 	}
 	
@@ -123,9 +130,8 @@ public class MateFinder {
 			throw new RuntimeException("Too deep");
 		
 		moveStackTop = 0;
-		Arrays.fill(killerMoves, Move.NONE_COMPRESSED_MOVE);
 		
-		return findMate(0, horizon, Evaluation.MATE_MIN, Evaluation.MAX);
+		return findMate(0, horizon, maxExtension, Evaluation.MATE_MIN, Evaluation.MAX);
 	}
 	
 	public int findLose(final int depthInMoves) {
@@ -135,16 +141,27 @@ public class MateFinder {
 			throw new RuntimeException("Too deep");
 		
 		moveStackTop = 0;
-		Arrays.fill(killerMoves, Move.NONE_COMPRESSED_MOVE);
 		
-		return findMate(0, horizon, Evaluation.MIN, -Evaluation.MATE_MIN);
+		return findMate(0, horizon, maxExtension, Evaluation.MIN, -Evaluation.MATE_MIN);
 	}
 
-	public void setMaxDepth (final int maxDepthInMoves) {
+	public void setMaxDepth (final int maxDepthInMoves, final int maxDepthAdvance) {
 		this.maxDepth = 2 * maxDepthInMoves - 1;
 		moveStack = new MoveStack((maxDepth + 1) * PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
 		
-		this.killerMoves = new int[maxDepth + 1];
+		this.killerMoves = new int[maxDepth + maxDepthAdvance + 1];
+	}
+	
+	public void setMaxExtension(final int maxExtension) {
+		this.maxExtension = maxExtension;
+	}
+	
+	public void setDepthAdvance (final int depthAdvance) {
+		this.depthAdvance = depthAdvance;
+	}
+	
+	public void clearKillerMoves() {
+		Arrays.fill(killerMoves, Move.NONE_COMPRESSED_MOVE);
 	}
 	
 }

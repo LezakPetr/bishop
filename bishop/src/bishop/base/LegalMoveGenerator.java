@@ -54,5 +54,13 @@ public class LegalMoveGenerator implements IMoveGenerator {
     public void setWalker (final IMoveWalker walker) {
     	this.userWalker = walker;
     }
+    
+    /**
+     * Setting to true means that the generator will not generate moves that cannot stop check. 
+     * @param reduce true in case that moves will be reduced in case of check
+     */
+    public void setReduceMovesInCheck(final boolean reduce) {
+    	backgroundGenerator.setReduceMovesInCheck(reduce);
+    }
 
 }

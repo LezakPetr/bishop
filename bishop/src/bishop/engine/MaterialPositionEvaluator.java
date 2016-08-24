@@ -7,7 +7,7 @@ import bishop.base.Position;
 
 public final class MaterialPositionEvaluator implements IPositionEvaluator {
 	
-	public int evaluatePosition (final Parallel parallel, final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
+	public int evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
 		attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 		
 		return position.getMaterialEvaluation();
