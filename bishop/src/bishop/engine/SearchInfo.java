@@ -1,9 +1,11 @@
 package bishop.engine;
 
 import bishop.base.MoveList;
+import bishop.base.Position;
 
 public final class SearchInfo {
 
+	private Position position;
 	private MoveList principalVariation;   // Best found variation
 	private int evaluation;
 	private int horizon;   // Horizon of the search
@@ -48,6 +50,14 @@ public final class SearchInfo {
 
 	public void setEvaluation(final int evaluation) {
 		this.evaluation = evaluation;
+	}
+
+	public Position getPosition() {
+		return position;
+	}
+
+	public void setPosition(final Position position) {
+		this.position = position;
 	}
 	
 }

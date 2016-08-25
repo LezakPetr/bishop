@@ -18,7 +18,7 @@ import bishop.engine.TablebasePositionEvaluator;
 
 public class SearchResources {
 	
-	private static final int MAX_TOTAL_DEPTH = 30;
+	private static final int MAX_TOTAL_DEPTH = 256;
 	private static final String BOOK_PATH = "book.pgn";
 
 	private final IApplication application;

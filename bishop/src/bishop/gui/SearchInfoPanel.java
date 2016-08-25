@@ -10,7 +10,10 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import bishop.base.INotationWriter;
 import bishop.base.MoveList;
+import bishop.base.Position;
+import bishop.base.StandardAlgebraicNotationWriter;
 import bishop.controller.IApplication;
 import bishop.controller.ILocalization;
 import bishop.controller.ILocalizedComponent;
@@ -25,6 +28,7 @@ import bishop.engine.SearchInfo;
 public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, ILocalizedComponent {
 	
 	private final IApplication application;
+	private final INotationWriter notation = new StandardAlgebraicNotationWriter();
 	
 	private JLabel labelPrincipalVariation;
 	private JTextField fieldPrincipalVariation;
@@ -249,13 +253,19 @@ public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, IL
 	
 	private void updateData(final SearchInfo info) {
 		final MoveList principalVariation = info.getPrincipalVariation();
-		final String principalVariationStr;
+		final MoveList shownPrincipalVariation;
 		
 		if (application.getRegimeType() == RegimeType.PLAY && principalVariation.getSize() > 0)
-			principalVariationStr = principalVariation.get(0).toString();
+		{
+			shownPrincipalVariation = new MoveList();
+			shownPrincipalVariation.add(principalVariation.get(0));
+			
+		}
 		else
-			principalVariationStr = principalVariation.toString();
-		
+			shownPrincipalVariation = principalVariation;
+
+		final Position position = info.getPosition();
+		final String principalVariationStr = shownPrincipalVariation.toString(position, notation);
 		fieldPrincipalVariation.setText(principalVariationStr);
 		fieldPrincipalVariation.setCaretPosition(0);
 		

@@ -136,6 +136,7 @@ public final class SearchManagerImpl implements ISearchManager {
 		if (searchResult != null && searchInfoChanged) {
 			final SearchInfo info = new SearchInfo();
 			
+			info.setPosition (rootPosition);
 			info.setElapsedTime(System.currentTimeMillis() - searchStartTime);
 			info.setHorizon(searchResult.getHorizon());
 			info.setNodeCount(totalNodeCount + searchResult.getNodeCount());
