@@ -16,6 +16,7 @@ import bishop.base.Move;
 import bishop.base.MoveList;
 import bishop.base.PgnReader;
 import bishop.base.Position;
+import bishop.controller.SearchResources;
 import bishop.engine.Evaluation;
 import bishop.engine.HashTableImpl;
 import bishop.engine.ISearchManager;
@@ -41,8 +42,9 @@ public class SearchPerformanceTest {
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings);
 
-		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();		
-		engineFactory.setParallel(new Parallel());
+		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
+		final int threadCount = Math.min(Runtime.getRuntime().availableProcessors(), SearchResources.MAX_THREADS);
+		engineFactory.setParallel(new Parallel(threadCount));
 		engineFactory.setPositionEvaluatorFactory(evaluatorFactory);
 		engineFactory.setMaximalDepth(25);
 		
@@ -52,7 +54,6 @@ public class SearchPerformanceTest {
 		manager.setEngineFactory(engineFactory);
 		manager.setHashTable(hashTable);
 		
-		final int threadCount = Runtime.getRuntime().availableProcessors();
 		System.out.println (threadCount);
 		
 		manager.setMaxTimeForMove(maxTimeForPosition);

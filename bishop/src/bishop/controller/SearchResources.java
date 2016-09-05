@@ -19,6 +19,8 @@ import bishop.engine.TablebasePositionEvaluator;
 public class SearchResources {
 	
 	private static final int MAX_TOTAL_DEPTH = 256;
+	public static final int MAX_THREADS = 3;
+	
 	private static final String BOOK_PATH = "book.pgn";
 
 	private final IApplication application;
@@ -33,7 +35,7 @@ public class SearchResources {
 		
 		searchEngineFactory = new SerialSearchEngineFactory();
 		
-		final int threadCount = application.getSettings().getEngineSettings().getThreadCount();
+		final int threadCount = Math.min(application.getSettings().getEngineSettings().getThreadCount(), SearchResources.MAX_THREADS);
 		final Parallel parallel = new Parallel(threadCount);
 		searchEngineFactory.setParallel(parallel);
 		

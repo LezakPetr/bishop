@@ -249,5 +249,18 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 		
 		return false;
 	}
+
+	/**
+	 * Checks if the material hash contains same number of corresponding white and black pieces except for given piece type.
+	 * @param exceptPieceType piece type with allowed different count
+	 */
+	public boolean isBalancedExceptFor(final int exceptPieceType) {
+		for (int pieceType = PieceType.VARIABLE_FIRST; pieceType < PieceType.VARIABLE_LAST; pieceType++) {
+			if (pieceType != exceptPieceType && getPieceCount(Color.WHITE, pieceType) != getPieceCount(Color.BLACK, pieceType))
+				return false;
+		}
+		
+		return true;
+	}
 	
 }
