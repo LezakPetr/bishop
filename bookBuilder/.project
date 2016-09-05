@@ -3,6 +3,8 @@
 	<name>bookBuilder</name>
 	<comment></comment>
 	<projects>
+		<project>bishop</project>
+		<project>utils</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

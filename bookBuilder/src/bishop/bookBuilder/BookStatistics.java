@@ -22,6 +22,10 @@ import bishop.base.Move;
 import bishop.base.PgnReader;
 import bishop.base.PgnWriter;
 import bishop.base.Position;
+import bishop.builderBase.IGameWalker;
+import bishop.builderBase.IPositionWalker;
+import bishop.builderBase.LinearGameWalker;
+import bishop.builderBase.PgnListProcessor;
 
 /**
  * BookStatistics holds statistical information about a book.
@@ -29,14 +33,6 @@ import bishop.base.Position;
  * @author Ing. Petr Ležák
  */
 public class BookStatistics {
-	
-	private interface IPositionWalker {
-		public void processPosition (final Position position, final Move move);
-	}
-	
-	private interface IGameWalker {
-		public void processGame (final Game game);
-	}
 	
 	// Statistics about each position
 	private final Map<Long, PositionStatistics> positionStatisticsMap = new HashMap<>();
@@ -52,31 +48,22 @@ public class BookStatistics {
 	private int maxDepth = 40;
 
 	
-	// Sends all positions in the main variation of the game to the walker 
-	private void processLinearGame (final Game game, final IPositionWalker walker) {
-		final ITreeIterator<IGameNode> it = game.getRootIterator();
-		
-		for (int i = 0; i < maxDepth; i++) {
-			final Position position = it.getItem().getTargetPosition();
-			
-			if (!it.hasChild())
-				break;
-			
-			it.moveFirstChild();
-			
-			final Move move = it.getItem().getMove();
-			walker.processPosition(position, move);
-		}
-	}
-	
 	private void addLinearGameToRepetitionFilter (final Game game) {
-		processLinearGame(game, (position, move) -> { repetitionFilter.addPositionToRepetitionFilter(position.getHash()); } );
+		final LinearGameWalker walker = new LinearGameWalker(
+			(position, move, result) -> { repetitionFilter.addPositionToRepetitionFilter(position.getHash()); }
+		);
+		
+		walker.setMaxDepth(maxDepth);
+		walker.processGame(game);
 	}
 
 	private void addLinearGameToStatistics (final Game game) {
-		final GameResult result = game.getHeader().getResult();
+		final LinearGameWalker walker = new LinearGameWalker(
+			(position, move, result) -> { addMoveToStatistics(position, move, result); }
+		);
 		
-		processLinearGame(game, (position, move) -> { addMoveToStatistics(position, move, result); } );
+		walker.setMaxDepth(maxDepth);
+		walker.processGame(game);
 	}
 	
 	private void addMoveToStatistics (final Position position, final Move move, final GameResult result) {
@@ -93,40 +80,20 @@ public class BookStatistics {
 			statistics.addMove(position.getOnTurn(), move, result);
 		}
 	}
-	
-	// Sends all games in PGN list to the walker.
-	private void processPgnList (final Collection<String> pgnList, final IGameWalker walker) throws FileNotFoundException, IOException {
-		for (String pgnFile: pgnList) {
-			System.out.println(pgnFile);
-			
-			final PgnReader reader = new PgnReader();
-			
-			try (
-				FileInputStream stream = new FileInputStream(pgnFile);
-				PushbackReader pushbackReader = PgnReader.createPushbackReader(stream)
-			) {
-				while (true) {
-					final Game game = reader.readSingleGame(pushbackReader);
-					
-					if (game == null)
-						break;
-					
-					walker.processGame(game);
-				}
-			}
-			
-			System.out.println(positionStatisticsMap.size());
-		}
-	}
-	
+		
 	// Build statistics from main variations of games in given PGNs. 
 	public void addLinearGames (final Collection<String> pgnList) throws FileNotFoundException, IOException {
+		final PgnListProcessor processor = new PgnListProcessor();
+		processor.addPgnList(pgnList);
+		
 		// Build repetition filter
-		repetitionFilter.clear(); 
-		processPgnList(pgnList, (game) -> { addLinearGameToRepetitionFilter(game); } );
+		repetitionFilter.clear();
+		processor.setGameWalker((game) -> { addLinearGameToRepetitionFilter(game); });
+		processor.processGames();
 		
 		// Build statistics
-		processPgnList(pgnList, (game) -> { addLinearGameToStatistics(game); } );
+		processor.setGameWalker((game) -> { addLinearGameToStatistics(game); });
+		processor.processGames();
 	}
 	
 	// Stores book to PGN file.
