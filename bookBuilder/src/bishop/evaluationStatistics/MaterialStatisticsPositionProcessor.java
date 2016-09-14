@@ -1,6 +1,8 @@
 package bishop.evaluationStatistics;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import bishop.base.Color;
@@ -8,13 +10,20 @@ import bishop.base.GameResult;
 import bishop.base.MaterialHash;
 import bishop.base.PieceType;
 import bishop.base.Position;
+import math.IMatrix;
+import math.IVector;
+import math.MatrixImpl;
+import math.VectorImpl;
 
 public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 
 	private static final int MAX_PIECE_COUNT = 8;
 	private static final int MIN_STABILITY = 4;
+	private static final int MIN_TOTAL_COUNT = 10;
+	private static final int MAX_PAWN_COUNT = 4;
 	
 	private final Map<MaterialHash, MaterialStatistics> statisticsMap = new HashMap<>();
+	private final Map<MaterialHash, MaterialStatistics> pawnDifferentialStatistics = new HashMap<>();
 	private final MaterialStatistics[][] pieceStatistics = new MaterialStatistics[PieceType.VARIABLE_LAST][];
 	
 	private MaterialHash prevHash;
@@ -79,6 +88,8 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 	
 	public void calculate() {
 		calculatePieceStatistics();
+		calculateDifferentialStatistics();
+		calculatePawnComplement();
 	}
 	
 	private MaterialStatistics[] calculatePieceStatistics(final int pieceType) {
@@ -104,7 +115,121 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 		}
 		
 		return pieceStatistics;
+	} 
 	
+	private void calculateDifferentialStatistics() {
+		for (Map.Entry<MaterialHash, MaterialStatistics> entry: statisticsMap.entrySet()) {
+			final MaterialHash differentialHash = entry.getKey().copy();
+			differentialHash.reduceToDifference();
+			
+			final MaterialStatistics statistics = entry.getValue().copy();
+			normalizeHashAndStatistics (differentialHash, statistics);
+			
+			MaterialStatistics differentialStatistics = pawnDifferentialStatistics.get(differentialHash);
+			
+			if (differentialStatistics == null) {
+				differentialStatistics = new MaterialStatistics();
+				pawnDifferentialStatistics.put(differentialHash, differentialStatistics);
+			}
+			
+			differentialStatistics.add(statistics);
+		}
+	}
+	
+	private void normalizeHashAndStatistics(final MaterialHash hash, final MaterialStatistics statistics) {
+		final MaterialHash oppositeHash = hash.getOpposite();
+		
+		if (hash.compareTo(oppositeHash) < 0) {
+			hash.assign(oppositeHash);
+			statistics.negate();
+		}
+	}
+
+	public void calculatePawnComplement() {
+		final List<PawnComplement> pawnComplementList = new ArrayList<>();
+		
+		for (MaterialHash zeroPawnHash: pawnDifferentialStatistics.keySet()) {
+			if (zeroPawnHash.getPieceCount(Color.WHITE, PieceType.PAWN) == 0 && zeroPawnHash.getPieceCount(Color.BLACK, PieceType.PAWN) == 0) {
+				final MaterialStatistics zeroPawnStatistics = pawnDifferentialStatistics.get(zeroPawnHash);
+				final double zeroPawnBalance = zeroPawnStatistics.getBalance();
+				final double coeff;
+				final int color;
+				
+				if (zeroPawnBalance >= 0) {
+					color = Color.BLACK;
+					coeff = -1;
+				}
+				else {
+					color = Color.WHITE;
+					coeff = +1;
+				}
+				
+				MaterialHash prevHash = zeroPawnHash;
+				MaterialStatistics prevStatistics = zeroPawnStatistics;
+				double prevBalance = zeroPawnBalance;
+				
+				for (int i = 1; i <= MAX_PAWN_COUNT; i++) {
+					final MaterialHash nextHash = prevHash.copy();
+					nextHash.addPiece(color, PieceType.PAWN);
+					
+					final MaterialStatistics nextStatistics = pawnDifferentialStatistics.get(nextHash);
+					
+					if (nextStatistics == null)
+						break;
+					
+					final double nextBalance = nextStatistics.getBalance();
+					
+					if (nextBalance * coeff >= 0) {
+						final long totalCount = Math.min(prevStatistics.getTotalCount(), nextStatistics.getTotalCount());
+						
+						if (totalCount >= MIN_TOTAL_COUNT) {
+							final double pawnCount = math.Utils.linearInterpolation(prevBalance, nextBalance, i - 1, i, 0);
+							System.out.println(prevHash + " " + prevBalance);
+							System.out.println(nextHash + " " + nextBalance);
+							System.out.println(pawnCount);
+							
+							final PawnComplement complement = new PawnComplement(zeroPawnHash, -pawnCount * coeff, totalCount);
+							pawnComplementList.add(complement);
+						}
+						
+						break;
+					}
+					
+					prevHash = nextHash;
+					prevStatistics = nextStatistics;
+					prevBalance = nextBalance;
+				}
+			}
+		}
+		
+		final int equationCount = pawnComplementList.size();
+		final double[][] aElements = new double[equationCount][PieceType.PROMOTION_FIGURE_COUNT];
+		final double[] bElements = new double[equationCount];
+		final double[] weightsElements = new double[equationCount];
+		
+		for (int i = 0; i < equationCount; i++) {
+			final PawnComplement complement = pawnComplementList.get(i);
+			final MaterialHash materialHash = complement.getMaterialHash();
+			
+			for (int j = 0; j < PieceType.PROMOTION_FIGURE_COUNT; j++) {
+				final int pieceType = PieceType.PROMOTION_FIGURE_FIRST + j;
+				aElements[i][j] = materialHash.getPieceCount(Color.WHITE, pieceType) - materialHash.getPieceCount(Color.BLACK, pieceType);
+			}
+			
+			bElements[i] = complement.getComplement();
+			weightsElements[i] = complement.getTotalCount();
+		}
+		
+		final IMatrix a = new MatrixImpl(aElements);
+		final IVector b = new VectorImpl(bElements);
+		final IVector weights = new VectorImpl(weightsElements);
+		
+		final IVector result = math.Utils.solveEquationsLeastSquare (a, b, weights);
+		
+		for (int j = 0; j < PieceType.PROMOTION_FIGURE_COUNT; j++) {
+			final int pieceType = PieceType.PROMOTION_FIGURE_FIRST + j;
+			System.out.println(PieceType.getName(pieceType) + " " + result.getElement(j));
+		}
 	}
 	
 	public void printPieceStatistics() {

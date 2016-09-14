@@ -27,6 +27,7 @@ public class PieceType {
 	// Subinterval of figures that can pawn promote to
 	public static final int PROMOTION_FIGURE_FIRST = 1;
 	public static final int PROMOTION_FIGURE_LAST  = 5;
+	public static final int PROMOTION_FIGURE_COUNT = PROMOTION_FIGURE_LAST - PROMOTION_FIGURE_FIRST;
 	
 	// Subinterval of variable pieces (all pieces without king which is permanent).
 	public static final int VARIABLE_FIRST = 1;

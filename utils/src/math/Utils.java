@@ -1,6 +1,6 @@
 package math;
 
-class Utils {
+public class Utils {
 	
 	/**
 	 * Swaps two items of the array.
@@ -35,5 +35,24 @@ class Utils {
 		for (int i = 0; i < count; i++) {
 			dest[destOffset+i] = src[srcOffset+i]*srcCoeff + dest[destOffset+i]*destCoeff;
 		}
+	}
+	
+	public static double linearInterpolation (final double x1, final double x2, final double y1, final double y2, final double x) {
+		return y1 + (y2 - y1) / (x2 - x1) * (x - x1);
+	}
+
+	public static IVector solveEquationsLeastSquare(final IMatrix a, final IVector b, final IVector weights) {
+		final IVector sqrtWeights = Vectors.applyToElements(weights, (x) -> Math.sqrt(x));
+		final IVector normalizedWeights = Vectors.normalize (sqrtWeights);
+		
+		final IMatrix weightedA = Matrices.multiplyRows (a, normalizedWeights);
+		final IMatrix at = Matrices.transpose(weightedA);
+		
+		final IMatrix m = Matrices.multiply(at, weightedA);
+		final IMatrix invM = Matrices.inverse(m);
+		
+		final IVector updatedB = Matrices.multiply(at, Vectors.elementMultiply(b, normalizedWeights));
+		
+		return Matrices.multiply(invM, updatedB);
 	}
 }

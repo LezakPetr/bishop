@@ -203,11 +203,39 @@ public class Matrices {
 	}
 	
 	/**
+	 * Multiplies given matrix by given vector.
+	 * @param m input matrix
+	 * @param v input vector
+	 * @return vector m*v
+	 */
+	public static IVector multiply (final IMatrix m, final IVector v) {
+		final int columnCount = m.getColumnCount();
+		
+		if (columnCount != v.getDimension())
+			throw new RuntimeException("Bad dimensions");
+		
+		final int rowCount = m.getRowCount();
+		final double[] result = new double[rowCount];
+		
+		for (int row = 0; row < rowCount; row++) {
+			double sum = 0.0;
+			
+			for (int column = 0; column < columnCount; column++)
+				sum += v.getElement(column) * m.getElement (row, column);
+			
+			result[row] =  sum;
+		}
+		
+		return new VectorImpl (result);
+	}
+
+	
+	/**
 	 * Returns maximal absolute element in the matrix.
 	 * @param matrix matrix
 	 * @return maximal absolute element
 	 */
-	public static final double maxAbsElement (final IMatrix matrix) {
+	public static double maxAbsElement (final IMatrix matrix) {
 		final int rowCount = matrix.getRowCount();
 		final int columnCount = matrix.getColumnCount();
 
@@ -222,6 +250,37 @@ public class Matrices {
 		}
 
 		return maxAbsElement;
+	}
+	
+	public static IMatrix transpose (final IMatrix matrix) {
+		final double[][] result = new double[matrix.getColumnCount()][matrix.getRowCount()];
+		
+		for (int i = 0; i < matrix.getRowCount(); i++) {
+			for (int j = 0; j < matrix.getColumnCount(); j++) {
+				result[j][i] = matrix.getElement(i, j);
+			}
+		}
+		
+		return new MatrixImpl(result);
+	}
+
+	public static IMatrix multiplyRows(final IMatrix m, final IVector v) {
+		final int rowCount = m.getRowCount();
+		
+		if (rowCount != v.getDimension())
+			throw new RuntimeException("Bad dimensions");
+		
+		final int columnCount = m.getColumnCount();
+
+		final double[][] result = new double[rowCount][columnCount];
+		
+		for (int row = 0; row < rowCount; row++) {
+			for (int column = 0; column < columnCount; column++) {
+				result[row][column] = m.getElement(row, column) * v.getElement(row);
+			}
+		}
+		
+		return new MatrixImpl(result);
 	}
 	
 }
