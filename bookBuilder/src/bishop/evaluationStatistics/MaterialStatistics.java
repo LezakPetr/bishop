@@ -49,4 +49,16 @@ public class MaterialStatistics {
 		}
 	}
 
+	public MaterialStatistics copy() {
+		final MaterialStatistics result = new MaterialStatistics();
+		result.totalCount = totalCount;
+		result.diff = diff;
+		
+		return result;
+	}
+	
+	public void negate() {
+		diff = -diff;
+	}
+
 }

@@ -1,5 +1,7 @@
 package math;
 
+import java.util.function.DoubleUnaryOperator;
+
 public class Vectors {
 	
 	/**
@@ -88,5 +90,38 @@ public class Vectors {
 		
 		return new VectorImpl (components);
 	}
+
+	public static IVector normalize(final IVector vec) {
+		final double length = getLength(vec);
+		
+		return multiply(1 / length, vec);
+	}
+
+	public static double getLength(final IVector vec) {
+		double squareSum = 0.0;
+		
+		for (int i = 0; i < vec.getDimension(); i++) {
+			final double x = vec.getElement(i);
+			squareSum += x*x;
+		}
+		
+		return Math.sqrt(squareSum);
+	}
+	
+	/**
+	 * Applies given function to all elements of the vector and returns new vector.
+	 * @param v vector
+	 * @param f function
+	 * @return f(v)
+	 */
+	public static IVector applyToElements(final IVector v, final DoubleUnaryOperator f) {
+		final double[] result = new double[v.getDimension()];
+		
+		for (int i = 0; i < result.length; i++)
+			result[i] = f.applyAsDouble(v.getElement(i));
+		
+		return new VectorImpl(result);
+	}
+
 	
 }
