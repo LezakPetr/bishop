@@ -64,7 +64,8 @@ public class SearchEngineTest {
 	}
 
 	public void runTest(final boolean runParallel) throws IOException, InterruptedException {
-		final int threadCount = (runParallel) ? 4 : 1;
+		final int availableProcessors = Runtime.getRuntime().availableProcessors();
+		final int threadCount = (runParallel) ? Math.min(availableProcessors, 4) : 1;
 		final Parallel parallel = new Parallel(threadCount);
 		final SerialSearchEngine engine = new SerialSearchEngine(parallel);
 		

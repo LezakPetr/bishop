@@ -46,16 +46,16 @@ public class NullPositionCaching implements IPositionCaching {
 	}
 
 	@Override
-	public int getMaterialEvaluation() {
-		return position.calculateMaterialEvaluation();
-	}
-
-	@Override
-	public void setMaterialEvaluation(final int evaluation) {
+	public MaterialHash getMaterialHash() {
+		return position.calculateMaterialHash();
 	}
 	
 	@Override
-	public void refreshMaterialEvaluation(final Position position) {
+	public void setMaterialHash(final MaterialHash hash) {
+	}
+
+	@Override
+	public void refreshMaterialHash(final Position position) {
 	}
 
 	@Override

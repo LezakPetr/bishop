@@ -866,7 +866,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	public void refreshCachedData() {
 		updatePiecesMasks();
 		updateHash();
-		updateMaterialEvaluation();
+		updateMaterialHash();
 	}
 
 	private void updatePiecesMasks() {
@@ -927,8 +927,8 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		return materialEvaluation;
 	}
 			
-	private void updateMaterialEvaluation() {
-		caching.refreshMaterialEvaluation(this);
+	private void updateMaterialHash() {
+		caching.refreshMaterialHash(this);
 	}
 
 	/**
@@ -1053,7 +1053,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 
 		// Material evaluation
 		final int oldMaterialEvaluation = getMaterialEvaluation();
-		updateMaterialEvaluation();
+		updateMaterialHash();
 		
 		if (getMaterialEvaluation() != oldMaterialEvaluation)
 			throw new RuntimeException("Material evaluation was corrupted");
@@ -1118,10 +1118,14 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
     }
     
     public int getMaterialEvaluation() {
-    	return caching.getMaterialEvaluation();
+    	return caching.getMaterialHash().getEvaluation();
     }
     
     public MaterialHash getMaterialHash() {
+    	return caching.getMaterialHash().copy();
+    }
+    
+    public MaterialHash calculateMaterialHash() {
     	return new MaterialHash (this, onTurn);
     }
 	
