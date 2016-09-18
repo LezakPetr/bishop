@@ -5,7 +5,7 @@ import bishop.tables.PieceHashTable;
 public final class PositionCachingImpl implements IPositionCaching {
 
 	private long hash;
-	private int materialEvaluation;
+	private final MaterialHash materialHash = new MaterialHash();
 
 	public void movePiece(final int color, final int pieceType, final int beginSquare, final int targetSquare) {
 		hash ^= PieceHashTable.getItem(color, pieceType, beginSquare);
@@ -14,16 +14,17 @@ public final class PositionCachingImpl implements IPositionCaching {
 	
 	public void addPiece(final int color, final int pieceType, final int square) {
 		hash ^= PieceHashTable.getItem(color, pieceType, square);
-		materialEvaluation += PieceTypeEvaluations.getPieceEvaluation(color, pieceType);		
+		materialHash.addPiece(color, pieceType);		
 	}
 	
 	public void removePiece(final int color, final int pieceType, final int square) {
 		hash ^= PieceHashTable.getItem(color, pieceType, square);
-		materialEvaluation -= PieceTypeEvaluations.getPieceEvaluation(color, pieceType);
+		materialHash.removePiece(color, pieceType);
 	}
 	
 	public void swapOnTurn() {
 		hash ^= HashConstants.getOnTurnHashDifference();
+		materialHash.swapOnTurn();
 	}
 	
 	public void changeEpFile(final int from, final int to) {
@@ -56,25 +57,25 @@ public final class PositionCachingImpl implements IPositionCaching {
 	}
 
 	@Override
-	public int getMaterialEvaluation() {
-		return materialEvaluation;
-	}
-
-	@Override
-	public void setMaterialEvaluation(final int evaluation) {
-		this.materialEvaluation = evaluation;
+	public MaterialHash getMaterialHash() {
+		return materialHash;
 	}
 	
 	@Override
-	public void refreshMaterialEvaluation(final Position position) {
-		setMaterialEvaluation(position.calculateMaterialEvaluation());
+	public void setMaterialHash(final MaterialHash hash) {
+		this.materialHash.assign(hash);
+	}
+
+	@Override
+	public void refreshMaterialHash(final Position position) {
+		setMaterialHash(position.calculateMaterialHash());
 	}
 
 	@Override
 	public IPositionCaching copy() {
 		final PositionCachingImpl result = new PositionCachingImpl();
 		result.hash = hash;
-		result.materialEvaluation = materialEvaluation;
+		result.materialHash.assign(materialHash);
 		
 		return result;
 	}
