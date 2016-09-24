@@ -3,7 +3,7 @@ package bishop.engine;
 import java.io.PrintWriter;
 
 import parallel.Parallel;
-
+import bishop.base.AdditiveMaterialEvaluator;
 import bishop.base.Color;
 import bishop.base.Position;
 import bishop.tables.MatedKingEvaluationTable;
@@ -25,7 +25,9 @@ public final class GeneralMatingPositionEvaluator implements IPositionEvaluator 
 		final int matingKingEvaluation = MatingKingEvaluationTable.getItem(matedKingSquare, matingKingSquare);
 		final int matingSideEvaluation = matedKingEvaluation + matingKingEvaluation;
 		
-		evaluation = position.getMaterialEvaluation() + Evaluation.getAbsolute(matingSideEvaluation, matingColor);
+		final int materialEvaluation = AdditiveMaterialEvaluator.getInstance().evaluateMaterial(position);
+		
+		evaluation = materialEvaluation + Evaluation.getAbsolute(matingSideEvaluation, matingColor);
 		
 		return evaluation;
 	}

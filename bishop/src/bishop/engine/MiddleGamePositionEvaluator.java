@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 
 import parallel.ITaskRunner;
 import parallel.Parallel;
+import bishop.base.AdditiveMaterialEvaluator;
 import bishop.base.BitBoard;
 import bishop.base.BoardConstants;
 import bishop.base.CastlingType;
@@ -58,7 +59,7 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 	public int evaluatePosition(final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
 		clear();
 				
-		final int materialEvaluation = position.getMaterialEvaluation();
+		final int materialEvaluation = AdditiveMaterialEvaluator.getInstance().evaluateMaterial(position);
 		
 		final int lowerBound = materialEvaluation + MAX_POSITIONAL_EVALUATION;
 		
