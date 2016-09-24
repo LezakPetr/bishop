@@ -1051,12 +1051,12 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		if (getHash() != oldHash)
 			throw new RuntimeException("Hash was corrupted");
 
-		// Material evaluation
-		final int oldMaterialEvaluation = getMaterialEvaluation();
+		// Material hash
+		final MaterialHash oldMaterialHash = getMaterialHash();
 		updateMaterialHash();
 		
-		if (getMaterialEvaluation() != oldMaterialEvaluation)
-			throw new RuntimeException("Material evaluation was corrupted");
+		if (!getMaterialHash().equals(oldMaterialHash))
+			throw new RuntimeException("Material hash was corrupted");
 	}
 	
 	/**
@@ -1115,10 +1115,6 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
     	}
 
     	return false;
-    }
-    
-    public int getMaterialEvaluation() {
-    	return caching.getMaterialHash().getEvaluation();
     }
     
     public MaterialHash getMaterialHash() {

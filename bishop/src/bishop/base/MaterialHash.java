@@ -183,22 +183,6 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 		return count;
 	}
 
-	/**
-	 * Returns material evaluation from white point of view.
-	 * @return material evaluation
-	 */
-	public int getEvaluation() {
-		int evaluation = 0;
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
-				evaluation += PieceTypeEvaluations.getPieceEvaluation(color, pieceType) * getPieceCount(color, pieceType);
-			}
-		}
-		
-		return evaluation;
-	}
-
 	@Override
 	public int compareTo(final MaterialHash cmp) {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {

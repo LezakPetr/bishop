@@ -4,6 +4,7 @@ package bishop.engine;
 import java.util.Random;
 
 import utils.Logger;
+import bishop.base.AdditiveMaterialEvaluator;
 import bishop.base.HandlerRegistrarImpl;
 import bishop.base.Holder;
 import bishop.base.IHandlerRegistrar;
@@ -320,7 +321,9 @@ public final class SearchManagerImpl implements ISearchManager {
 			task.getPosition().assign(rootPosition);
 			task.setHorizon(horizon);
 			task.setInitialSearch(initialSearch);
-			task.setRootMaterialEvaluation(rootPosition.getMaterialEvaluation());
+			
+			final int materialEvaluation = AdditiveMaterialEvaluator.getInstance().evaluateMaterial(rootPosition);
+			task.setRootMaterialEvaluation(materialEvaluation);
 			
 			final RepeatedPositionRegister repeatedPositionRegister = new RepeatedPositionRegister();
 			repeatedPositionRegister.clearAnsReserve(1);

@@ -23,6 +23,7 @@ public class IoUtils {
 	private static final String PLACEHOLDER_CHARACTERS = "=n";
 	
 	
+	public static final int SHORT_BYTES = Short.SIZE / Byte.SIZE;
 	public static final int INT_BYTES = Integer.SIZE / Byte.SIZE;
 	public static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
 
@@ -390,7 +391,7 @@ public class IoUtils {
 		return readNumberBinary(stream, length);
 	}
 	
-	public static long readSignedNumberBinary(final CountingInputStream stream, final int length) throws IOException {
+	public static long readSignedNumberBinary(final InputStream stream, final int length) throws IOException {
 		final long number = readNumberBinary(stream, length);
 		final int shift = 8 * (LONG_BYTES - length);
 		

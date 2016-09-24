@@ -4,7 +4,7 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 
 import parallel.Parallel;
-
+import bishop.base.AdditiveMaterialEvaluator;
 import bishop.base.BitBoard;
 import bishop.base.BitLoop;
 import bishop.base.BoardConstants;
@@ -123,7 +123,7 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		
 		attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 		
-		materialEvaluation = position.getMaterialEvaluation();
+		materialEvaluation = AdditiveMaterialEvaluator.getInstance().evaluateMaterial(position);
 		
 		final int lowerBound = materialEvaluation + MAX_POSITIONAL_EVALUATION;
 		
