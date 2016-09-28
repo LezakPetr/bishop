@@ -10,6 +10,7 @@ import bishop.base.GameResult;
 import bishop.base.MaterialHash;
 import bishop.base.PieceType;
 import bishop.base.Position;
+import bishop.engine.TableMaterialEvaluator;
 import math.IMatrix;
 import math.IVector;
 import math.MatrixImpl;
@@ -22,9 +23,10 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 	private static final int MIN_TOTAL_COUNT = 10;
 	private static final int MAX_PAWN_COUNT = 4;
 	
-	private final Map<MaterialHash, MaterialStatistics> statisticsMap = new HashMap<>();
+	private final Map<MaterialHash, MaterialStatistics> statisticsMap = new HashMap<>();   // Statistics for every material
 	private final Map<MaterialHash, MaterialStatistics> pawnDifferentialStatistics = new HashMap<>();
 	private final MaterialStatistics[][] pieceStatistics = new MaterialStatistics[PieceType.VARIABLE_LAST][];
+	private final TableMaterialEvaluator tableEvaluator = new TableMaterialEvaluator(null);
 	
 	private MaterialHash prevHash;
 	private int stability;
@@ -146,6 +148,39 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 	}
 
 	public void calculatePawnComplement() {
+		final List<PawnComplement> pawnComplementList = calculatePawnComplementList();
+		
+		final int equationCount = pawnComplementList.size();
+		final double[][] aElements = new double[equationCount][PieceType.PROMOTION_FIGURE_COUNT];
+		final double[] bElements = new double[equationCount];
+		final double[] weightsElements = new double[equationCount];
+		
+		for (int i = 0; i < equationCount; i++) {
+			final PawnComplement complement = pawnComplementList.get(i);
+			final MaterialHash materialHash = complement.getMaterialHash();
+			
+			for (int j = 0; j < PieceType.PROMOTION_FIGURE_COUNT; j++) {
+				final int pieceType = PieceType.PROMOTION_FIGURE_FIRST + j;
+				aElements[i][j] = materialHash.getPieceCount(Color.WHITE, pieceType) - materialHash.getPieceCount(Color.BLACK, pieceType);
+			}
+			
+			bElements[i] = complement.getComplement();
+			weightsElements[i] = complement.getTotalCount();
+		}
+		
+		final IMatrix a = new MatrixImpl(aElements);
+		final IVector b = new VectorImpl(bElements);
+		final IVector weights = new VectorImpl(weightsElements);
+		
+		final IVector result = math.Utils.solveEquationsLeastSquare (a, b, weights);
+		
+		for (int j = 0; j < PieceType.PROMOTION_FIGURE_COUNT; j++) {
+			final int pieceType = PieceType.PROMOTION_FIGURE_FIRST + j;
+			System.out.println(PieceType.getName(pieceType) + " " + result.getElement(j));
+		}
+	}
+
+	public List<PawnComplement> calculatePawnComplementList() {
 		final List<PawnComplement> pawnComplementList = new ArrayList<>();
 		
 		for (MaterialHash zeroPawnHash: pawnDifferentialStatistics.keySet()) {
@@ -201,35 +236,7 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 				}
 			}
 		}
-		
-		final int equationCount = pawnComplementList.size();
-		final double[][] aElements = new double[equationCount][PieceType.PROMOTION_FIGURE_COUNT];
-		final double[] bElements = new double[equationCount];
-		final double[] weightsElements = new double[equationCount];
-		
-		for (int i = 0; i < equationCount; i++) {
-			final PawnComplement complement = pawnComplementList.get(i);
-			final MaterialHash materialHash = complement.getMaterialHash();
-			
-			for (int j = 0; j < PieceType.PROMOTION_FIGURE_COUNT; j++) {
-				final int pieceType = PieceType.PROMOTION_FIGURE_FIRST + j;
-				aElements[i][j] = materialHash.getPieceCount(Color.WHITE, pieceType) - materialHash.getPieceCount(Color.BLACK, pieceType);
-			}
-			
-			bElements[i] = complement.getComplement();
-			weightsElements[i] = complement.getTotalCount();
-		}
-		
-		final IMatrix a = new MatrixImpl(aElements);
-		final IVector b = new VectorImpl(bElements);
-		final IVector weights = new VectorImpl(weightsElements);
-		
-		final IVector result = math.Utils.solveEquationsLeastSquare (a, b, weights);
-		
-		for (int j = 0; j < PieceType.PROMOTION_FIGURE_COUNT; j++) {
-			final int pieceType = PieceType.PROMOTION_FIGURE_FIRST + j;
-			System.out.println(PieceType.getName(pieceType) + " " + result.getElement(j));
-		}
+		return pawnComplementList;
 	}
 	
 	public void printPieceStatistics() {
