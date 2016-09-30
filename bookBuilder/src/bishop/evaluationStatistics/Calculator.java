@@ -39,6 +39,5 @@ public class Calculator {
 		pgnProcessor.processGames();
 		
 		materialProcessor.calculate();
-		materialProcessor.printPieceStatistics();
 	}
 }

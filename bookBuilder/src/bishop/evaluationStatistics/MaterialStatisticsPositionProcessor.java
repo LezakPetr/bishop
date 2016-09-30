@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 import bishop.base.Color;
 import bishop.base.GameResult;
@@ -24,8 +27,10 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 	private static final int MAX_PAWN_COUNT = 4;
 	
 	private final Map<MaterialHash, MaterialStatistics> statisticsMap = new HashMap<>();   // Statistics for every material
-	private final Map<MaterialHash, MaterialStatistics> pawnDifferentialStatistics = new HashMap<>();
-	private final MaterialStatistics[][] pieceStatistics = new MaterialStatistics[PieceType.VARIABLE_LAST][];
+	private Map<MaterialHash, MaterialStatistics> symmetricalStatistics;
+	private Map<MaterialHash, MaterialStatistics> pawnDifferentialStatistics;
+	private Map<MaterialHash, MaterialStatistics> pieceDifferentialStatistics;
+	
 	private final TableMaterialEvaluator tableEvaluator = new TableMaterialEvaluator(null);
 	
 	private MaterialHash prevHash;
@@ -81,18 +86,50 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 			processed = true;
 		}
 	}
+		
+	public void calculate() {
+		calculateSymmetricalStatistics();
+		calculatePawnDifferentialStatistics();
+		calculatePieceDifferentialStatistics();
+		calculatePawnComplement();
+	}
 	
-	private void calculatePieceStatistics() {
-		for (int pieceType = PieceType.VARIABLE_FIRST; pieceType < PieceType.VARIABLE_LAST; pieceType++) {
-			pieceStatistics[pieceType] = calculatePieceStatistics(pieceType);
+	private void calculateSymmetricalStatistics() {
+		for (Map.Entry<MaterialHash, MaterialStatistics> entry: statisticsMap.entrySet()) {
+			final MaterialHash hash = entry.getKey().copy();
+			
+			final MaterialStatistics statistics = entry.getValue().copy();
+			normalizeHashAndStatistics (hash, statistics);
+			
+			MaterialStatistics statisticsInMap = symmetricalStatistics.get(hash);
+			
+			if (statisticsInMap == null) {
+				statisticsInMap = new MaterialStatistics();
+				symmetricalStatistics.put(hash, statisticsInMap);
+			}
+			
+			statisticsInMap.add(statistics);
 		}
 	}
 	
-	public void calculate() {
-		calculatePieceStatistics();
-		calculateDifferentialStatistics();
-		calculatePawnComplement();
+	private void calculatePawnDifferentialStatistics() {
+		pawnDifferentialStatistics = mergeMapKeys(symmetricalStatistics, (h) -> {
+			final MaterialHash result = h.copy();
+			result.reducePieceToDifference(PieceType.PAWN);
+			
+			return result;
+		});
 	}
+
+	private void calculatePieceDifferentialStatistics() {
+		pieceDifferentialStatistics = mergeMapKeys(pawnDifferentialStatistics, (h) -> {
+			final MaterialHash result = h.copy();
+			result.reduceToDifference();
+			
+			return result;
+		});
+	}
+	
 	
 	private MaterialStatistics[] calculatePieceStatistics(final int pieceType) {
 		final MaterialStatistics[] pieceStatistics = new MaterialStatistics[MAX_PIECE_COUNT + 1];
@@ -118,26 +155,7 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 		
 		return pieceStatistics;
 	} 
-	
-	private void calculateDifferentialStatistics() {
-		for (Map.Entry<MaterialHash, MaterialStatistics> entry: statisticsMap.entrySet()) {
-			final MaterialHash differentialHash = entry.getKey().copy();
-			differentialHash.reduceToDifference();
-			
-			final MaterialStatistics statistics = entry.getValue().copy();
-			normalizeHashAndStatistics (differentialHash, statistics);
-			
-			MaterialStatistics differentialStatistics = pawnDifferentialStatistics.get(differentialHash);
-			
-			if (differentialStatistics == null) {
-				differentialStatistics = new MaterialStatistics();
-				pawnDifferentialStatistics.put(differentialHash, differentialStatistics);
-			}
-			
-			differentialStatistics.add(statistics);
-		}
-	}
-	
+		
 	private void normalizeHashAndStatistics(final MaterialHash hash, final MaterialStatistics statistics) {
 		final MaterialHash oppositeHash = hash.getOpposite();
 		
@@ -183,9 +201,9 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 	public List<PawnComplement> calculatePawnComplementList() {
 		final List<PawnComplement> pawnComplementList = new ArrayList<>();
 		
-		for (MaterialHash zeroPawnHash: pawnDifferentialStatistics.keySet()) {
+		for (MaterialHash zeroPawnHash: pieceDifferentialStatistics.keySet()) {
 			if (zeroPawnHash.getPieceCount(Color.WHITE, PieceType.PAWN) == 0 && zeroPawnHash.getPieceCount(Color.BLACK, PieceType.PAWN) == 0) {
-				final MaterialStatistics zeroPawnStatistics = pawnDifferentialStatistics.get(zeroPawnHash);
+				final MaterialStatistics zeroPawnStatistics = pieceDifferentialStatistics.get(zeroPawnHash);
 				final double zeroPawnBalance = zeroPawnStatistics.getBalance();
 				final double coeff;
 				final int color;
@@ -207,7 +225,7 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 					final MaterialHash nextHash = prevHash.copy();
 					nextHash.addPiece(color, PieceType.PAWN);
 					
-					final MaterialStatistics nextStatistics = pawnDifferentialStatistics.get(nextHash);
+					final MaterialStatistics nextStatistics = pieceDifferentialStatistics.get(nextHash);
 					
 					if (nextStatistics == null)
 						break;
@@ -238,17 +256,16 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 		}
 		return pawnComplementList;
 	}
-	
-	public void printPieceStatistics() {
-		for (int pieceType = PieceType.VARIABLE_FIRST; pieceType < PieceType.VARIABLE_LAST; pieceType++) {
-			System.out.println(PieceType.getName(pieceType));
-			
-			for (int pieceCount = 0; pieceCount <= MAX_PIECE_COUNT; pieceCount++) {
-				final MaterialStatistics statistics = pieceStatistics[pieceType][pieceCount];
-				System.out.println(pieceCount + ": " + statistics.getBalance() + " (" + statistics.getTotalCount() + ")");
-			}
-			
-			System.out.println();
-		}
+		
+	/**
+	 * Creates new statistic map from given one. The keys (material hashes) are mapped by keyMapper. If there will be collision of returned keys the
+	 * statistics are summed together.
+	 * @param origMap original map
+	 * @param keyMapper mapper of the material hashes
+	 * @return transformed map
+	 */
+	public Map<MaterialHash, MaterialStatistics> mergeMapKeys(final Map<MaterialHash, MaterialStatistics> origMap, final UnaryOperator<MaterialHash> keyMapper)
+	{
+		return origMap.entrySet().stream().collect(Collectors.toMap(e -> keyMapper.apply(e.getKey()), e -> e.getValue(), MaterialStatistics::sum));
 	}
 }
