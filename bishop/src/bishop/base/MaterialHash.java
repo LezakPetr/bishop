@@ -249,13 +249,17 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 
 	public void reduceToDifference() {
 		for (int pieceType = PieceType.VARIABLE_FIRST; pieceType < PieceType.VARIABLE_LAST; pieceType++) {
-			final int whiteCount = getPieceCount(Color.WHITE, pieceType);
-			final int blackCount = getPieceCount(Color.BLACK, pieceType);
-			final int toRemove = Math.min(whiteCount, blackCount);
-			
-			removePiece(Color.WHITE, pieceType, toRemove);
-			removePiece(Color.BLACK, pieceType, toRemove);
+			reducePieceToDifference(pieceType);
 		}
+	}
+
+	public void reducePieceToDifference(final int pieceType) {
+		final int whiteCount = getPieceCount(Color.WHITE, pieceType);
+		final int blackCount = getPieceCount(Color.BLACK, pieceType);
+		final int toRemove = Math.min(whiteCount, blackCount);
+		
+		removePiece(Color.WHITE, pieceType, toRemove);
+		removePiece(Color.BLACK, pieceType, toRemove);
 	}
 	
 }

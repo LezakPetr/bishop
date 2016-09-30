@@ -61,4 +61,11 @@ public class MaterialStatistics {
 		diff = -diff;
 	}
 
+	public static MaterialStatistics sum (final MaterialStatistics a, final MaterialStatistics b)
+	{
+		final MaterialStatistics result = a.copy();
+		result.add(b);
+		
+		return result;
+	}
 }
