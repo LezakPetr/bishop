@@ -1,18 +1,25 @@
 package bishop.evaluationStatistics;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import bishop.builderBase.IGameWalker;
 import bishop.builderBase.IPositionWalker;
 import bishop.builderBase.LinearGameWalker;
 import bishop.builderBase.PgnListProcessor;
+import parallel.Parallel;
 
 public class Calculator {
 	
-	public static void main (final String[] args) throws FileNotFoundException, IOException {
-		final MaterialStatisticsPositionProcessor materialProcessor = new MaterialStatisticsPositionProcessor();
+	public static void main (final String[] args) throws IOException, InterruptedException, ExecutionException {
+		final Parallel parallel = new Parallel();
+		final List<String> argList = Arrays.asList(args);
+		final File tableEvaluatorFile = new File (argList.get(0));
+		final MaterialStatisticsPositionProcessor materialProcessor = new MaterialStatisticsPositionProcessor(tableEvaluatorFile);
 		
 		final IPositionProcessor[] processors = { materialProcessor };
 		
@@ -32,12 +39,16 @@ public class Calculator {
 				processor.endGame();
 		};
 		
-		final PgnListProcessor pgnProcessor = new PgnListProcessor();
-		pgnProcessor.addPgnList(Arrays.asList(args));
+		final PgnListProcessor pgnProcessor = new PgnListProcessor(parallel);
+		
+		pgnProcessor.addPgnList(argList.subList(1, argList.size()));
 		pgnProcessor.setGameWalker(walker);
 		
 		pgnProcessor.processGames();
 		
 		materialProcessor.calculate();
+		parallel.shutdown();
+		
+		System.out.println("Finished");
 	}
 }

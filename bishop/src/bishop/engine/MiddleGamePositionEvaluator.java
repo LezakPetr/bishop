@@ -4,12 +4,13 @@ import java.io.PrintWriter;
 
 import parallel.ITaskRunner;
 import parallel.Parallel;
-import bishop.base.AdditiveMaterialEvaluator;
+import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.BitBoard;
 import bishop.base.BoardConstants;
 import bishop.base.CastlingType;
 import bishop.base.Color;
 import bishop.base.File;
+import bishop.base.IMaterialEvaluator;
 import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
@@ -21,6 +22,7 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 	
 	private static final int MAX_POSITIONAL_EVALUATION = PieceTypeEvaluations.getPawnMultiply (2.0);
 	
+	private final IMaterialEvaluator materialEvaluator;
 	private final TablePositionEvaluator tablePositionEvaluator;
 	private final BishopColorPositionEvaluator bishopColorPositionEvaluator;
 	private final MobilityPositionEvaluator mobilityEvaluator;
@@ -29,7 +31,8 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 	private final PawnStructureEvaluator pawnStructureCalculator;
 	
 	
-	public MiddleGamePositionEvaluator(final MiddleGameEvaluatorSettings settings) {
+	public MiddleGamePositionEvaluator(final MiddleGameEvaluatorSettings settings, final IMaterialEvaluator materialEvaluator) {
+		this.materialEvaluator = materialEvaluator;
 		this.settings = settings;
 		
 		tablePositionEvaluator = new TablePositionEvaluator(settings.getTablePositionEvaluatorSettings());
@@ -59,7 +62,7 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 	public int evaluatePosition(final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
 		clear();
 				
-		final int materialEvaluation = AdditiveMaterialEvaluator.getInstance().evaluateMaterial(position);
+		final int materialEvaluation = materialEvaluator.evaluateMaterial(position);
 		
 		final int lowerBound = materialEvaluation + MAX_POSITIONAL_EVALUATION;
 		

@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.List;
 
 import parallel.Parallel;
-
+import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.Game;
 import bishop.base.Holder;
 import bishop.base.IGameNode;
@@ -40,7 +40,7 @@ public class SearchPerformanceTest {
 	
 	protected void initializeSearchManager(final TablebasePositionEvaluator tablebaseEvaluator, final long maxTimeForPosition) {
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
-		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings);
+		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, DefaultAdditiveMaterialEvaluator.getInstance());
 
 		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
 		final int threadCount = Math.min(Runtime.getRuntime().availableProcessors(), SearchResources.MAX_THREADS);

@@ -1,6 +1,6 @@
 package bishop.engine;
 
-import bishop.base.AdditiveMaterialEvaluator;
+import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.Color;
 import bishop.base.Move;
 import bishop.base.PieceType;
@@ -40,7 +40,7 @@ public class MoveExtensionEvaluator {
 			boolean isRecapture = false;
 			
 			if (move.getCapturedPieceType() != PieceType.NONE) {
-				final int materialEvaluation = AdditiveMaterialEvaluator.getInstance().evaluateMaterial(targetPosition);
+				final int materialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(targetPosition);
 				final int relativeTargetEvaluation = Evaluation.getRelative(materialEvaluation, oppositeColor);
 				final int targetSquare = move.getTargetSquare();
 				final int sse = targetPosition.getStaticExchangeEvaluation(onTurn, targetSquare);

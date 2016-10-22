@@ -1,5 +1,7 @@
 package bishop.engine;
 
+import java.io.File;
+
 public final class PositionEvaluatorSwitchSettings {
 	
 	private final MiddleGameEvaluatorSettings middleGameEvaluatorSettings;

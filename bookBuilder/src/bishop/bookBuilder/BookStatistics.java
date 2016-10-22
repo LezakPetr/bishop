@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import bishop.base.Annotation;
 import bishop.base.Game;
@@ -26,6 +27,7 @@ import bishop.builderBase.IGameWalker;
 import bishop.builderBase.IPositionWalker;
 import bishop.builderBase.LinearGameWalker;
 import bishop.builderBase.PgnListProcessor;
+import parallel.Parallel;
 
 /**
  * BookStatistics holds statistical information about a book.
@@ -82,8 +84,8 @@ public class BookStatistics {
 	}
 		
 	// Build statistics from main variations of games in given PGNs. 
-	public void addLinearGames (final Collection<String> pgnList) throws FileNotFoundException, IOException {
-		final PgnListProcessor processor = new PgnListProcessor();
+	public void addLinearGames (final Collection<String> pgnList) throws IOException, InterruptedException, ExecutionException {
+		final PgnListProcessor processor = new PgnListProcessor(new Parallel());
 		processor.addPgnList(pgnList);
 		
 		// Build repetition filter

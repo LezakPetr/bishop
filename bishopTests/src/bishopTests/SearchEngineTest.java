@@ -11,7 +11,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import parallel.Parallel;
-import bishop.base.AdditiveMaterialEvaluator;
+import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.Fen;
 import bishop.base.MoveList;
 import bishop.base.Position;
@@ -120,7 +120,7 @@ public class SearchEngineTest {
 			task.setRepeatedPositionRegister(register);
 			task.getPosition().assign(position);
 			
-			final int materialEvaluation = AdditiveMaterialEvaluator.getInstance().evaluateMaterial(position);
+			final int materialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(position);
 			task.setRootMaterialEvaluation(materialEvaluation);
 			
 			final SearchResult result = engine.search(task);			

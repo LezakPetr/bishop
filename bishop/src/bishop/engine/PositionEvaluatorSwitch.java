@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 
 import parallel.Parallel;
 import bishop.base.Color;
+import bishop.base.IMaterialEvaluator;
 import bishop.base.IPieceCounts;
 import bishop.base.PieceType;
 import bishop.base.Position;
@@ -25,11 +26,11 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 	private int evaluation;
 
 	
-	public PositionEvaluatorSwitch(final PositionEvaluatorSwitchSettings settings) {
-		middleGameEvaluator = new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings());
-		generalMatingEvaluator = new GeneralMatingPositionEvaluator();
-		drawEvaluator = new DrawPositionEvaluator();
-		endingEvaluator = new EndingPositionEvaluator(settings.getEndingPositionEvaluatorSettings());
+	public PositionEvaluatorSwitch(final PositionEvaluatorSwitchSettings settings, final IMaterialEvaluator materialEvaluator) {
+		middleGameEvaluator = new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), materialEvaluator);
+		generalMatingEvaluator = new GeneralMatingPositionEvaluator(materialEvaluator);
+		drawEvaluator = new DrawPositionEvaluator(materialEvaluator);
+		endingEvaluator = new EndingPositionEvaluator(settings.getEndingPositionEvaluatorSettings(), materialEvaluator);
 		
 		colorCounts = new int[Color.LAST];
 		pieceCounts = new int[Color.LAST][PieceType.LAST];

@@ -2,6 +2,8 @@ package bishopTests;
 
 import org.junit.Test;
 
+import bishop.base.DefaultAdditiveMaterialEvaluator;
+import bishop.base.IMaterialEvaluator;
 import bishop.base.Position;
 import bishop.engine.AttackCalculator;
 import bishop.engine.EndingPositionEvaluator;
@@ -32,8 +34,10 @@ public class PositionEvaluatorTest {
 		position.setInitialPosition();
 		
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
-		testPositionEvaluatorSpeed (position, new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings()));
-		testPositionEvaluatorSpeed (position, new EndingPositionEvaluator(settings.getEndingPositionEvaluatorSettings()));
-		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings));
+		final IMaterialEvaluator materialEvaluator = DefaultAdditiveMaterialEvaluator.getInstance();
+		
+		testPositionEvaluatorSpeed (position, new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), materialEvaluator));
+		testPositionEvaluatorSpeed (position, new EndingPositionEvaluator(settings.getEndingPositionEvaluatorSettings(), materialEvaluator));
+		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings, materialEvaluator));
 	}
 }

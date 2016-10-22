@@ -7,7 +7,7 @@ import java.util.function.IntConsumer;
 
 import parallel.ITaskRunner;
 import parallel.Parallel;
-import bishop.base.AdditiveMaterialEvaluator;
+import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.BitBoard;
 import bishop.base.Color;
 import bishop.base.HandlerRegistrarImpl;
@@ -606,7 +606,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 */
 	private ISearchResult evaluateMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta) {
 		final NodeRecord currentRecord = nodeStack[currentDepth];
-		final int beginMaterialEvaluation = AdditiveMaterialEvaluator.getInstance().evaluateMaterial(currentPosition);
+		final int beginMaterialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(currentPosition);
 		
 		currentPosition.makeMove(move);
 		

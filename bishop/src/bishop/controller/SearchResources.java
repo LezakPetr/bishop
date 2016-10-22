@@ -5,7 +5,8 @@ import java.io.InputStream;
 import java.net.URL;
 
 import parallel.Parallel;
-
+import bishop.base.DefaultAdditiveMaterialEvaluator;
+import bishop.base.IMaterialEvaluator;
 import bishop.base.PgnReader;
 import bishop.engine.BookSource;
 import bishop.engine.HashTableImpl;
@@ -14,6 +15,7 @@ import bishop.engine.PositionEvaluatorSwitchFactory;
 import bishop.engine.PositionEvaluatorSwitchSettings;
 import bishop.engine.SearchManagerImpl;
 import bishop.engine.SerialSearchEngineFactory;
+import bishop.engine.TableMaterialEvaluator;
 import bishop.engine.TablebasePositionEvaluator;
 
 public class SearchResources {
@@ -22,6 +24,7 @@ public class SearchResources {
 	public static final int MAX_THREADS = 3;
 	
 	private static final String BOOK_PATH = "book.pgn";
+	private static final String MATERIAL_PATH = "material.tbl";
 
 	private final IApplication application;
 	private final SerialSearchEngineFactory searchEngineFactory;
@@ -40,7 +43,8 @@ public class SearchResources {
 		searchEngineFactory.setParallel(parallel);
 		
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
-		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings);
+		final IMaterialEvaluator materialEvaluator = createMaterialEvaluator();
+		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, materialEvaluator);
 		
 		searchEngineFactory.setPositionEvaluatorFactory(evaluatorFactory);
 		searchEngineFactory.setMaximalDepth(MAX_TOTAL_DEPTH);
@@ -63,11 +67,9 @@ public class SearchResources {
 	private void setBookToManager() {
 		try {
 			final URL url = new URL(application.getRootUrl(), BOOK_PATH);
-			final PgnReader pgn = new PgnReader();
 			
-			final InputStream stream = url.openStream();
-			
-			try {
+			try (final InputStream stream = url.openStream()) {
+				final PgnReader pgn = new PgnReader();
 				pgn.readPgnFromStream(stream);
 				
 				final BookSource book = new BookSource();
@@ -77,12 +79,26 @@ public class SearchResources {
 				
 				searchManager.setBook(book);
 			}
-			finally {
-				stream.close();
-			}
 		}
 		catch (IOException ex) {
 			ex.printStackTrace();
+		}
+	}
+	
+	private IMaterialEvaluator createMaterialEvaluator() {
+		try {
+			final URL url = new URL(application.getRootUrl(), MATERIAL_PATH);
+			
+			try (final InputStream stream = url.openStream()) {
+				final IMaterialEvaluator baseEvaluator = DefaultAdditiveMaterialEvaluator.getInstance();
+				final TableMaterialEvaluator tableEvaluator = new TableMaterialEvaluator(baseEvaluator);
+				tableEvaluator.read(stream);
+
+				return tableEvaluator;
+			}
+		}
+		catch (IOException ex) {
+			throw new RuntimeException(ex);
 		}
 	}
 

@@ -4,7 +4,8 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 
 import parallel.Parallel;
-import bishop.base.AdditiveMaterialEvaluator;
+import bishop.base.DefaultAdditiveMaterialEvaluator;
+import bishop.base.IMaterialEvaluator;
 import bishop.base.BitBoard;
 import bishop.base.BitLoop;
 import bishop.base.BoardConstants;
@@ -19,6 +20,7 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 	
 	private static final int MAX_POSITIONAL_EVALUATION = PieceTypeEvaluations.getPawnMultiply (2.0);
 	
+	private final IMaterialEvaluator materialEvaluator;
 	private final TablePositionEvaluator tableEvaluator;
 	private final BishopColorPositionEvaluator bishopColorPositionEvaluator;
 	private final PawnStructureEvaluator pawnStructureEvaluator;
@@ -36,7 +38,8 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 	private int pawnEvaluation;
 	
 
-	public EndingPositionEvaluator(final EndingPositionEvaluatorSettings settings) {
+	public EndingPositionEvaluator(final EndingPositionEvaluatorSettings settings, final IMaterialEvaluator materialEvaluator) {
+		this.materialEvaluator = materialEvaluator;
 		this.settings = settings;
 		
 		tableEvaluator = new TablePositionEvaluator(settings.getTableSettings());
@@ -123,7 +126,7 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		
 		attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 		
-		materialEvaluation = AdditiveMaterialEvaluator.getInstance().evaluateMaterial(position);
+		materialEvaluation = materialEvaluator.evaluateMaterial(position);
 		
 		final int lowerBound = materialEvaluation + MAX_POSITIONAL_EVALUATION;
 		

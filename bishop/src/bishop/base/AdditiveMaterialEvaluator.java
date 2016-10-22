@@ -1,12 +1,6 @@
 package bishop.base;
 
-public class AdditiveMaterialEvaluator implements IMaterialEvaluator {
-	
-	private static final AdditiveMaterialEvaluator instance = new AdditiveMaterialEvaluator();
-	
-	private AdditiveMaterialEvaluator() {
-	}
-
+abstract public class AdditiveMaterialEvaluator implements IMaterialEvaluator {
 	@Override
 	public int evaluateMaterial(final IPieceCounts pieceCounts) {
 		int evaluation = 0;
@@ -14,7 +8,7 @@ public class AdditiveMaterialEvaluator implements IMaterialEvaluator {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
 				final int count = pieceCounts.getPieceCount(color, pieceType);
-				final int unitEvaluation = PieceTypeEvaluations.getPieceEvaluation(color, pieceType);
+				final int unitEvaluation = getPieceEvaluation(color, pieceType);
 				
 				evaluation += unitEvaluation * count;
 			}
@@ -22,9 +16,6 @@ public class AdditiveMaterialEvaluator implements IMaterialEvaluator {
 		
 		return evaluation;
 	}
-
-	public static AdditiveMaterialEvaluator getInstance() {
-		return instance;
-	}
 	
+	abstract public int getPieceEvaluation (final int color, final int pieceType);
 }

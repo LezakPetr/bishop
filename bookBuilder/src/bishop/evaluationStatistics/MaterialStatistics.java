@@ -1,12 +1,20 @@
 package bishop.evaluationStatistics;
 
-import bishop.base.Color;
 import bishop.base.GameResult;
 
 public class MaterialStatistics {
 	
 	private long totalCount;   // wins + draws + loses 
 	private long diff;   // Wins - loses   (from White point of view)
+	
+	
+	public MaterialStatistics() {
+	}
+	
+	public MaterialStatistics (final long totalCount, final double balance) {
+		this.totalCount = totalCount;
+		this.diff = Math.round(totalCount * balance);
+	}
 	
 	/**
 	 * Returns balance.
