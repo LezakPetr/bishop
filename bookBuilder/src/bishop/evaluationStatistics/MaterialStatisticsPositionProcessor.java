@@ -1,17 +1,19 @@
 package bishop.evaluationStatistics;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
+import bishop.base.AdditiveMaterialEvaluator;
 import bishop.base.Color;
 import bishop.base.GameResult;
+import bishop.base.IMaterialEvaluator;
 import bishop.base.MaterialHash;
 import bishop.base.PieceType;
+import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
 import bishop.engine.TableMaterialEvaluator;
 import math.IMatrix;
@@ -19,25 +21,49 @@ import math.IVector;
 import math.MatrixImpl;
 import math.VectorImpl;
 
+/**
+ * Processor that calculates evaluations of material constelation of positions. 
+ * @author Ing. Petr Ležák
+ */
 public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 
-	private static final int MAX_PIECE_COUNT = 8;
 	private static final int MIN_STABILITY = 4;
 	private static final int MIN_TOTAL_COUNT = 10;
 	private static final int MAX_PAWN_COUNT = 4;
+	private static final int MIN_TOTAL_COUNT_FOR_EVALUATOR = 500;
 	
-	private final Map<MaterialHash, MaterialStatistics> statisticsMap = new HashMap<>();   // Statistics for every material
+	private final File tableEvaluatorFile;
+
+	// Statistics for every material
+	private final Map<MaterialHash, MaterialStatistics> statisticsMap = new HashMap<>();
+	
+	// Statistics for every normalized material; contains sum of statistics of corresponding unnormalized materials from statisticsMap
 	private Map<MaterialHash, MaterialStatistics> symmetricalStatistics;
-	private Map<MaterialHash, MaterialStatistics> pawnDifferentialStatistics;
-	private Map<MaterialHash, MaterialStatistics> pieceDifferentialStatistics;
 	
+	// Statistics for every normalized material with zero pawns on white or black side;
+	// contains sum of statistics of corresponding materials with same difference of pawns 
+	private Map<MaterialHash, MaterialStatistics> pawnDifferentialStatistics;
+	
+	// Statistics for every normalized material with zero pieces on white or black side for every piece type;
+	// contains sum of statistics of corresponding materials with same difference of pieces
+	private Map<MaterialHash, MaterialStatistics> pieceDifferentialStatistics;
+
+	// Evaluation of pieces (in multiplies of pawn)
+	private final double[] pawnComplementForPieces = new double[PieceType.VARIABLE_LAST];
+	
+	// Evaluation of every material combination
 	private final TableMaterialEvaluator tableEvaluator = new TableMaterialEvaluator(null);
+
 	
 	private MaterialHash prevHash;
 	private int stability;
 	private boolean processed;
 	private GameResult result;
 
+	
+	public MaterialStatisticsPositionProcessor (final File tableEvaluatorFile) {
+		this.tableEvaluatorFile = tableEvaluatorFile;
+	}
 	
 	public MaterialStatistics getStatistics() {
 		MaterialStatistics statistics = statisticsMap.get(prevHash);
@@ -87,18 +113,26 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 		}
 	}
 		
-	public void calculate() {
+	public void calculate() throws IOException {
 		calculateSymmetricalStatistics();
 		calculatePawnDifferentialStatistics();
 		calculatePieceDifferentialStatistics();
-		calculatePawnComplement();
+		calculatePawnComplementForPieces();
+		calculateAndWriteTableEvaluator();
 	}
 	
 	private void calculateSymmetricalStatistics() {
+		symmetricalStatistics = new HashMap<>();
+		
 		for (Map.Entry<MaterialHash, MaterialStatistics> entry: statisticsMap.entrySet()) {
 			final MaterialHash hash = entry.getKey().copy();
+			final MaterialStatistics statistics;
 			
-			final MaterialStatistics statistics = entry.getValue().copy();
+			if (hash.isBalancedExceptFor(PieceType.NONE))
+				statistics = new MaterialStatistics(Integer.MAX_VALUE, 0.0);   // Fictional zero balance for balanced positions 
+			else	
+				statistics = entry.getValue().copy();
+			
 			normalizeHashAndStatistics (hash, statistics);
 			
 			MaterialStatistics statisticsInMap = symmetricalStatistics.get(hash);
@@ -129,35 +163,10 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 			return result;
 		});
 	}
-	
-	
-	private MaterialStatistics[] calculatePieceStatistics(final int pieceType) {
-		final MaterialStatistics[] pieceStatistics = new MaterialStatistics[MAX_PIECE_COUNT + 1];
-		
-		for (int pieceCount = 0; pieceCount <= MAX_PIECE_COUNT; pieceCount++)
-			pieceStatistics[pieceCount] = new MaterialStatistics();
-		
-		for (MaterialHash material: statisticsMap.keySet()) {
-			if (material.isBalancedExceptFor (pieceType)) {
-				final int whiteCount = material.getPieceCount(Color.WHITE, pieceType);
-				final int blackCount = material.getPieceCount(Color.BLACK, pieceType);
-				final int countDiff = whiteCount - blackCount;
-				final int absCountDiff = Math.abs(countDiff);
-				
-				if (absCountDiff <= MAX_PIECE_COUNT) {
-					if (countDiff >= 0)
-						pieceStatistics[absCountDiff].add(statisticsMap.get(material));
-					else
-						pieceStatistics[absCountDiff].addOpposite(statisticsMap.get(material));
-				}
-			}
-		}
-		
-		return pieceStatistics;
-	} 
-		
+			
 	private void normalizeHashAndStatistics(final MaterialHash hash, final MaterialStatistics statistics) {
 		final MaterialHash oppositeHash = hash.getOpposite();
+		oppositeHash.setOnTurn(Color.WHITE);
 		
 		if (hash.compareTo(oppositeHash) < 0) {
 			hash.assign(oppositeHash);
@@ -165,25 +174,28 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 		}
 	}
 
-	public void calculatePawnComplement() {
-		final List<PawnComplement> pawnComplementList = calculatePawnComplementList();
+	// Calculates evaluation of every piece type by least squares method
+	private void calculatePawnComplementForPieces() {
+		final Map<MaterialHash, PawnComplement> pawnComplementMap = calculatePawnComplementMap(pieceDifferentialStatistics);
 		
-		final int equationCount = pawnComplementList.size();
+		final int equationCount = pawnComplementMap.size();
 		final double[][] aElements = new double[equationCount][PieceType.PROMOTION_FIGURE_COUNT];
 		final double[] bElements = new double[equationCount];
 		final double[] weightsElements = new double[equationCount];
 		
-		for (int i = 0; i < equationCount; i++) {
-			final PawnComplement complement = pawnComplementList.get(i);
+		int equationIndex = 0;
+		
+		for (PawnComplement complement: pawnComplementMap.values()) {
 			final MaterialHash materialHash = complement.getMaterialHash();
 			
 			for (int j = 0; j < PieceType.PROMOTION_FIGURE_COUNT; j++) {
 				final int pieceType = PieceType.PROMOTION_FIGURE_FIRST + j;
-				aElements[i][j] = materialHash.getPieceCount(Color.WHITE, pieceType) - materialHash.getPieceCount(Color.BLACK, pieceType);
+				aElements[equationIndex][j] = materialHash.getPieceCount(Color.WHITE, pieceType) - materialHash.getPieceCount(Color.BLACK, pieceType);
 			}
 			
-			bElements[i] = complement.getComplement();
-			weightsElements[i] = complement.getTotalCount();
+			bElements[equationIndex] = complement.getComplement();
+			weightsElements[equationIndex] = complement.getTotalCount();
+			equationIndex++;
 		}
 		
 		final IMatrix a = new MatrixImpl(aElements);
@@ -192,18 +204,28 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 		
 		final IVector result = math.Utils.solveEquationsLeastSquare (a, b, weights);
 		
+		pawnComplementForPieces[PieceType.PAWN] = PieceTypeEvaluations.PAWN_EVALUATION;
+		pawnComplementForPieces[PieceType.KING] = PieceTypeEvaluations.KING_EVALUATION;
+		
 		for (int j = 0; j < PieceType.PROMOTION_FIGURE_COUNT; j++) {
 			final int pieceType = PieceType.PROMOTION_FIGURE_FIRST + j;
-			System.out.println(PieceType.getName(pieceType) + " " + result.getElement(j));
+			final double complement = result.getElement(j);
+			pawnComplementForPieces[pieceType] = result.getElement(j);
+			
+			System.out.println("Pawn complement for " + PieceType.getName(pieceType) + " is " + complement);
 		}
 	}
 
-	public List<PawnComplement> calculatePawnComplementList() {
-		final List<PawnComplement> pawnComplementList = new ArrayList<>();
+	// Calculates pawn complements from given differential statistics map. At least it must be differentiated by pawns.
+	// Algorithm works this way. For every material with zero pawn on both sides it finds if it is win for white or black.
+	// Then it adds pawns to the lost side until it finds material with opposite evaluation in the statistics map.
+	// This way it finds two numbers of pawns (with difference 1) with opposite evaluations. The complement is then interpolated. 
+	private static Map<MaterialHash, PawnComplement> calculatePawnComplementMap(final Map<MaterialHash, MaterialStatistics> differentialStatistics) {
+		final Map<MaterialHash, PawnComplement> pawnComplementList = new HashMap<>();
 		
-		for (MaterialHash zeroPawnHash: pieceDifferentialStatistics.keySet()) {
+		for (MaterialHash zeroPawnHash: differentialStatistics.keySet()) {
 			if (zeroPawnHash.getPieceCount(Color.WHITE, PieceType.PAWN) == 0 && zeroPawnHash.getPieceCount(Color.BLACK, PieceType.PAWN) == 0) {
-				final MaterialStatistics zeroPawnStatistics = pieceDifferentialStatistics.get(zeroPawnHash);
+				final MaterialStatistics zeroPawnStatistics = differentialStatistics.get(zeroPawnHash);
 				final double zeroPawnBalance = zeroPawnStatistics.getBalance();
 				final double coeff;
 				final int color;
@@ -225,7 +247,7 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 					final MaterialHash nextHash = prevHash.copy();
 					nextHash.addPiece(color, PieceType.PAWN);
 					
-					final MaterialStatistics nextStatistics = pieceDifferentialStatistics.get(nextHash);
+					final MaterialStatistics nextStatistics = differentialStatistics.get(nextHash);
 					
 					if (nextStatistics == null)
 						break;
@@ -236,13 +258,9 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 						final long totalCount = Math.min(prevStatistics.getTotalCount(), nextStatistics.getTotalCount());
 						
 						if (totalCount >= MIN_TOTAL_COUNT) {
-							final double pawnCount = math.Utils.linearInterpolation(prevBalance, nextBalance, i - 1, i, 0);
-							System.out.println(prevHash + " " + prevBalance);
-							System.out.println(nextHash + " " + nextBalance);
-							System.out.println(pawnCount);
-							
+							final double pawnCount = math.Utils.linearInterpolation(prevBalance, nextBalance, i - 1, i, 0);							
 							final PawnComplement complement = new PawnComplement(zeroPawnHash, -pawnCount * coeff, totalCount);
-							pawnComplementList.add(complement);
+							pawnComplementList.put(zeroPawnHash, complement);
 						}
 						
 						break;
@@ -254,7 +272,41 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 				}
 			}
 		}
+		
 		return pawnComplementList;
+	}
+	
+	private void calculateAndWriteTableEvaluator() throws IOException {
+		final Map<MaterialHash, PawnComplement> pawnComplementMap = calculatePawnComplementMap(pawnDifferentialStatistics);
+		
+		final IMaterialEvaluator additiveEvaluator = new AdditiveMaterialEvaluator() {
+			@Override
+			public int getPieceEvaluation(final int color, final int pieceType) {
+				final double colorMultiplier = (color == Color.WHITE) ? +1 : -1;
+				
+				return PieceTypeEvaluations.getPawnMultiply(colorMultiplier * pawnComplementForPieces[pieceType]);
+			}
+		};
+		
+		for (int i = 0; i < TableMaterialEvaluator.TABLE_SIZE; i++) {
+			final MaterialHash materialHash = TableMaterialEvaluator.getMaterialHashForIndex(i);
+			final PawnComplement complement = pawnComplementMap.get(materialHash);
+			
+			int evaluation;
+			
+			if (complement != null && complement.getTotalCount() >= MIN_TOTAL_COUNT_FOR_EVALUATOR)
+				evaluation = PieceTypeEvaluations.getPawnMultiply(complement.getComplement());
+			else
+				evaluation = additiveEvaluator.evaluateMaterial(materialHash);
+			
+			tableEvaluator.setEvaluationForIndex(i, evaluation);
+			
+			// Just a check
+			if (tableEvaluator.evaluateMaterial(materialHash) != evaluation)
+				throw new RuntimeException("Internal error - wrong evaluation");
+		}
+		
+		tableEvaluator.write(tableEvaluatorFile);
 	}
 		
 	/**

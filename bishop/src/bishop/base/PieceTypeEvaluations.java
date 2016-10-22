@@ -4,10 +4,10 @@ package bishop.base;
 public final class PieceTypeEvaluations {
 
 	public static final int PAWN_EVALUATION   = 1000;
-	public static final int KNIGHT_EVALUATION = 3034;
-	public static final int BISHOP_EVALUATION = 3254;
-	public static final int ROOK_EVALUATION   = 4738;
-	public static final int QUEEN_EVALUATION  = 9323;
+	public static final int KNIGHT_EVALUATION = 3144;
+	public static final int BISHOP_EVALUATION = 3350;
+	public static final int ROOK_EVALUATION   = 4877;
+	public static final int QUEEN_EVALUATION  = 9595;
 	public static final int KING_EVALUATION   = 0;
 	
 	private static final int[] pieceTypeEvaluations = initializePieceTypeEvaluations();

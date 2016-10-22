@@ -1,6 +1,7 @@
 package parallel;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -9,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import javax.xml.ws.Holder;
 
@@ -109,9 +111,27 @@ public class Parallel {
 	}
 	
 	/**
+	 * Ensures calling body.accept(e) for every item e in items.
+	 * @param items items
+	 * @param body body to call
+	 */
+	public <T> void parallelForEach (final Collection<T> items, final Consumer<T> body) throws InterruptedException, ExecutionException {
+		final List<T> list;
+		
+		if (items instanceof List<?>)
+			list = (List<T>) items;
+		else
+			list = new ArrayList<T>(items);
+		
+		final int size = list.size();
+		
+		parallelFor(0, size, (i) -> body.accept(list.get(i)));
+	}
+
+	/**
 	 * Ensures calling body.run (index) for from <= index < to.
 	 * @param from lower index boundary (inclusive)
-	 * @param to upper index boundary (inclusive)
+	 * @param to upper index boundary (exclusive)
 	 * @param body body to call
 	 * @throws InterruptedException
 	 * @throws ExecutionException

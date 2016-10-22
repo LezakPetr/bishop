@@ -1,15 +1,16 @@
 package bishop.builderBase;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import bishop.base.Game;
 import bishop.base.PgnReader;
+import parallel.Parallel;
 
 /**
  * Sends all games in PGN list to the walker.
@@ -17,11 +18,20 @@ import bishop.base.PgnReader;
  * @author Ing. Petr Ležák
  */
 public class PgnListProcessor {
+	private final Parallel parallel;
 	private final List<String> pgnList = new ArrayList<>();
 	private IGameWalker gameWalker;
+	
+	public PgnListProcessor(final Parallel parallel) {
+		this.parallel = parallel;
+	}
 	 
-	public void processGames() throws FileNotFoundException, IOException {
-		for (String pgnFile: pgnList) {
+	public void processGames() throws IOException, InterruptedException, ExecutionException {
+		parallel.parallelForEach(pgnList, this::processPgnFile);
+	}
+
+	public void processPgnFile(String pgnFile) {
+		try {
 			System.out.println(pgnFile);
 			
 			final PgnReader reader = new PgnReader();
@@ -36,10 +46,16 @@ public class PgnListProcessor {
 					if (game == null)
 						break;
 					
-					gameWalker.processGame(game);
+					synchronized (gameWalker) {
+						gameWalker.processGame(game);
+					}
 				}
 			}
 		}
+		catch (Throwable ex) {
+			throw new RuntimeException("Cannot read PGN " + pgnFile, ex);
+		}
+		
 	}
 	
 	public void clearPgnList() {
