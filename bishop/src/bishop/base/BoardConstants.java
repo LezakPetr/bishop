@@ -17,6 +17,7 @@ public class BoardConstants {
     public static final long RANK_8_MASK  = 0xFF00000000000000L;
     
     public static final long RANK_18_MASK = RANK_1_MASK | RANK_8_MASK;
+	public static final long PAWN_ALLOWED_SQUARES = ~BoardConstants.RANK_18_MASK;
 
 	// Mask of files
     public static final long FILE_A_MASK  = 0x0101010101010101L;
@@ -553,7 +554,7 @@ public class BoardConstants {
 	 * @return mask of allowed squares
 	 */
 	public static long getPieceAllowedSquares(final int pieceType) {
-		return (pieceType == PieceType.PAWN) ? ~BoardConstants.RANK_18_MASK : BitBoard.FULL;
+		return (pieceType == PieceType.PAWN) ? PAWN_ALLOWED_SQUARES : BitBoard.FULL;
 	}
 
 }

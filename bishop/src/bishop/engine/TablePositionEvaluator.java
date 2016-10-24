@@ -2,12 +2,20 @@ package bishop.engine;
 
 import java.io.PrintWriter;
 
+import bishop.base.BitBoard;
 import bishop.base.BitLoop;
+import bishop.base.BoardConstants;
 import bishop.base.Color;
 import bishop.base.PieceType;
 import bishop.base.Position;
 
 public final class TablePositionEvaluator {
+	
+	private static final long[] PAWN_MASKS = {
+		BoardConstants.PAWN_ALLOWED_SQUARES & (BoardConstants.FILE_C_MASK | BoardConstants.FILE_D_MASK | BoardConstants.FILE_E_MASK | BoardConstants.FILE_F_MASK),
+		BoardConstants.PAWN_ALLOWED_SQUARES & (BoardConstants.FILE_D_MASK | BoardConstants.FILE_E_MASK),
+		BitBoard.EMPTY
+	};
 	
 	private final TablePositionEvaluatorSettings settings;
 	
