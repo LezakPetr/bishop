@@ -23,6 +23,7 @@ public class PieceType {
 	// Subinterval of figures (pieces without pawn)
 	public static final int FIGURE_FIRST = 0;
 	public static final int FIGURE_LAST = 5;
+	public static final int FIGURE_COUNT = FIGURE_LAST - FIGURE_FIRST;
 	
 	// Subinterval of figures that can pawn promote to
 	public static final int PROMOTION_FIGURE_FIRST = 1;
@@ -46,6 +47,7 @@ public class PieceType {
 	private static final String[] PIECE_TYPE_NAMES = {
 		NAME_KING, NAME_QUEEN, NAME_ROOK, NAME_BISHOP, NAME_KNIGHT, NAME_PAWN
 	};
+
 	
 	/**
 	 * Checks if given piece type is valid.
@@ -116,7 +118,7 @@ public class PieceType {
 		return pieceType >= VARIABLE_FIRST && pieceType < VARIABLE_LAST;
 	}
 
-	public static Object getName(final int pieceType) {
+	public static String getName(final int pieceType) {
 		return PIECE_TYPE_NAMES[pieceType];
 	}
 	

@@ -1,6 +1,5 @@
 package bishop.tablebase;
 
-import bishop.base.IPosition;
 import bishop.base.Position;
 
 public abstract class TableIteratorBase implements ITableIteratorRead {

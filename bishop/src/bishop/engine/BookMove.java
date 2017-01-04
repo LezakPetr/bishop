@@ -1,7 +1,5 @@
 package bishop.engine;
 
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLBoundOperation.ANONYMOUS;
-
 import bishop.base.Annotation;
 import bishop.base.Move;
 

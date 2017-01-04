@@ -6,7 +6,6 @@ import java.util.Set;
 import bishop.base.MaterialHash;
 import bishop.base.Position;
 import bishop.tablebase.FileNameCalculator;
-import bishop.tablebase.FilePositionResultSource;
 import bishop.tablebase.ITableRead;
 import bishop.tablebase.LazyFilePositionResultSource;
 import bishop.tablebase.TableBlockCache;

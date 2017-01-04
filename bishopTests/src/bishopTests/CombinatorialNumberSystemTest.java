@@ -11,7 +11,6 @@ import bishop.tablebase.GeneralCombinatorialNumberSystem;
 import bishop.tablebase.ICombinatorialNumberSystem;
 import bishop.tablebase.OneCombinatorialNumberSystem;
 import bishop.tablebase.TwoCombinatorialNumberSystem;
-import bishop.tablebase.ZeroCombinatorialNumberSystem;
 
 public class CombinatorialNumberSystemTest {
 

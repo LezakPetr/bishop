@@ -1,6 +1,7 @@
 package bishopTests;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -9,8 +10,10 @@ import bishop.base.BitBoard;
 import bishop.base.Color;
 import bishop.base.Fen;
 import bishop.base.Position;
+import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.AttackCalculator;
 import bishop.engine.AttackEvaluationTable;
+import bishop.engine.IPositionEvaluation;
 
 public class AttackCalculatorTest {
 	@Test
@@ -57,7 +60,8 @@ public class AttackCalculatorTest {
 		};
 		
 		final Fen fen = new Fen();
-		final AttackCalculator calculator = new AttackCalculator();
+		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
+		final AttackCalculator calculator = new AttackCalculator(evaluationFactory);
 		
 		for (TestValue testValue: testValueArray) {
 			fen.readFenFromString(testValue.positionFen);
@@ -94,7 +98,8 @@ public class AttackCalculatorTest {
 		};
 		
 		final Fen fen = new Fen();
-		final AttackCalculator calculator = new AttackCalculator();
+		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
+		final AttackCalculator calculator = new AttackCalculator(evaluationFactory);
 		
 		for (TestValue testValue: testValueArray) {
 			fen.readFenFromString(testValue.positionFen);

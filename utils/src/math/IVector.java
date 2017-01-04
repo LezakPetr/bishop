@@ -1,8 +1,5 @@
 package math;
 
-import java.util.function.DoubleFunction;
-import java.util.function.DoubleUnaryOperator;
-
 public interface IVector {
 	/**
 	 * Returns dimension of this vector.

@@ -1,6 +1,7 @@
 package bishop.engine;
 
 import java.io.PrintWriter;
+import java.util.function.Supplier;
 
 import bishop.base.BitBoard;
 import bishop.base.BoardConstants;
@@ -15,10 +16,12 @@ public final class BishopColorPositionEvaluator {
 	private static final double PAWN_ON_SAME_COLOR_BONUS = -0.05;
 	
 	private final int[] pawnOnSameColorBonus;
-	private int evaluation;
+	private final IPositionEvaluation evaluation;
 	
 	
-	public BishopColorPositionEvaluator() {
+	public BishopColorPositionEvaluator(final Supplier<IPositionEvaluation> evaluationFactory) {
+		this.evaluation = evaluationFactory.get();
+		
 		pawnOnSameColorBonus = new int[SquareColor.LAST];
 		
 		for (int color = SquareColor.FIRST; color < SquareColor.LAST; color++) {
@@ -28,19 +31,18 @@ public final class BishopColorPositionEvaluator {
 		}
 	}
 
-	public int evaluatePosition(final Position position) {
-		evaluation = 0;
+	public IPositionEvaluation evaluatePosition(final Position position) {
+		evaluation.clear();
 		
 		for (int pieceColor = Color.FIRST; pieceColor < Color.LAST; pieceColor++) {
-			evaluation += evaluatePositionForColor(position, pieceColor);
+			evaluatePositionForColor(position, pieceColor);
 		}
 		
 		return evaluation;
 	}
 	
-	public int evaluatePositionForColor(final Position position, final int pieceColor) {
+	private void evaluatePositionForColor(final Position position, final int pieceColor) {
 		final long bishopMask = position.getPiecesMask(pieceColor, PieceType.BISHOP);
-		evaluation = 0;
 		
 		for (int squareColor = SquareColor.FIRST; squareColor < SquareColor.LAST; squareColor++) {
 			final long squareMask = BoardConstants.getSquareColorMask(squareColor);
@@ -48,16 +50,14 @@ public final class BishopColorPositionEvaluator {
 			if ((bishopMask & squareMask) != 0) {
 				final long pawnMask = position.getPiecesMask(pieceColor, PieceType.PAWN);
 				final int pawnCount = BitBoard.getSquareCount(pawnMask & squareMask);
-				
-				evaluation += pawnCount * pawnOnSameColorBonus[pieceColor];
+			
+				evaluation.addCoeff(PositionEvaluationCoeffs.PAWN_ON_SAME_COLOR_BONUS, pieceColor, pawnCount);
 			}
 		}
-		
-		return evaluation;
 	}
 
 	public void writeLog(final PrintWriter writer) {
-		writer.println ("Bishop color evaluation: " + Evaluation.toString(evaluation));
+		writer.println ("Bishop color evaluation: " + evaluation.toString());
 	}
 
 }

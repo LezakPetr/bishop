@@ -22,6 +22,7 @@ public class File {
 	public static final int LAST = 8;
 	public static final int NONE = 15;
 	
+	public static final int COUNT = LAST - FIRST;
 	public static final int BIT_COUNT = 3;
 	
 	
@@ -65,5 +66,9 @@ public class File {
 
 	public static char toChar(final int file) {
 		return NOTATION[file];
+	}
+
+	public static int getOppositeFile(final int file) {
+		return FH - file;
 	}
 }

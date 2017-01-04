@@ -1,6 +1,5 @@
 package bishop.engine;
 
-import parallel.Parallel;
 import bishop.base.IHandlerRegistrar;
 import bishop.base.Position;
 

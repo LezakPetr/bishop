@@ -1,19 +1,22 @@
 package bishop.engine;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Supplier;
 
 import parallel.Parallel;
 
 public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 	
 	private IPositionEvaluatorFactory positionEvaluatorFactory;
+	private Supplier<IPositionEvaluation> evaluationFactory;
 	private int maximalDepth;
 	private Parallel parallel;
 
 	public IPositionEvaluatorFactory getPositionEvaluatorFactory() {
 		return positionEvaluatorFactory;
+	}
+	
+	public void setEvaluationFactory(final Supplier<IPositionEvaluation> evaluationFactory) {
+		this.evaluationFactory = evaluationFactory;
 	}
 
 	public void setPositionEvaluatorFactory(final IPositionEvaluatorFactory positionEvaluatorFactory) {
@@ -57,6 +60,7 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 		final IPositionEvaluator evaluator = createPositionEvaluator();
 		final SerialSearchEngine searchEngine = new SerialSearchEngine(parallel);
 		
+		searchEngine.setEvaluationFactory(evaluationFactory);
 		searchEngine.setPositionEvaluator(evaluator);
 		searchEngine.setMaximalDepth(maximalDepth);
 		

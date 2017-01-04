@@ -2,8 +2,6 @@ package bishop.tablebaseGenerator;
 
 import java.io.File;
 
-import javax.swing.text.Position.Bias;
-
 import bishop.base.BitBoard;
 import bishop.base.BitLoop;
 import bishop.base.BoardConstants;
@@ -17,7 +15,6 @@ import bishop.tablebase.FileNameCalculator;
 import bishop.tablebase.FilePositionResultSource;
 import bishop.tablebase.TableBlockCache;
 import bishop.tablebase.TableResult;
-import bishop.tables.PawnAttackTable;
 
 public class RookQueryTool {
 

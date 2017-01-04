@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Supplier;
 
 import parallel.Parallel;
 import bishop.base.DefaultAdditiveMaterialEvaluator;
@@ -17,8 +18,10 @@ import bishop.base.MoveList;
 import bishop.base.PgnReader;
 import bishop.base.Position;
 import bishop.controller.SearchResources;
+import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.Evaluation;
 import bishop.engine.HashTableImpl;
+import bishop.engine.IPositionEvaluation;
 import bishop.engine.ISearchManager;
 import bishop.engine.ISearchManagerHandler;
 import bishop.engine.PositionEvaluatorSwitchFactory;
@@ -40,12 +43,16 @@ public class SearchPerformanceTest {
 	
 	protected void initializeSearchManager(final TablebasePositionEvaluator tablebaseEvaluator, final long maxTimeForPosition) {
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
-		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, DefaultAdditiveMaterialEvaluator.getInstance());
+		
+		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, DefaultAdditiveMaterialEvaluator.getInstance(), AlgebraicPositionEvaluation.getTestingFactory());
 
 		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
 		final int threadCount = Math.min(Runtime.getRuntime().availableProcessors(), SearchResources.MAX_THREADS);
+		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
+		
 		engineFactory.setParallel(new Parallel(threadCount));
 		engineFactory.setPositionEvaluatorFactory(evaluatorFactory);
+		engineFactory.setEvaluationFactory(evaluationFactory);
 		engineFactory.setMaximalDepth(25);
 		
 		final HashTableImpl hashTable = new HashTableImpl(20);

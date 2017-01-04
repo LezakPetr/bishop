@@ -1,13 +1,17 @@
 package bishopTests;
 
+import java.util.function.Supplier;
+
 import org.junit.Test;
 
 import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.IMaterialEvaluator;
 import bishop.base.Position;
+import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.AttackCalculator;
 import bishop.engine.EndingPositionEvaluator;
 import bishop.engine.Evaluation;
+import bishop.engine.IPositionEvaluation;
 import bishop.engine.IPositionEvaluator;
 import bishop.engine.MiddleGamePositionEvaluator;
 import bishop.engine.PositionEvaluatorSwitch;
@@ -18,9 +22,10 @@ public class PositionEvaluatorTest {
 	private void testPositionEvaluatorSpeed (final Position position, final IPositionEvaluator evaluator) {
 		final int iterationCount = 2000000;
 		final long t1 = System.currentTimeMillis();
+		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
 
 		for (int i = 0; i < iterationCount; i++)
-			evaluator.evaluatePosition(position, Evaluation.MIN, Evaluation.MAX, new AttackCalculator());
+			evaluator.evaluatePosition(position, Evaluation.MIN, Evaluation.MAX, new AttackCalculator(evaluationFactory));
 
 		final long t2 = System.currentTimeMillis();
 		final double iterPerSec = (double) iterationCount * 1000 / (t2 - t1);
@@ -36,8 +41,10 @@ public class PositionEvaluatorTest {
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 		final IMaterialEvaluator materialEvaluator = DefaultAdditiveMaterialEvaluator.getInstance();
 		
-		testPositionEvaluatorSpeed (position, new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), materialEvaluator));
-		testPositionEvaluatorSpeed (position, new EndingPositionEvaluator(settings.getEndingPositionEvaluatorSettings(), materialEvaluator));
-		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings, materialEvaluator));
+		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
+		
+		testPositionEvaluatorSpeed (position, new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), materialEvaluator, evaluationFactory));
+		testPositionEvaluatorSpeed (position, new EndingPositionEvaluator(materialEvaluator, evaluationFactory));
+		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings, materialEvaluator, evaluationFactory));
 	}
 }

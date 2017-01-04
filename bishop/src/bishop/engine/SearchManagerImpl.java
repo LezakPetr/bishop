@@ -595,15 +595,6 @@ public final class SearchManagerImpl implements ISearchManager {
 			return managerState;
 		}		
 	}
-	
-	private void sendMoveBeforeSearch (final Move move) {
-		final MoveList principalVariation = searchResult.getPrincipalVariation();
-		principalVariation.clear();
-		principalVariation.add(move);
-		
-		searchFinished = true;
-		monitor.notify();
-	}
 		
 	/**
 	 * Returns hash table.

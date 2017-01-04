@@ -3,9 +3,7 @@ package bishopTests;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Supplier;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -15,7 +13,9 @@ import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.Fen;
 import bishop.base.MoveList;
 import bishop.base.Position;
+import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.Evaluation;
+import bishop.engine.IPositionEvaluation;
 import bishop.engine.ISearchEngine;
 import bishop.engine.MaterialPositionEvaluator;
 import bishop.engine.RepeatedPositionRegister;
@@ -69,6 +69,7 @@ public class SearchEngineTest {
 		final int threadCount = (runParallel) ? Math.min(availableProcessors, 4) : 1;
 		final Parallel parallel = new Parallel(threadCount);
 		final SerialSearchEngine engine = new SerialSearchEngine(parallel);
+		engine.setEvaluationFactory(AlgebraicPositionEvaluation.getTestingFactory());
 		
 		configureEngine(engine);
 		
@@ -93,7 +94,8 @@ public class SearchEngineTest {
 
 
 	public void configureEngine(final SerialSearchEngine engine) {
-		final MaterialPositionEvaluator evaluator = new MaterialPositionEvaluator();
+		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
+		final MaterialPositionEvaluator evaluator = new MaterialPositionEvaluator(evaluationFactory);
 		
 		engine.setPositionEvaluator(evaluator);
 		engine.setMaximalDepth(20);
