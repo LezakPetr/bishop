@@ -10,9 +10,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-
-import javax.xml.ws.Holder;
 
 /**
  * Parallel utilities.
@@ -137,18 +136,13 @@ public class Parallel {
 	 * @throws ExecutionException
 	 */
 	public void parallelFor (final int from, final int to, final IForBody body) throws InterruptedException, ExecutionException {
-		final Holder<Integer> indexHolder = new Holder<>(from);
+		final AtomicInteger sharedIndex = new AtomicInteger(from);
 		
 		runParallel(new Callable<Throwable>() {
 			public Throwable call() {
 				try {
 					while (true) {
-						final int index;
-						
-						synchronized (indexHolder) {
-							index = indexHolder.value;
-							indexHolder.value = index + 1;
-						}
+						final int index = sharedIndex.getAndIncrement();
 						
 						if (index >= to)
 							break;

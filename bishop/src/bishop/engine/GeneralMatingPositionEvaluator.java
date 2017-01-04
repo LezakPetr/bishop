@@ -1,9 +1,8 @@
 package bishop.engine;
 
 import java.io.PrintWriter;
+import java.util.function.Supplier;
 
-import parallel.Parallel;
-import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.IMaterialEvaluator;
 import bishop.base.Color;
 import bishop.base.Position;
@@ -13,13 +12,14 @@ import bishop.tables.MatingKingEvaluationTable;
 public final class GeneralMatingPositionEvaluator implements IPositionEvaluator {
 	
 	private final IMaterialEvaluator materialEvaluator;
-	private int evaluation;
+	private final IPositionEvaluation evaluation;
 	
-	public GeneralMatingPositionEvaluator (final IMaterialEvaluator materialEvaluator) {
+	public GeneralMatingPositionEvaluator (final IMaterialEvaluator materialEvaluator, final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.materialEvaluator = materialEvaluator;
+		this.evaluation = evaluationFactory.get();
 	}
 	
-	public int evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
 		attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 		
 		final int matingColor = position.getSideWithMorePieces();
@@ -33,13 +33,15 @@ public final class GeneralMatingPositionEvaluator implements IPositionEvaluator 
 		
 		final int materialEvaluation = materialEvaluator.evaluateMaterial(position);
 		
-		evaluation = materialEvaluation + Evaluation.getAbsolute(matingSideEvaluation, matingColor);
+		evaluation.clear();
+		evaluation.addEvaluation(materialEvaluation);
+		evaluation.addEvaluation(Evaluation.getAbsolute(matingSideEvaluation, matingColor));
 		
 		return evaluation;
 	}
 	
 	public void writeLog (final PrintWriter writer) {
-		writer.println ("General mating evaluation: " + Evaluation.toString (evaluation));
+		writer.println ("General mating evaluation: " + evaluation.toString());
 	}
 
 }

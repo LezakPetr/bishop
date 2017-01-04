@@ -2,20 +2,18 @@ package bishop.engine;
 
 import java.io.PrintWriter;
 
-import parallel.Parallel;
-
 import bishop.base.Position;
 
 public class ConstantPositionEvaluator implements IPositionEvaluator {
 	
-	private int evaluation;
+	private IPositionEvaluation evaluation;
 	
-	public ConstantPositionEvaluator (final int evaluation) {
+	public ConstantPositionEvaluator (final IPositionEvaluation evaluation) {
 		this.evaluation = evaluation;
 	}
 	
 	@Override
-	public int evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
 		attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 		
 		return evaluation;
@@ -26,7 +24,7 @@ public class ConstantPositionEvaluator implements IPositionEvaluator {
 	 * @param writer target writer
 	 */
 	public void writeLog (final PrintWriter writer) {
-		writer.println ("Evaluation: " + Evaluation.toString (evaluation));
+		writer.println ("Evaluation: " + evaluation.toString());
 	}
 
 }

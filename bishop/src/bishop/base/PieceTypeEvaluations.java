@@ -1,5 +1,6 @@
 package bishop.base;
 
+import math.Utils;
 
 public final class PieceTypeEvaluations {
 
@@ -55,7 +56,7 @@ public final class PieceTypeEvaluations {
 	}
 	
 	public static int getPawnMultiply (final double multiplier) {
-		return (int) Math.round(multiplier * PieceTypeEvaluations.PAWN_EVALUATION);
+		return Utils.roundToInt (multiplier * PieceTypeEvaluations.PAWN_EVALUATION);
 	}
 	
 }

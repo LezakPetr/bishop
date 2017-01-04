@@ -3,6 +3,7 @@ package bishop.evaluationStatistics;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -16,10 +17,7 @@ import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
 import bishop.engine.TableMaterialEvaluator;
-import math.IMatrix;
-import math.IVector;
-import math.MatrixImpl;
-import math.VectorImpl;
+import math.EquationSystemSolver;
 
 /**
  * Processor that calculates evaluations of material constelation of positions. 
@@ -54,6 +52,8 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 	// Evaluation of every material combination
 	private final TableMaterialEvaluator tableEvaluator = new TableMaterialEvaluator(null);
 
+	// Balance of position with single pawn difference
+	private double singlePawnBalance;
 	
 	private MaterialHash prevHash;
 	private int stability;
@@ -119,6 +119,7 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 		calculatePieceDifferentialStatistics();
 		calculatePawnComplementForPieces();
 		calculateAndWriteTableEvaluator();
+		calculateSinglePawnBalance();
 	}
 	
 	private void calculateSymmetricalStatistics() {
@@ -177,40 +178,32 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 	// Calculates evaluation of every piece type by least squares method
 	private void calculatePawnComplementForPieces() {
 		final Map<MaterialHash, PawnComplement> pawnComplementMap = calculatePawnComplementMap(pieceDifferentialStatistics);
+		final EquationSystemSolver solver = new EquationSystemSolver(PieceType.PROMOTION_FIGURE_COUNT, 1);
 		
-		final int equationCount = pawnComplementMap.size();
-		final double[][] aElements = new double[equationCount][PieceType.PROMOTION_FIGURE_COUNT];
-		final double[] bElements = new double[equationCount];
-		final double[] weightsElements = new double[equationCount];
-		
-		int equationIndex = 0;
 		
 		for (PawnComplement complement: pawnComplementMap.values()) {
 			final MaterialHash materialHash = complement.getMaterialHash();
+			final double[] coeffs = new double[PieceType.PROMOTION_FIGURE_COUNT];
 			
 			for (int j = 0; j < PieceType.PROMOTION_FIGURE_COUNT; j++) {
 				final int pieceType = PieceType.PROMOTION_FIGURE_FIRST + j;
-				aElements[equationIndex][j] = materialHash.getPieceCount(Color.WHITE, pieceType) - materialHash.getPieceCount(Color.BLACK, pieceType);
+				coeffs[j] = materialHash.getPieceCount(Color.WHITE, pieceType) - materialHash.getPieceCount(Color.BLACK, pieceType);
 			}
 			
-			bElements[equationIndex] = complement.getComplement();
-			weightsElements[equationIndex] = complement.getTotalCount();
-			equationIndex++;
+			final double weight = complement.getTotalCount();
+			
+			solver.addEquation(coeffs, new double[] {complement.getComplement()}, weight);
 		}
 		
-		final IMatrix a = new MatrixImpl(aElements);
-		final IVector b = new VectorImpl(bElements);
-		final IVector weights = new VectorImpl(weightsElements);
-		
-		final IVector result = math.Utils.solveEquationsLeastSquare (a, b, weights);
+		final List<Double> result = solver.solveEquations().get(0);
 		
 		pawnComplementForPieces[PieceType.PAWN] = PieceTypeEvaluations.PAWN_EVALUATION;
 		pawnComplementForPieces[PieceType.KING] = PieceTypeEvaluations.KING_EVALUATION;
 		
 		for (int j = 0; j < PieceType.PROMOTION_FIGURE_COUNT; j++) {
 			final int pieceType = PieceType.PROMOTION_FIGURE_FIRST + j;
-			final double complement = result.getElement(j);
-			pawnComplementForPieces[pieceType] = result.getElement(j);
+			final double complement = result.get(j).doubleValue();
+			pawnComplementForPieces[pieceType] = complement;
 			
 			System.out.println("Pawn complement for " + PieceType.getName(pieceType) + " is " + complement);
 		}
@@ -258,7 +251,7 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 						final long totalCount = Math.min(prevStatistics.getTotalCount(), nextStatistics.getTotalCount());
 						
 						if (totalCount >= MIN_TOTAL_COUNT) {
-							final double pawnCount = math.Utils.linearInterpolation(prevBalance, nextBalance, i - 1, i, 0);							
+							final double pawnCount = math.Utils.linearInterpolation(prevBalance, nextBalance, i - 1, i, 0.0);							
 							final PawnComplement complement = new PawnComplement(zeroPawnHash, -pawnCount * coeff, totalCount);
 							pawnComplementList.put(zeroPawnHash, complement);
 						}
@@ -308,7 +301,22 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 		
 		tableEvaluator.write(tableEvaluatorFile);
 	}
+	
+	private void calculateSinglePawnBalance() {
+		final MaterialStatistics statistics = pieceDifferentialStatistics.entrySet().stream()
+			.filter(e -> isSinglePawnDifference (e.getKey()))
+			.map(e -> e.getValue())
+			.reduce(new MaterialStatistics(), MaterialStatistics::sum);
 		
+		singlePawnBalance = statistics.getBalance();
+	}
+		
+	private boolean isSinglePawnDifference(final MaterialHash key) {
+		return key.isBalancedExceptFor(PieceType.PAWN)
+				&& key.getPieceCount(Color.WHITE, PieceType.PAWN) == 1
+				&& key.getPieceCount(Color.BLACK, PieceType.PAWN) == 0;
+	}
+
 	/**
 	 * Creates new statistic map from given one. The keys (material hashes) are mapped by keyMapper. If there will be collision of returned keys the
 	 * statistics are summed together.
@@ -319,5 +327,9 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 	public Map<MaterialHash, MaterialStatistics> mergeMapKeys(final Map<MaterialHash, MaterialStatistics> origMap, final UnaryOperator<MaterialHash> keyMapper)
 	{
 		return origMap.entrySet().stream().collect(Collectors.toMap(e -> keyMapper.apply(e.getKey()), e -> e.getValue(), MaterialStatistics::sum));
+	}
+
+	public double getSinglePawnBalance() {
+		return singlePawnBalance;
 	}
 }

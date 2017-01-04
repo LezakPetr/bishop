@@ -1,12 +1,9 @@
 package bishop.bookBuilder;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PushbackReader;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,11 +17,8 @@ import bishop.base.GameResult;
 import bishop.base.IGameNode;
 import bishop.base.ITreeIterator;
 import bishop.base.Move;
-import bishop.base.PgnReader;
 import bishop.base.PgnWriter;
 import bishop.base.Position;
-import bishop.builderBase.IGameWalker;
-import bishop.builderBase.IPositionWalker;
 import bishop.builderBase.LinearGameWalker;
 import bishop.builderBase.PgnListProcessor;
 import parallel.Parallel;

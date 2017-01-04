@@ -13,7 +13,7 @@ public interface IPositionEvaluator {
 	 * @param attackCalculator calculator of attacks, it will be filled by current position
 	 * @return evaluation from view of white side
 	 */
-	public int evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator);
+	public IPositionEvaluation evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator);
 		
 	/**
 	 * Writes information about the position into given writer.

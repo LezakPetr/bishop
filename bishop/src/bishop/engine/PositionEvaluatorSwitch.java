@@ -1,8 +1,8 @@
 package bishop.engine;
 
 import java.io.PrintWriter;
+import java.util.function.Supplier;
 
-import parallel.Parallel;
 import bishop.base.Color;
 import bishop.base.IMaterialEvaluator;
 import bishop.base.IPieceCounts;
@@ -23,14 +23,14 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 	
 	private Position position;
 	private IPositionEvaluator currentEvaluator;
-	private int evaluation;
+	private IPositionEvaluation evaluation;
 
 	
-	public PositionEvaluatorSwitch(final PositionEvaluatorSwitchSettings settings, final IMaterialEvaluator materialEvaluator) {
-		middleGameEvaluator = new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), materialEvaluator);
-		generalMatingEvaluator = new GeneralMatingPositionEvaluator(materialEvaluator);
-		drawEvaluator = new DrawPositionEvaluator(materialEvaluator);
-		endingEvaluator = new EndingPositionEvaluator(settings.getEndingPositionEvaluatorSettings(), materialEvaluator);
+	public PositionEvaluatorSwitch(final PositionEvaluatorSwitchSettings settings, final IMaterialEvaluator materialEvaluator, final Supplier<IPositionEvaluation> evaluationFactory) {
+		middleGameEvaluator = new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), materialEvaluator, evaluationFactory);
+		generalMatingEvaluator = new GeneralMatingPositionEvaluator(materialEvaluator, evaluationFactory);
+		drawEvaluator = new DrawPositionEvaluator(materialEvaluator, evaluationFactory);
+		endingEvaluator = new EndingPositionEvaluator(materialEvaluator, evaluationFactory);
 		
 		colorCounts = new int[Color.LAST];
 		pieceCounts = new int[Color.LAST][PieceType.LAST];
@@ -103,7 +103,7 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 	 * @param position position to evaluate
 	 * @return evaluation from view of white side
 	 */
-	public int evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
 		this.position = position;
 		
 		calculatePieceCounts();

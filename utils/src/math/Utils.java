@@ -16,6 +16,14 @@ public class Utils {
 		array[indexB] = pom;
 	}
 	
+
+	public static void swapArrayItems(final double[] array, final int indexA, final int indexB) {
+		final double pom = array[indexA];
+		
+		array[indexA] = array[indexB];
+		array[indexB] = pom;
+	}
+	
 	/**
 	 * Creates square matrix (2D array) with given dimension. Matrix will have ones on the diagonal and zeros elsewhere.
 	 * @param dimension dimension of the matrix
@@ -41,18 +49,64 @@ public class Utils {
 		return y1 + (y2 - y1) / (x2 - x1) * (x - x1);
 	}
 
-	public static IVector solveEquationsLeastSquare(final IMatrix a, final IVector b, final IVector weights) {
-		final IVector sqrtWeights = Vectors.applyToElements(weights, (x) -> Math.sqrt(x));
-		final IVector normalizedWeights = Vectors.normalize (sqrtWeights);
+	/**
+	 * Rounds the number to long.
+	 * Rounding is done to the closest long, ties are rounded out of zero.
+	 * @param value
+	 * @return rounded value
+	 */
+	private static long round (final double value) {
+		final long signum = (long) Math.signum(value);
+		final double abs = Math.abs(value);
 		
-		final IMatrix weightedA = Matrices.multiplyRows (a, normalizedWeights);
-		final IMatrix at = Matrices.transpose(weightedA);
+		return signum * Math.round(abs);
+	}
+	
+	/**
+	 * Rounds the number to integer. Throws an exception if int range is exceeded.
+	 * Rounding is done to the closest int, ties are rounded out of zero.
+	 * @param value
+	 * @return rounded value
+	 */
+	public static int roundToInt (final double value) {
+		final long roundedToLong = round (value);
+		final int roundedToInt = (int) roundedToLong;
 		
-		final IMatrix m = Matrices.multiply(at, weightedA);
-		final IMatrix invM = Matrices.inverse(m);
+		if (roundedToLong != roundedToInt)
+			throw new RuntimeException("Value out of range: " + value);
 		
-		final IVector updatedB = Matrices.multiply(at, Vectors.elementMultiply(b, normalizedWeights));
+		return roundedToInt;
+	}
+	
+	/**
+	 * Rounds the number to short. Throws an exception if short range is exceeded.
+	 * Rounding is done to the closest short, ties are rounded out of zero.
+	 * @param value
+	 * @return rounded value
+	 */
+	public static short roundToShort (final double value) {
+		final long roundedToLong = round (value);
+		final short roundedToShort = (short) roundedToLong;
 		
-		return Matrices.multiply(invM, updatedB);
+		if (roundedToLong != roundedToShort)
+			throw new RuntimeException("Value out of range: " + value);
+		
+		return roundedToShort;
+	}
+	
+	/**
+	 * Rounds the number to byte. Throws an exception if byte range is exceeded.
+	 * Rounding is done to the closest byte, ties are rounded out of zero.
+	 * @param value
+	 * @return rounded value
+	 */
+	public static byte roundToByte (final double value) {
+		final long roundedToLong = round (value);
+		final byte roundedToByte = (byte) roundedToLong;
+		
+		if (roundedToLong != roundedToByte)
+			throw new RuntimeException("Value out of range: " + value);
+		
+		return roundedToByte;
 	}
 }

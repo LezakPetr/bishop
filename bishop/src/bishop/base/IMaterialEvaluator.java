@@ -1,5 +1,6 @@
 package bishop.base;
 
+
 public interface IMaterialEvaluator {
 	/**
 	 * Returns absolute evaluation for given piece counts.

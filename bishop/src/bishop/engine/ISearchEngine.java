@@ -1,5 +1,7 @@
 package bishop.engine;
 
+import java.util.function.Supplier;
+
 import bishop.base.IHandlerRegistrar;
 
 public interface ISearchEngine {
@@ -74,6 +76,13 @@ public interface ISearchEngine {
 	 * @param searchSettings search settings
 	 */
 	public void setSearchSettings(final SearchSettings searchSettings);
+	
+	/**
+	 * Sets evaluation factory
+	 * Engine must be in STOPPED state.
+	 * @param evaluationFactory factory
+	 */
+	public void setEvaluationFactory(final Supplier<IPositionEvaluation> evaluationFactory);
 	
 	/**
 	 * Sets tablebase evaluator.

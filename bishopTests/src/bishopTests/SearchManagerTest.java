@@ -3,6 +3,8 @@ package bishopTests;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.StringReader;
+import java.util.function.Supplier;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -15,8 +17,10 @@ import bishop.base.Holder;
 import bishop.base.MoveList;
 import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
+import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.Evaluation;
 import bishop.engine.HashTableImpl;
+import bishop.engine.IPositionEvaluation;
 import bishop.engine.ISearchEngine;
 import bishop.engine.ISearchManager;
 import bishop.engine.ISearchManagerHandler;
@@ -115,9 +119,11 @@ public class SearchManagerTest {
 
 	private void doSearch(final TestValue[] testValueArray,	final ISearchManager manager, final Holder<Boolean> searchFinished, final int threadCount) throws IOException, InterruptedException {
 		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
+		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
 		
-		engineFactory.setPositionEvaluatorFactory(new MaterialPositionEvaluatorFactory());
+		engineFactory.setPositionEvaluatorFactory(new MaterialPositionEvaluatorFactory(evaluationFactory));
 		engineFactory.setMaximalDepth(25);
+		engineFactory.setEvaluationFactory(evaluationFactory);
 		engineFactory.setParallel(new Parallel(threadCount));
 
 		manager.setEngineFactory(engineFactory);

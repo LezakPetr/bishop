@@ -1,10 +1,6 @@
 package bishop.bookBuilder;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import bishop.base.Color;
 import bishop.base.GameResult;
 import bishop.base.Move;

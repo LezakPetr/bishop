@@ -23,7 +23,7 @@ public class MaterialStatistics {
 	public double getBalance() {
 		return (double) diff / (double) getTotalCount();
 	}
-
+	
 	public long getTotalCount() {
 		return totalCount;
 	}
@@ -76,4 +76,5 @@ public class MaterialStatistics {
 		
 		return result;
 	}
+
 }

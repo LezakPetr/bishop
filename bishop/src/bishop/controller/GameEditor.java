@@ -1,7 +1,5 @@
 package bishop.controller;
 
-import java.io.PrintWriter;
-
 import bishop.base.Game;
 import bishop.base.HandlerRegistrarImpl;
 import bishop.base.IGameNode;
@@ -9,10 +7,6 @@ import bishop.base.IHandlerRegistrar;
 import bishop.base.ITreeIterator;
 import bishop.base.Move;
 import bishop.base.Position;
-import bishop.engine.AttackCalculator;
-import bishop.engine.Evaluation;
-import bishop.engine.PositionEvaluatorSwitch;
-import bishop.engine.PositionEvaluatorSwitchSettings;
 
 public class GameEditor {
 	

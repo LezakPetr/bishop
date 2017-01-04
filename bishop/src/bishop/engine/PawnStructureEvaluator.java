@@ -2,6 +2,7 @@ package bishop.engine;
 
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.function.Supplier;
 
 import bishop.base.BitBoard;
 import bishop.base.BitLoop;
@@ -73,10 +74,12 @@ public class PawnStructureEvaluator {
 	private final long[] backwardPawns;
 	private final long[] doubledPawns;
 	
-	private final PawnStructureEvaluatorSettings settings;
+	private final IPositionEvaluation evaluation;
+	private final PawnStructureCoeffs coeffs;
 	
-	public PawnStructureEvaluator(final PawnStructureEvaluatorSettings settings) {
-		this.settings = settings;
+	public PawnStructureEvaluator(final PawnStructureCoeffs coeffs, final Supplier<IPositionEvaluation> evaluationFactory) {
+		this.evaluation = evaluationFactory.get();
+		this.coeffs = coeffs;
 		
 		backSquares = new long[Color.LAST];
 		frontSquares = new long[Color.LAST];
@@ -148,9 +151,7 @@ public class PawnStructureEvaluator {
 		}
 	}
 	
-	private int evaluateUnprotectedOpenFilePawns(final Position position, final AttackCalculator attackCalculator) {
-		int unprotectedOpenFilePawnsEvaluation = 0;
-		
+	private void evaluateUnprotectedOpenFilePawns(final Position position, final AttackCalculator attackCalculator) {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int oppositeColor = Color.getOppositeColor(color);
 			final long oppositeRookMask = position.getPiecesMask(oppositeColor, PieceType.ROOK);
@@ -160,16 +161,12 @@ public class PawnStructureEvaluator {
 				final long unprotectedPawnMask = ownPawnMask & ~attackCalculator.getPawnAttackedSquares(color);
 				final long unprotectedOpenPawnMask = unprotectedPawnMask & ~frontSquares[oppositeColor];
 				
-				unprotectedOpenFilePawnsEvaluation += BitBoard.getSquareCount(unprotectedOpenPawnMask) * settings.getUnprotectedOpenFilePawnBonus(color);
+				evaluation.addCoeff(coeffs.getCoeffUnprotectedOpenFilePawnBonus(), color, BitBoard.getSquareCount(unprotectedOpenPawnMask));
 			}
 		}
-		
-		return unprotectedOpenFilePawnsEvaluation;
 	}
 	
-	private int evaluatePawnStructure(final Position position, final AttackCalculator attackCalculator) {
-		int evaluation = 0;
-		
+	private void evaluatePawnStructure(final Position position, final AttackCalculator attackCalculator) {
 		final long whiteRookMask = position.getPiecesMask(Color.WHITE, PieceType.ROOK);
 		final long blackRookMask = position.getPiecesMask(Color.BLACK, PieceType.ROOK);
 		
@@ -191,37 +188,35 @@ public class PawnStructureEvaluator {
 					final long neighbourSquares = BoardConstants.getConnectedPawnSquareMask(square);
 					
 					if ((ownPawnMask & neighbourSquares) != 0) {
-						evaluation += settings.getConnectedPassedPawnBonus (color, square);
+						evaluation.addCoeff(coeffs.getConnectedPassedPawnBonusCoeff(color, rank), color);
 					}
 					else {
 						final long protectingSquares = PawnAttackTable.getItem(oppositeColor, square);
 						
 						if ((ownPawnMask & protectingSquares) != 0) {
-							evaluation += settings.getProtectedPassedPawnBonus(color, square);
+							evaluation.addCoeff(coeffs.getProtectedPassedPawnBonusCoeffs(color, rank), color);
 						}
 						else {
-							evaluation += settings.getSinglePassedPawnBonus(color, square);
+							evaluation.addCoeff(coeffs.getSinglePassedPawnBonusCoeffs(color, rank), color);
 						}
 					}
 					
 					// Pawn with rooks
 					if ((whiteRookMask & rearSquaresOnSameFile) != 0 && (blackRookMask & frontSquaresOnSameFile) != 0) {
-						evaluation += settings.getRookPawnBonus(color, rank);
+						evaluation.addCoeff(coeffs.getRookPawnBonusCoeffs(color, rank), color, +1);
 					}
 					
 					if ((blackRookMask & rearSquaresOnSameFile) != 0 && (whiteRookMask & frontSquaresOnSameFile) != 0) {
-						evaluation -= settings.getRookPawnBonus(color, rank);
+						evaluation.addCoeff(coeffs.getRookPawnBonusCoeffs(color, rank), color, -1);
 					}
 				}
 				
 				// Double pawn
 				if ((frontSquaresOnSameFile & ownPawnMask) != 0) {
-					evaluation += settings.getDoublePawnBonus(color);
+					evaluation.addCoeff(coeffs.getDoublePawnBonusCoeffs(color, rank), color);
 				}
 			}
 		}
-		
-		return evaluation;
 	}
 	
 	public long getBackSquares(final int color) {
@@ -259,11 +254,11 @@ public class PawnStructureEvaluator {
 		}
 	}
 
-	public int evaluate(final Position position, final AttackCalculator attackCalculator) {
-		int evaluation = 0;
+	public IPositionEvaluation evaluate(final Position position, final AttackCalculator attackCalculator) {
+		evaluation.clear();
 		
-		evaluation += evaluatePawnStructure(position, attackCalculator);
-		evaluation += evaluateUnprotectedOpenFilePawns(position, attackCalculator);
+		evaluatePawnStructure(position, attackCalculator);
+		evaluateUnprotectedOpenFilePawns(position, attackCalculator);
 		
 		return evaluation;		
 	}

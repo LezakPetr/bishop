@@ -3,7 +3,7 @@ package bishop.engine;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.function.IntConsumer;
+import java.util.function.Supplier;
 
 import parallel.ITaskRunner;
 import parallel.Parallel;
@@ -42,14 +42,14 @@ public final class SerialSearchEngine implements ISearchEngine {
 		public final AttackCalculator attackCalculator;
 		public boolean isQuiescenceSearch;
 
-		public NodeRecord(final int maxPrincipalDepth) {
+		public NodeRecord(final int maxPrincipalDepth, final Supplier<IPositionEvaluation> evaluationFactory) {
 			currentMove = new Move();
 			principalVariation = new MoveList(maxPrincipalDepth);
 			evaluation = new NodeEvaluation();
 			killerMove = new Move();
 			principalMove = new Move();
 			hashBestCompressedMove = Move.NONE_COMPRESSED_MOVE;
-			attackCalculator = new AttackCalculator();
+			attackCalculator = new AttackCalculator(evaluationFactory);
 		}
 
 		public void openNode(final int alpha, final int beta) {
@@ -104,6 +104,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private int maxTotalDepth;
 	private SearchSettings searchSettings;
 	private IHashTable hashTable;
+	private Supplier<IPositionEvaluation> evaluationFactory;
 
 	// Actual task
 	private NodeRecord[] nodeStack;
@@ -351,7 +352,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				absoluteBeta = -initialAlpha;				
 			}
 
-			final int whitePositionEvaluation = positionEvaluator.evaluatePosition(currentPosition, absoluteAlpha, absoluteBeta, currentRecord.attackCalculator);
+			final int whitePositionEvaluation = positionEvaluator.evaluatePosition(currentPosition, absoluteAlpha, absoluteBeta, currentRecord.attackCalculator).getEvaluation();
 			final int positionEvaluation = Evaluation.getRelative(whitePositionEvaluation, onTurn);
 			final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
 			final boolean isCheck = currentPosition.isCheck();
@@ -798,7 +799,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			this.moveStack = new MoveStack(maxTotalDepth * PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
 
 			for (int i = 0; i < nodeStack.length; i++)
-				this.nodeStack[i] = new NodeRecord(maxTotalDepth - i - 1);
+				this.nodeStack[i] = new NodeRecord(maxTotalDepth - i - 1, evaluationFactory);
 			
 			this.winMateTask = new WinMateTask();
 			this.loseMateTask = new LoseMateTask();
@@ -816,6 +817,20 @@ public final class SerialSearchEngine implements ISearchEngine {
 			checkEngineState(EngineState.STOPPED);
 
 			this.positionEvaluator = evaluator;
+		}
+	}
+	
+	/**
+	 * Sets evaluation factory
+	 * Engine must be in STOPPED state.
+	 * @param evaluationFactory factory
+	 */
+	@Override
+	public void setEvaluationFactory(final Supplier<IPositionEvaluation> evaluationFactory) {
+		synchronized (monitor) {
+			checkEngineState(EngineState.STOPPED);
+
+			this.evaluationFactory = evaluationFactory;
 		}
 	}
 

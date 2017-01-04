@@ -3,14 +3,18 @@ package bishop.controller;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.function.Supplier;
 
 import parallel.Parallel;
 import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.IMaterialEvaluator;
 import bishop.base.PgnReader;
+import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.BookSource;
 import bishop.engine.HashTableImpl;
+import bishop.engine.IPositionEvaluation;
 import bishop.engine.ISearchManager;
+import bishop.engine.PositionEvaluationCoeffs;
 import bishop.engine.PositionEvaluatorSwitchFactory;
 import bishop.engine.PositionEvaluatorSwitchSettings;
 import bishop.engine.SearchManagerImpl;
@@ -25,6 +29,7 @@ public class SearchResources {
 	
 	private static final String BOOK_PATH = "book.pgn";
 	private static final String MATERIAL_PATH = "material.tbl";
+	private static final String EVALUATION_COEFFS_PATH = "coeffs.tbl";
 
 	private final IApplication application;
 	private final SerialSearchEngineFactory searchEngineFactory;
@@ -32,6 +37,8 @@ public class SearchResources {
 	private final ISearchManager searchManager;
 	private final TablebasePositionEvaluator tablebasePositionEvaluator;
 	
+	private final PositionEvaluationCoeffs evaluationCoeffs;
+	private final Supplier<IPositionEvaluation> evaluationFactory;
 	
 	public SearchResources(final IApplication application) {
 		this.application = application;
@@ -41,12 +48,16 @@ public class SearchResources {
 		final int threadCount = Math.min(application.getSettings().getEngineSettings().getThreadCount(), SearchResources.MAX_THREADS);
 		final Parallel parallel = new Parallel(threadCount);
 		searchEngineFactory.setParallel(parallel);
+
+		evaluationCoeffs = createEvaluationCoeffs();
+		evaluationFactory = () -> new AlgebraicPositionEvaluation(evaluationCoeffs);
 		
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 		final IMaterialEvaluator materialEvaluator = createMaterialEvaluator();
-		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, materialEvaluator);
+		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, materialEvaluator, getEvaluationFactory());
 		
 		searchEngineFactory.setPositionEvaluatorFactory(evaluatorFactory);
+		searchEngineFactory.setEvaluationFactory(evaluationFactory);
 		searchEngineFactory.setMaximalDepth(MAX_TOTAL_DEPTH);
 		
 		hashTable = new HashTableImpl(10);
@@ -102,6 +113,22 @@ public class SearchResources {
 		}
 	}
 
+	private PositionEvaluationCoeffs createEvaluationCoeffs() {
+		try {
+			final URL url = new URL(application.getRootUrl(), EVALUATION_COEFFS_PATH);
+			
+			try (final InputStream stream = url.openStream()) {
+				final PositionEvaluationCoeffs evaluationCoeffs = new PositionEvaluationCoeffs();
+				evaluationCoeffs.read(stream);
+
+				return evaluationCoeffs;
+			}
+		}
+		catch (IOException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+
 	public SerialSearchEngineFactory getSearchEngineFactory() {
 		return searchEngineFactory;
 	}
@@ -125,4 +152,11 @@ public class SearchResources {
 		hashTable.resize (engineSettings.getHashTableExponent());
 	}
 
+	public PositionEvaluationCoeffs getEvaluationCoeffs() {
+		return evaluationCoeffs;
+	}
+	
+	public Supplier<IPositionEvaluation> getEvaluationFactory() {
+		return evaluationFactory;
+	}
 }

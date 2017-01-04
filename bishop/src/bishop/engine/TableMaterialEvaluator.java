@@ -1,20 +1,17 @@
 package bishop.engine;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.stream.Collectors;
-
 import bishop.base.Color;
 import bishop.base.IMaterialEvaluator;
 import bishop.base.IPieceCounts;
 import bishop.base.MaterialHash;
-import bishop.base.Piece;
 import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import utils.IntArrayBuilder;
@@ -87,7 +84,7 @@ public class TableMaterialEvaluator implements IMaterialEvaluator {
 	}
 
 	public void write (final File file) throws IOException {
-		try (OutputStream stream = new FileOutputStream(file)) {
+		try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(file))) {
 			write (stream);
 		}
 	}
