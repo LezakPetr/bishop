@@ -1,5 +1,7 @@
 package bishop.tablebase;
 
+import java.nio.ByteBuffer;
+import java.nio.LongBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +14,7 @@ public class CompressedTablePage implements ITablePage {
 	private final long size;
 	private final int sliceSize;
 	private int sliceCount;
-	private final long[][] slices;
+	private final LongBuffer[] slices;
 	private short[] symbolToResultMap;
 	private Map<Short, Short> resultToSymbolMap;
 	private int nextSymbol;
@@ -23,8 +25,8 @@ public class CompressedTablePage implements ITablePage {
 		this.offset = offset;
 		this.size = size;
 		this.sliceSize = (int) Utils.divideRoundUp(size, Long.SIZE);
-		this.slices = new long[MAX_SLICE_COUNT][];
-		this.slices[0] = new long[sliceSize];
+		this.slices = new LongBuffer[MAX_SLICE_COUNT];
+		this.slices[0] = allocateBuffer();
 		this.sliceCount = 1;
 		
 		this.resultToSymbolMap = new HashMap<>();
@@ -35,6 +37,10 @@ public class CompressedTablePage implements ITablePage {
 		this.nextSymbol = SYMBOL_ILLEGAL + 1;
 	}
 	
+	private LongBuffer allocateBuffer() {
+		return ByteBuffer.allocateDirect(Long.BYTES * sliceSize).asLongBuffer();
+	}
+
 	public int getResult (final long index) {
 		final long baseIndex = index - offset;
 		final long bitIndex = baseIndex % Long.SIZE;
@@ -42,7 +48,7 @@ public class CompressedTablePage implements ITablePage {
 		int symbol = 0;
 		
 		for (int i = 0; i < sliceCount; i++) {
-			symbol += ((slices[i][cellIndex] >>> bitIndex) & 0x01) << i;
+			symbol += ((slices[i].get(cellIndex) >>> bitIndex) & 0x01) << i;
 		}
 		
 		return symbolToResultMap[symbol];
@@ -55,7 +61,7 @@ public class CompressedTablePage implements ITablePage {
 			symbol = (short) nextSymbol;
 						
 			if (nextSymbol >= symbolToResultMap.length) {
-				slices[sliceCount] = new long[sliceSize];
+				slices[sliceCount] = allocateBuffer();
 				sliceCount++;
 				
 				symbolToResultMap = Arrays.copyOf(symbolToResultMap, 1 << sliceCount);
@@ -73,10 +79,14 @@ public class CompressedTablePage implements ITablePage {
 		final long mask = 1L << bitIndex;
 		
 		for (int i = 0; i < sliceCount; i++) {
+			long cell = slices[i].get(cellIndex);
+			
 			if (((symbol >> i) & 0x01) != 0)
-				slices[i][cellIndex] |= mask;
+				cell |= mask;
 			else
-				slices[i][cellIndex] &= ~mask;
+				cell &= ~mask;
+			
+			slices[i].put(cellIndex, cell);
 		}
 	}
 	
@@ -97,7 +107,8 @@ public class CompressedTablePage implements ITablePage {
 	
 	@Override
 	public void clear() {
-		Arrays.fill(slices[0], 0);
+		for (int i = 0; i < sliceSize; i++)
+			slices[0].put(i, 0);
 		
 		for (int i = 1; i < MAX_SLICE_COUNT; i++)
 			slices[i] = null;
