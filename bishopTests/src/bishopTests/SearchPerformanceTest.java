@@ -1,9 +1,11 @@
 package bishopTests;
 
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -12,6 +14,7 @@ import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.Game;
 import bishop.base.Holder;
 import bishop.base.IGameNode;
+import bishop.base.IMaterialEvaluator;
 import bishop.base.ITreeIterator;
 import bishop.base.Move;
 import bishop.base.MoveList;
@@ -44,7 +47,20 @@ public class SearchPerformanceTest {
 	protected void initializeSearchManager(final TablebasePositionEvaluator tablebaseEvaluator, final long maxTimeForPosition) {
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 		
-		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, DefaultAdditiveMaterialEvaluator.getInstance(), AlgebraicPositionEvaluation.getTestingFactory());
+		final URL rootUrl;
+		
+		try {
+			final File bishopDirectory = new File("../bishop/bin/");
+			rootUrl = bishopDirectory.toURI().toURL();
+		}
+		catch (IOException ex) {
+			throw new RuntimeException(ex);
+		}
+		
+		final IMaterialEvaluator materialEvaluator = SearchResources.createMaterialEvaluator(rootUrl);
+		final Supplier<IPositionEvaluation> positionEvaluationFactory = SearchResources.createEvaluationFactory(rootUrl);
+		
+		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, materialEvaluator, positionEvaluationFactory);
 
 		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
 		final int threadCount = Math.min(Runtime.getRuntime().availableProcessors(), SearchResources.MAX_THREADS);

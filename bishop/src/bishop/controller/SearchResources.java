@@ -37,7 +37,6 @@ public class SearchResources {
 	private final ISearchManager searchManager;
 	private final TablebasePositionEvaluator tablebasePositionEvaluator;
 	
-	private final PositionEvaluationCoeffs evaluationCoeffs;
 	private final Supplier<IPositionEvaluation> evaluationFactory;
 	
 	public SearchResources(final IApplication application) {
@@ -49,8 +48,7 @@ public class SearchResources {
 		final Parallel parallel = new Parallel(threadCount);
 		searchEngineFactory.setParallel(parallel);
 
-		evaluationCoeffs = createEvaluationCoeffs();
-		evaluationFactory = () -> new AlgebraicPositionEvaluation(evaluationCoeffs);
+		evaluationFactory = createEvaluationFactory(application.getRootUrl());
 		
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 		final IMaterialEvaluator materialEvaluator = createMaterialEvaluator();
@@ -74,6 +72,12 @@ public class SearchResources {
 		setBookToManager();
 		updateSettings();
 	}
+
+	public static Supplier<IPositionEvaluation> createEvaluationFactory(final URL rootUrl) {
+		final PositionEvaluationCoeffs evaluationCoeffs = createEvaluationCoeffs(rootUrl);
+		
+		return () -> new AlgebraicPositionEvaluation(evaluationCoeffs);
+	}
 	
 	private void setBookToManager() {
 		try {
@@ -96,9 +100,9 @@ public class SearchResources {
 		}
 	}
 	
-	private IMaterialEvaluator createMaterialEvaluator() {
+	public static IMaterialEvaluator createMaterialEvaluator(final URL rootUrl) {
 		try {
-			final URL url = new URL(application.getRootUrl(), MATERIAL_PATH);
+			final URL url = new URL(rootUrl, MATERIAL_PATH);
 			
 			try (final InputStream stream = url.openStream()) {
 				final IMaterialEvaluator baseEvaluator = DefaultAdditiveMaterialEvaluator.getInstance();
@@ -112,10 +116,14 @@ public class SearchResources {
 			throw new RuntimeException(ex);
 		}
 	}
+	
+	private IMaterialEvaluator createMaterialEvaluator() {
+		return createMaterialEvaluator(application.getRootUrl());
+	}
 
-	private PositionEvaluationCoeffs createEvaluationCoeffs() {
+	private static PositionEvaluationCoeffs createEvaluationCoeffs(final URL rootUrl) {
 		try {
-			final URL url = new URL(application.getRootUrl(), EVALUATION_COEFFS_PATH);
+			final URL url = new URL(rootUrl, EVALUATION_COEFFS_PATH);
 			
 			try (final InputStream stream = url.openStream()) {
 				final PositionEvaluationCoeffs evaluationCoeffs = new PositionEvaluationCoeffs();
@@ -150,10 +158,6 @@ public class SearchResources {
 		final EngineSettings engineSettings = applicationSettings.getEngineSettings();
 		
 		hashTable.resize (engineSettings.getHashTableExponent());
-	}
-
-	public PositionEvaluationCoeffs getEvaluationCoeffs() {
-		return evaluationCoeffs;
 	}
 	
 	public Supplier<IPositionEvaluation> getEvaluationFactory() {
