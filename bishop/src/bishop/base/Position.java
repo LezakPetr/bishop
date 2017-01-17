@@ -8,6 +8,7 @@ import utils.IAssignable;
 import utils.ICopyable;
 
 import bishop.engine.Evaluation;
+import bishop.engine.PawnStructure;
 import bishop.tables.BetweenTable;
 import bishop.tables.FigureAttackTable;
 import bishop.tables.PawnAttackTable;
@@ -21,11 +22,10 @@ import bishop.tables.PieceHashTable;
 public final class Position implements IPosition, ICopyable<Position>, IAssignable<Position> {
 
 	// Primary piece information - the source of truth
-	private final byte[] pieceTypeOnSquares = new byte[Square.LAST];
+	private final long[] pieceTypeMasks = new long[PieceType.LAST];   // Which squares are occupied by given piece types (no matter of color)
 	private final long[] colorOccupancy = new long[Color.LAST];   // Which squares are occupied by some piece with given color
 	
 	// Cached piece information
-	private final long[] pieces = new long[PieceType.LAST * Color.LAST];   // Which squares are occupied by given pieces
 	private long occupancy;   // Which squares are occupied by some piece
 
 	private int onTurn;   // Color of player on turn
@@ -51,16 +51,6 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		
 		clearPosition();
 	}
-	
-	/**
-	 * Returns index into array 'pieces'.
-	 * @param color color of piece
-	 * @param pieceType type of piece
-	 * @return index
-	 */
-	private static int getPieceMaskIndex (final int color, final int pieceType) {
-		return (pieceType << 1) + color;
-	}
 
 	/**
 	 * Makes given normal move.
@@ -79,24 +69,21 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final int oppositeColor = Color.getOppositeColor (onTurn);
 		
 		final long movingPieceChange = beginSquareMask | targetSquareMask;
-		
-		pieceTypeOnSquares[beginSquare] = PieceType.NONE;
-		pieceTypeOnSquares[targetSquare] = (byte) movingPieceType;
-		
-		pieces[getPieceMaskIndex(onTurn, movingPieceType)] ^= movingPieceChange;
+				
+		pieceTypeMasks[movingPieceType] ^= movingPieceChange;
 		colorOccupancy[onTurn] ^= movingPieceChange;
-		occupancy &= ~beginSquareMask;
+		occupancy ^= beginSquareMask;
 		
 		caching.movePiece (onTurn, movingPieceType, beginSquare, targetSquare);
 
 		if (capturedPieceType != PieceType.NONE) {
-			pieces[getPieceMaskIndex (oppositeColor, capturedPieceType)] &= ~targetSquareMask;
-			colorOccupancy[oppositeColor] &= ~targetSquareMask;
+			pieceTypeMasks[capturedPieceType] ^= targetSquareMask;
+			colorOccupancy[oppositeColor] ^= targetSquareMask;
 			
 			caching.removePiece (oppositeColor, capturedPieceType, targetSquare);
 		}
 		else
-			occupancy |= targetSquareMask;
+			occupancy ^= targetSquareMask;
 
 		// Update castling rights
 		if (!castlingRights.isEmpty() && (movingPieceChange & CastlingRights.AFFECTED_SQUARES) != 0) {
@@ -149,24 +136,21 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		
 		// Piece masks
 		final long movingPieceChange = beginSquareMask | targetSquareMask;
-		
-		pieceTypeOnSquares[beginSquare] = (byte) movingPieceType;
-		pieceTypeOnSquares[targetSquare] = (byte) capturedPieceType;
-		
-		pieces[getPieceMaskIndex (onTurn, movingPieceType)] ^= movingPieceChange;
+				
+		pieceTypeMasks[movingPieceType] ^= movingPieceChange;
 		colorOccupancy[onTurn] ^= movingPieceChange;
-		occupancy |= beginSquareMask;
+		occupancy ^= beginSquareMask;
 		
 		caching.movePiece(onTurn, movingPieceType, targetSquare, beginSquare);
 
 		if (capturedPieceType != PieceType.NONE) {
-			pieces[getPieceMaskIndex (oppositeColor, capturedPieceType)] |= targetSquareMask;
-			colorOccupancy[oppositeColor] |= targetSquareMask;
+			pieceTypeMasks[capturedPieceType] ^= targetSquareMask;
+			colorOccupancy[oppositeColor] ^= targetSquareMask;
 			
 			caching.addPiece(oppositeColor, capturedPieceType, targetSquare);
 		}
 		else
-			occupancy &= ~targetSquareMask;
+			occupancy ^= targetSquareMask;
 
 		// Update castling rights
 		final int prevCastlingRightIndex = move.getPreviousCastlingRigthIndex();
@@ -200,27 +184,24 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final int promotionPieceType = move.getPromotionPieceType();
 		final int oppositeColor = Color.getOppositeColor (onTurn);
 		
-		pieceTypeOnSquares[beginSquare] = PieceType.NONE;
-		pieceTypeOnSquares[targetSquare] = (byte) promotionPieceType;
+		pieceTypeMasks[PieceType.PAWN] ^= beginSquareMask;
+		colorOccupancy[onTurn] ^= beginSquareMask;
+		occupancy ^= beginSquareMask;
 
-		pieces[getPieceMaskIndex (onTurn, PieceType.PAWN)] &= ~beginSquareMask;
-		colorOccupancy[onTurn] &= ~beginSquareMask;
-		occupancy &= ~beginSquareMask;
-
-		pieces[getPieceMaskIndex (onTurn, promotionPieceType)] |= targetSquareMask;
-		colorOccupancy[onTurn] |= targetSquareMask;
+		pieceTypeMasks[promotionPieceType] ^= targetSquareMask;
+		colorOccupancy[onTurn] ^= targetSquareMask;
 		
 		caching.removePiece(onTurn, PieceType.PAWN, beginSquare);
 		caching.addPiece(onTurn, promotionPieceType, targetSquare);
 		
 		if (capturedPieceType != PieceType.NONE) {
-			pieces[getPieceMaskIndex (oppositeColor, capturedPieceType)] &= ~targetSquareMask;
-			colorOccupancy[oppositeColor] &= ~targetSquareMask;
+			pieceTypeMasks[capturedPieceType] ^= targetSquareMask;
+			colorOccupancy[oppositeColor] ^= targetSquareMask;
 
 			caching.removePiece(oppositeColor, capturedPieceType, targetSquare);
 		}
 		else
-			occupancy |= targetSquareMask;
+			occupancy ^= targetSquareMask;
 
 		// Update castling rights - only by target square (begin square cannot change rights)
 		final int origCastlingRightIndex = castlingRights.getIndex();
@@ -254,27 +235,24 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		caching.swapOnTurn();
 
 		// Piece masks
-		pieceTypeOnSquares[beginSquare] = PieceType.PAWN;
-		pieceTypeOnSquares[targetSquare] = (byte) capturedPieceType;
+		pieceTypeMasks[PieceType.PAWN] ^= beginSquareMask;
+		colorOccupancy[onTurn] ^= beginSquareMask;
+		occupancy ^= beginSquareMask;
 
-		pieces[getPieceMaskIndex (onTurn, PieceType.PAWN)] |= beginSquareMask;
-		colorOccupancy[onTurn] |= beginSquareMask;
-		occupancy |= beginSquareMask;
-
-		pieces[getPieceMaskIndex (onTurn, promotionPieceType)] &= ~targetSquareMask;
-		colorOccupancy[onTurn] &= ~targetSquareMask;
+		pieceTypeMasks[promotionPieceType] ^= targetSquareMask;
+		colorOccupancy[onTurn] ^= targetSquareMask;
 
 		caching.addPiece(onTurn, PieceType.PAWN, beginSquare);
 		caching.removePiece(onTurn, promotionPieceType, targetSquare);
 
 		if (capturedPieceType != PieceType.NONE) {
-			pieces[getPieceMaskIndex (oppositeColor, capturedPieceType)] |= targetSquareMask;
-			colorOccupancy[oppositeColor] |= targetSquareMask;
+			pieceTypeMasks[capturedPieceType] ^= targetSquareMask;
+			colorOccupancy[oppositeColor] ^= targetSquareMask;
 			
 			caching.addPiece(oppositeColor, capturedPieceType, targetSquare);
 		}
 		else
-			occupancy &= ~targetSquareMask;
+			occupancy ^= targetSquareMask;
 
 		// Update castling rights
 		final int prevCastlingRightIndex = move.getPreviousCastlingRigthIndex();
@@ -307,16 +285,11 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final int rookBeginSquare = BoardConstants.getCastlingRookBeginSquare(onTurn, castlingType);
 		final int rookTargetSquare = BoardConstants.getCastlingRookTargetSquare(onTurn, castlingType);
 		
-		pieceTypeOnSquares[beginSquare] = PieceType.NONE;
-		pieceTypeOnSquares[targetSquare] = PieceType.KING;
-		pieceTypeOnSquares[rookBeginSquare] = PieceType.NONE;
-		pieceTypeOnSquares[rookTargetSquare] = PieceType.ROOK;
-
 		caching.movePiece(onTurn, PieceType.KING, beginSquare, targetSquare);
 		caching.movePiece(onTurn, PieceType.ROOK, rookBeginSquare, rookTargetSquare);
 
-		pieces[getPieceMaskIndex (onTurn, PieceType.KING)] ^= kingChanges;
-		pieces[getPieceMaskIndex (onTurn, PieceType.ROOK)] ^= rookChanges;
+		pieceTypeMasks[PieceType.KING] ^= kingChanges;
+		pieceTypeMasks[PieceType.ROOK] ^= rookChanges;
 		colorOccupancy[onTurn] ^= occupancyChanges;
 		occupancy ^= occupancyChanges;
 
@@ -357,16 +330,11 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final int rookBeginSquare = BoardConstants.getCastlingRookBeginSquare(onTurn, castlingType);
 		final int rookTargetSquare = BoardConstants.getCastlingRookTargetSquare(onTurn, castlingType);
 		
-		pieceTypeOnSquares[beginSquare] = PieceType.KING;
-		pieceTypeOnSquares[targetSquare] = PieceType.NONE;
-		pieceTypeOnSquares[rookBeginSquare] = PieceType.ROOK;
-		pieceTypeOnSquares[rookTargetSquare] = PieceType.NONE;
-
 		caching.movePiece(onTurn, PieceType.KING, targetSquare, beginSquare);
 		caching.movePiece(onTurn, PieceType.ROOK, rookTargetSquare, rookBeginSquare);
 
-		pieces[getPieceMaskIndex (onTurn, PieceType.KING)] ^= kingChanges;
-		pieces[getPieceMaskIndex (onTurn, PieceType.ROOK)] ^= rookChanges;
+		pieceTypeMasks[PieceType.KING] ^= kingChanges;
+		pieceTypeMasks[PieceType.ROOK] ^= rookChanges;
 		colorOccupancy[onTurn] ^= occupancyChanges;
 		occupancy ^= occupancyChanges;
 
@@ -395,21 +363,13 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final int epSquare = Square.onFileRank(epFile, Square.getRank (beginSquare));
 		final long epSquareMask = BitBoard.getSquareMask(epSquare);
 		
-		pieceTypeOnSquares[beginSquare] = PieceType.NONE;
-		pieceTypeOnSquares[epSquare] = PieceType.NONE;
-		pieceTypeOnSquares[targetSquare] = PieceType.PAWN;
-
-		pieces[getPieceMaskIndex (onTurn, PieceType.PAWN)] &= ~beginSquareMask;
-		colorOccupancy[onTurn] &= ~beginSquareMask;
-		occupancy &= ~beginSquareMask;
-
-		pieces[getPieceMaskIndex (onTurn, PieceType.PAWN)] |= targetSquareMask;
-		colorOccupancy[onTurn] |= targetSquareMask;
-		occupancy |= targetSquareMask;
-
-		pieces[getPieceMaskIndex (oppositeColor, PieceType.PAWN)] &= ~epSquareMask;
-		colorOccupancy[oppositeColor] &= ~epSquareMask;
-		occupancy &= ~epSquareMask;
+		final long moveMask = beginSquareMask | targetSquareMask;
+		final long changeMask = moveMask | epSquareMask;
+		
+		pieceTypeMasks[PieceType.PAWN] ^= changeMask;
+		colorOccupancy[onTurn] ^= moveMask;
+		colorOccupancy[oppositeColor] ^= epSquareMask;
+		occupancy ^= changeMask;
 		
 		caching.movePiece(onTurn, PieceType.PAWN, beginSquare, targetSquare);
 		caching.removePiece(oppositeColor, PieceType.PAWN, epSquare);
@@ -447,21 +407,13 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final long epSquareMask = BitBoard.getSquareMask(epSquare);
 
 		// Piece masks
-		pieceTypeOnSquares[beginSquare] = PieceType.PAWN;
-		pieceTypeOnSquares[epSquare] = PieceType.PAWN;
-		pieceTypeOnSquares[targetSquare] = PieceType.NONE;
-
-		pieces[getPieceMaskIndex (onTurn, PieceType.PAWN)] |= beginSquareMask;
-		colorOccupancy[onTurn] |= beginSquareMask;
-		occupancy |= beginSquareMask;
-
-		pieces[getPieceMaskIndex (onTurn, PieceType.PAWN)] &= ~targetSquareMask;
-		colorOccupancy[onTurn] &= ~targetSquareMask;
-		occupancy &= ~targetSquareMask;
-
-		pieces[getPieceMaskIndex (oppositeColor, PieceType.PAWN)] |= epSquareMask;
-		colorOccupancy[oppositeColor] |= epSquareMask;
-		occupancy |= epSquareMask;
+		final long moveMask = beginSquareMask | targetSquareMask;
+		final long changeMask = moveMask | epSquareMask;
+		
+		pieceTypeMasks[PieceType.PAWN] ^= changeMask;
+		colorOccupancy[onTurn] ^= moveMask;
+		colorOccupancy[oppositeColor] ^= epSquareMask;
+		occupancy ^= changeMask;
 		
 		caching.movePiece(onTurn, PieceType.PAWN, targetSquare, beginSquare);
 		caching.addPiece(oppositeColor, PieceType.PAWN, epSquare);
@@ -562,19 +514,25 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final long squareMask = BitBoard.getSquareMask(square);
 		
 		if (piece != null) {
-			pieceTypeOnSquares[square] = (byte) piece.getPieceType();
-			
 			final int color = piece.getColor();
 			final int oppositeColor = Color.getOppositeColor(color);
 			
 			colorOccupancy[color] |= squareMask;
 			colorOccupancy[oppositeColor] &= ~squareMask;
+			
+			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
+				if (pieceType == piece.getPieceType())
+					pieceTypeMasks[pieceType] |= squareMask;
+				else
+					pieceTypeMasks[pieceType] &= ~squareMask;
+			}
 		}
 		else {
-			pieceTypeOnSquares[square] = PieceType.NONE;
-			
 			for (int color = Color.FIRST; color < Color.LAST; color++)
 				colorOccupancy[color] &= ~squareMask;
+			
+			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++)
+				pieceTypeMasks[pieceType] &= ~squareMask;
 		}
 	}
 	
@@ -595,10 +553,9 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 * Makes the position empty and white on turn.
 	 */
 	public void clearPosition() {
-		occupancy = 0;
-		Arrays.fill(colorOccupancy, 0);
-		Arrays.fill(pieces, 0);
-		Arrays.fill(pieceTypeOnSquares, (byte) PieceType.NONE);
+		occupancy = BitBoard.EMPTY;
+		Arrays.fill(colorOccupancy, BitBoard.EMPTY);
+		Arrays.fill(pieceTypeMasks, BitBoard.EMPTY);
 
 		onTurn = Color.WHITE;
 		castlingRights.clearRights();
@@ -643,7 +600,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 * @return mask of squares
 	 */
 	public long getPiecesMask (final int color, final int type) {
-		return pieces[getPieceMaskIndex (color, type)];
+		return pieceTypeMasks[type] & colorOccupancy[color];
 	}
 
 	/**
@@ -652,7 +609,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 * @return mask of given piece type
 	 */
 	public long getBothColorPiecesMask(final int type) {
-		return getPiecesMask(Color.WHITE, type) | getPiecesMask(Color.BLACK, type);
+		return pieceTypeMasks[type];
 	}
 	
 	/**
@@ -696,34 +653,34 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 */
 	public boolean isSquareAttacked (final int color, final int square) {
 		// Short move figures
-		if ((pieces[getPieceMaskIndex (color, PieceType.KING)] & FigureAttackTable.getItem (PieceType.KING, square)) != 0)
+		if ((getPiecesMask(color, PieceType.KING) & FigureAttackTable.getItem (PieceType.KING, square)) != 0)
 			return true;
 
-		if ((pieces[getPieceMaskIndex (color, PieceType.KNIGHT)] & FigureAttackTable.getItem (PieceType.KNIGHT, square)) != 0)
+		if ((getPiecesMask(color, PieceType.KNIGHT) & FigureAttackTable.getItem (PieceType.KNIGHT, square)) != 0)
 			return true;
 
 		// Pawn
 		final int oppositeColor = Color.getOppositeColor(color);
 
-		if ((pieces[getPieceMaskIndex (color, PieceType.PAWN)] & PawnAttackTable.getItem(oppositeColor, square)) != 0)
+		if ((getPiecesMask(color, PieceType.PAWN) & PawnAttackTable.getItem(oppositeColor, square)) != 0)
 			return true;
 
 		// Long move figures
 		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, square, occupancy);
 		final long orthogonalMask = LineAttackTable.getAttackMask(orthogonalIndex);
 		
-		if ((pieces[getPieceMaskIndex (color, PieceType.ROOK)] & orthogonalMask) != 0)
+		if ((getPiecesMask(color, PieceType.ROOK) & orthogonalMask) != 0)
 			return true;
 
 		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, square, occupancy);
 		final long diagonalMask = LineAttackTable.getAttackMask(diagonalIndex);
 
-		if ((pieces[getPieceMaskIndex (color, PieceType.BISHOP)] & diagonalMask) != 0)
+		if ((getPiecesMask(color, PieceType.BISHOP) & diagonalMask) != 0)
 			return true;
 		
 		final long queenMask = orthogonalMask | diagonalMask;
 		
-		if ((pieces[getPieceMaskIndex (color, PieceType.QUEEN)] & queenMask) != 0)
+		if ((getPiecesMask(color, PieceType.QUEEN) & queenMask) != 0)
 			return true;
 				
 		return false;
@@ -739,26 +696,26 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		long attackingPieceMask = BitBoard.EMPTY;
 		
 		// Short move figures
-		attackingPieceMask |= pieces[getPieceMaskIndex (color, PieceType.KING)] & FigureAttackTable.getItem (PieceType.KING, square);
-		attackingPieceMask |= pieces[getPieceMaskIndex (color, PieceType.KNIGHT)] & FigureAttackTable.getItem (PieceType.KNIGHT, square);
+		attackingPieceMask |= getPiecesMask(color, PieceType.KING) & FigureAttackTable.getItem (PieceType.KING, square);
+		attackingPieceMask |= getPiecesMask(color, PieceType.KNIGHT) & FigureAttackTable.getItem (PieceType.KNIGHT, square);
 
 		// Pawn
 		final int oppositeColor = Color.getOppositeColor(color);
-		attackingPieceMask |= pieces[getPieceMaskIndex (color, PieceType.PAWN)] & PawnAttackTable.getItem(oppositeColor, square);
+		attackingPieceMask |= getPiecesMask(color, PieceType.PAWN) & PawnAttackTable.getItem(oppositeColor, square);
 
 		// Long move figures
 		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, square, occupancy);
 		final long orthogonalMask = LineAttackTable.getAttackMask(orthogonalIndex);
 		
-		attackingPieceMask |= pieces[getPieceMaskIndex (color, PieceType.ROOK)] & orthogonalMask;
+		attackingPieceMask |= getPiecesMask(color, PieceType.ROOK) & orthogonalMask;
 
 		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, square, occupancy);
 		final long diagonalMask = LineAttackTable.getAttackMask(diagonalIndex);
 
-		attackingPieceMask |= pieces[getPieceMaskIndex (color, PieceType.BISHOP)] & diagonalMask;
+		attackingPieceMask |= getPiecesMask(color, PieceType.BISHOP) & diagonalMask;
 		
 		final long queenMask = orthogonalMask | diagonalMask;
-		attackingPieceMask |= pieces[getPieceMaskIndex (color, PieceType.QUEEN)] & queenMask;
+		attackingPieceMask |= getPiecesMask(color, PieceType.QUEEN) & queenMask;
 				
 		return attackingPieceMask;
 	}
@@ -781,7 +738,30 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 * @return type of piece on given square or PieceType.NONE
 	 */
 	public int getPieceTypeOnSquare (final int square) {
-		return pieceTypeOnSquares[square];
+		final long mask = BitBoard.getSquareMask(square);
+		
+		if ((occupancy & mask) == 0)
+			return PieceType.NONE;
+		
+		if ((pieceTypeMasks[PieceType.PAWN] & mask) != 0)
+			return PieceType.PAWN;
+		
+		if ((pieceTypeMasks[PieceType.ROOK] & mask) != 0)
+			return PieceType.ROOK;
+
+		if ((pieceTypeMasks[PieceType.KNIGHT] & mask) != 0)
+			return PieceType.KNIGHT;
+
+		if ((pieceTypeMasks[PieceType.BISHOP] & mask) != 0)
+			return PieceType.BISHOP;
+
+		if ((pieceTypeMasks[PieceType.KING] & mask) != 0)
+			return PieceType.KING;
+
+		if ((pieceTypeMasks[PieceType.QUEEN] & mask) != 0)
+			return PieceType.QUEEN;
+		
+		throw new RuntimeException("Corrupted position on square " + square);
 	}
 
 	/**
@@ -854,7 +834,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 * @return square where is king with given color
 	 */
 	public int getKingPosition (final int color) {
-		final long kingMask = pieces[getPieceMaskIndex(color, PieceType.KING)];
+		final long kingMask = getPiecesMask(color, PieceType.KING);
 				
 		return BitBoard.getFirstSquare(kingMask);
 	}
@@ -874,19 +854,6 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++)
 			occupancy |= colorOccupancy[color];
-			
-		Arrays.fill(pieces, 0);
-		
-		for (int square = Square.FIRST; square < Square.LAST; square++) {
-			final long squareMask = BitBoard.getSquareMask(square);
-			final int pieceType = pieceTypeOnSquares[square];
-			
-			for (int color = Color.FIRST; color < Color.LAST; color++) {
-				if ((colorOccupancy[color] & squareMask) != 0) {
-					pieces[getPieceMaskIndex(color, pieceType)] |= squareMask;
-				}
-			}
-		}
 	}
 	
 	public long calculateHash() {
@@ -894,7 +861,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
-				for (BitLoop loop = new BitLoop(pieces[getPieceMaskIndex (color, pieceType)]); loop.hasNextSquare(); ) {
+				for (BitLoop loop = new BitLoop(getPiecesMask(color, pieceType)); loop.hasNextSquare(); ) {
 					final int square = loop.getNextSquare();
 					
 					hash ^= PieceHashTable.getItem(color, pieceType, square);					
@@ -936,8 +903,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 * @param orig original position
 	 */
 	public void assign (final Position orig) {
-		System.arraycopy(orig.pieceTypeOnSquares, 0, this.pieceTypeOnSquares, 0, Square.LAST);
-		System.arraycopy(orig.pieces, 0, this.pieces, 0, orig.pieces.length);
+		System.arraycopy(orig.pieceTypeMasks, 0, this.pieceTypeMasks, 0, PieceType.LAST);
 		System.arraycopy(orig.colorOccupancy, 0, this.colorOccupancy, 0, Color.LAST);
 		this.occupancy = orig.occupancy;
 
@@ -985,7 +951,10 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		if (!this.castlingRights.equals(pos.castlingRights))
 			return false;
 		
-		if (!Arrays.equals (this.pieces, pos.pieces))
+		if (!Arrays.equals (this.pieceTypeMasks, pos.pieceTypeMasks))
+			return false;
+		
+		if (!Arrays.equals (this.colorOccupancy, pos.colorOccupancy))
 			return false;
 		
 		return true;
@@ -1011,7 +980,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 			long expectedColorOccupancy = 0;
 			
 			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
-				final long pieceMask = this.pieces[getPieceMaskIndex (color, pieceType)];
+				final long pieceMask = getPiecesMask(color, pieceType);
 				
 				if ((pieceMask & expectedOccupancy) != 0)
 					throw new RuntimeException("There are more pieces on one square");
@@ -1029,15 +998,15 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		
 		for (int square = Square.FIRST; square < Square.LAST; square++) {
 			final long squareMask = BitBoard.getSquareMask(square);
-			final int pieceType = pieceTypeOnSquares[square];
+			final int pieceType = getPieceTypeOnSquare(square);
 			
 			if (pieceType == PieceType.NONE) {
 				if ((occupancy & squareMask) != 0)
 					throw new RuntimeException("Corrupted NONE pieceType");
 			}
 			else {
-				final long whiteMask = this.pieces[getPieceMaskIndex (Color.WHITE, pieceType)];
-				final long blackMask = this.pieces[getPieceMaskIndex (Color.BLACK, pieceType)];
+				final long whiteMask = getPiecesMask(Color.WHITE, pieceType);
+				final long blackMask = getPiecesMask(Color.BLACK, pieceType);
 				
 				if (((whiteMask | blackMask) & squareMask) == 0)
 					throw new RuntimeException("Corrupted pieceType");
@@ -1164,19 +1133,19 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	public int getCheapestAttacker (final int color, final int square) {
 		// Pawn
 		final int oppositeColor = Color.getOppositeColor(color);
-		final long attackingPawnMask = pieces[getPieceMaskIndex (color, PieceType.PAWN)] & PawnAttackTable.getItem(oppositeColor, square);
+		final long attackingPawnMask = getPiecesMask(color, PieceType.PAWN) & PawnAttackTable.getItem(oppositeColor, square);
 
 		if (attackingPawnMask != 0)
 			return BitBoard.getFirstSquare(attackingPawnMask);
 
 		// Knight
-		final long attackingKnightMask = pieces[getPieceMaskIndex (color, PieceType.KNIGHT)] & FigureAttackTable.getItem (PieceType.KNIGHT, square);
+		final long attackingKnightMask = getPiecesMask(color, PieceType.KNIGHT) & FigureAttackTable.getItem (PieceType.KNIGHT, square);
 		
 		if (attackingKnightMask != 0)
 			return BitBoard.getFirstSquare(attackingKnightMask);
 		
 		// Bishop
-		final long attackingBishopMask = pieces[getPieceMaskIndex (color, PieceType.BISHOP)] & FigureAttackTable.getItem(PieceType.BISHOP, square);
+		final long attackingBishopMask = getPiecesMask(color, PieceType.BISHOP) & FigureAttackTable.getItem(PieceType.BISHOP, square);
 		
 		for (BitLoop loop = new BitLoop(attackingBishopMask); loop.hasNextSquare(); ) {
 			final int testSquare = loop.getNextSquare();
@@ -1186,7 +1155,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		}
 		
 		// Rook
-		final long attackingRookMask = pieces[getPieceMaskIndex (color, PieceType.ROOK)] & FigureAttackTable.getItem(PieceType.ROOK, square);
+		final long attackingRookMask = getPiecesMask(color, PieceType.ROOK) & FigureAttackTable.getItem(PieceType.ROOK, square);
 		
 		for (BitLoop loop = new BitLoop(attackingRookMask); loop.hasNextSquare(); ) {
 			final int testSquare = loop.getNextSquare();
@@ -1196,7 +1165,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		}
 
 		// Queen
-		final long attackingQueenMask = pieces[getPieceMaskIndex (color, PieceType.QUEEN)] & FigureAttackTable.getItem(PieceType.QUEEN, square);
+		final long attackingQueenMask = getPiecesMask(color, PieceType.QUEEN) & FigureAttackTable.getItem(PieceType.QUEEN, square);
 		
 		for (BitLoop loop = new BitLoop(attackingQueenMask); loop.hasNextSquare(); ) {
 			final int testSquare = loop.getNextSquare();
@@ -1206,7 +1175,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		}
 
 		// King
-		final long attackingKingMask = pieces[getPieceMaskIndex (color, PieceType.KING)] & FigureAttackTable.getItem (PieceType.KING, square);
+		final long attackingKingMask = getPiecesMask(color, PieceType.KING) & FigureAttackTable.getItem (PieceType.KING, square);
 				
 		if (attackingKingMask != 0)
 			return BitBoard.getFirstSquare(attackingKingMask);
@@ -1259,5 +1228,12 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final long pieceMask = getPiecesMask(color, pieceType);
 		
 		return BitBoard.getSquareCount(pieceMask);
+	}
+
+	public PawnStructure getPawnStructure() {
+		final long whitePawnMask = getPiecesMask(Color.WHITE, PieceType.PAWN);
+		final long blackPawnMask = getPiecesMask(Color.BLACK, PieceType.PAWN);
+		
+		return new PawnStructure(whitePawnMask, blackPawnMask);
 	}
 }

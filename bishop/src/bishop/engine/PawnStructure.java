@@ -1,5 +1,7 @@
 package bishop.engine;
 
+import bishop.base.Color;
+
 public class PawnStructure {
 
 	private final long whitePawnMask;
@@ -22,5 +24,21 @@ public class PawnStructure {
 	
 	public int hashCode() {
 		return 31 * Long.hashCode(whitePawnMask) + Long.hashCode(blackPawnMask);
+	}
+	
+	public long getPawnMask (final int color) {
+		return (color == Color.WHITE) ? whitePawnMask : blackPawnMask;
+	}
+
+	public long getBothColorPawnMask() {
+		return whitePawnMask | blackPawnMask;
+	}
+
+	public long getWhitePawnMask() {
+		return whitePawnMask;
+	}
+
+	public long getBlackPawnMask() {
+		return blackPawnMask;
 	}
 }
