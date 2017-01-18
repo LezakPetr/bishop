@@ -46,19 +46,6 @@ public class NullPositionCaching implements IPositionCaching {
 	}
 
 	@Override
-	public MaterialHash getMaterialHash() {
-		return position.calculateMaterialHash();
-	}
-	
-	@Override
-	public void setMaterialHash(final MaterialHash hash) {
-	}
-
-	@Override
-	public void refreshMaterialHash(final Position position) {
-	}
-
-	@Override
 	public IPositionCaching copy() {
 		return new NullPositionCaching(position);
 	}

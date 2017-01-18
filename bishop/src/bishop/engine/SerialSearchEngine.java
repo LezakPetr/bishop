@@ -145,7 +145,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	
 	abstract private class MateTaskBase implements Runnable {
 		protected final MateFinder finder = new MateFinder();
-		public final Position position = new Position();
+		public final Position position = new Position(true);   // Position with null caching because we don't need the hashCode
 		public int evaluation;
 		public long timeSpent;
 		
