@@ -31,7 +31,7 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 	private final IPositionEvaluation positionalEvaluation;
 	
 	
-	public MiddleGamePositionEvaluator(final MiddleGameEvaluatorSettings settings, final IMaterialEvaluator materialEvaluator, final Supplier<IPositionEvaluation> evaluationFactory) {
+	public MiddleGamePositionEvaluator(final MiddleGameEvaluatorSettings settings, final IMaterialEvaluator materialEvaluator, final PawnStructureCache structureCache, final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.materialEvaluator = materialEvaluator;
 		this.settings = settings;
 		this.evaluation = evaluationFactory.get();
@@ -40,7 +40,7 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 		tablePositionEvaluator = new TablePositionEvaluator(PositionEvaluationCoeffs.MIDDLE_GAME_TABLE_EVALUATOR_COEFFS, evaluationFactory);
 		bishopColorPositionEvaluator = new BishopColorPositionEvaluator(evaluationFactory);
 		mobilityEvaluator = new MobilityPositionEvaluator(evaluationFactory);
-		pawnStructureCalculator = new PawnStructureEvaluator(PositionEvaluationCoeffs.MIDDLE_GAME_PAWN_STRUCTURE_COEFFS, evaluationFactory);
+		pawnStructureCalculator = new PawnStructureEvaluator(PositionEvaluationCoeffs.MIDDLE_GAME_PAWN_STRUCTURE_COEFFS, structureCache, evaluationFactory);
 	}
 
 	private void clear() {
@@ -186,7 +186,6 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 
 	public void writeLog(final PrintWriter writer) {
 		bishopColorPositionEvaluator.writeLog(writer);		
-		pawnStructureCalculator.writeLog (writer);
 	}
 
 }
