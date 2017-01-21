@@ -15,6 +15,7 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 	private final GeneralMatingPositionEvaluator generalMatingEvaluator;
 	private final EndingPositionEvaluator endingEvaluator;
 	private final DrawPositionEvaluator drawEvaluator;
+	private final PawnStructureCache pawnStructureCache;
 	
 	private final int[] colorCounts;
 	private final int[][] pieceCounts;
@@ -27,10 +28,12 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 
 	
 	public PositionEvaluatorSwitch(final PositionEvaluatorSwitchSettings settings, final IMaterialEvaluator materialEvaluator, final Supplier<IPositionEvaluation> evaluationFactory) {
-		middleGameEvaluator = new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), materialEvaluator, evaluationFactory);
+		pawnStructureCache = new PawnStructureCache();
+		
+		middleGameEvaluator = new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), materialEvaluator, pawnStructureCache, evaluationFactory);
 		generalMatingEvaluator = new GeneralMatingPositionEvaluator(materialEvaluator, evaluationFactory);
 		drawEvaluator = new DrawPositionEvaluator(materialEvaluator, evaluationFactory);
-		endingEvaluator = new EndingPositionEvaluator(materialEvaluator, evaluationFactory);
+		endingEvaluator = new EndingPositionEvaluator(materialEvaluator, pawnStructureCache, evaluationFactory);
 		
 		colorCounts = new int[Color.LAST];
 		pieceCounts = new int[Color.LAST][PieceType.LAST];

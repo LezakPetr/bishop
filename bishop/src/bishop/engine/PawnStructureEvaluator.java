@@ -1,7 +1,5 @@
 package bishop.engine;
 
-import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.function.Supplier;
 
 import bishop.base.BitBoard;
@@ -15,157 +13,31 @@ import bishop.tables.FrontSquaresOnSameFileTable;
 import bishop.tables.PawnAttackTable;
 
 public class PawnStructureEvaluator {
-	// Contains 1 on squares behind pawns.
-	// Direction is relative.
-	// White pawn on e4: 
-	//   +-----------------+
-	// 8 |                 |
-	// 7 |                 |
-	// 6 |                 |
-	// 5 |                 |
-	// 4 |         P       |
-	// 3 |         *       |
-	// 2 |         *       |
-	// 1 |         *       |
-	//   +-----------------+
-	//     a b c d e f g h
-	private final long[] backSquares;
-	
-	// Contains 1 on squares in front of pawns.
-	// Direction is relative.
-	// White pawn on e4: 
-	//   +-----------------+
-	// 8 |         *       |
-	// 7 |         *       |
-	// 6 |         *       |
-	// 5 |         *       |
-	// 4 |         P       |
-	// 3 |                 |
-	// 2 |                 |
-	// 1 |                 |
-	//   +-----------------+
-	//     a b c d e f g h
-	private final long[] frontSquares;
-
-	// Mask of squares attackable by pawn of given color.
-	// White pawn on e4: 
-	//   +-----------------+
-	// 8 |       *   *     |
-	// 7 |       *   *     |
-	// 6 |       *   *     |
-	// 5 |       *   *     |
-	// 4 |         P       |
-	// 3 |                 |
-	// 2 |                 |
-	// 1 |                 |
-	//   +-----------------+
-	//     a b c d e f g h
-	private final long[] neighborFrontSquares;
-	
-	// Mask of squares that are protected by own pawns, not occupied by own pawn and not attackable
-	// by opponent pawns (there is no opponent pawn on left and right columns in front of the square). 
-	private final long[] secureSquares;
-	
-	// Pawns without opposite pawn in front of them on 3 neighbor files.
-	private final long[] passedPawns;
-	
-	private final long[] connectedPawns;
-	private final long[] isolatedPawns;
-	private final long[] backwardPawns;
-	private final long[] doubledPawns;
 	
 	private final IPositionEvaluation evaluation;
 	private final PawnStructureCoeffs coeffs;
+	private final PawnStructureCache structureCache;
+	private final PawnStructureData structureData;
 	
-	public PawnStructureEvaluator(final PawnStructureCoeffs coeffs, final Supplier<IPositionEvaluation> evaluationFactory) {
+	public PawnStructureEvaluator(final PawnStructureCoeffs coeffs, final PawnStructureCache structureCache, final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.evaluation = evaluationFactory.get();
 		this.coeffs = coeffs;
-		
-		backSquares = new long[Color.LAST];
-		frontSquares = new long[Color.LAST];
-		neighborFrontSquares = new long[Color.LAST];
-		secureSquares = new long[Color.LAST];
-		passedPawns = new long[Color.LAST];
-		connectedPawns = new long[Color.LAST];
-		isolatedPawns = new long[Color.LAST];
-		backwardPawns = new long[Color.LAST];
-		doubledPawns = new long[Color.LAST];
+		this.structureCache = structureCache;
+		this.structureData = new PawnStructureData();
 	}
 
-	public void clear() {
-		Arrays.fill(backSquares, 0);
-		Arrays.fill(frontSquares, 0);
-		Arrays.fill(neighborFrontSquares, 0);
-		Arrays.fill(secureSquares, 0);
+	public IPositionEvaluation evaluate(final Position position, final AttackCalculator attackCalculator) {
+		evaluation.clear();
+		
+		final PawnStructure structure = position.getPawnStructure();
+		structureCache.getData(structure, structureData);
+		
+		evaluatePawnStructure(position, attackCalculator);
+		evaluateUnprotectedOpenFilePawns(position, attackCalculator);
+		
+		return evaluation;		
 	}
-
-	private void fillOpenFileSquares(final Position position) {
-		// White
-		long whiteNotFileOpenSquares = position.getPiecesMask(Color.WHITE, PieceType.PAWN);
-		whiteNotFileOpenSquares |= whiteNotFileOpenSquares >>> 8;
-		whiteNotFileOpenSquares |= whiteNotFileOpenSquares >>> 16;
-		whiteNotFileOpenSquares |= whiteNotFileOpenSquares >>> 32;
 		
-		backSquares[Color.WHITE] = whiteNotFileOpenSquares >>> 8;
-		
-		// Black
-		long blackNotFileOpenSquares = position.getPiecesMask(Color.BLACK, PieceType.PAWN);
-		blackNotFileOpenSquares |= blackNotFileOpenSquares << 8;
-		blackNotFileOpenSquares |= blackNotFileOpenSquares << 16;
-		blackNotFileOpenSquares |= blackNotFileOpenSquares << 32;
-		
-		backSquares[Color.BLACK] = blackNotFileOpenSquares << 8;
-	}
-
-	private void fillOppositeFileAndAttackableSquares(final Position position) {
-		// White
-		final long whitePawnSquares = position.getPiecesMask(Color.WHITE, PieceType.PAWN);
-		long whiteReachableSquares = whitePawnSquares;
-		whiteReachableSquares |= whiteReachableSquares << 8;
-		whiteReachableSquares |= whiteReachableSquares << 16;
-		whiteReachableSquares |= whiteReachableSquares << 32;
-		
-		frontSquares[Color.WHITE] = whiteReachableSquares << 8;
-		neighborFrontSquares[Color.WHITE] = BoardConstants.getPawnsAttackedSquares(Color.WHITE, whiteReachableSquares & ~BoardConstants.RANK_18_MASK);
-		
-		// Black
-		final long blackPawnSquares = position.getPiecesMask(Color.BLACK, PieceType.PAWN);
-		long blackReachableSquares = blackPawnSquares;
-		blackReachableSquares |= blackReachableSquares >>> 8;
-		blackReachableSquares |= blackReachableSquares >>> 16;
-		blackReachableSquares |= blackReachableSquares >>> 32;
-		
-		frontSquares[Color.BLACK] = blackReachableSquares >>> 8;
-		neighborFrontSquares[Color.BLACK] = BoardConstants.getPawnsAttackedSquares(Color.BLACK, blackReachableSquares & ~BoardConstants.RANK_18_MASK);
-	}
-	
-	private void fillSecureSquares(final Position position) {
-		final long notPawnsSquares = ~position.getBothColorPiecesMask(PieceType.PAWN);
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int oppositeColor = Color.getOppositeColor(color);
-			final long pawnsMask = position.getPiecesMask(color, PieceType.PAWN);
-			final long attackedSquares = BoardConstants.getPawnsAttackedSquares(color, pawnsMask);
-			
-			secureSquares[color] = attackedSquares & notPawnsSquares & ~neighborFrontSquares[oppositeColor];
-		}
-	}
-	
-	private void evaluateUnprotectedOpenFilePawns(final Position position, final AttackCalculator attackCalculator) {
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int oppositeColor = Color.getOppositeColor(color);
-			final long oppositeRookMask = position.getPiecesMask(oppositeColor, PieceType.ROOK);
-			
-			if (oppositeRookMask != 0) {
-				final long ownPawnMask = position.getPiecesMask(color, PieceType.PAWN);
-				final long unprotectedPawnMask = ownPawnMask & ~attackCalculator.getPawnAttackedSquares(color);
-				final long unprotectedOpenPawnMask = unprotectedPawnMask & ~frontSquares[oppositeColor];
-				
-				evaluation.addCoeff(coeffs.getCoeffUnprotectedOpenFilePawnBonus(), color, BitBoard.getSquareCount(unprotectedOpenPawnMask));
-			}
-		}
-	}
-	
 	private void evaluatePawnStructure(final Position position, final AttackCalculator attackCalculator) {
 		final long whiteRookMask = position.getPiecesMask(Color.WHITE, PieceType.ROOK);
 		final long blackRookMask = position.getPiecesMask(Color.BLACK, PieceType.ROOK);
@@ -219,71 +91,42 @@ public class PawnStructureEvaluator {
 		}
 	}
 	
-	public long getBackSquares(final int color) {
-		return backSquares[color];
-	}
-
-	public long getFrontSquares(final int color) {
-		return frontSquares[color];
-	}
-
-	public void calculate(final Position position) {
-		fillOpenFileSquares(position);
-		fillOppositeFileAndAttackableSquares(position);
-		fillSecureSquares(position);
-		calculatePawnTypes(position);
-	}
-	
-	private void calculatePawnTypes(final Position position) {
+	private void evaluateUnprotectedOpenFilePawns(final Position position, final AttackCalculator attackCalculator) {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int oppositeColor = Color.getOppositeColor(color);
+			final long oppositeRookMask = position.getPiecesMask(oppositeColor, PieceType.ROOK);
 			
-			final long ownPawnMask = position.getPiecesMask(color, PieceType.PAWN);
-			final long openSquares = ~frontSquares[oppositeColor];
-			passedPawns[color] = ownPawnMask & openSquares & ~neighborFrontSquares[oppositeColor];
-			
-			final long extendedConnectedSquareMask = BoardConstants.getAllConnectedPawnSquareMask(ownPawnMask) | BoardConstants.getPawnsAttackedSquares(Color.WHITE, ownPawnMask) | BoardConstants.getPawnsAttackedSquares(Color.BLACK, ownPawnMask);
-			connectedPawns[color] = ownPawnMask & extendedConnectedSquareMask;
-			
-			final long frontOrBackSquares = frontSquares[color] | backSquares[color];
-			final long occupiedFiles = frontOrBackSquares | ownPawnMask;
-			isolatedPawns[color] = ownPawnMask & ~BoardConstants.getAllConnectedPawnSquareMask(occupiedFiles);
-			
-			backwardPawns[color] = ownPawnMask & openSquares & neighborFrontSquares[oppositeColor] & ~neighborFrontSquares[color];
-			doubledPawns[color] = ownPawnMask & frontOrBackSquares;
+			if (oppositeRookMask != 0) {
+				final long ownPawnMask = position.getPiecesMask(color, PieceType.PAWN);
+				final long unprotectedPawnMask = ownPawnMask & ~attackCalculator.getPawnAttackedSquares(color);
+				final long unprotectedOpenPawnMask = unprotectedPawnMask & ~structureData.getFrontSquares(oppositeColor);
+				
+				evaluation.addCoeff(coeffs.getCoeffUnprotectedOpenFilePawnBonus(), color, BitBoard.getSquareCount(unprotectedOpenPawnMask));
+			}
 		}
 	}
 
-	public IPositionEvaluation evaluate(final Position position, final AttackCalculator attackCalculator) {
-		evaluation.clear();
-		
-		evaluatePawnStructure(position, attackCalculator);
-		evaluateUnprotectedOpenFilePawns(position, attackCalculator);
-		
-		return evaluation;		
+
+	public long getSecureSquares(final int color) {
+		return structureData.getSecureSquares(color);
 	}
 
-	public void writeLog(final PrintWriter writer) {
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			writer.print("Back squares " + Color.getName(color) + ": ");
-			BitBoard.write(writer, backSquares[color]);
-			writer.println();			
-		}
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			writer.print("Front squares " + Color.getName(color) + ": ");
-			BitBoard.write(writer, frontSquares[color]);
-			writer.println();			
-		}
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			writer.print("Secure squares " + Color.getName(color) + ": ");
-			BitBoard.write(writer, secureSquares[color]);
-			writer.println();			
-		}
+
+	public long getBackSquares(final int color) {
+		return structureData.getBackSquares(color);
 	}
-	
-	public long getSecureSquares (final int color) {
-		return secureSquares[color];
+
+
+	public void clear() {
+		structureData.clear();
 	}
+
+
+	public void calculate(final Position position) {
+		final PawnStructure structure = position.getPawnStructure();
+		
+		structureData.calculate(structure);
+	}
+
+
 }

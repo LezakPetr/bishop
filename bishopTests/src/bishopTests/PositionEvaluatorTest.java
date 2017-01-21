@@ -14,6 +14,7 @@ import bishop.engine.Evaluation;
 import bishop.engine.IPositionEvaluation;
 import bishop.engine.IPositionEvaluator;
 import bishop.engine.MiddleGamePositionEvaluator;
+import bishop.engine.PawnStructureCache;
 import bishop.engine.PositionEvaluatorSwitch;
 import bishop.engine.PositionEvaluatorSwitchSettings;
 
@@ -42,9 +43,10 @@ public class PositionEvaluatorTest {
 		final IMaterialEvaluator materialEvaluator = DefaultAdditiveMaterialEvaluator.getInstance();
 		
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
+		final PawnStructureCache pawnStructureCache = new PawnStructureCache();
 		
-		testPositionEvaluatorSpeed (position, new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), materialEvaluator, evaluationFactory));
-		testPositionEvaluatorSpeed (position, new EndingPositionEvaluator(materialEvaluator, evaluationFactory));
+		testPositionEvaluatorSpeed (position, new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), materialEvaluator, pawnStructureCache, evaluationFactory));
+		testPositionEvaluatorSpeed (position, new EndingPositionEvaluator(materialEvaluator, pawnStructureCache, evaluationFactory));
 		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings, materialEvaluator, evaluationFactory));
 	}
 }

@@ -34,14 +34,14 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 	private final boolean[] hasFigures;
 	
 
-	public EndingPositionEvaluator(final IMaterialEvaluator materialEvaluator, final Supplier<IPositionEvaluation> evaluationFactory) {
+	public EndingPositionEvaluator(final IMaterialEvaluator materialEvaluator, final PawnStructureCache structureCache, final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.materialEvaluator = materialEvaluator;
 		this.evaluation = evaluationFactory.get();
 		this.positionalEvaluation = evaluationFactory.get();
 		
 		tableEvaluator = new TablePositionEvaluator(PositionEvaluationCoeffs.ENDING_TABLE_EVALUATOR_COEFFS, evaluationFactory);
 		bishopColorPositionEvaluator = new BishopColorPositionEvaluator(evaluationFactory);
-		pawnStructureEvaluator = new PawnStructureEvaluator(PositionEvaluationCoeffs.ENDING_PAWN_STRUCTURE_COEFFS, evaluationFactory);
+		pawnStructureEvaluator = new PawnStructureEvaluator(PositionEvaluationCoeffs.ENDING_PAWN_STRUCTURE_COEFFS, structureCache, evaluationFactory);
 		
 		pawnPromotionDistances = new int[Color.LAST];
 		hasFigures = new boolean[Color.LAST];
@@ -176,7 +176,6 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 	 */
 	public void writeLog (final PrintWriter writer) {
 		bishopColorPositionEvaluator.writeLog(writer);
-		pawnStructureEvaluator.writeLog (writer);
 		
 		writer.println ("EndingPositionEvaluator");
 		writer.println ("=======================");
