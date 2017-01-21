@@ -68,25 +68,24 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final int capturedPieceType = move.getCapturedPieceType();
 		final int oppositeColor = Color.getOppositeColor (onTurn);
 		
-		final long movingPieceChange = beginSquareMask | targetSquareMask;
+		final long moveMask = beginSquareMask | targetSquareMask;
 				
-		pieceTypeMasks[movingPieceType] ^= movingPieceChange;
-		colorOccupancy[onTurn] ^= movingPieceChange;
-		occupancy ^= beginSquareMask;
+		pieceTypeMasks[movingPieceType] ^= moveMask;
+		colorOccupancy[onTurn] ^= moveMask;
+		occupancy ^= moveMask;
 		
 		caching.movePiece (onTurn, movingPieceType, beginSquare, targetSquare);
 
 		if (capturedPieceType != PieceType.NONE) {
 			pieceTypeMasks[capturedPieceType] ^= targetSquareMask;
 			colorOccupancy[oppositeColor] ^= targetSquareMask;
+			occupancy ^= targetSquareMask;
 			
 			caching.removePiece (oppositeColor, capturedPieceType, targetSquare);
 		}
-		else
-			occupancy ^= targetSquareMask;
 
 		// Update castling rights
-		if (!castlingRights.isEmpty() && (movingPieceChange & CastlingRights.AFFECTED_SQUARES) != 0) {
+		if (!castlingRights.isEmpty() && (moveMask & CastlingRights.AFFECTED_SQUARES) != 0) {
 			final int origCastlingRightIndex = castlingRights.getIndex();
 			
 			castlingRights.updateAfterSquareChange (beginSquare);
@@ -135,22 +134,21 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		caching.swapOnTurn();
 		
 		// Piece masks
-		final long movingPieceChange = beginSquareMask | targetSquareMask;
+		final long moveMask = beginSquareMask | targetSquareMask;
 				
-		pieceTypeMasks[movingPieceType] ^= movingPieceChange;
-		colorOccupancy[onTurn] ^= movingPieceChange;
-		occupancy ^= beginSquareMask;
+		pieceTypeMasks[movingPieceType] ^= moveMask;
+		colorOccupancy[onTurn] ^= moveMask;
+		occupancy ^= moveMask;
 		
 		caching.movePiece(onTurn, movingPieceType, targetSquare, beginSquare);
 
 		if (capturedPieceType != PieceType.NONE) {
 			pieceTypeMasks[capturedPieceType] ^= targetSquareMask;
 			colorOccupancy[oppositeColor] ^= targetSquareMask;
+			occupancy ^= targetSquareMask;
 			
 			caching.addPiece(oppositeColor, capturedPieceType, targetSquare);
 		}
-		else
-			occupancy ^= targetSquareMask;
 
 		// Update castling rights
 		final int prevCastlingRightIndex = move.getPreviousCastlingRigthIndex();
@@ -184,12 +182,12 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final int promotionPieceType = move.getPromotionPieceType();
 		final int oppositeColor = Color.getOppositeColor (onTurn);
 		
+		final long moveMask = beginSquareMask | targetSquareMask;
+		
 		pieceTypeMasks[PieceType.PAWN] ^= beginSquareMask;
-		colorOccupancy[onTurn] ^= beginSquareMask;
-		occupancy ^= beginSquareMask;
-
 		pieceTypeMasks[promotionPieceType] ^= targetSquareMask;
-		colorOccupancy[onTurn] ^= targetSquareMask;
+		colorOccupancy[onTurn] ^= moveMask;
+		occupancy ^= moveMask;
 		
 		caching.removePiece(onTurn, PieceType.PAWN, beginSquare);
 		caching.addPiece(onTurn, promotionPieceType, targetSquare);
@@ -197,11 +195,10 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		if (capturedPieceType != PieceType.NONE) {
 			pieceTypeMasks[capturedPieceType] ^= targetSquareMask;
 			colorOccupancy[oppositeColor] ^= targetSquareMask;
-
-			caching.removePiece(oppositeColor, capturedPieceType, targetSquare);
-		}
-		else
 			occupancy ^= targetSquareMask;
+			
+			caching.removePiece(oppositeColor, capturedPieceType, targetSquare);
+		}			
 
 		// Update castling rights - only by target square (begin square cannot change rights)
 		final int origCastlingRightIndex = castlingRights.getIndex();
@@ -235,12 +232,12 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		caching.swapOnTurn();
 
 		// Piece masks
+		final long moveMask = beginSquareMask | targetSquareMask;
+		
 		pieceTypeMasks[PieceType.PAWN] ^= beginSquareMask;
-		colorOccupancy[onTurn] ^= beginSquareMask;
-		occupancy ^= beginSquareMask;
-
 		pieceTypeMasks[promotionPieceType] ^= targetSquareMask;
-		colorOccupancy[onTurn] ^= targetSquareMask;
+		colorOccupancy[onTurn] ^= moveMask;
+		occupancy ^= moveMask;
 
 		caching.addPiece(onTurn, PieceType.PAWN, beginSquare);
 		caching.removePiece(onTurn, promotionPieceType, targetSquare);
@@ -248,11 +245,10 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		if (capturedPieceType != PieceType.NONE) {
 			pieceTypeMasks[capturedPieceType] ^= targetSquareMask;
 			colorOccupancy[oppositeColor] ^= targetSquareMask;
+			occupancy ^= targetSquareMask;
 			
 			caching.addPiece(oppositeColor, capturedPieceType, targetSquare);
 		}
-		else
-			occupancy ^= targetSquareMask;
 
 		// Update castling rights
 		final int prevCastlingRightIndex = move.getPreviousCastlingRigthIndex();
