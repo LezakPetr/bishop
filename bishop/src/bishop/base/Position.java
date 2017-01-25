@@ -515,6 +515,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 			
 			colorOccupancy[color] |= squareMask;
 			colorOccupancy[oppositeColor] &= ~squareMask;
+			occupancy |= squareMask;
 			
 			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
 				if (pieceType == piece.getPieceType())
@@ -529,6 +530,8 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 			
 			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++)
 				pieceTypeMasks[pieceType] &= ~squareMask;
+			
+			occupancy &= ~squareMask;
 		}
 	}
 	
