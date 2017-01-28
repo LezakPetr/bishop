@@ -14,15 +14,22 @@ public class PawnStructureCoeffs {
 	public static final int COEFF_COUNT = 29;
 	
 	
-	public PawnStructureCoeffs(final CoeffRegistry registry, final String category) {
+	public PawnStructureCoeffs(final CoeffRegistry registry, final String category, final boolean withFigures) {
 		registry.enterCategory(category);
 		
-		coeffUnprotectedOpenFilePawnBonus = registry.add("unprotected_open_file_pawn");
+		if (withFigures) {
+			coeffUnprotectedOpenFilePawnBonus = registry.add("unprotected_open_file_pawn");
+			rookPawnBonusCoeffs = createRankCoeffs (registry, "rook_pawn", Rank.R2, Rank.R7);		
+		}
+		else {
+			// Without figures -> without coeffs that requires figure
+			coeffUnprotectedOpenFilePawnBonus = -1;
+			rookPawnBonusCoeffs = createRankCoeffs (registry, "rook_pawn", Rank.LAST, Rank.FIRST);
+		}
 		
 		connectedPassedPawnBonusCoeffs = createRankCoeffs (registry, "connected_passed_pawn", Rank.R2, Rank.R7);
 		protectedPassedPawnBonusCoeffs = createRankCoeffs (registry, "protected_passed_pawn", Rank.R3, Rank.R7);
 		singlePassedPawnBonusCoeffs = createRankCoeffs (registry, "single_passed_pawn", Rank.R2, Rank.R7);
-		rookPawnBonusCoeffs = createRankCoeffs (registry, "rook_pawn", Rank.R2, Rank.R7);
 		doublePawnBonusCoeffs = createRankCoeffs (registry, "double_pawn", Rank.R2, Rank.R6);
 		
 		registry.leaveCategory();

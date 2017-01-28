@@ -31,8 +31,9 @@ public class PositionEvaluationCoeffs {
 	
 	public static final int MOBILITY_OFFSET = MobilityPositionEvaluator.registerCoeffs(registry);
 	
-	public static final PawnStructureCoeffs MIDDLE_GAME_PAWN_STRUCTURE_COEFFS = new PawnStructureCoeffs(registry, "middle_game_pawn_structure");
-	public static final PawnStructureCoeffs ENDING_PAWN_STRUCTURE_COEFFS = new PawnStructureCoeffs(registry, "ending_pawn_structure");
+	public static final PawnStructureCoeffs MIDDLE_GAME_PAWN_STRUCTURE_COEFFS = new PawnStructureCoeffs(registry, "middle_game_pawn_structure", true);
+	public static final PawnStructureCoeffs ENDING_WITH_FIGURES_PAWN_STRUCTURE_COEFFS = new PawnStructureCoeffs(registry, "ending_with_figures_pawn_structure", true);
+	public static final PawnStructureCoeffs ENDING_PAWNS_ONLY_PAWN_STRUCTURE_COEFFS = new PawnStructureCoeffs(registry, "ending_pawns_only_pawn_structure", false);
 	
 	public static final int LAST = registry.finish();
 	
