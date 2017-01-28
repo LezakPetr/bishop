@@ -22,7 +22,8 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 	private final IMaterialEvaluator materialEvaluator;
 	private final TablePositionEvaluator tableEvaluator;
 	private final BishopColorPositionEvaluator bishopColorPositionEvaluator;
-	private final PawnStructureEvaluator pawnStructureEvaluator;
+	private final PawnStructureEvaluator pawnStructureEvaluatorWithFigures;
+	private final PawnStructureEvaluator pawnStructureEvaluatorPawnsOnly;
 	
 	private Position position;
 	
@@ -41,7 +42,8 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		
 		tableEvaluator = new TablePositionEvaluator(PositionEvaluationCoeffs.ENDING_TABLE_EVALUATOR_COEFFS, evaluationFactory);
 		bishopColorPositionEvaluator = new BishopColorPositionEvaluator(evaluationFactory);
-		pawnStructureEvaluator = new PawnStructureEvaluator(PositionEvaluationCoeffs.ENDING_PAWN_STRUCTURE_COEFFS, structureCache, evaluationFactory);
+		pawnStructureEvaluatorWithFigures  = new PawnStructureEvaluator(PositionEvaluationCoeffs.ENDING_WITH_FIGURES_PAWN_STRUCTURE_COEFFS, structureCache, evaluationFactory);
+		pawnStructureEvaluatorPawnsOnly = new PawnStructureEvaluator(PositionEvaluationCoeffs.ENDING_PAWNS_ONLY_PAWN_STRUCTURE_COEFFS, structureCache, evaluationFactory);
 		
 		pawnPromotionDistances = new int[Color.LAST];
 		hasFigures = new boolean[Color.LAST];
@@ -54,7 +56,8 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		
 		evaluation.clear();
 		positionalEvaluation.clear();
-		pawnStructureEvaluator.clear();
+		pawnStructureEvaluatorWithFigures.clear();
+		pawnStructureEvaluatorPawnsOnly.clear();
 	}
 	
 	private void calculateHasFigures() {
@@ -161,6 +164,10 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 	
 	private void calculatePositionalEvaluation(final AttackCalculator attackCalculator) {
 		calculateHasFigures();
+		
+		final PawnStructureEvaluator pawnStructureEvaluator = (hasFigures[Color.WHITE] || hasFigures[Color.BLACK]) ?
+				pawnStructureEvaluatorWithFigures : pawnStructureEvaluatorPawnsOnly;
+		
 		pawnStructureEvaluator.calculate(position);
 		
 		positionalEvaluation.addSubEvaluation(tableEvaluator.evaluatePosition(position));

@@ -51,5 +51,12 @@ public class PawnStructureCache {
 		
 		data.assign(dataFromCache);
 	}
+	
+	public void printStatistics() {
+		final double totalCount = hitCount + missCount;
+		final double hitPercent = 100.0 * (hitCount / totalCount);
+		
+		System.out.println ("Pawn structure cache hit: " + hitPercent + "%");
+	}
 
 }
