@@ -4,18 +4,25 @@ import bishop.base.Color;
 import bishop.base.Rank;
 
 public class PawnStructureCoeffs {
+	
+	private final int firstCoeff;
+	
 	private final int coeffUnprotectedOpenFilePawnBonus;
 	private final int[][] connectedPassedPawnBonusCoeffs;
 	private final int[][] protectedPassedPawnBonusCoeffs;
 	private final int[][] singlePassedPawnBonusCoeffs;
 	private final int[][] rookPawnBonusCoeffs;
 	private final int[][] doublePawnBonusCoeffs;
+	private final int[][] connectedNotPassedPawnBonusCoeffs;
+	private final int[][] protectedNotPassedPawnBonusCoeffs;
+	
+	private final int lastCoeff;
 	
 	public static final int COEFF_COUNT = 29;
 	
 	
 	public PawnStructureCoeffs(final CoeffRegistry registry, final String category, final boolean withFigures) {
-		registry.enterCategory(category);
+		firstCoeff = registry.enterCategory(category);
 		
 		if (withFigures) {
 			coeffUnprotectedOpenFilePawnBonus = registry.add("unprotected_open_file_pawn");
@@ -31,8 +38,10 @@ public class PawnStructureCoeffs {
 		protectedPassedPawnBonusCoeffs = createRankCoeffs (registry, "protected_passed_pawn", Rank.R3, Rank.R7);
 		singlePassedPawnBonusCoeffs = createRankCoeffs (registry, "single_passed_pawn", Rank.R2, Rank.R7);
 		doublePawnBonusCoeffs = createRankCoeffs (registry, "double_pawn", Rank.R2, Rank.R6);
+		connectedNotPassedPawnBonusCoeffs = createRankCoeffs (registry, "connected_not_passed_pawn", Rank.R2, Rank.R6);
+		protectedNotPassedPawnBonusCoeffs = createRankCoeffs (registry, "protected_not_passed_pawn", Rank.R3, Rank.R6);
 		
-		registry.leaveCategory();
+		lastCoeff = registry.leaveCategory();
 	}
 	
 	private int[][] createRankCoeffs(final CoeffRegistry registry, final String category, final int from, final int to) {
@@ -69,23 +78,40 @@ public class PawnStructureCoeffs {
 	}
 
 
-	public int getProtectedPassedPawnBonusCoeffs(final int color, final int rank) {
+	public int getProtectedPassedPawnBonusCoeff(final int color, final int rank) {
 		return protectedPassedPawnBonusCoeffs[color][rank];
 	}
 
 
-	public int getSinglePassedPawnBonusCoeffs(final int color, final int rank) {
+	public int getSinglePassedPawnBonusCoeff(final int color, final int rank) {
 		return singlePassedPawnBonusCoeffs[color][rank];
 	}
 
 
-	public int getRookPawnBonusCoeffs(final int color, final int rank) {
+	public int getRookPawnBonusCoeff(final int color, final int rank) {
 		return rookPawnBonusCoeffs[color][rank];
 	}
 
 
-	public int getDoublePawnBonusCoeffs(final int color, final int rank) {
+	public int getDoublePawnBonusCoeff(final int color, final int rank) {
 		return doublePawnBonusCoeffs[color][rank];
+	}
+	
+	public int getConnectedNotPassedPawnBonusCoeff(final int color, final int rank) {
+		return connectedNotPassedPawnBonusCoeffs[color][rank];
+	}
+
+
+	public int getProtectedNotPassedPawnBonusCoeff(final int color, final int rank) {
+		return protectedNotPassedPawnBonusCoeffs[color][rank];
+	}
+	
+	public int getFirstCoeff() {
+		return firstCoeff;
+	}
+	
+	public int getLastCoeff() {
+		return lastCoeff;
 	}
 
 }
