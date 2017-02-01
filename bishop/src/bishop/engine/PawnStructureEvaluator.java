@@ -44,48 +44,51 @@ public class PawnStructureEvaluator {
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int oppositeColor = Color.getOppositeColor(color);
-			
 			final long ownPawnMask = position.getPiecesMask(color, PieceType.PAWN);
-			final long oppositePawnMask = position.getPiecesMask(oppositeColor, PieceType.PAWN);
+			final long passedPawnMask = structureData.getPassedPawnMask(color);
+			final long connectedPawnMask = structureData.getConnectedPawnMask(color);
+			final long protectedPawnMask = structureData.getProtectedPawnMask(color);
 			
 			for (BitLoop loop = new BitLoop(ownPawnMask); loop.hasNextSquare(); ) {
 				final int square = loop.getNextSquare();
+				final long squareMask = BitBoard.getSquareMask(square);
 				final int rank = Square.getRank(square);
-				final long frontSquaresOnThreeFiles = BoardConstants.getFrontSquaresOnThreeFiles(color, square);
 				final long frontSquaresOnSameFile = FrontSquaresOnSameFileTable.getItem(color, square);
-				final long rearSquaresOnSameFile = FrontSquaresOnSameFileTable.getItem(oppositeColor, square);
-				
+
 				// Passed pawn
-				if ((oppositePawnMask & frontSquaresOnThreeFiles) == 0) {
-					final long neighbourSquares = BoardConstants.getConnectedPawnSquareMask(square);
-					
-					if ((ownPawnMask & neighbourSquares) != 0) {
+				if ((passedPawnMask & squareMask) != 0) {
+					if ((connectedPawnMask & squareMask) != 0)
 						evaluation.addCoeff(coeffs.getConnectedPassedPawnBonusCoeff(color, rank), color);
-					}
 					else {
-						final long protectingSquares = PawnAttackTable.getItem(oppositeColor, square);
-						
-						if ((ownPawnMask & protectingSquares) != 0) {
-							evaluation.addCoeff(coeffs.getProtectedPassedPawnBonusCoeffs(color, rank), color);
-						}
-						else {
-							evaluation.addCoeff(coeffs.getSinglePassedPawnBonusCoeffs(color, rank), color);
-						}
+						if ((protectedPawnMask & squareMask) != 0)
+							evaluation.addCoeff(coeffs.getProtectedPassedPawnBonusCoeff(color, rank), color);
+						else
+							evaluation.addCoeff(coeffs.getSinglePassedPawnBonusCoeff(color, rank), color);
 					}
 					
 					// Pawn with rooks
+					final long rearSquaresOnSameFile = FrontSquaresOnSameFileTable.getItem(oppositeColor, square);
+
 					if ((whiteRookMask & rearSquaresOnSameFile) != 0 && (blackRookMask & frontSquaresOnSameFile) != 0) {
-						evaluation.addCoeff(coeffs.getRookPawnBonusCoeffs(color, rank), color, +1);
+						evaluation.addCoeff(coeffs.getRookPawnBonusCoeff(color, rank), color, +1);
 					}
 					
 					if ((blackRookMask & rearSquaresOnSameFile) != 0 && (whiteRookMask & frontSquaresOnSameFile) != 0) {
-						evaluation.addCoeff(coeffs.getRookPawnBonusCoeffs(color, rank), color, -1);
+						evaluation.addCoeff(coeffs.getRookPawnBonusCoeff(color, rank), color, -1);
 					}
+				}
+				else {
+					if ((connectedPawnMask & squareMask) != 0)
+						evaluation.addCoeff(coeffs.getConnectedNotPassedPawnBonusCoeff(color, rank), color);
+					else {
+						if ((protectedPawnMask & squareMask) != 0)
+							evaluation.addCoeff(coeffs.getProtectedNotPassedPawnBonusCoeff(color, rank), color);
+					}					
 				}
 				
 				// Double pawn
 				if ((frontSquaresOnSameFile & ownPawnMask) != 0) {
-					evaluation.addCoeff(coeffs.getDoublePawnBonusCoeffs(color, rank), color);
+					evaluation.addCoeff(coeffs.getDoublePawnBonusCoeff(color, rank), color);
 				}
 			}
 		}
