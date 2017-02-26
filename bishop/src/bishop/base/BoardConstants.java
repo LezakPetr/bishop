@@ -1,5 +1,6 @@
 package bishop.base;
 
+import utils.IntBiPredicate;
 
 /**
  * This class contains some constants related to the board.  
@@ -129,38 +130,42 @@ public class BoardConstants {
     };
     
     
-    private static final long[][] FRONT_SQUARES_ON_THREE_FILES = initializeSquaresBeforePawnOnThreeFiles();
-    
-    private static final long[][] initializeSquaresBeforePawnOnThreeFiles() {
-    	final long[][] table = new long[Color.LAST][Square.LAST];
+    private static long[][] initializeSquareMaskBySquareTable(final IntBiPredicate predicate) {
+    	final long[][] result = new long[Color.LAST][Square.LAST];
     	
-    	for (int pawnColor = Color.FIRST; pawnColor < Color.LAST; pawnColor++) {
-    		final int rankOffset = getPawnRankOffset(pawnColor);
+    	for (int drivingSquare = Square.FIRST; drivingSquare < Square.LAST; drivingSquare++) {
+    		long mask = BitBoard.EMPTY;
     		
-    		for (int pawnSquare = Square.FIRST; pawnSquare < Square.LAST; pawnSquare++) {
-    			final int pawnFile = Square.getFile(pawnSquare);
-    			
-    			long board = BitBoard.EMPTY;
-    			int rank = Square.getRank(pawnSquare);
-    			rank += rankOffset;
-    			
-    			while (Rank.isValid(rank)) {
-    				for (int file = pawnFile - 1; file <= pawnFile + 1; file++) {
-    					if (File.isValid(file)) {
-    						final int square = Square.onFileRank(file, rank);
-    						board |= BitBoard.getSquareMask(square);
-    					}
-    				}
-    				
-    				rank += rankOffset;
-    			}
-    			
-    			table[pawnColor][pawnSquare] = board;
+    		for (int maskedSquare = Square.FIRST; maskedSquare < Square.LAST; maskedSquare++) {
+    			if (predicate.test(drivingSquare, maskedSquare))
+    				mask |= BitBoard.getSquareMask(maskedSquare);
     		}
+    		
+    		result[Color.WHITE][drivingSquare] = mask;
+    		result[Color.BLACK][Square.getOppositeSquare(drivingSquare)] = BitBoard.getMirrorBoard(mask);
     	}
     	
-    	return table;
+    	return result;
     }
+    
+    private static final long[][] FRONT_SQUARES_ON_THREE_FILES = initializeSquareMaskBySquareTable(
+		(d, m) -> Square.getRank(m) > Square.getRank(d) && Math.abs(Square.getFile(m) - Square.getFile(d)) <= 1
+	);
+    
+    private static final long[][] PAWN_BLOCKING_SQUARES = initializeSquareMaskBySquareTable(
+		(d, m) -> {
+			final int dRank = Square.getRank(d);
+			final int mRank = Square.getRank(m);
+			final int dFile = Square.getFile(d);
+			final int mFile = Square.getFile(m);
+			
+			return (dFile == mFile && mRank > dRank) || (Math.abs(dFile - mFile) == 1 && mRank - dRank >= 2);
+		}
+	);
+    
+    private static final long[][] SQUARES_IN_FRONT_INCLUSIVE = initializeSquareMaskBySquareTable(
+		(d, m) -> Square.getFile(d) == Square.getFile(m) && Square.getRank(m) >= Square.getRank(d)
+	);
     
     private static final long[] CONNECTED_PAWN_SQUARE_MASKS = initializeConnectedPawnSquareMasks();
     
@@ -413,6 +418,21 @@ public class BoardConstants {
 	public static long getFrontSquaresOnThreeFiles (final int color, final int square) {
 		return FRONT_SQUARES_ON_THREE_FILES[color][square];
 	}
+	
+	/**
+	 * Returns mask of squares that if they would be occupied by opposite pawn
+	 * stops pawn on given square. 
+	 * @param color color of pawn
+	 * @param square square
+	 * @return mask of blocking squares
+	 */
+	public static long getPawnBlockingSquares (final int color, final int square) {
+		return PAWN_BLOCKING_SQUARES[color][square];
+	}
+	
+	public static long getSquaresInFrontInclusive(final int color, final int square) {
+		return SQUARES_IN_FRONT_INCLUSIVE[color][square];
+	}
 
 	/**
 	 * Returns one or two squares on same rank left and right to given square.
@@ -511,6 +531,14 @@ public class BoardConstants {
     	else {
     		return (leftPawnMask >>> 9) | (rightPawnMask >>> 7);
     	}
+	}
+	
+	public static long getKingsAttackedSquares(final long kingsMask) {
+		final long fileExtension = ((kingsMask & ~FILE_A_MASK) >>> 1) | ((kingsMask & ~FILE_H_MASK) << 1);
+		final long fileExtended = kingsMask | fileExtension;
+		final long rankExtension = ((fileExtended & ~RANK_1_MASK) >>> File.COUNT) | ((fileExtended & ~RANK_8_MASK) << File.COUNT);
+		
+		return rankExtension | fileExtension;
 	}
 	
 	/**

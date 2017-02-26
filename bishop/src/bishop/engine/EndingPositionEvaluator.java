@@ -24,6 +24,7 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 	private final BishopColorPositionEvaluator bishopColorPositionEvaluator;
 	private final PawnStructureEvaluator pawnStructureEvaluatorWithFigures;
 	private final PawnStructureEvaluator pawnStructureEvaluatorPawnsOnly;
+	private final PawnRaceEvaluator pawnRaceEvaluator;
 	
 	private Position position;
 	
@@ -31,7 +32,6 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 	private final IPositionEvaluation evaluation;
 	private final IPositionEvaluation positionalEvaluation;
 	
-	private final int[] pawnPromotionDistances;
 	private final boolean[] hasFigures;
 	
 
@@ -44,14 +44,12 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		bishopColorPositionEvaluator = new BishopColorPositionEvaluator(evaluationFactory);
 		pawnStructureEvaluatorWithFigures  = new PawnStructureEvaluator(PositionEvaluationCoeffs.ENDING_WITH_FIGURES_PAWN_STRUCTURE_COEFFS, structureCache, evaluationFactory);
 		pawnStructureEvaluatorPawnsOnly = new PawnStructureEvaluator(PositionEvaluationCoeffs.ENDING_PAWNS_ONLY_PAWN_STRUCTURE_COEFFS, structureCache, evaluationFactory);
+		pawnRaceEvaluator = new PawnRaceEvaluator(evaluationFactory);
 		
-		pawnPromotionDistances = new int[Color.LAST];
 		hasFigures = new boolean[Color.LAST];
 	}
 		
 	private void clear() {
-		Arrays.fill(pawnPromotionDistances, Rank.LAST);
-		
 		materialEvaluation = 0;
 		
 		evaluation.clear();
@@ -73,48 +71,9 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 	}
 	
 	private void evaluatePawns(final AttackCalculator attackCalculator) {
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int oppositeColor = Color.getOppositeColor(color);
-			
-			final long ownPawnMask = position.getPiecesMask(color, PieceType.PAWN);
-			final long oppositePawnMask = position.getPiecesMask(oppositeColor, PieceType.PAWN);
-			
-			for (BitLoop loop = new BitLoop(ownPawnMask); loop.hasNextSquare(); ) {
-				final int square = loop.getNextSquare();
-				final long frontSquaresOnThreeFiles = BoardConstants.getFrontSquaresOnThreeFiles(color, square);
-				final long frontSquaresOnSameFile = FrontSquaresOnSameFileTable.getItem(color, square);
-				
-				// Passed pawn
-				if ((oppositePawnMask & frontSquaresOnThreeFiles) == 0) {
-					// Pawn out of square
-					if (!hasFigures[oppositeColor]) {
-						final long defendingSquares = RuleOfSquare.getKingDefendingSquares(color, position.getOnTurn(), square);
-						final long oppositeKingMask = position.getPiecesMask(oppositeColor, PieceType.KING);
-						
-						if ((defendingSquares & oppositeKingMask) == 0) {
-							int distance = BoardConstants.getPawnPromotionDistance(color, square);
-							
-							if (color == position.getOnTurn())
-								distance--;
-							
-							distance += BitBoard.getSquareCount(position.getOccupancy() & frontSquaresOnSameFile);
-							
-							pawnPromotionDistances[color] = Math.min(pawnPromotionDistances[color], distance);
-						}
-					}
-				}
-			}
-		}
-		
 		// Rule of square
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int oppositeColor = Color.getOppositeColor(color);
-			final int ownDistance = pawnPromotionDistances[color];
-			final int oppositeDistance = pawnPromotionDistances[oppositeColor];
-			
-			if (ownDistance < Rank.LAST && oppositeDistance - ownDistance > 1) {
-				positionalEvaluation.addCoeff(PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, color);
-			}
+		if (!hasFigures[Color.WHITE] && !hasFigures[Color.BLACK]) {
+			evaluation.addSubEvaluation(pawnRaceEvaluator.evaluate(position));
 		}
 	}
 	
@@ -186,8 +145,6 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		
 		writer.println ("EndingPositionEvaluator");
 		writer.println ("=======================");
-		
-		writer.println ("Pawn promotion distances: white " + pawnPromotionDistances[Color.WHITE] + ", black " + pawnPromotionDistances[Color.BLACK]);
 		
 		writer.println ("Material evaluation: " + Evaluation.toString (materialEvaluation));
 		writer.println ("Positional evaluation: " + positionalEvaluation.toString());

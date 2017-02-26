@@ -10,23 +10,25 @@ import org.junit.Test;
 import org.junit.Assert;
 
 import bishop.base.Color;
+import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.Fen;
 import bishop.base.Position;
 import bishop.base.Rank;
 import bishop.engine.AttackCalculator;
 import bishop.engine.AttackEvaluationTable;
 import bishop.engine.CoeffCountPositionEvaluation;
+import bishop.engine.EndingPositionEvaluator;
+import bishop.engine.Evaluation;
 import bishop.engine.IPositionEvaluation;
 import bishop.engine.PawnStructureCache;
 import bishop.engine.PawnStructureCoeffs;
-import bishop.engine.PawnStructureEvaluator;
 import bishop.engine.PositionEvaluationCoeffs;
 
 import math.Utils;
 
 public class PawnStructureEvaluatorTest {
 	
-	private static final PawnStructureCoeffs COEFFS = PositionEvaluationCoeffs.MIDDLE_GAME_PAWN_STRUCTURE_COEFFS;
+	private static final PawnStructureCoeffs COEFFS = PositionEvaluationCoeffs.ENDING_PAWNS_ONLY_PAWN_STRUCTURE_COEFFS;
 	
 	private static class TestCase {
 		public final String position;
@@ -41,7 +43,7 @@ public class PawnStructureEvaluatorTest {
 		}
 	}
 	
-	public TestCase[] TEST_CASES = {
+	public TestCase[] CLASSIFICATION_TEST_CASES = {
 		new TestCase(
 			"5k2/8/6P1/5P2/1p6/1P6/P1P5/5K2 w - - 0 1",
 			new int[] {
@@ -76,27 +78,82 @@ public class PawnStructureEvaluatorTest {
 		)
 	};
 	
+	public TestCase[] RULE_OF_SQUARE_TEST_CASES = {
+		new TestCase(
+			"8/8/8/8/2P4k/8/8/K7 w - - 0 1",
+			new int[] {
+				PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, 1
+			}
+		),
+		new TestCase(
+			"8/8/8/8/2P4k/8/8/K7 b - - 0 1",
+			new int[] {
+			}
+		),
+		new TestCase(
+			"7k/p4K2/8/8/8/8/8/8 b - - 0 1",
+			new int[] {
+				PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, -1
+			}
+		),
+		new TestCase(
+			"7k/p4K2/8/8/8/8/8/8 w - - 0 1",
+			new int[] {
+			}
+		),
+		new TestCase(
+			"1k6/5K2/8/8/p7/8/1P6/8 w - - 0 1",
+			new int[] {
+			}
+		),
+		new TestCase(
+			"1k6/5K2/7B/8/p7/8/8/8 w - - 0 1",
+			new int[] {
+			}
+		),
+		new TestCase(
+			"1k6/5K2/7P/8/p7/8/8/8 w - - 0 1",
+			new int[] {
+				PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, 1
+			}
+		),
+		new TestCase(
+			"1k6/5K2/7P/8/p7/8/8/8 b - - 0 1",
+			new int[] {
+			}
+		),
+	};
+	
 	@Test
-	public void test() throws IOException {
+	public void testPawnClassification() throws IOException {
+		doTest(CLASSIFICATION_TEST_CASES, COEFFS.getFirstCoeff(), COEFFS.getLastCoeff());
+	}
+	
+	@Test
+	public void testRuleOfSquare() throws IOException {
+		doTest(RULE_OF_SQUARE_TEST_CASES, PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS + 1);
+	}
+
+	private void doTest(final TestCase[] testCases, final int firstCoeff, final int lastCoeff) throws IOException {
 		final PositionEvaluationCoeffs positionEvaluationCoeffs = new PositionEvaluationCoeffs();
 		
 		final PawnStructureCache cache = new PawnStructureCache();
 		final Supplier<IPositionEvaluation> evaluationFactory = () -> new CoeffCountPositionEvaluation(positionEvaluationCoeffs);
-		final PawnStructureEvaluator evaluator = new PawnStructureEvaluator(COEFFS, cache, evaluationFactory);
+		final EndingPositionEvaluator evaluator = new EndingPositionEvaluator(DefaultAdditiveMaterialEvaluator.getInstance(), cache, evaluationFactory);
 		final AttackCalculator attackCalculator = new AttackCalculator(evaluationFactory);
 		final Fen fen = new Fen();
 		
-		for (TestCase testCase: TEST_CASES) {
+		for (TestCase testCase: testCases) {
 			fen.readFenFromString(testCase.position);
 			
 			final Position position = fen.getPosition();
 			attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 			
-			final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluator.evaluate(position, attackCalculator);
+			final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluator.evaluatePosition(position, Evaluation.MIN, Evaluation.MAX, attackCalculator);
 			
 			final Map<Integer, Integer> givenCoeffMap = new HashMap<>();
 			
-			for (int coeff = COEFFS.getFirstCoeff(); coeff < COEFFS.getLastCoeff(); coeff++) {
+			for (int coeff = firstCoeff; coeff < lastCoeff; coeff++) {
 				final int count = Utils.roundToInt(evaluation.getCoeffCount(coeff));
 				
 				if (count != 0)

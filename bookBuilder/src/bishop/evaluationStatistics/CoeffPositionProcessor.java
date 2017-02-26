@@ -77,6 +77,9 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 		return Collections.unmodifiableMap(result);
 	}
 
+	long win;
+	long notwin;
+	
 	@Override
 	public void processPosition(final Position position) {
 		if (position.getMaterialHash().isBalancedExceptFor(PieceType.NONE) && PROBABILITY_RIGHT_SIDES.containsKey(result)) {
@@ -94,6 +97,15 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 			final double[] rightSide = new double[] {probabilityRightSide, evaluationRightSide};
 			
 			equationSolver.addEquation(equationCoeffs, rightSide, 1.0);
+			
+			if (equationCoeffs[PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS] > 0) {
+				if (result == GameResult.WHITE_WINS)
+					win++;
+				else {
+					notwin++;
+					System.out.println(position.toString());
+				}
+			}
 		}
 	}
 
@@ -120,6 +132,8 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 		try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(coeffFile))) {
 			coeffs.write(stream);
 		}
+		
+		System.out.println("WIN " + win + ", " + notwin + " = " + (100.0 *win / (win + notwin)));
 	}
 
 }

@@ -68,4 +68,8 @@ public class Rank {
 	public static char toChar(final int rank) {
 		return NOTATION[rank];
 	}
+
+	public static int getAbsolute(final int relativeRank, final int color) {
+		return (color == Color.WHITE) ? relativeRank : getOppositeRank(relativeRank);
+	}
 }
