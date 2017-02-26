@@ -3,8 +3,10 @@ package bishop.engine;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import bishop.base.BitBoard;
 import bishop.base.BoardConstants;
 import bishop.base.Color;
+import bishop.base.File;
 
 public class PawnStructureData {
 	
@@ -91,41 +93,27 @@ public class PawnStructureData {
 		this.structure = structure;
 		
 		// White
-		long whiteNotFileOpenSquares = structure.getWhitePawnMask();
-		whiteNotFileOpenSquares |= whiteNotFileOpenSquares >>> 8;
-		whiteNotFileOpenSquares |= whiteNotFileOpenSquares >>> 16;
-		whiteNotFileOpenSquares |= whiteNotFileOpenSquares >>> 32;
-		
-		data[BACK_SQUARES_OFFSET + Color.WHITE] = whiteNotFileOpenSquares >>> 8;
+		final long whiteNotFileOpenSquares = BitBoard.extendBackward(structure.getWhitePawnMask());
+		data[BACK_SQUARES_OFFSET + Color.WHITE] = whiteNotFileOpenSquares >>> File.LAST;
 		
 		// Black
-		long blackNotFileOpenSquares = structure.getBlackPawnMask();
-		blackNotFileOpenSquares |= blackNotFileOpenSquares << 8;
-		blackNotFileOpenSquares |= blackNotFileOpenSquares << 16;
-		blackNotFileOpenSquares |= blackNotFileOpenSquares << 32;
-		
-		data[BACK_SQUARES_OFFSET + Color.BLACK] = blackNotFileOpenSquares << 8;
+		long blackNotFileOpenSquares = BitBoard.extendForward(structure.getBlackPawnMask());
+		data[BACK_SQUARES_OFFSET + Color.BLACK] = blackNotFileOpenSquares << File.LAST;
 	}
-
+	
 	private void fillOppositeFileAndAttackableSquares(final PawnStructure structure) {
 		// White
 		final long whitePawnSquares = structure.getWhitePawnMask();
-		long whiteReachableSquares = whitePawnSquares;
-		whiteReachableSquares |= whiteReachableSquares << 8;
-		whiteReachableSquares |= whiteReachableSquares << 16;
-		whiteReachableSquares |= whiteReachableSquares << 32;
+		final long whiteReachableSquares = BitBoard.extendForward(whitePawnSquares);
 		
-		data[FRONT_SQUARES_OFFSET + Color.WHITE] = whiteReachableSquares << 8;
+		data[FRONT_SQUARES_OFFSET + Color.WHITE] = whiteReachableSquares << File.LAST;
 		data[NEIGHBOR_FRONT_SQUARES_OFFSET + Color.WHITE] = BoardConstants.getPawnsAttackedSquares(Color.WHITE, whiteReachableSquares & ~BoardConstants.RANK_18_MASK);
 		
 		// Black
 		final long blackPawnSquares = structure.getBlackPawnMask();
-		long blackReachableSquares = blackPawnSquares;
-		blackReachableSquares |= blackReachableSquares >>> 8;
-		blackReachableSquares |= blackReachableSquares >>> 16;
-		blackReachableSquares |= blackReachableSquares >>> 32;
+		final long blackReachableSquares = BitBoard.extendBackward(blackPawnSquares);
 		
-		data[FRONT_SQUARES_OFFSET + Color.BLACK] = blackReachableSquares >>> 8;
+		data[FRONT_SQUARES_OFFSET + Color.BLACK] = blackReachableSquares >>> File.LAST;
 		data[NEIGHBOR_FRONT_SQUARES_OFFSET + Color.BLACK] = BoardConstants.getPawnsAttackedSquares(Color.BLACK, blackReachableSquares & ~BoardConstants.RANK_18_MASK);
 	}
 	

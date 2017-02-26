@@ -146,4 +146,24 @@ public class BitBoard {
 		return getSquareCount(possibleSquares & preSquareMask);
 	}
 
+	public static long extendForward (final long mask) {
+		long result = mask;
+		
+		result |= result << File.LAST;
+		result |= result << (2 * File.LAST);
+		result |= result << (4 * File.LAST);
+		
+		return result;
+	}
+
+	public static long extendBackward (final long mask) {
+		long result = mask;
+		
+		result |= result >>> File.LAST;
+		result |= result >>> (2 * File.LAST);
+		result |= result >>> (4 * File.LAST);
+		
+		return result;
+	}
+
 }
