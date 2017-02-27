@@ -44,6 +44,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, materialEvaluator, evaluationFactory);
 	private final AttackCalculator attackCalculator = new AttackCalculator(evaluationFactory);
 	private GameResult result;
+ 
 	
 	public CoeffPositionProcessor(final File coeffFile) {
 		this.coeffFile = coeffFile;
@@ -122,6 +123,8 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 				.mapToDouble(i -> PieceTypeEvaluations.PAWN_EVALUATION * pawnProbability * results.get(0).get(i).doubleValue() + results.get(1).get(i).doubleValue())
 				.toArray();
 		
+		fixCoeffs(bestCoeffs);
+		
 		for (int i = 0; i < PositionEvaluationCoeffs.LAST; i++) {
 			System.out.println(PositionEvaluationCoeffs.getCoeffRegistry().getName(i) + " " + bestCoeffs[i]);			
 		}
@@ -134,6 +137,10 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 		}
 		
 		System.out.println("WIN " + win + ", " + notwin + " = " + (100.0 *win / (win + notwin)));
+	}
+
+	private void fixCoeffs(final double[] bestCoeffs) {
+		bestCoeffs[PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS] = 5.0 * PieceTypeEvaluations.PAWN_EVALUATION;
 	}
 
 }
