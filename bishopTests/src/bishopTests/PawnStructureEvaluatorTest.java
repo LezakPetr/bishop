@@ -122,6 +122,12 @@ public class PawnStructureEvaluatorTest {
 			new int[] {
 			}
 		),
+		new TestCase(
+			"8/5K2/6P1/8/2k5/8/1p6/8 b - - 0 1",
+			new int[] {
+				PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, -1
+			}
+		)
 	};
 	
 	@Test

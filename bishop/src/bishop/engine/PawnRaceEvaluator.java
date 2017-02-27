@@ -179,7 +179,7 @@ public class PawnRaceEvaluator {
 			firstEvaluation = Math.max(firstEvaluation, secondEvaluation);
 		}
 		
-		return firstEvaluation;
+		return Evaluation.getAbsolute(firstEvaluation, onTurn);
 	}
 
 	private int evaluatePromotedPawnRace(final boolean onTurnPromoted, final int remainder, final int promotionSquare) {
