@@ -32,7 +32,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	private final CastlingRights castlingRights = new CastlingRights();   // Rights for castling
 	private int epFile;   // File where pawn advanced by two squares in last move (or File.NONE)
 
-	private IPositionCaching caching;
+	private final IPositionCaching caching;
 	
 	public static final Position INITIAL_POSITION = createInitialPosition();
 	
@@ -904,14 +904,14 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		this.onTurn = orig.onTurn;
 		this.castlingRights.assign (orig.castlingRights);
 		this.epFile = orig.epFile;
-		this.caching = orig.caching.copy();
+		this.caching.assign(orig.caching);
 	}
 	
 	/**
 	 * Returns deep copy of this position.
 	 */
 	public Position copy() {
-		final Position position = new Position();
+		final Position position = new Position(caching instanceof NullPositionCaching);
 		position.assign(this);
 		
 		return position;

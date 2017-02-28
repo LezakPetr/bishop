@@ -11,5 +11,5 @@ public interface IPositionCaching {
 	public long getHash();
 	public void setHash(final long hash);
 	public void refreshHash(final Position position);
-	public IPositionCaching copy();
+	public void assign (final IPositionCaching orig);
 }
