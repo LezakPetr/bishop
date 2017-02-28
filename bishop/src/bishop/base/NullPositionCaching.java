@@ -46,8 +46,7 @@ public class NullPositionCaching implements IPositionCaching {
 	}
 
 	@Override
-	public IPositionCaching copy() {
-		return new NullPositionCaching(position);
+	public void assign (final IPositionCaching orig) {
 	}
 
 }

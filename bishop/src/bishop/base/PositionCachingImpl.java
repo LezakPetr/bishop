@@ -53,10 +53,8 @@ public final class PositionCachingImpl implements IPositionCaching {
 	}
 
 	@Override
-	public IPositionCaching copy() {
-		final PositionCachingImpl result = new PositionCachingImpl();
-		result.hash = hash;
-		
-		return result;
+	public void assign (final IPositionCaching orig) {
+		this.hash = orig.getHash();
 	}
+
 }
