@@ -65,21 +65,24 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
     	// Loop through all squares with our figure
     	for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
     		final int beginSquare = beginSquareLoop.getNextSquare();
-    		move.setBeginSquare(beginSquare);
     		
-    		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, beginSquare, occupancy);
-    		final long targetSquareMask = LineAttackTable.getAttackMask(diagonalIndex) & possibleTargetSquares;
-
-    		// Loop through all target squares
-    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
-    			final int targetSquare = targetSquareLoop.getNextSquare();
-				final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
-
-				// Make and process move
-				move.finishNormalMove(targetSquare, capturedPieceType);
-
-				if (!walker.processMove(move))
-					return false;
+    		if ((FigureAttackTable.getItem(PieceType.BISHOP, beginSquare) & possibleTargetSquares) != 0) {
+	    		move.setBeginSquare(beginSquare);
+	    		
+	    		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, beginSquare, occupancy);
+	    		final long targetSquareMask = LineAttackTable.getAttackMask(diagonalIndex) & possibleTargetSquares;
+	
+	    		// Loop through all target squares
+	    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+	    			final int targetSquare = targetSquareLoop.getNextSquare();
+					final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
+	
+					// Make and process move
+					move.finishNormalMove(targetSquare, capturedPieceType);
+	
+					if (!walker.processMove(move))
+						return false;
+	    		}
     		}
     	}
 
@@ -105,21 +108,24 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
     	// Loop through all squares with our figure
     	for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
     		final int beginSquare = beginSquareLoop.getNextSquare();
-    		move.setBeginSquare(beginSquare);
     		
-    		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, beginSquare, occupancy);
-    		final long targetSquareMask = LineAttackTable.getAttackMask(orthogonalIndex) & possibleTargetSquares;
-
-    		// Loop through all target squares
-    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
-    			final int targetSquare = targetSquareLoop.getNextSquare();
-				final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
-
-				// Make and process move
-				move.finishNormalMove(targetSquare, capturedPieceType);
-
-				if (!walker.processMove(move))
-					return false;
+    		if ((FigureAttackTable.getItem(PieceType.ROOK, beginSquare) & possibleTargetSquares) != 0) {
+	    		move.setBeginSquare(beginSquare);
+	    		
+	    		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, beginSquare, occupancy);
+	    		final long targetSquareMask = LineAttackTable.getAttackMask(orthogonalIndex) & possibleTargetSquares;
+	
+	    		// Loop through all target squares
+	    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+	    			final int targetSquare = targetSquareLoop.getNextSquare();
+					final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
+	
+					// Make and process move
+					move.finishNormalMove(targetSquare, capturedPieceType);
+	
+					if (!walker.processMove(move))
+						return false;
+	    		}
     		}
     	}
 
@@ -145,26 +151,29 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
     	// Loop through all squares with our figure
     	for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
     		final int beginSquare = beginSquareLoop.getNextSquare();
-    		move.setBeginSquare(beginSquare);
     		
-    		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, beginSquare, occupancy);
-    		final long diagonalMask = LineAttackTable.getAttackMask(diagonalIndex);
-
-    		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, beginSquare, occupancy);
-    		final long orthogonalMask = LineAttackTable.getAttackMask(orthogonalIndex);
-    		
-    		final long targetSquareMask = (diagonalMask | orthogonalMask) & possibleTargetSquares;
-
-    		// Loop through all target squares
-    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
-    			final int targetSquare = targetSquareLoop.getNextSquare();
-				final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
-
-				// Make and process move
-				move.finishNormalMove(targetSquare, capturedPieceType);
-
-				if (!walker.processMove(move))
-					return false;
+    		if ((FigureAttackTable.getItem(PieceType.QUEEN, beginSquare) & possibleTargetSquares) != 0) {
+	    		move.setBeginSquare(beginSquare);
+	    		
+	    		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, beginSquare, occupancy);
+	    		final long diagonalMask = LineAttackTable.getAttackMask(diagonalIndex);
+	
+	    		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, beginSquare, occupancy);
+	    		final long orthogonalMask = LineAttackTable.getAttackMask(orthogonalIndex);
+	    		
+	    		final long targetSquareMask = (diagonalMask | orthogonalMask) & possibleTargetSquares;
+	
+	    		// Loop through all target squares
+	    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+	    			final int targetSquare = targetSquareLoop.getNextSquare();
+					final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
+	
+					// Make and process move
+					move.finishNormalMove(targetSquare, capturedPieceType);
+	
+					if (!walker.processMove(move))
+						return false;
+	    		}
     		}
     	}
 
