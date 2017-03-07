@@ -138,10 +138,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final ITaskRunner loseMateRunner;
 	
 	private static final int WIN_MATE_DEPTH_IN_MOVES = 1;
-	private static final int WIN_MAX_EXTENSION = 2;
+	private static final int WIN_MAX_EXTENSION = 3;
 	
 	private static final int LOSE_MATE_DEPTH_IN_MOVES = 1;
-	private static final int LOSE_MAX_EXTENSION = 0;
+	private static final int LOSE_MAX_EXTENSION = 1;
 	
 	abstract private class MateTaskBase implements Runnable {
 		protected final MateFinder finder = new MateFinder();
