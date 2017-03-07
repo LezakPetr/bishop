@@ -75,6 +75,7 @@ public class MateFinder {
 		}
 		
 		final int moveStackBegin = moveStackTop;
+		moveGenerator.setGenerateOnlyChecks(horizon == 0);
 		moveGenerator.generateMoves();
 		final int moveStackEnd = moveStackTop;
 		

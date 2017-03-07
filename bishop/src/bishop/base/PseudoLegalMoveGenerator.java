@@ -10,11 +10,19 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
 	public static final int MAX_MOVES_IN_POSITION = 321;
 	
 	private boolean reduceMovesInCheck;
+	private boolean generateOnlyChecks;
+	
+	private int onTurn;
+	private int oppositeColor;
+	private int oppositeKingSquare;
+	
+	private long orthogonalCheckingMask;
+	private long diagonalCheckingMask;
+	private long indirectCheckingBlockers;
 	
     // Generates moves of some figure.
     // Returns if generation should continue.
     private boolean generateShortMovingFigureMoves(final int figure, final long possibleDestinationSquares) {
-    	final int onTurn = position.getOnTurn();
     	final long beginSquareMask = position.getPiecesMask(onTurn, figure);
     	
     	final BitLoop beginSquareLoop = new BitLoop();
@@ -27,7 +35,9 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     		final int beginSquare = beginSquareLoop.getNextSquare();
     		move.setBeginSquare(beginSquare);
     		
-    		final long targetSquareMask = FigureAttackTable.getItem(figure, beginSquare) & possibleDestinationSquares;
+    		final long unfilteredTargetSquareMask = FigureAttackTable.getItem(figure, beginSquare) & possibleDestinationSquares;
+    		final boolean indirectCheck = BitBoard.containsSquare (indirectCheckingBlockers, beginSquare);
+    		final long targetSquareMask = (indirectCheck) ? unfilteredTargetSquareMask : unfilteredTargetSquareMask & FigureAttackTable.getItem(figure, oppositeKingSquare);
 
     		// Loop through all target squares
     		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
@@ -48,7 +58,6 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     // Generates moves of some figure.
     // Returns if generation should continue.
     private boolean generateBishopMoves(final long possibleDestinationSquares) {
-    	final int onTurn = position.getOnTurn();
     	final long beginSquareMask = position.getPiecesMask(onTurn, PieceType.BISHOP);
     	final long occupancy = position.getOccupancy();
     	
@@ -63,7 +72,9 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     		move.setBeginSquare(beginSquare);
     		
     		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, beginSquare, occupancy);
-    		final long targetSquareMask = LineAttackTable.getAttackMask(diagonalIndex) & possibleDestinationSquares;
+    		final long unfilteredTargetSquareMask = LineAttackTable.getAttackMask(diagonalIndex) & possibleDestinationSquares;
+    		final boolean indirectCheck = BitBoard.containsSquare (indirectCheckingBlockers, beginSquare);
+    		final long targetSquareMask = (indirectCheck) ? unfilteredTargetSquareMask : unfilteredTargetSquareMask & diagonalCheckingMask;
 
     		// Loop through all target squares
     		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
@@ -84,7 +95,6 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     // Generates moves of some figure.
     // Returns if generation should continue.
     private boolean generateRookMoves(final long possibleDestinationSquares) {
-    	final int onTurn = position.getOnTurn();
     	final long beginSquareMask = position.getPiecesMask(onTurn, PieceType.ROOK);
     	final long occupancy = position.getOccupancy();
     	
@@ -99,7 +109,9 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     		move.setBeginSquare(beginSquare);
     		
     		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, beginSquare, occupancy);
-    		final long targetSquareMask = LineAttackTable.getAttackMask(orthogonalIndex) & possibleDestinationSquares;
+    		final long unfilteredTargetSquareMask = LineAttackTable.getAttackMask(orthogonalIndex) & possibleDestinationSquares;
+    		final boolean indirectCheck = BitBoard.containsSquare (indirectCheckingBlockers, beginSquare);
+    		final long targetSquareMask = (indirectCheck) ? unfilteredTargetSquareMask : unfilteredTargetSquareMask & orthogonalCheckingMask;
 
     		// Loop through all target squares
     		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
@@ -120,7 +132,6 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     // Generates moves of some figure.
     // Returns if generation should continue.
     private boolean generateQueenMoves(final long possibleDestinationSquares) {
-    	final int onTurn = position.getOnTurn();
     	final long beginSquareMask = position.getPiecesMask(onTurn, PieceType.QUEEN);
     	final long occupancy = position.getOccupancy();
     	
@@ -140,7 +151,9 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, beginSquare, occupancy);
     		final long orthogonalMask = LineAttackTable.getAttackMask(orthogonalIndex);
     		
-    		final long targetSquareMask = (diagonalMask | orthogonalMask) & possibleDestinationSquares;
+    		final long unfilteredTargetSquareMask = (diagonalMask | orthogonalMask) & possibleDestinationSquares;
+    		final boolean indirectCheck = BitBoard.containsSquare (indirectCheckingBlockers, beginSquare);
+    		final long targetSquareMask = (indirectCheck) ? unfilteredTargetSquareMask : unfilteredTargetSquareMask & (diagonalCheckingMask | orthogonalCheckingMask);
     		
     		// Loop through all target squares
     		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
@@ -161,9 +174,21 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     // Generates moves of pawns.
     // Returns if generation should continue.
     private boolean generatePawnMoves(final long possibleDestinationSquares) {
-    	final int onTurn = position.getOnTurn();
-    	final int oppositeColor = Color.getOppositeColor(onTurn);
-    	final long beginSquareMask = position.getPiecesMask(onTurn, PieceType.PAWN);
+    	long beginSquareMask = position.getPiecesMask(onTurn, PieceType.PAWN);
+    	
+    	if (generateOnlyChecks) {
+    		final long promotionRankMask = BoardConstants.getRankMask(BoardConstants.getPawnPromotionRank(onTurn));
+    		final long directCheckingTargetSquares = PawnAttackTable.getItem(oppositeColor, oppositeKingSquare) | promotionRankMask;
+    		final long directCheckingSourceSquares;
+    		
+    		if (onTurn == Color.WHITE)
+    			directCheckingSourceSquares = (directCheckingTargetSquares >>> File.LAST) | ((directCheckingTargetSquares & Rank.R4) >>> (2*File.LAST));
+    		else
+    			directCheckingSourceSquares = (directCheckingTargetSquares << File.LAST) | ((directCheckingTargetSquares & Rank.R5) << (2*File.LAST));
+    		
+    		beginSquareMask &= (directCheckingSourceSquares | indirectCheckingBlockers);
+    	}
+    	
     	final long occupancy = position.getOccupancy();
     	final long opponentSquares = position.getColorOccupancy(oppositeColor);
     	
@@ -216,8 +241,6 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     // Returns if generation should continue.
     private boolean generateCastlingMoves() {
     	final CastlingRights castlingRights = position.getCastlingRights();
-    	final int onTurn = position.getOnTurn();
-    	final int oppositeColor = Color.getOppositeColor(onTurn);
 
     	// If no castling is permitted skip all tests
     	if (!castlingRights.isRightForColor(onTurn))
@@ -261,8 +284,16 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     	this.reduceMovesInCheck = reduce;
     }
     
+    /**
+     * Setting to true means that the generator doesn't have to generate moves that are not checks.
+     * So the generator generates all the checking moves and (possibly) some non-checking ones. 
+     */
+    public void setGenerateOnlyChecks(final boolean onlyChecks) {
+    	this.generateOnlyChecks = onlyChecks;
+    }
+
+    
     private long calculatePossibleTargetSquares() {
-    	final int onTurn = position.getOnTurn();
     	final long notOwnSquares = ~position.getColorOccupancy(onTurn);
 
     	if (!reduceMovesInCheck)
@@ -285,19 +316,69 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
 		else
 			return BitBoard.EMPTY;   // Double check => king must move
     }
+    
+    private void updateCheckingMasksOnlyChecks() {
+    	final int kingSquare = position.getKingPosition(oppositeColor);
+    	
+    	// Direct check
+		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, kingSquare, position.getOccupancy());
+		diagonalCheckingMask = LineAttackTable.getAttackMask(diagonalIndex);
+
+		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, kingSquare, position.getOccupancy());
+		orthogonalCheckingMask = LineAttackTable.getAttackMask(orthogonalIndex);
+		
+		// Indirect check
+		final long orthogonalFullMask = FigureAttackTable.getItem(PieceType.ROOK, kingSquare);
+		final long diagonalFullMask = FigureAttackTable.getItem(PieceType.BISHOP, kingSquare);
+		
+		final long rookMask = position.getBothColorPiecesMask(PieceType.ROOK);
+		final long bishopMask = position.getBothColorPiecesMask(PieceType.BISHOP);
+		final long queenMask = position.getBothColorPiecesMask(PieceType.QUEEN);
+		final long ownPieces = position.getColorOccupancy(onTurn);
+		
+		final long potentialIndirectMask = ownPieces & (
+				orthogonalFullMask & (rookMask | queenMask) |
+				diagonalFullMask & (bishopMask | queenMask)
+		);
+		
+		long blockers = BitBoard.EMPTY;
+		
+		for (BitLoop loop = new BitLoop(potentialIndirectMask); loop.hasNextSquare(); ) {
+			final int square = loop.getNextSquare();
+			final long betweenMask = BetweenTable.getItem(kingSquare, square) & position.getOccupancy();
+			
+			if (BitBoard.getSquareCount(betweenMask) == 1)
+				blockers |= betweenMask;
+		}
+		
+		indirectCheckingBlockers = blockers & ownPieces;
+    }
+    
+    private void updateCheckingMasksAllMoves() {
+    	diagonalCheckingMask = BitBoard.FULL;
+    	orthogonalCheckingMask = BitBoard.FULL;
+    	indirectCheckingBlockers = BitBoard.FULL;
+    }
 
     /**
      * Generates all legal moves in the position.
      * Calls walker for each generated move.
      */
     public void generateMoves() {
+    	onTurn = position.getOnTurn();
+    	oppositeColor = Color.getOppositeColor(onTurn);
+
     	final int castlingRightIndex = position.getCastlingRights().getIndex();
     	final int epFile = position.getEpFile();
-    	final int onTurn = position.getOnTurn();
     	final long notOwnSquares = ~position.getColorOccupancy(onTurn);
 
     	move.initialize(castlingRightIndex, epFile);
-    	
+
+    	if (generateOnlyChecks)
+    		updateCheckingMasksOnlyChecks();
+    	else
+    		updateCheckingMasksAllMoves();
+
     	final long possibleDestinationSquares = calculatePossibleTargetSquares();
     	    	
     	// Generate figure moves, starting with king - this speeds up legal move checking

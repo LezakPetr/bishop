@@ -1,19 +1,25 @@
 package bishopTests;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import bishop.base.IMoveGenerator;
 import bishop.base.LegalMoveGenerator;
+import bishopTests.MoveGeneratorTestBase.TestValue;
+import bishopTests.PseudoLegalMoveGeneratorTest.PositionWithMoves;
 
 
 public class LegalMoveGeneratorTest extends MoveGeneratorTestBase {
 	
 	protected TestValue[] getTestValues() {
-		final TestValue[] pseudoLegalTestValues = PseudoLegalMoveGeneratorTest.getPseudoLegalTestValues();
-		final TestValue[] legalTestValues = new TestValue[pseudoLegalTestValues.length];
+		final PseudoLegalMoveGeneratorTest.PositionWithMoves[] pseudoLegalTestValues = PseudoLegalMoveGeneratorTest.getPseudoLegalTestValues();
+		final List<TestValue> result = new ArrayList<>();
 		
-		for (int i = 0; i < pseudoLegalTestValues.length; i++)
-			legalTestValues[i] = new TestValue(pseudoLegalTestValues[i].positionFen, pseudoLegalTestValues[i].minExpectedMoves);
+		for (PositionWithMoves testCase: pseudoLegalTestValues) {
+			result.add(new TestValue(testCase.getPositionFen(), testCase.getLegalMoves(), testCase.getLegalMoves()));
+		}
 		
-		return legalTestValues;
+		return result.toArray(new TestValue[result.size()]);
 	}
 	
 	protected IMoveGenerator getMoveGenerator() {

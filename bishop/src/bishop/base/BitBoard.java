@@ -166,4 +166,8 @@ public class BitBoard {
 		return result;
 	}
 
+	public static boolean containsSquare(final long mask, final int square) {
+		return ((mask >>> square) & 0x01) != 0;
+	}
+
 }
