@@ -41,7 +41,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private final IMaterialEvaluator materialEvaluator = DefaultAdditiveMaterialEvaluator.getInstance();
 	private final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 	
-	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, materialEvaluator, evaluationFactory);
+	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);
 	private final AttackCalculator attackCalculator = new AttackCalculator(evaluationFactory);
 	private GameResult result;
  
@@ -84,8 +84,14 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	@Override
 	public void processPosition(final Position position) {
 		if (position.getMaterialHash().isBalancedExceptFor(PieceType.NONE) && PROBABILITY_RIGHT_SIDES.containsKey(result)) {
-			final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluator.evaluatePosition(position, Evaluation.MIN, Evaluation.MAX, attackCalculator);
+			final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
 			
+			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, attackCalculator);
+			evaluation.addSubEvaluation(tacticalEvaluation);
+			
+			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional(attackCalculator);
+			evaluation.addSubEvaluation(positionalEvaluation);
+
 			final double[] equationCoeffs = new double[PositionEvaluationCoeffs.LAST];
 			
 			for (int i = 0; i < PositionEvaluationCoeffs.LAST; i++) {

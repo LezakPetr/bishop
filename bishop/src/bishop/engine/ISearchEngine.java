@@ -3,6 +3,7 @@ package bishop.engine;
 import java.util.function.Supplier;
 
 import bishop.base.IHandlerRegistrar;
+import bishop.base.IMaterialEvaluator;
 
 public interface ISearchEngine {
 	public enum EngineState {
@@ -22,6 +23,13 @@ public interface ISearchEngine {
 	 */
 	public void setMaximalDepth (final int maxTotalDepth);
 	
+	/**
+	 * Sets material evaluator.
+	 * Engine must be in STOPPED state.
+	 * @param evaluator material evaluator
+	 */
+	public void setMaterialEvaluator(final IMaterialEvaluator evaluator);
+
 	/**
 	 * Sets position evaluator.
 	 * Engine must be in STOPPED state.

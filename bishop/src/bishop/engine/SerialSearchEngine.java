@@ -12,6 +12,7 @@ import bishop.base.BitBoard;
 import bishop.base.Color;
 import bishop.base.HandlerRegistrarImpl;
 import bishop.base.IHandlerRegistrar;
+import bishop.base.IMaterialEvaluator;
 import bishop.base.IMoveWalker;
 import bishop.base.LegalMoveFinder;
 import bishop.base.Move;
@@ -131,6 +132,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final SearchExtensionCalculator extensionCalculator;
 	private final MoveExtensionEvaluator moveExtensionEvaluator;
 	private SearchTask task;
+	private IMaterialEvaluator materialEvaluator;
 	private IPositionEvaluator positionEvaluator;
 	private final HandlerRegistrarImpl<ISearchEngineHandler> handlerRegistrar;
 	
@@ -351,8 +353,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 				absoluteAlpha = -initialBeta;
 				absoluteBeta = -initialAlpha;				
 			}
-
-			final int whitePositionEvaluation = positionEvaluator.evaluatePosition(currentPosition, absoluteAlpha, absoluteBeta, currentRecord.attackCalculator).getEvaluation();
+			
+			int whitePositionEvaluation = positionEvaluator.evaluateTactical(currentPosition, currentRecord.attackCalculator).getEvaluation();
+			
+			final int materialEvaluation = materialEvaluator.evaluateMaterial(currentPosition);
+			final int materialEvaluationShift = positionEvaluator.getMaterialEvaluationShift();
+			
+			whitePositionEvaluation += materialEvaluation >> materialEvaluationShift;
+			whitePositionEvaluation += positionEvaluator.evaluatePositional(currentRecord.attackCalculator).getEvaluation();
+			
 			final int positionEvaluation = Evaluation.getRelative(whitePositionEvaluation, onTurn);
 			final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
 			final boolean isCheck = currentPosition.isCheck();
@@ -803,6 +812,20 @@ public final class SerialSearchEngine implements ISearchEngine {
 			
 			this.winMateTask = new WinMateTask();
 			this.loseMateTask = new LoseMateTask();
+		}
+	}
+
+	/**
+	 * Sets material evaluator.
+	 * Engine must be in STOPPED state.
+	 * @param evaluator material evaluator
+	 */
+	@Override
+	public void setMaterialEvaluator(final IMaterialEvaluator evaluator) {
+		synchronized (monitor) {
+			checkEngineState(EngineState.STOPPED);
+
+			this.materialEvaluator = evaluator;
 		}
 	}
 

@@ -60,7 +60,7 @@ public class SearchPerformanceTest {
 		final IMaterialEvaluator materialEvaluator = SearchResources.createMaterialEvaluator(rootUrl);
 		final Supplier<IPositionEvaluation> positionEvaluationFactory = SearchResources.createEvaluationFactory(rootUrl);
 		
-		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, materialEvaluator, positionEvaluationFactory);
+		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, positionEvaluationFactory);
 
 		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
 		final int threadCount = Math.min(Runtime.getRuntime().availableProcessors(), SearchResources.MAX_THREADS);
@@ -70,6 +70,7 @@ public class SearchPerformanceTest {
 		engineFactory.setPositionEvaluatorFactory(evaluatorFactory);
 		engineFactory.setEvaluationFactory(evaluationFactory);
 		engineFactory.setMaximalDepth(25);
+		engineFactory.setMaterialEvaluator(materialEvaluator);
 		
 		final HashTableImpl hashTable = new HashTableImpl(20);
 		
