@@ -18,23 +18,25 @@ import bishop.tables.SecondKingProtectionPawnsTable;
 
 public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 	
-	private static final int MAX_POSITIONAL_EVALUATION = PieceTypeEvaluations.getPawnMultiply (2.0);
+//	public static final int MAX_POSITIONAL_EVALUATION = PieceTypeEvaluations.getPawnMultiply (2.0);
 	
-	private final IMaterialEvaluator materialEvaluator;
+
+	
 	private final TablePositionEvaluator tablePositionEvaluator;
 	private final BishopColorPositionEvaluator bishopColorPositionEvaluator;
 	private final MobilityPositionEvaluator mobilityEvaluator;
 	
 	private final MiddleGameEvaluatorSettings settings;
 	private final PawnStructureEvaluator pawnStructureCalculator;
-	private final IPositionEvaluation evaluation;
+	
+	private final IPositionEvaluation tacticalEvaluation;
 	private final IPositionEvaluation positionalEvaluation;
+	private Position position;
 	
 	
-	public MiddleGamePositionEvaluator(final MiddleGameEvaluatorSettings settings, final IMaterialEvaluator materialEvaluator, final PawnStructureCache structureCache, final Supplier<IPositionEvaluation> evaluationFactory) {
-		this.materialEvaluator = materialEvaluator;
+	public MiddleGamePositionEvaluator(final MiddleGameEvaluatorSettings settings, final PawnStructureCache structureCache, final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.settings = settings;
-		this.evaluation = evaluationFactory.get();
+		this.tacticalEvaluation = evaluationFactory.get();
 		this.positionalEvaluation = evaluationFactory.get();
 		
 		tablePositionEvaluator = new TablePositionEvaluator(PositionEvaluationCoeffs.MIDDLE_GAME_TABLE_EVALUATOR_COEFFS, evaluationFactory);
@@ -44,12 +46,12 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 	}
 
 	private void clear() {
-		evaluation.clear();
+		tacticalEvaluation.clear();
 		positionalEvaluation.clear();
 		pawnStructureCalculator.clear();
 	}
 	
-	private void evaluateRooks(final Position position) {
+	private void evaluateRooks() {
 		// Rooks on open files
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final long rookMask = position.getPiecesMask(color, PieceType.ROOK);
@@ -59,75 +61,43 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 		}
 	}
 	
-	public IPositionEvaluation evaluatePosition(final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
+	@Override
+	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
+		this.position = position;
 		clear();
+		calculateAttacks(attackCalculator);
 		
-		final int materialEvaluation = materialEvaluator.evaluateMaterial(position);
-		
-		// Speedup if materialEvaluation is not in <alpha, beta>
-		final int lowerBound = materialEvaluation + MAX_POSITIONAL_EVALUATION;
-		
-		if (lowerBound < alpha) {
-			evaluation.addEvaluation(lowerBound);
-			return evaluation;
-		}
-		
-		final int upperBound = materialEvaluation - MAX_POSITIONAL_EVALUATION;
-		
-		if (upperBound > beta) {
-			evaluation.addEvaluation(upperBound);
-			return evaluation;
-		}
-
-		
-		// Regular evaluation
-		evaluation.addEvaluation(materialEvaluation);
-
-		calculatePositionalEvaluation(position, attackCalculator);
-		final int positionalEvaluationValue = positionalEvaluation.getEvaluation();
-		
-		if (positionalEvaluationValue < -MAX_POSITIONAL_EVALUATION) {
-			evaluation.addEvaluation(-MAX_POSITIONAL_EVALUATION);
-			return evaluation;
-		}
-		
-		if (positionalEvaluationValue > MAX_POSITIONAL_EVALUATION) {
-			evaluation.addEvaluation(MAX_POSITIONAL_EVALUATION);
-			return evaluation;
-		}
-		
-		evaluation.addSubEvaluation(positionalEvaluation);
-		
-		return evaluation;
+		return tacticalEvaluation;
 	}
 
-	private void calculateAttacks(final Position position, final AttackCalculator attackCalculator) {
-		final int whiteKingFile = Square.getFile(position.getKingPosition(Color.WHITE));
-		final int blackKingFile = Square.getFile(position.getKingPosition(Color.BLACK));
-		
-		attackCalculator.calculate(position, settings.getAttackTable(whiteKingFile, blackKingFile));
-	}
-
-	private void calculatePositionalEvaluation(final Position position, final AttackCalculator attackCalculator) {
+	@Override
+	public IPositionEvaluation evaluatePositional (final AttackCalculator attackCalculator) {
 		pawnStructureCalculator.calculate(position);
 		
 		positionalEvaluation.addSubEvaluation(tablePositionEvaluator.evaluatePosition(position));
 		positionalEvaluation.addSubEvaluation(bishopColorPositionEvaluator.evaluatePosition(position));
 		
-		evaluateRooks(position);
-		evaluateKingFiles(position);
+		evaluateRooks();
+		evaluateKingFiles();
 		
-		evaluateQueenMove(position);
-		evaluateSecureFigures(position);
-		
-		calculateAttacks(position, attackCalculator);
+		evaluateQueenMove();
+		evaluateSecureFigures();
 		
 		positionalEvaluation.addSubEvaluation(pawnStructureCalculator.evaluate(position, attackCalculator));
 		positionalEvaluation.addSubEvaluation(attackCalculator.getAttackEvaluation());
 		positionalEvaluation.addSubEvaluation(mobilityEvaluator.evaluatePosition(position, attackCalculator));
+		
+		return positionalEvaluation;
 	}
 	
-	private void evaluateSecureFigures(final Position position) {
+	private void calculateAttacks(final AttackCalculator attackCalculator) {
+		final int whiteKingFile = Square.getFile(position.getKingPosition(Color.WHITE));
+		final int blackKingFile = Square.getFile(position.getKingPosition(Color.BLACK));
+		
+		attackCalculator.calculate(position, settings.getAttackTable(whiteKingFile, blackKingFile));
+	}
+	
+	private void evaluateSecureFigures() {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final long securedFigures = position.getColorOccupancy(color) & pawnStructureCalculator.getSecureSquares(color);
 			final int count = BitBoard.getSquareCount(securedFigures);
@@ -148,7 +118,7 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 		positionalEvaluation.addCoeff(PositionEvaluationCoeffs.KING_SECOND_PROTECTION_PAWN_BONUS, color, secondPawnCount << shift);
 	}
 	
-	private int evaluateKingFiles(final Position position) {
+	private int evaluateKingFiles() {
 		int kingFilesEvaluation = 0;
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
@@ -167,11 +137,11 @@ public final class MiddleGamePositionEvaluator implements IPositionEvaluator {
 		return kingFilesEvaluation;
 	}
 	
-	private int evaluateQueenMove(final Position position) {
+	private int evaluateQueenMove() {
 		int queenMoveEvaluation = 0;
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final long figureMask = position.getPiecesMask(color, PieceType.BISHOP) | position.getPiecesMask(color, PieceType.QUEEN);
+			final long figureMask = position.getPiecesMask(color, PieceType.BISHOP) | position.getPiecesMask(color, PieceType.KNIGHT);
 			final long queenMask = position.getPiecesMask(color, PieceType.QUEEN);
 			final long firstRankMask = BoardConstants.getFirstRankMask (color);
 			final long figuresOnFirstRank = figureMask & firstRankMask;

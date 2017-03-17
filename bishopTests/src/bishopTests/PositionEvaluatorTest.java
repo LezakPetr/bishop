@@ -4,13 +4,10 @@ import java.util.function.Supplier;
 
 import org.junit.Test;
 
-import bishop.base.DefaultAdditiveMaterialEvaluator;
-import bishop.base.IMaterialEvaluator;
 import bishop.base.Position;
 import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.AttackCalculator;
 import bishop.engine.EndingPositionEvaluator;
-import bishop.engine.Evaluation;
 import bishop.engine.IPositionEvaluation;
 import bishop.engine.IPositionEvaluator;
 import bishop.engine.MiddleGamePositionEvaluator;
@@ -20,18 +17,31 @@ import bishop.engine.PositionEvaluatorSwitchSettings;
 
 public class PositionEvaluatorTest {
 	
-	private void testPositionEvaluatorSpeed (final Position position, final IPositionEvaluator evaluator) {
+	private void testPositionEvaluatorSpeed (final Position position, final IPositionEvaluator evaluator, final boolean withPositionalEvaluation) {
 		final int iterationCount = 2000000;
 		final long t1 = System.currentTimeMillis();
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
+		final AttackCalculator attackCalculator = new AttackCalculator(evaluationFactory);
 
-		for (int i = 0; i < iterationCount; i++)
-			evaluator.evaluatePosition(position, Evaluation.MIN, Evaluation.MAX, new AttackCalculator(evaluationFactory));
+		for (int i = 0; i < iterationCount; i++) {
+			evaluator.evaluateTactical(position, attackCalculator);
+			
+			if (withPositionalEvaluation)
+				evaluator.evaluatePositional(attackCalculator);
+		}
 
 		final long t2 = System.currentTimeMillis();
 		final double iterPerSec = (double) iterationCount * 1000 / (t2 - t1);
 
-		System.out.println(evaluator.getClass().getSimpleName() + ": iterations per second: " + iterPerSec);
+		System.out.println(evaluator.getClass().getSimpleName() + " with positional = " + withPositionalEvaluation + ": iterations per second: " + iterPerSec);
+	}
+	
+	private void testPositionEvaluatorSpeed (final Position position, final IPositionEvaluator evaluator) {
+		final boolean[] withPositionalValues = { false, true };
+		
+		for (boolean withPositionalEvaluation: withPositionalValues) {
+			testPositionEvaluatorSpeed(position, evaluator, withPositionalEvaluation);
+		}
 	}
 
 	@Test
@@ -40,13 +50,12 @@ public class PositionEvaluatorTest {
 		position.setInitialPosition();
 		
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
-		final IMaterialEvaluator materialEvaluator = DefaultAdditiveMaterialEvaluator.getInstance();
 		
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
 		final PawnStructureCache pawnStructureCache = new PawnStructureCache();
 		
-		testPositionEvaluatorSpeed (position, new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), materialEvaluator, pawnStructureCache, evaluationFactory));
-		testPositionEvaluatorSpeed (position, new EndingPositionEvaluator(materialEvaluator, pawnStructureCache, evaluationFactory));
-		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings, materialEvaluator, evaluationFactory));
+		testPositionEvaluatorSpeed (position, new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), pawnStructureCache, evaluationFactory));
+		testPositionEvaluatorSpeed (position, new EndingPositionEvaluator(pawnStructureCache, evaluationFactory));
+		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings, evaluationFactory));
 	}
 }

@@ -52,8 +52,9 @@ public class SearchResources {
 		
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 		final IMaterialEvaluator materialEvaluator = createMaterialEvaluator();
-		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, materialEvaluator, getEvaluationFactory());
+		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, getEvaluationFactory());
 		
+		searchEngineFactory.setMaterialEvaluator(materialEvaluator);
 		searchEngineFactory.setPositionEvaluatorFactory(evaluatorFactory);
 		searchEngineFactory.setEvaluationFactory(evaluationFactory);
 		searchEngineFactory.setMaximalDepth(MAX_TOTAL_DEPTH);

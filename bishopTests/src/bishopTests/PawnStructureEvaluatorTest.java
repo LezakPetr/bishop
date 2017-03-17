@@ -145,9 +145,10 @@ public class PawnStructureEvaluatorTest {
 		
 		final PawnStructureCache cache = new PawnStructureCache();
 		final Supplier<IPositionEvaluation> evaluationFactory = () -> new CoeffCountPositionEvaluation(positionEvaluationCoeffs);
-		final EndingPositionEvaluator evaluator = new EndingPositionEvaluator(DefaultAdditiveMaterialEvaluator.getInstance(), cache, evaluationFactory);
+		final EndingPositionEvaluator evaluator = new EndingPositionEvaluator(cache, evaluationFactory);
 		final AttackCalculator attackCalculator = new AttackCalculator(evaluationFactory);
 		final Fen fen = new Fen();
+		final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
 		
 		for (TestCase testCase: testCases) {
 			fen.readFenFromString(testCase.position);
@@ -155,8 +156,14 @@ public class PawnStructureEvaluatorTest {
 			final Position position = fen.getPosition();
 			attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
 			
-			final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluator.evaluatePosition(position, Evaluation.MIN, Evaluation.MAX, attackCalculator);
+			evaluation.clear();
 			
+			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, attackCalculator);
+			evaluation.addSubEvaluation(tacticalEvaluation);
+			
+			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional(attackCalculator);
+			evaluation.addSubEvaluation(positionalEvaluation);
+						
 			final Map<Integer, Integer> givenCoeffMap = new HashMap<>();
 			
 			for (int coeff = firstCoeff; coeff < lastCoeff; coeff++) {

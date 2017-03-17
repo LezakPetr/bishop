@@ -11,6 +11,7 @@ import org.junit.Test;
 import parallel.Parallel;
 
 import utils.Logger;
+import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.Fen;
 import bishop.base.GlobalSettings;
 import bishop.base.Holder;
@@ -125,6 +126,7 @@ public class SearchManagerTest {
 		engineFactory.setMaximalDepth(25);
 		engineFactory.setEvaluationFactory(evaluationFactory);
 		engineFactory.setParallel(new Parallel(threadCount));
+		engineFactory.setMaterialEvaluator(DefaultAdditiveMaterialEvaluator.getInstance());
 
 		manager.setEngineFactory(engineFactory);
 

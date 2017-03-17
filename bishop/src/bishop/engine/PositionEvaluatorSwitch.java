@@ -4,7 +4,6 @@ import java.io.PrintWriter;
 import java.util.function.Supplier;
 
 import bishop.base.Color;
-import bishop.base.IMaterialEvaluator;
 import bishop.base.IPieceCounts;
 import bishop.base.PieceType;
 import bishop.base.Position;
@@ -24,16 +23,17 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 	
 	private Position position;
 	private IPositionEvaluator currentEvaluator;
-	private IPositionEvaluation evaluation;
+	private IPositionEvaluation tacticalEvaluation;
+	private IPositionEvaluation positionalEvaluation;
 
 	
-	public PositionEvaluatorSwitch(final PositionEvaluatorSwitchSettings settings, final IMaterialEvaluator materialEvaluator, final Supplier<IPositionEvaluation> evaluationFactory) {
+	public PositionEvaluatorSwitch(final PositionEvaluatorSwitchSettings settings, final Supplier<IPositionEvaluation> evaluationFactory) {
 		pawnStructureCache = new PawnStructureCache();
 		
-		middleGameEvaluator = new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), materialEvaluator, pawnStructureCache, evaluationFactory);
-		generalMatingEvaluator = new GeneralMatingPositionEvaluator(materialEvaluator, evaluationFactory);
-		drawEvaluator = new DrawPositionEvaluator(materialEvaluator, evaluationFactory);
-		endingEvaluator = new EndingPositionEvaluator(materialEvaluator, pawnStructureCache, evaluationFactory);
+		middleGameEvaluator = new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), pawnStructureCache, evaluationFactory);
+		generalMatingEvaluator = new GeneralMatingPositionEvaluator(evaluationFactory);
+		drawEvaluator = new DrawPositionEvaluator(evaluationFactory);
+		endingEvaluator = new EndingPositionEvaluator(pawnStructureCache, evaluationFactory);
 		
 		colorCounts = new int[Color.LAST];
 		pieceCounts = new int[Color.LAST][PieceType.LAST];
@@ -101,22 +101,30 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 		return count <= 8;
 	}
 	
-	/**
-	 * Returns evaluation of given position.
-	 * @param position position to evaluate
-	 * @return evaluation from view of white side
-	 */
-	public IPositionEvaluation evaluatePosition (final Position position, final int alpha, final int beta, final AttackCalculator attackCalculator) {
+	@Override
+	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
 		this.position = position;
 		
 		calculatePieceCounts();
 		calculateHasMatingMaterial();
 		selectCurrentEvaluator();
 		
-		evaluation = currentEvaluator.evaluatePosition(position, alpha, beta, attackCalculator);
+		tacticalEvaluation = currentEvaluator.evaluateTactical(position, attackCalculator);
 		this.position = null;
 		
-		return evaluation;
+		return tacticalEvaluation;
+	}
+
+	@Override
+	public IPositionEvaluation evaluatePositional (final AttackCalculator attackCalculator) {
+		positionalEvaluation = currentEvaluator.evaluatePositional(attackCalculator);
+		
+		return positionalEvaluation;
+	}
+	
+	@Override
+	public int getMaterialEvaluationShift() {
+		return currentEvaluator.getMaterialEvaluationShift();
 	}
 
 	private void calculateHasMatingMaterial() {
