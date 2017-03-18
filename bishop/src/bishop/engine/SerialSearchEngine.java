@@ -135,15 +135,17 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private IMaterialEvaluator materialEvaluator;
 	private IPositionEvaluator positionEvaluator;
 	private final HandlerRegistrarImpl<ISearchEngineHandler> handlerRegistrar;
+	private int lastPositionalEvaluation;
+	private long normalSearchTimeSpent;
 	
 	private final ITaskRunner winMateRunner;
 	private final ITaskRunner loseMateRunner;
 	
 	private static final int WIN_MATE_DEPTH_IN_MOVES = 1;
-	private static final int WIN_MAX_EXTENSION = 3;
+	private static final int WIN_MAX_EXTENSION = 4;
 	
 	private static final int LOSE_MATE_DEPTH_IN_MOVES = 1;
-	private static final int LOSE_MAX_EXTENSION = 1;
+	private static final int LOSE_MAX_EXTENSION = 2;
 	
 	abstract private class MateTaskBase implements Runnable {
 		protected final MateFinder finder = new MateFinder();
@@ -328,9 +330,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final boolean isQuiescenceSearch = (horizon < ISearchEngine.HORIZON_GRANULARITY);
 		currentRecord.isQuiescenceSearch = isQuiescenceSearch;
 		
-		final boolean shouldFindMate = isQuiescenceSearch && currentDepth > 0 && !nodeStack[currentDepth - 1].isQuiescenceSearch;
+		final boolean isFirstQuiescence = isQuiescenceSearch && currentDepth > 0 && !nodeStack[currentDepth - 1].isQuiescenceSearch;
 		
-		if (shouldFindMate) {
+		if (isFirstQuiescence) {
 			winMateTask.position.assign(currentPosition);
 			winMateTask.setDepthAdvance(currentDepth);
 			winMateRunner.startTask(winMateTask);
@@ -340,27 +342,24 @@ public final class SerialSearchEngine implements ISearchEngine {
 			loseMateRunner.startTask(loseMateTask);
 		}
 		
+		final long t1 = System.currentTimeMillis();
+		
 		try {
 			// Evaluate position
-			final int absoluteAlpha;
-			final int absoluteBeta;
-			
-			if (onTurn == Color.WHITE) {
-				absoluteAlpha = initialAlpha;
-				absoluteBeta = initialBeta;
-			}
-			else {
-				absoluteAlpha = -initialBeta;
-				absoluteBeta = -initialAlpha;				
-			}
-			
 			int whitePositionEvaluation = positionEvaluator.evaluateTactical(currentPosition, currentRecord.attackCalculator).getEvaluation();
 			
 			final int materialEvaluation = materialEvaluator.evaluateMaterial(currentPosition);
 			final int materialEvaluationShift = positionEvaluator.getMaterialEvaluationShift();
 			
 			whitePositionEvaluation += materialEvaluation >> materialEvaluationShift;
-			whitePositionEvaluation += positionEvaluator.evaluatePositional(currentRecord.attackCalculator).getEvaluation();
+			
+			if (!isQuiescenceSearch || isFirstQuiescence) {
+				// Calculate positional evaluation in normal search and first depth of quiescence search.
+				// So it will remain cached for the quiescence search, 
+				lastPositionalEvaluation = positionEvaluator.evaluatePositional(currentRecord.attackCalculator).getEvaluation();;
+			}
+			
+			whitePositionEvaluation += lastPositionalEvaluation;
 			
 			final int positionEvaluation = Evaluation.getRelative(whitePositionEvaluation, onTurn);
 			final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
@@ -478,7 +477,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 			}
 		}
 		finally {
-			if (shouldFindMate) {
+			if (isFirstQuiescence) {
+				final long t2 = System.currentTimeMillis();
+				normalSearchTimeSpent += t2 - t1;
+				
 				winMateRunner.joinTask();
 				loseMateRunner.joinTask();
 				
@@ -753,6 +755,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		winMateTask.clear();
 		loseMateTask.clear();
+		normalSearchTimeSpent = 0;
 
 		// Do the search
 		currentDepth = 0;
@@ -771,8 +774,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final SearchResult result = getResult(task.getHorizon());
 		result.setSearchTerminated(terminated);
 		
-		System.out.println("Time in win mate search: " + winMateTask.timeSpent + "ms");
-		System.out.println("Time in lose mate search: " + loseMateTask.timeSpent + "ms");
+		System.out.println("Time in quiescence search: " + normalSearchTimeSpent + "ms");
+		
+		final double winPercent = 100.0 * winMateTask.timeSpent / normalSearchTimeSpent;
+		System.out.println("Time in win mate search: " + winMateTask.timeSpent + "ms = " + Math.round(winPercent) + "%");
+		
+		final double losePercent = 100.0 * loseMateTask.timeSpent / normalSearchTimeSpent;
+		System.out.println("Time in lose mate search: " + loseMateTask.timeSpent + "ms = " + Math.round(losePercent) + "%");
 		
 		return result;
 	}
