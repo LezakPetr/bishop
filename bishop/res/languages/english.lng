@@ -102,7 +102,7 @@ MessagePositionValidator.errorWrongEpFile=EP file is impossible
 
 AboutDialog.title=Bishop
 AboutDialog.labelProduct.textPrefix=Bishop version 
-AboutDialog.labelCopyright.text=Copyright 2016 Ing. Petr Ležák
+AboutDialog.labelCopyright.text=Copyright 2017 Ing. Petr Ležák
 AboutDialog.labelUser.textPrefix=User: 
 AboutDialog.labelCompany.textPrefix=Company: 
 
