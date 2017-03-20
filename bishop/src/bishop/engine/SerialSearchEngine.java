@@ -138,8 +138,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private int lastPositionalEvaluation;
 	private long normalSearchTimeSpent;
 	
-	private final ITaskRunner winMateRunner;
-	private final ITaskRunner loseMateRunner;
+	private final ITaskRunner mateRunner;
 	
 	private static final int WIN_MATE_DEPTH_IN_MOVES = 1;
 	private static final int WIN_MAX_EXTENSION = 4;
@@ -205,6 +204,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 	private WinMateTask winMateTask;
 	private LoseMateTask loseMateTask;
+	private Runnable compoundMateTask;
 
 	
 	public SerialSearchEngine(final Parallel parallel) {
@@ -237,8 +237,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		setHashTable(new NullHashTable());
 		
-		this.winMateRunner = parallel.getTaskRunner(0);
-		this.loseMateRunner = parallel.getTaskRunner(1);
+		this.mateRunner = parallel.getTaskRunner(0);
 
 		task = null;
 	}
@@ -335,11 +334,11 @@ public final class SerialSearchEngine implements ISearchEngine {
 		if (isFirstQuiescence) {
 			winMateTask.position.assign(currentPosition);
 			winMateTask.setDepthAdvance(currentDepth);
-			winMateRunner.startTask(winMateTask);
 			
 			loseMateTask.position.assign(currentPosition);
 			loseMateTask.setDepthAdvance(currentDepth);
-			loseMateRunner.startTask(loseMateTask);
+			
+			mateRunner.startTask(compoundMateTask);
 		}
 		
 		final long t1 = System.currentTimeMillis();
@@ -481,8 +480,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				final long t2 = System.currentTimeMillis();
 				normalSearchTimeSpent += t2 - t1;
 				
-				winMateRunner.joinTask();
-				loseMateRunner.joinTask();
+				mateRunner.joinTask();
 				
 				if (winMateTask.evaluation >= Evaluation.MATE_MIN || loseMateTask.evaluation <= -Evaluation.MATE_MIN) {
 					if (winMateTask.evaluation >= Evaluation.MATE_MIN)
@@ -820,6 +818,11 @@ public final class SerialSearchEngine implements ISearchEngine {
 			
 			this.winMateTask = new WinMateTask();
 			this.loseMateTask = new LoseMateTask();
+			
+			this.compoundMateTask = () -> {
+				winMateTask.run();
+				loseMateTask.run();
+			};
 		}
 	}
 

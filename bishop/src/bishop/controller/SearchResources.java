@@ -25,7 +25,7 @@ import bishop.engine.TablebasePositionEvaluator;
 public class SearchResources {
 	
 	private static final int MAX_TOTAL_DEPTH = 256;
-	public static final int MAX_THREADS = 3;
+	public static final int MAX_THREADS = 2;
 	
 	private static final String BOOK_PATH = "book.pgn";
 	private static final String MATERIAL_PATH = "material.tbl";
