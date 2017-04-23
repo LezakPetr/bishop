@@ -1,5 +1,8 @@
 package bishop.engine;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import bishop.base.MoveList;
 import bishop.base.Position;
 
@@ -11,6 +14,7 @@ public final class SearchInfo {
 	private int horizon;   // Horizon of the search
 	private long nodeCount;   // Number of searched nodes
 	private long elapsedTime;   // [ms]
+	private final List<String> additionalInfo = new ArrayList<>();   // Lines with additional information
 	
 	public MoveList getPrincipalVariation() {
 		return principalVariation;
@@ -58,6 +62,10 @@ public final class SearchInfo {
 
 	public void setPosition(final Position position) {
 		this.position = position;
+	}
+
+	public List<String> getAdditionalInfo() {
+		return additionalInfo;
 	}
 	
 }

@@ -30,7 +30,9 @@ public final class BookSource implements IBook<BookRecord> {
 		return positionMap.get(position);
 	}
 	
-	public void addRecord (final Position position, final BookRecord record) {
+	public void addRecord (final BookRecord record) {
+		final Position position = record.getPosition();
+		
 		if (positionMap.containsKey(position))
 			throw new RuntimeException("Dupplicate position");
 		
@@ -54,7 +56,6 @@ public final class BookSource implements IBook<BookRecord> {
 					final BookMove bookMove = new BookMove();
 					
 					bookMove.setMove(node.getMove().copy());
-					bookMove.setAnnotation(node.getAnnotation());
 					
 					moveList.add(bookMove);
 					nodeStack.add(child.copy());
@@ -73,7 +74,7 @@ public final class BookSource implements IBook<BookRecord> {
 				record = new BookRecord();
 				record.getPosition().assign(position);
 				
-				addRecord(position, record);
+				addRecord(record);
 			}
 			
 			for (BookMove bookMove: moveList) {

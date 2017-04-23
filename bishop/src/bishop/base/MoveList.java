@@ -193,4 +193,27 @@ public class MoveList implements Iterable<Move> {
 
 		return -1;
 	}
+	
+	public void sort() {
+		final Move minMove = new Move();
+		final Move checkedMove = new Move();
+		int minIndex;
+		
+		for (int i = 0; i < size - 1; i++) {
+			minMove.setData(data[i]);
+			minIndex = i;
+			
+			for (int j = i + 1; j < size; j++) {
+				checkedMove.setData(data[j]);
+				
+				if (checkedMove.compareTo (minMove) < 0) {
+					minMove.assign(checkedMove);
+					minIndex = j;
+				}
+			}
+			
+			data[minIndex] = data[i];
+			data[i] = minMove.getData();
+		}
+	}
 }

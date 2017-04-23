@@ -57,21 +57,6 @@ public class PositionIo {
 		result[5] = new RecordedPiece(PieceType.QUEEN, BitBoard.FULL, modelOnePiece);
 		result[6] = new RecordedPiece(PieceType.KING, BitBoard.FULL, null);
 		
-		/*final RecordedPiece[] result = new RecordedPiece[6];
-		
-		final IProbabilityModel modelOnePiece = ProbabilityModelFactory.fromProbabilities(ArrayUtils.copyItems(24956, 2, 252, 62));
-		final IProbabilityModel modelTwoPieces = ProbabilityModelFactory.fromProbabilities(ArrayUtils.copyItems(18104, 3, 184, 61));
-		final IProbabilityModel modelEightPieces = ProbabilityModelFactory.fromProbabilities(ArrayUtils.copyItems(6854, 9, 70, 55));
-		
-		result[0] = new RecordedPiece(PieceType.PAWN, ~BoardConstants.RANK_18_MASK, modelEightPieces);
-		result[1] = new RecordedPiece(PieceType.KNIGHT, BitBoard.FULL, modelTwoPieces);
-		//result[2] = new RecordedPiece(PieceType.BISHOP, BoardConstants.WHITE_SQUARE_MASK, modelOnePiece);
-		//result[3] = new RecordedPiece(PieceType.BISHOP, BoardConstants.BLACK_SQUARE_MASK, modelOnePiece);
-		result[2] = new RecordedPiece(PieceType.BISHOP, BitBoard.FULL, modelTwoPieces);
-		result[3] = new RecordedPiece(PieceType.ROOK, BitBoard.FULL, modelTwoPieces);
-		result[4] = new RecordedPiece(PieceType.QUEEN, BitBoard.FULL, modelOnePiece);
-		result[5] = new RecordedPiece(PieceType.KING, BitBoard.FULL, null);*/
-		
 		return result;
 		
 	}

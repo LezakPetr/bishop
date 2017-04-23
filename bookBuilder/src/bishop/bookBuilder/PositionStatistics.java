@@ -17,20 +17,22 @@ public class PositionStatistics {
 	
 	
 	public void addMove (final int onTurn, final Move move, final GameResult result) {
-		final int index = moves.indexOf (move);
+		final boolean statisticsAdded = addStatistics(onTurn, result);
 		
-		if (index >= 0)
-			counts[index] ++;
-		else {
-			final int size = moves.getSize();
+		if (statisticsAdded) {
+			final int index = moves.indexOf (move);
 			
-			moves.add(move);
-			counts = Arrays.copyOf(counts, size + 1);
-			
-			counts[size] = 1;
+			if (index >= 0)
+				counts[index]++;
+			else {
+				final int size = moves.getSize();
+				
+				moves.add(move);
+				counts = Arrays.copyOf(counts, size + 1);
+				
+				counts[size] = 1;
+			}
 		}
-		
-		addStatistics(onTurn, result);
 	}
 	
 	public Iterable<Move> getMoves() {
@@ -43,12 +45,11 @@ public class PositionStatistics {
 		return counts[index];
 	}
 		
-	@SuppressWarnings("incomplete-switch")
-	private void addStatistics (final int onTurn, final GameResult result) {
+	private boolean addStatistics (final int onTurn, final GameResult result) {
 		switch (result) {
 			case DRAW:
 				totalCount++;
-				break;
+				return true;
 				
 			case WHITE_WINS:
 				totalCount++;
@@ -57,7 +58,8 @@ public class PositionStatistics {
 					diff++;
 				else
 					diff--;
-				break;
+				
+				return true;
 		
 			case BLACK_WINS:
 				totalCount++;
@@ -66,7 +68,11 @@ public class PositionStatistics {
 					diff++;
 				else
 					diff--;
-				break;
+				
+				return true;
+				
+			default:
+				return false;
 		}
 	}
 

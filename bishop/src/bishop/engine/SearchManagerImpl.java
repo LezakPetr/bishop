@@ -1,6 +1,8 @@
 package bishop.engine;
 
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import utils.Logger;
@@ -52,6 +54,7 @@ public final class SearchManagerImpl implements ISearchManager {
 	private boolean isSearchRunning;
 	private boolean searchInfoChanged;
 	private long lastSearchInfoTime;
+	private final List<String> additionalInfo = new ArrayList<>();
 	private Random random = new Random();
 	
 	private ISearchEngineHandler engineHandler = new ISearchEngineHandler() {
@@ -143,6 +146,7 @@ public final class SearchManagerImpl implements ISearchManager {
 			info.setNodeCount(totalNodeCount + searchResult.getNodeCount());
 			info.setPrincipalVariation(searchResult.getPrincipalVariation());
 			info.setEvaluation(searchResult.getNodeEvaluation().getEvaluation());
+			info.getAdditionalInfo().addAll(additionalInfo);
 			
 			for (ISearchManagerHandler handler: handlerRegistrar.getHandlers())
 				handler.onSearchInfoUpdate(info);
@@ -364,7 +368,8 @@ public final class SearchManagerImpl implements ISearchManager {
 		this.horizon = startHorizon;
 		
 		this.searchResult = null;
-				
+		additionalInfo.clear();
+		
 		if (singleSearchEnabled) {
 			final Move singleMove = singleMoveSearch();
 			
@@ -372,12 +377,10 @@ public final class SearchManagerImpl implements ISearchManager {
 				return singleMove;
 		}
 		
-		if (bookSearchEnabled) {
-			final Move bookMove = bookSearch();
-			
-			if (bookMove != null)
-				return bookMove;
-		}
+		final Move bookMove = bookSearch();
+		
+		if (bookMove != null && bookSearchEnabled)
+			return bookMove;
 
 		hashTable.clear();
 		
@@ -392,6 +395,9 @@ public final class SearchManagerImpl implements ISearchManager {
 		
 		if (record == null)
 			return null;
+		
+		record.logRecord(additionalInfo);
+		searchInfoChanged = true;
 		
 		final BookMove bookMove = record.getRandomMove(random);
 		
@@ -472,38 +478,6 @@ public final class SearchManagerImpl implements ISearchManager {
 			this.maxTimeForMove = time;
 		}
 	}
-	/*
-	public Move initializeSearch (final Position position, final int startHorizon) {
-		this.initialPosition.assign(position);
-		this.horizon = startHorizon - ISearchEngine.HORIZON_GRANULARITY;
-		
-		this.searchResult.clear();
-		
-		rootNode = new SearchNode(position, null, null);
-		rootNode.setMaxExtension(searchSettings.getMaxExtension());
-		
-		rootMaterialEvaluation = position.getMaterialEvaluation();
-		
-		if (singleMoveSearchEnabled) {
-			final Move singleMove = singleMoveSearch();
-			
-			if (singleMove != null) {
-				setBeforeSearchResult (singleMove);
-				return singleMove;
-			}
-		}
-		
-		if (bookSearchEnabled) {
-			final Move bookMove = bookSearch();
-			
-			if (bookMove != null) {
-				setBeforeSearchResult (bookMove);
-				return bookMove;
-			}
-		}
-				
-		return null;
-	}*/
 	
 	/**
 	 * Starts searching of given position.

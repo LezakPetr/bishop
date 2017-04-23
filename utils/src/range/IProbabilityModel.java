@@ -31,4 +31,13 @@ public interface IProbabilityModel {
 	 * @return symbol
 	 */
 	public int getSymbolForCdf (final int cdf);
+	
+	/**
+	 * Returns probability of give symbol multiplied by MAX_SYMBOL_CDF.
+	 * @param symbol symbol
+	 * @return probability * MAX_SYMBOL_CDF
+	 */
+	public default int getSymbolProbability(final int symbol) {
+		return getCdfLowerBound(symbol + 1) - getCdfLowerBound(symbol);
+	}
 }

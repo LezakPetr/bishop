@@ -117,6 +117,9 @@ public class ProbabilityModelFactory {
 	}
 
 	public static IProbabilityModel createBinaryFraction (final int numerator, final int denominator) {
+		if (denominator < 0 || numerator < 0)
+			throw new RuntimeException("Internal error: invalid fraction");
+		
 		return BINARY_FRACTIONS[denominator][numerator];
 	}
 }

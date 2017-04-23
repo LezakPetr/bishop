@@ -26,4 +26,17 @@ public interface IMoveGenerator {
 	 * @return generator type
 	 */
 	public MoveGeneratorType getGeneratorType();
+	
+	/**
+	 * Generates all moves into given move list.
+	 * Resets move walker.
+	 * @param moveList target move list
+	 */
+	public default void generateMoveList(final MoveList moveList) {
+		moveList.clear();
+		
+		setWalker((move) -> { moveList.add(move); return true; } );
+		generateMoves();
+		setWalker(null);
+	}
 }

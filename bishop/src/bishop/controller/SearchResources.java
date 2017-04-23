@@ -10,6 +10,7 @@ import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.IMaterialEvaluator;
 import bishop.base.PgnReader;
 import bishop.engine.AlgebraicPositionEvaluation;
+import bishop.engine.BookReader;
 import bishop.engine.BookSource;
 import bishop.engine.HashTableImpl;
 import bishop.engine.IPositionEvaluation;
@@ -27,7 +28,7 @@ public class SearchResources {
 	private static final int MAX_TOTAL_DEPTH = 256;
 	public static final int MAX_THREADS = 2;
 	
-	private static final String BOOK_PATH = "book.pgn";
+	private static final String BOOK_PATH = "book.dat";
 	private static final String MATERIAL_PATH = "material.tbl";
 	private static final String EVALUATION_COEFFS_PATH = "coeffs.tbl";
 
@@ -83,18 +84,9 @@ public class SearchResources {
 	private void setBookToManager() {
 		try {
 			final URL url = new URL(application.getRootUrl(), BOOK_PATH);
-			
-			try (final InputStream stream = url.openStream()) {
-				final PgnReader pgn = new PgnReader();
-				pgn.readPgnFromStream(stream);
+			final BookReader book = new BookReader(url);
 				
-				final BookSource book = new BookSource();
-				book.addPgn(pgn);
-				
-				System.out.println ("Read book with " + book.getPositionCount() + " positions");
-				
-				searchManager.setBook(book);
-			}
+			searchManager.setBook(book);
 		}
 		catch (IOException ex) {
 			ex.printStackTrace();

@@ -1,40 +1,82 @@
 package bishop.engine;
 
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
 
-import utils.CountingInputStream;
-import utils.IoUtils;
-
-import bishop.base.Annotation;
 import bishop.base.Move;
 import bishop.base.Position;
 import bishop.base.PositionReader;
+import range.IProbabilityModel;
+import range.ProbabilityModelFactory;
+import range.RangeBase;
+import range.RangeDecoder;
+import utils.CountingInputStream;
+import utils.IoUtils;
 
-public class BookReader extends BookIo implements IBook<EvaluatedBookRecord> {
+public class BookReader extends BookIo implements IBook<BookRecord> {
 	
-	private final String path;
+	private final URL url;
 	private CountingInputStream stream;
-	private int hashBits;
-	private long hashMask;
-	private int bytesPerSize;
-	private long recordListBegin;
-	private long recordListEnd;
+	private RangeDecoder recordListDecoder;
+
+	private int offsetSize;
+	private int maxBookRecordsInList;
 	
-	public BookReader (final String path) {
-		this.path = path;
+	public BookReader(final String path) {
+		try {
+			this.url = new File(path).toURI().toURL();
+			
+			init();
+		}
+		catch (Exception ex) {
+			throw new RuntimeException("Cannot initialize reader", ex);
+		}
+	}
+	
+	public BookReader (final URL url) {
+		try {
+			this.url = url;
+			
+			init();
+		}
+		catch (Exception ex) {
+			throw new RuntimeException("Cannot initialize reader", ex);
+		}
+	}
+	
+	private void init() throws IOException {
+		try {
+			stream = new CountingInputStream(new BufferedInputStream(url.openStream()));
+		
+			readHeader();
+		}
+		finally {
+			if (stream != null) {
+				stream.close();
+				stream = null;
+				
+				recordListDecoder = null;
+			}
+		}
 	}
 	
 	@Override
-	public EvaluatedBookRecord getRecord(final Position position) {
+	public BookRecord getRecord(final Position position) {
 		try {
 			try {
-				stream = new CountingInputStream(new BufferedInputStream(new FileInputStream(path)));
-			
-				readHeader();
-				findRecordList(position);
+				stream = new CountingInputStream(new BufferedInputStream(url.openStream()));
+				
+				final byte[] recordListData = findRecordList(position);
+				
+				if (recordListData == null)
+					return null;
+				
+				recordListDecoder = new RangeDecoder();
+				recordListDecoder.initialize(new ByteArrayInputStream(recordListData));
 				
 				return findRecordInList(position);
 			}
@@ -42,6 +84,8 @@ public class BookReader extends BookIo implements IBook<EvaluatedBookRecord> {
 				if (stream != null) {
 					stream.close();
 					stream = null;
+					
+					recordListDecoder = null;
 				}
 			}
 		}
@@ -56,74 +100,119 @@ public class BookReader extends BookIo implements IBook<EvaluatedBookRecord> {
 
 		/*final byte version = */IoUtils.readByteBinary(stream);
 		
-		hashBits = IoUtils.readByteBinary(stream);
-		hashMask = (1L << hashBits) - 1;
+		setHashBits(IoUtils.readByteBinary(stream));
 		
-		bytesPerSize = IoUtils.readByteBinary(stream);
+		offsetSize = IoUtils.readByteBinary(stream);
+		maxBookRecordsInList = (int) IoUtils.readUnsignedNumberBinary(stream, IoUtils.INT_BYTES);
+
+		moveIncludedProbabilityModel = readProbabilityModel(BOOLEAN_SYMBOL_COUNT);
+		recordListContinueProbabilityModel = readProbabilityModel(BOOLEAN_SYMBOL_COUNT);
+		relativaMoveRepetitionProbabilityModel = readProbabilityModel(RELATIVE_MOVE_REPETITION_SYMBOL_COUNT);
+		balanceProbabilityModel = readProbabilityModel(BALANCE_SYMBOL_COUNT);
+		positionRepetitionCountProbabilityModel = readProbabilityModel(POSITION_REPETITION_COUNT_SYMBOL_COUNT);
+	}
+	
+	private IProbabilityModel readProbabilityModel (final int count) throws IOException {
+		final int[] probabilities = new int[count];
+		int sum = 0;
+		
+		for (int i = 0; i < count - 1; i++) {
+			final int probability = (int) IoUtils.readUnsignedNumberBinary(stream, IoUtils.SHORT_BYTES);
+			probabilities[i] = probability;
+			sum += probability;
+		}
+		
+		probabilities[count - 1] = RangeBase.MAX_SYMBOL_CDF - sum;
+		
+		return ProbabilityModelFactory.fromProbabilities(probabilities);
 	}
 
-	private void findRecordList(final Position position) throws IOException {
+	private byte[] findRecordList(final Position position) throws IOException {
 		final long hash = position.getHash();
+		final long hashOffset = (hash & hashMask) * offsetSize;
 	
-		stream.skip((hash & hashMask) * bytesPerSize);
+		IoUtils.skip(stream, HEADER_SIZE + hashOffset);
 		
-		recordListBegin = IoUtils.readUnsignedNumberBinary(stream, bytesPerSize);
-		recordListEnd = IoUtils.readUnsignedNumberBinary(stream, bytesPerSize);
+		final long recordListBegin = IoUtils.readUnsignedNumberBinary(stream, offsetSize);
+		final long recordListEnd = IoUtils.readUnsignedNumberBinary(stream, offsetSize);
 		
-		stream.skip(recordListBegin - stream.getPosition());
+		if (recordListEnd > recordListBegin) {
+			IoUtils.skip(stream, recordListBegin - stream.getPosition());
+			
+			final int size = (int) (recordListEnd - recordListBegin);
+			final byte[] data = IoUtils.readByteArray(stream, size);
+			
+			return data;
+		}
+		else
+			return null;
 	}
 	
 
-	private EvaluatedBookRecord findRecordInList(final Position position) throws IOException {
-		while (stream.getPosition() < recordListEnd) {
-			final EvaluatedBookRecord record = readRecord();
+	private BookRecord findRecordInList(final Position position) throws IOException {
+		for (int i = 0; i < maxBookRecordsInList; i++) {
+			final BookRecord record = readRecord();
 			
 			if (record.getPosition().equals(position))
 				return record;
+			
+			if (recordListDecoder.decodeSymbol(recordListContinueProbabilityModel) == SYMBOL_FALSE)
+				break;
 		}
 		
 		return null;
 	}
 
-	private EvaluatedBookRecord readRecord() throws IOException {
-		final EvaluatedBookRecord record = new EvaluatedBookRecord();
+	private BookRecord readRecord() throws IOException {
+		final BookRecord record = new BookRecord();
 		
 		final PositionReader positionReader = new PositionReader();
-		positionReader.readPositionFromStream(stream);
+		positionReader.readPositionFromDecoder(recordListDecoder);
 		
 		final Position position = positionReader.getPosition();
 		record.getPosition().assign(position);
 		
-		final int evaluation = (int) IoUtils.readSignedNumberBinary(stream, EVALUATION_BYTES);
-		record.setEvaluation(evaluation);
+		final int balance = readPositionBalance();
+		record.setBalance(balance);
 		
-		final int moveCount = IoUtils.readByteBinary(stream) & 0xFF;
+		final int repetitionCount = recordListDecoder.decodeSymbol(positionRepetitionCountProbabilityModel);
+		record.setRepetitionCount(repetitionCount);
 		
-		for (int i = 0; i < moveCount; i++)
-			record.addMove(readMove(position));
+		moveGenerator.setPosition(position);
+		moveGenerator.generateMoveList(moveList);
+		moveList.sort();
+		
+		for (int i = 0; i < moveList.getSize(); i++) {
+			final BookMove move = readMove(position, moveList.get(i));
+			
+			if (move != null)
+				record.addMove(move);
+		}
 		
 		return record;
 	}
 
-	private BookMove readMove(final Position position) throws IOException {
-		final int data = (int) IoUtils.readUnsignedNumberBinary(stream, MOVE_SIZE);
-		final int compressedMove = data & Move.COMPRESSED_MOVE_MASK;
+	private BookMove readMove(final Position position, final Move move) throws IOException {
+		if (recordListDecoder.decodeSymbol(moveIncludedProbabilityModel) == SYMBOL_FALSE)
+			return null;
 		
-		final Move move = new Move();
-		move.uncompressMove(compressedMove, position);
-		
-		final boolean goodMove = (data & GOOD_MOVE_MASK) != 0;
+		final int relativaMoveRepetition = recordListDecoder.decodeSymbol(relativaMoveRepetitionProbabilityModel);
+		final int targetPositionBalance = readPositionBalance();
 		
 		final BookMove bookMove = new BookMove();
 		bookMove.setMove(move);
-		bookMove.setAnnotation((goodMove) ? Annotation.GOOD_MOVE : Annotation.POOR_MOVE);
+		bookMove.setRelativeMoveRepetition (relativaMoveRepetition);
+		bookMove.setTargetPositionBalance (targetPositionBalance);
 		
 		return bookMove;
 	}
 
+	private int readPositionBalance() throws IOException {
+		return recordListDecoder.decodeSymbol(balanceProbabilityModel) - BALANCE_OFFSET;
+	}
+
 	@Override
-	public Collection<EvaluatedBookRecord> getAllRecords() {
-		// TODO Auto-generated method stub
-		return null;
+	public Collection<BookRecord> getAllRecords() {
+		throw new RuntimeException("Method getAllRecords not implemented");
 	}
 }
