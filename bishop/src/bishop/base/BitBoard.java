@@ -134,7 +134,7 @@ public class BitBoard {
 		long mask = possibleSquares;
 
 		for (int i = 0; i < index; i++)
-			mask &= Long.lowestOneBit(mask);
+			mask &= ~Long.lowestOneBit(mask);
 		
 		return getFirstSquare(mask);
 	}

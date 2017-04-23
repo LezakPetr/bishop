@@ -4,9 +4,12 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
@@ -23,6 +26,7 @@ import bishop.engine.ISearchEngine;
 import bishop.engine.ISearchManager;
 import bishop.engine.ISearchManagerHandler;
 import bishop.engine.SearchInfo;
+import utils.IoUtils;
 
 @SuppressWarnings("serial")
 public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, ILocalizedComponent {
@@ -47,6 +51,8 @@ public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, IL
 
 	private JLabel labelNodesPerSecond;
 	private JTextField fieldNodesPerSecond;
+	
+	private JTextArea fieldAdditionalInfo;
 	
 	public SearchInfoPanel(final IApplicationView applicationView) {
 		this.application = applicationView.getApplication();
@@ -242,6 +248,22 @@ public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, IL
 				0, 0
 			)
 		);
+		
+		// Additional info
+		fieldAdditionalInfo = new JTextArea();
+		fieldAdditionalInfo.setEditable(false);
+		fieldAdditionalInfo.setPreferredSize(new Dimension(100, 50));
+		
+		this.add (
+			fieldAdditionalInfo,
+			new GridBagConstraints(
+				0, 3, 6, 1,
+				1.0, 1.0,
+				GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+				new Insets(5, 5, 5, 5),
+				0, 0
+			)
+		);
 	}
 
 	/**
@@ -259,7 +281,6 @@ public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, IL
 		{
 			shownPrincipalVariation = new MoveList();
 			shownPrincipalVariation.add(principalVariation.get(0));
-			
 		}
 		else
 			shownPrincipalVariation = principalVariation;
@@ -279,7 +300,10 @@ public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, IL
 		fieldNodeCount.setText(Long.toString(nodeCount));
 		
 		final long nodesPerSecond = (elapsedTime > 0) ? (1000*nodeCount / elapsedTime) : 0;
-		fieldNodesPerSecond.setText(Long.toString(nodesPerSecond));		
+		fieldNodesPerSecond.setText(Long.toString(nodesPerSecond));	
+		
+		final String additionalInfo = info.getAdditionalInfo().stream().collect(Collectors.joining("\n"));
+		fieldAdditionalInfo.setText(additionalInfo);
 	}
 	
 	/**

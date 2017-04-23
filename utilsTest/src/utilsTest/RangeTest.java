@@ -10,6 +10,7 @@ import range.IProbabilityModel;
 import range.ProbabilityModelFactory;
 import range.RangeDecoder;
 import range.RangeEncoder;
+import utils.IoUtils;
 
 public class RangeTest {
 	
@@ -83,6 +84,8 @@ public class RangeTest {
 		}
 		
 		decoder.close();
+		
+		Assert.assertTrue("Not found end of stream", inputStream.read() < 0);
 	}
 	
 	@Test

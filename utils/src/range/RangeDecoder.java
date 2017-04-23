@@ -69,7 +69,10 @@ public final class RangeDecoder extends RangeBase {
 		
 		normalize();
 		
-		return symbol - 1;
+		final int decodedSymbol = symbol - 1;
+		sendSymbolToConsumers(decodedSymbol);
+		
+		return decodedSymbol;
 	}
 	
 	/**

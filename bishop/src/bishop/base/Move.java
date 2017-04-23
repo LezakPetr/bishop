@@ -8,7 +8,7 @@ import bishop.tables.FigureAttackTable;
 import bishop.tables.PawnAttackTable;
 import bishop.tables.PawnMoveTable;
 
-public final class Move {
+public final class Move implements Comparable<Move> {
 
 	private static final int BEGIN_SQUARE_SHIFT                  = 0;
 	private static final int TARGET_SQUARE_SHIFT                 = 6;
@@ -364,6 +364,7 @@ public final class Move {
 		return movingPieceType == PieceType.PAWN && (targetSquareMask & BoardConstants.RANK_18_MASK) != 0;
 	}
 	
+	@Override
 	public boolean equals (final Object obj) {
 		if (!(obj instanceof Move))
 			return false;
@@ -371,6 +372,7 @@ public final class Move {
 		return data == ((Move) obj).data;
 	}
 	
+	@Override
 	public int hashCode() {
 		return data;
 	}
@@ -388,6 +390,32 @@ public final class Move {
 			// Castling, promotion and EP are irreversible
 			return false;
 		}
+	}
+
+	@Override
+	public int compareTo(final Move that) {
+		// Begin square
+		final int thisBeginSquare = this.getBeginSquare();
+		final int thatBeginSquare = that.getBeginSquare();
+		
+		if (thisBeginSquare != thatBeginSquare)
+			return thisBeginSquare - thatBeginSquare;
+		
+		// Target square
+		final int thisTargetSquare = this.getTargetSquare();
+		final int thatTargetSquare = that.getTargetSquare();
+		
+		if (thisTargetSquare != thatTargetSquare)
+			return thisTargetSquare - thatTargetSquare;
+
+		// Promotion piece
+		final int thisPromotionPieceType = this.getPromotionPieceType();
+		final int thatPromotionPieceType = that.getPromotionPieceType();
+		
+		if (thisPromotionPieceType != thatPromotionPieceType)
+			return thisPromotionPieceType - thatPromotionPieceType;
+
+		return 0;
 	}
 
 }

@@ -1,6 +1,8 @@
 package range;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Base class for range encoder and decoder.
@@ -49,12 +51,16 @@ public abstract class RangeBase {
 	
 	public static final int MAX_SYMBOL_BITS = MIN_RANGE_BITS;
 	public static final int MAX_SYMBOL_CDF = 1 << MAX_SYMBOL_BITS;
+	public static final int PROBABILITY_BYTES = MIN_RANGE_BYTES;
 	
 	public static final int MIN_SYMBOL_PROBABILITY = 1;
 	
 	protected long number;   // Actual number read from the stream
 	protected long low;   // Lower bound of actual range (inclusive)
 	protected long high;   // Upper bound of actual range (exclusive)
+	
+	// List of symbol consumers, usually for debugging 
+	private final List<ISymbolConsumer> symbolConsumerList = new ArrayList<>(0);
 	
 	
 	/**
@@ -178,6 +184,27 @@ public abstract class RangeBase {
 	 */
 	public long getHigh() {
 		return high;
+	}
+	
+	public void addSymbolConumer (final ISymbolConsumer consumer) {
+		symbolConsumerList.add(consumer);
+	}
+	
+	public void removeSymbolConsumer (final ISymbolConsumer consumer) {
+		final int index = symbolConsumerList.lastIndexOf(consumer);
+		
+		if (index < 0)
+			throw new RuntimeException("Consumer not found");
+		
+		symbolConsumerList.remove(index);
+	}
+	
+	public void removeAllSymbolConsumers() {
+		symbolConsumerList.clear();
+	}
+	
+	protected void sendSymbolToConsumers (final int symbol) {
+		symbolConsumerList.forEach(c -> c.consumeSymbol(symbol));
 	}
 
 }

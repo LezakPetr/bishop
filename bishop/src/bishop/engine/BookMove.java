@@ -1,16 +1,15 @@
 package bishop.engine;
 
-import bishop.base.Annotation;
 import bishop.base.Move;
 
 public final class BookMove {
 
 	private Move move;
-	private Annotation annotation;
+	private byte relativeMoveRepetition;
+	private byte targetPositionBalance;
 	
 	public BookMove() {
 		move = null;
-		setAnnotation(Annotation.NONE);
 	}
 
 	public Move getMove() {
@@ -21,22 +20,55 @@ public final class BookMove {
 		this.move = move;
 	}
 
-	public Annotation getAnnotation() {
-		return annotation;
-	}
-
-	public void setAnnotation(final Annotation annotation) {
-		this.annotation = annotation;
-	}
-
 	public BookMove copy() {
 		final BookMove move = new BookMove();
-		move.annotation = this.annotation;
+		move.relativeMoveRepetition = this.relativeMoveRepetition;
+		move.targetPositionBalance = this.targetPositionBalance;
 		move.move = this.move.copy();
-		
 		
 		return move;
 	}
+	
+	public int getRelativeMoveRepetition() {
+		return relativeMoveRepetition;
+	}
 
+	public void setRelativeMoveRepetition(final int relativaMoveRepetition) {
+		this.relativeMoveRepetition = (byte) relativaMoveRepetition;
+	}
+
+	public int getTargetPositionBalance() {
+		return targetPositionBalance;
+	}
+
+	public void setTargetPositionBalance(final int targetPositionBalance) {
+		this.targetPositionBalance = (byte) targetPositionBalance;
+	}
+	
+	@Override
+	public boolean equals (final Object obj) {
+		if (obj == null || obj.getClass() != this.getClass())
+			return false;
+		
+		final BookMove that = (BookMove) obj;
+		
+		return this.move.equals(that.move)
+				&& this.relativeMoveRepetition == that.relativeMoveRepetition
+				&& this.targetPositionBalance == that.targetPositionBalance;
+	}
+	
+	@Override
+	public int hashCode() {
+		int hash = move.hashCode();
+		hash = 31 * hash + relativeMoveRepetition;
+		hash = 31 * hash + targetPositionBalance;
+		
+		return hash;
+	}
+	
+	@Override
+	public String toString() {
+		return move.toString() + " " + relativeMoveRepetition + " " + targetPositionBalance;
+	}
 	
 }

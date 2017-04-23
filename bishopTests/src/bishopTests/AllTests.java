@@ -48,7 +48,8 @@ public class AllTests {
 		ChunkTest.class,
 		TableDefinitionTest.class,
 		HashTableTest.class,
-		PawnStructureEvaluatorTest.class
+		PawnStructureEvaluatorTest.class,
+		PositionIoTest.class
 	};
 	
 	public static final void main (final String[] args) {

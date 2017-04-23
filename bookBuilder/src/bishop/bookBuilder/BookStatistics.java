@@ -1,26 +1,26 @@
 package bishop.bookBuilder;
 
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import bishop.base.Annotation;
 import bishop.base.Game;
 import bishop.base.GameResult;
-import bishop.base.IGameNode;
-import bishop.base.ITreeIterator;
 import bishop.base.Move;
-import bishop.base.PgnWriter;
 import bishop.base.Position;
 import bishop.builderBase.LinearGameWalker;
 import bishop.builderBase.PgnListProcessor;
+import bishop.engine.BookMove;
+import bishop.engine.BookReader;
+import bishop.engine.BookRecord;
+import bishop.engine.BookSource;
+import bishop.engine.BookWriter;
+import math.Utils;
 import parallel.Parallel;
 
 /**
@@ -31,18 +31,13 @@ import parallel.Parallel;
 public class BookStatistics {
 	
 	// Statistics about each position
-	private final Map<Long, PositionStatistics> positionStatisticsMap = new HashMap<>();
+	private final Map<Position, PositionStatistics> positionStatisticsMap = new HashMap<>();
 	
-	// Hashes of positions already processed when writing the book
-	private final Set<Long> processedPositions = new HashSet<>();
-	
+	private BookSource book;	
 	private final PositionRepetitionFilter repetitionFilter = new PositionRepetitionFilter();
 	
 	private int minAbsolutePositionRepetition = 16;   // Minimal count of occurrence of position to be written into book
-	private double minRelativeMoveRepetition = 0.02;   // Minimal relative occurrence of move in a position to be considered as a good move
-	private double minBalanceDifference = -0.2;   // Minimal difference between balances of source and target positions so the move is considered as a good one 
 	private int maxDepth = 40;
-
 	
 	private void addLinearGameToRepetitionFilter (final Game game) {
 		final LinearGameWalker walker = new LinearGameWalker(
@@ -66,11 +61,11 @@ public class BookStatistics {
 		final Long hash = position.getHash();
 		
 		if (repetitionFilter.canPositionBeRepeatedAtLeast(hash, minAbsolutePositionRepetition)) {
-			PositionStatistics statistics = positionStatisticsMap.get(hash);
+			PositionStatistics statistics = positionStatisticsMap.get(position);
 			
 			if (statistics == null) {
 				statistics = new PositionStatistics();
-				positionStatisticsMap.put(hash, statistics);
+				positionStatisticsMap.put(position.copy(), statistics);
 			}
 			
 			statistics.addMove(position.getOnTurn(), move, result);
@@ -79,7 +74,8 @@ public class BookStatistics {
 		
 	// Build statistics from main variations of games in given PGNs. 
 	public void addLinearGames (final Collection<String> pgnList) throws IOException, InterruptedException, ExecutionException {
-		final PgnListProcessor processor = new PgnListProcessor(new Parallel());
+		final Parallel parallel = new Parallel();
+		final PgnListProcessor processor = new PgnListProcessor(parallel);
 		processor.addPgnList(pgnList);
 		
 		// Build repetition filter
@@ -90,50 +86,64 @@ public class BookStatistics {
 		// Build statistics
 		processor.setGameWalker((game) -> { addLinearGameToStatistics(game); });
 		processor.processGames();
+		
+		parallel.shutdown();
 	}
 	
-	// Stores book to PGN file.
+	// Stores book to dat file.
 	public void storeBookToFile(final String path) throws FileNotFoundException, IOException {
-		final Game game = storeBookToGame();
-		final PgnWriter writer = new PgnWriter();
-		writer.getGameList().add(game);
+		buildBook();
 		
-		try (OutputStream stream = new FileOutputStream(path)) {
-			writer.writePgnToStream(stream);
-		}	
+		final BookWriter writer = new BookWriter();
+		writer.writeBook(book, path);
+		
+		verifyBook(path);
+		
+		System.out.println(book.getPositionCount() + " positions written");
 	}
 	
-	// Stores book to game.
-	public Game storeBookToGame() {
-		processedPositions.clear();
+	private void verifyBook(final String path) throws FileNotFoundException, IOException {
+		System.out.println("Verification");
 		
-		final Game game = new Game();
-		final ITreeIterator<IGameNode> it = game.getRootIterator();		
+		final BookReader reader = new BookReader(path);
 		
-		storePosition (game, it);
+		for (BookRecord origRecord: book.getAllRecords()) {
+			final Position position = origRecord.getPosition();
+			final BookRecord readRecord = reader.getRecord(position);
 		
-		return game;
+			if (!origRecord.equals(readRecord)) {
+				throw new RuntimeException("Wrong record. Orig: " + origRecord + ", read: " + readRecord);
+			}
+		}
 	}
 	
+	private void buildBook() {
+		book = new BookSource();
+		
+		for (Position position: positionStatisticsMap.keySet())
+			storePosition (position);
+	}
+		
 	// Stores descendants of position on given iterator to the game 
-	private void storePosition (final Game game, final ITreeIterator<IGameNode> it) {
-		final Position prevPosition = it.getItem().getTargetPosition();
-		final Long prevHash = prevPosition.getHash();
+	private void storePosition (final Position prevPosition) {
+		final PositionStatistics prevPositionStatistics = positionStatisticsMap.get(prevPosition);
+		final long prevPositionRepetition = prevPositionStatistics.getTotalCount();
 		
-		if (processedPositions.contains(prevHash))
+		if (prevPositionRepetition < minAbsolutePositionRepetition)
 			return;
 		
-		processedPositions.add(prevHash);
-		
-		final PositionStatistics prevPositionStatistics = positionStatisticsMap.get(prevHash);
-		final long prevPositionRepetition = prevPositionStatistics.getTotalCount();
 		final double prevBalance = prevPositionStatistics.getBalance();
-				
+		
+		final BookRecord record = new BookRecord();
+		record.getPosition().assign(prevPosition);
+		record.setRepetitionCount(prevPositionRepetition);
+		record.setBalance(Utils.roundToPercents(prevBalance));
+		
 		for (Move move: prevPositionStatistics.getMoves()) {
 			final Position nextPosition = prevPosition.copy();
 			nextPosition.makeMove(move);
-			
-			final PositionStatistics nextPositionStatistics = positionStatisticsMap.get(nextPosition.getHash());
+
+			final PositionStatistics nextPositionStatistics = positionStatisticsMap.get(nextPosition);
 			
 			if (nextPositionStatistics != null) {
 				final long nextPositionRepetition = nextPositionStatistics.getTotalCount();
@@ -141,24 +151,16 @@ public class BookStatistics {
 				final double relativeMoveRepetition = (double) moveRepetition / (double) prevPositionRepetition;
 				
 				if (nextPositionRepetition >= minAbsolutePositionRepetition) {
-					boolean goodMove = false;
+					final BookMove bookMove = new BookMove();
+					bookMove.setMove(move);
+					bookMove.setRelativeMoveRepetition(Utils.roundToPercents(relativeMoveRepetition));
+					bookMove.setTargetPositionBalance(Utils.roundToPercents(nextPositionStatistics.getBalance()));
 					
-					if (relativeMoveRepetition >= minRelativeMoveRepetition) {
-						final double nextBalance = nextPositionStatistics.getBalance();
-						
-						if (-nextBalance - prevBalance >= minBalanceDifference) {
-							goodMove = true;
-						}						
-					}
-					
-					final ITreeIterator<IGameNode> childIt = game.addChild(it, move);
-					
-					if (!goodMove)
-						childIt.getItem().setAnnotation(Annotation.POOR_MOVE);
-					
-					storePosition(game, childIt);
+					record.addMove(bookMove);
 				}
 			}
 		}
+		
+		book.addRecord(record);
 	}
 }
