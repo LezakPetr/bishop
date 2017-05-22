@@ -136,75 +136,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private IPositionEvaluator positionEvaluator;
 	private final HandlerRegistrarImpl<ISearchEngineHandler> handlerRegistrar;
 	private int lastPositionalEvaluation;
-	private long normalSearchTimeSpent;
-	
-	private final ITaskRunner mateRunner;
+	private final MateFinder mateFinder;
 	
 	private static final int WIN_MATE_DEPTH_IN_MOVES = 1;
 	private static final int WIN_MAX_EXTENSION = 4;
 	
 	private static final int LOSE_MATE_DEPTH_IN_MOVES = 1;
 	private static final int LOSE_MAX_EXTENSION = 2;
-	
-	abstract private class MateTaskBase implements Runnable {
-		protected final MateFinder finder = new MateFinder();
-		public final Position position = new Position(true);   // Position with null caching because we don't need the hashCode
-		public int evaluation;
-		public long timeSpent;
-		
-		public MateTaskBase (final int maxDepth, final int maxExtension) {
-			finder.setMaxDepth(maxDepth, maxTotalDepth);
-			finder.setPosition(position);
-			finder.setMaxExtension(maxExtension);
-		}
-	
-		public void setDepthAdvance (final int depthAdvance) {
-			finder.setDepthAdvance(depthAdvance);
-		}
-		
-		public void clear() {
-			finder.clearKillerMoves();
-			timeSpent = 0;
-		}
-
-		@Override
-		public void run() {
-			final long t1 = System.currentTimeMillis();
-			evaluation = find();
-			final long t2 = System.currentTimeMillis();
-			
-			timeSpent += t2 - t1;
-		}
-		
-		abstract protected int find();
-	};
-	
-	private class WinMateTask extends MateTaskBase {
-		public WinMateTask() {
-			super (WIN_MATE_DEPTH_IN_MOVES, WIN_MAX_EXTENSION);
-		}
-		
-		
-		@Override
-		public int find() {
-			return finder.findWin(WIN_MATE_DEPTH_IN_MOVES);
-		}
-	}
-	
-	private class LoseMateTask extends MateTaskBase {
-		public LoseMateTask() {
-			super (LOSE_MATE_DEPTH_IN_MOVES, LOSE_MAX_EXTENSION);
-		}
-		
-		@Override
-		public int find() {
-			return finder.findLose(LOSE_MATE_DEPTH_IN_MOVES);
-		}
-	}
-
-	private WinMateTask winMateTask;
-	private LoseMateTask loseMateTask;
-	private Runnable compoundMateTask;
 
 	
 	public SerialSearchEngine(final Parallel parallel) {
@@ -235,9 +173,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 		extensionCalculator = new SearchExtensionCalculator();
 		moveExtensionEvaluator = new MoveExtensionEvaluator();
 		
-		setHashTable(new NullHashTable());
+		mateFinder = new MateFinder();
 		
-		this.mateRunner = parallel.getTaskRunner(0);
+		setHashTable(new NullHashTable());
 
 		task = null;
 	}
@@ -332,16 +270,37 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final boolean isFirstQuiescence = isQuiescenceSearch && currentDepth > 0 && !nodeStack[currentDepth - 1].isQuiescenceSearch;
 		
 		if (isFirstQuiescence) {
-			winMateTask.position.assign(currentPosition);
-			winMateTask.setDepthAdvance(currentDepth);
+			mateFinder.setPosition(currentPosition);
+			mateFinder.setDepthAdvance(currentDepth);
 			
-			loseMateTask.position.assign(currentPosition);
-			loseMateTask.setDepthAdvance(currentDepth);
+			// Win
+			mateFinder.setMaxExtension(WIN_MAX_EXTENSION);
 			
-			mateRunner.startTask(compoundMateTask);
+			final int winEvaluation = mateFinder.findWin(WIN_MATE_DEPTH_IN_MOVES);
+			
+			if (winEvaluation >= Evaluation.MATE_MIN) {
+				currentRecord.evaluation.setEvaluation(winEvaluation);				
+				currentRecord.evaluation.setAlpha(Evaluation.MIN);
+				currentRecord.evaluation.setBeta(Evaluation.MAX);
+				currentRecord.principalVariation.clear();
+				
+				return;
+			}
+			
+			// Lose
+			mateFinder.setMaxExtension(LOSE_MAX_EXTENSION);
+			
+			final int loseEvaluation = mateFinder.findLose(LOSE_MATE_DEPTH_IN_MOVES);
+			
+			if (loseEvaluation <= -Evaluation.MATE_MIN) {
+				currentRecord.evaluation.setEvaluation(loseEvaluation);				
+				currentRecord.evaluation.setAlpha(Evaluation.MIN);
+				currentRecord.evaluation.setBeta(Evaluation.MAX);
+				currentRecord.principalVariation.clear();
+				
+				return;
+			}	
 		}
-		
-		final long t1 = System.currentTimeMillis();
 		
 		try {
 			// Evaluate position
@@ -476,25 +435,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			}
 		}
 		finally {
-			if (isFirstQuiescence) {
-				final long t2 = System.currentTimeMillis();
-				normalSearchTimeSpent += t2 - t1;
-				
-				mateRunner.joinTask();
-				
-				if (winMateTask.evaluation >= Evaluation.MATE_MIN || loseMateTask.evaluation <= -Evaluation.MATE_MIN) {
-					if (winMateTask.evaluation >= Evaluation.MATE_MIN)
-						currentRecord.evaluation.setEvaluation(winMateTask.evaluation);
-					else
-						currentRecord.evaluation.setEvaluation(loseMateTask.evaluation);
-					
-					currentRecord.evaluation.setAlpha(Evaluation.MIN);
-					currentRecord.evaluation.setBeta(Evaluation.MAX);
-					currentRecord.principalVariation.clear();
-				}
-			}
-
-			
 			updateHashRecord(currentRecord, horizon);
 		}
 	}
@@ -751,10 +691,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			}
 		}
 		
-		winMateTask.clear();
-		loseMateTask.clear();
-		normalSearchTimeSpent = 0;
-
 		// Do the search
 		currentDepth = 0;
 		boolean terminated = false;
@@ -816,13 +752,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			for (int i = 0; i < nodeStack.length; i++)
 				this.nodeStack[i] = new NodeRecord(maxTotalDepth - i - 1, evaluationFactory);
 			
-			this.winMateTask = new WinMateTask();
-			this.loseMateTask = new LoseMateTask();
-			
-			this.compoundMateTask = () -> {
-				winMateTask.run();
-				loseMateTask.run();
-			};
+			mateFinder.setMaxDepth (Math.max(WIN_MATE_DEPTH_IN_MOVES, LOSE_MATE_DEPTH_IN_MOVES), maxTotalDepth);
 		}
 	}
 
@@ -884,8 +814,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 		
 		try {
-			parallel.startTaskRunners();
-			
 			final RepeatedPositionRegister taskRepeatedPositionRegister = task.getRepeatedPositionRegister();
 			
 			repeatedPositionRegister.clearAnsReserve(taskRepeatedPositionRegister.getSize() + maxTotalDepth);
@@ -894,8 +822,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return searchOneTask();
 		}
 		finally {
-			parallel.stopTaskRunners();
-			
 			synchronized (monitor) {
 				this.task = null;
 				this.engineState = EngineState.STOPPED;
