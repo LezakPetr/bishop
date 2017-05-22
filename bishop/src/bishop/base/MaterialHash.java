@@ -3,20 +3,9 @@ package bishop.base;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import utils.ICopyable;
 import bishop.tablebase.FileNameCalculator;
-import bishop.tables.MaterialHashColorMaskTable;
-import bishop.tables.MaterialHashPieceOffsetTable;
 
-public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>, Comparable<MaterialHash> {
-	
-	private static final long HASH_ALONE_KINGS = 0;
-	
-	public static final int BITS_PER_ITEM = Square.BIT_COUNT;
-	private static final long ITEM_MASK = (1L << BITS_PER_ITEM) - 1;
-	
-	private static final int ON_TURN_OFFSET = BITS_PER_ITEM * Color.LAST * (PieceType.VARIABLE_LAST - PieceType.VARIABLE_FIRST);
-	private static final long ON_TURN_MASK = 1L << ON_TURN_OFFSET;
+public final class MaterialHash implements IMaterialHashRead {
 	
 	private long hash;
 	
@@ -58,11 +47,11 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 	}
 
 	public void changeToOpposite () {
-		final long whiteHash = hash & MaterialHashColorMaskTable.getItem(Color.WHITE);
-		final long blackHash = hash & MaterialHashColorMaskTable.getItem(Color.BLACK);
-		final long onTurn = hash & ON_TURN_MASK;
+		final long whiteHash = hash & MaterialHashConstants.WHITE_COLOR_MASK;
+		final long blackHash = hash & MaterialHashConstants.BLACK_COLOR_MASK;
+		final long onTurn = hash & MaterialHashConstants.ON_TURN_MASK;
 		
-		hash = (whiteHash << BITS_PER_ITEM) | (blackHash >>> BITS_PER_ITEM) | (onTurn ^ ON_TURN_MASK);
+		hash = (whiteHash << MaterialHashConstants.BITS_PER_ITEM) | (blackHash >>> MaterialHashConstants.BITS_PER_ITEM) | (onTurn ^ MaterialHashConstants.ON_TURN_MASK);
 	}
 	
 	@Override
@@ -71,20 +60,20 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 			return 1;
 		}
 		else {
-			final int offset = MaterialHashPieceOffsetTable.getItem(color, pieceType);
+			final int offset = MaterialHashConstants.getOffset(color, pieceType);
 			
-			return (int) ((hash >>> offset) & ITEM_MASK);
+			return (int) ((hash >>> offset) & MaterialHashConstants.ITEM_MASK);
 		}
 	}
 
 	public void addPiece(final int color, final int pieceType, final int count) {
-		final int offset = MaterialHashPieceOffsetTable.getItem(color, pieceType);
+		final int offset = MaterialHashConstants.getOffset(color, pieceType);
 		
 		hash += (long) count << offset;
 	}
 
 	public void addPiece(final int color, final int pieceType) {
-		addPiece(color, pieceType, 1);
+		hash += MaterialHashConstants.getPieceIncrement(color, pieceType);
 	}
 
 	public void removePiece(final int color, final int pieceType, final int count) {
@@ -92,19 +81,19 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 	}
 	
 	public void removePiece(final int color, final int pieceType) {
-		removePiece(color, pieceType, 1);
+		hash -= MaterialHashConstants.getPieceIncrement(color, pieceType);
 	}
 
 	public int getOnTurn() {
-		return (int) ((hash & ON_TURN_MASK) >>> ON_TURN_OFFSET);
+		return (int) ((hash & MaterialHashConstants.ON_TURN_MASK) >>> MaterialHashConstants.ON_TURN_OFFSET);
 	}
 
 	public void swapOnTurn() {
-		hash ^= ON_TURN_MASK;
+		hash ^= MaterialHashConstants.ON_TURN_MASK;
 	}
 	
 	public void setOnTurn(final int onTurn) {
-		hash = (hash & ~ON_TURN_MASK) | ((long) onTurn << ON_TURN_OFFSET);
+		hash = (hash & ~MaterialHashConstants.ON_TURN_MASK) | ((long) onTurn << MaterialHashConstants.ON_TURN_OFFSET);
 	}
 
 	public MaterialHash copy() {
@@ -119,7 +108,7 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 	}
 
 	public void clear() {
-		this.hash = HASH_ALONE_KINGS;
+		this.hash = MaterialHashConstants.HASH_ALONE_KINGS;
 	}
 	
 	@Override
@@ -137,6 +126,7 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 		return (int) (hash ^ (hash >>> 32));
 	}
 
+	@Override
 	public MaterialHash getOpposite() {
 		final MaterialHash opposite = this.copy();
 		opposite.changeToOpposite();
@@ -144,6 +134,7 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 		return opposite;
 	}
 
+	@Override
 	public String getMaterialString() {
 		final StringWriter stringWriter = new StringWriter();
 		final PrintWriter printWriter = new PrintWriter(stringWriter);
@@ -171,6 +162,7 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 		return getMaterialString() + '-' + Color.getNotation(getOnTurn());
 	}
 	
+	@Override
 	public int getTotalPieceCount() {
 		int count = 0;
 		
@@ -212,11 +204,7 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 		return materialHashArray;
 	}
 
-	/**
-	 * Method defines order between material hashes.
-	 * @param cmpHash compared material hash
-	 * @return true if this hash is greater than cmpHash
-	 */
+	@Override
 	public boolean isGreater(final MaterialHash cmpHash) {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			for (int pieceType = PieceType.VARIABLE_FIRST; pieceType < PieceType.VARIABLE_LAST; pieceType++) {
@@ -234,10 +222,7 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 		return false;
 	}
 
-	/**
-	 * Checks if the material hash contains same number of corresponding white and black pieces except for given piece type.
-	 * @param exceptPieceType piece type with allowed different count
-	 */
+	@Override
 	public boolean isBalancedExceptFor(final int exceptPieceType) {
 		for (int pieceType = PieceType.VARIABLE_FIRST; pieceType < PieceType.VARIABLE_LAST; pieceType++) {
 			if (pieceType != exceptPieceType && getPieceCount(Color.WHITE, pieceType) != getPieceCount(Color.BLACK, pieceType))
@@ -262,4 +247,23 @@ public final class MaterialHash implements IPieceCounts, ICopyable<MaterialHash>
 		removePiece(Color.BLACK, pieceType, toRemove);
 	}
 	
+	@Override
+	public long getHash() {
+		return hash;
+	}
+	
+	@Override
+	public boolean isAloneKing(final int color) {
+		return (hash & MaterialHashConstants.getColorMask(color)) == 0;
+	}
+
+	@Override
+	public boolean hasQueenRookOrPawn() {
+		return (hash & MaterialHashConstants.QUEEN_ROOK_OR_PAWN_BOTH_COLOR_MASK) != 0;
+	}
+	
+	@Override
+	public boolean hasQueenRookOrPawnOnSide(final int color) {
+		return (hash & MaterialHashConstants.getQueenRookOrPawnOnSide(color)) != 0;
+	}
 }

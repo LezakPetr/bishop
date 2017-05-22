@@ -14,6 +14,8 @@ public class Evaluation {
 	
 	public static final int DRAW = 0;
 	
+	public static final int BYTES = 3;
+	
 	public static int getMateEvaluation (final int depth) {
 		return MATE_ZERO_DEPTH - depth;
 	}

@@ -38,15 +38,15 @@ public class NullPositionCaching implements IPositionCaching {
 	}
 
 	@Override
-	public void setHash(final long hash) {
-	}
-	
-	@Override
-	public void refreshHash(final Position position) {
+	public void refreshCache(final Position position) {
 	}
 
 	@Override
 	public void assign (final IPositionCaching orig) {
 	}
 
+	@Override
+	public MaterialHash getMaterialHash() {
+		return position.calculateMaterialHash();
+	}
 }

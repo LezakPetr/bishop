@@ -45,9 +45,9 @@ public class PositionIo {
 	private static RecordedPiece[] createRecordedPieces() {
 		final RecordedPiece[] result = new RecordedPiece[7];
 		
-		final IProbabilityModel modelOnePiece = ProbabilityModelFactory.fromProbabilities(ArrayUtils.copyItems(24956, 2, 252, 62));
-		final IProbabilityModel modelTwoPieces = ProbabilityModelFactory.fromProbabilities(ArrayUtils.copyItems(18104, 3, 184, 61));
-		final IProbabilityModel modelEightPieces = ProbabilityModelFactory.fromProbabilities(ArrayUtils.copyItems(6854, 9, 70, 55));
+		final IProbabilityModel modelOnePiece = ProbabilityModelFactory.fromProbabilities(ArrayUtils.copyItems(31926, 2, 1024, 1, 64, 7, 4, 53));
+		final IProbabilityModel modelTwoPieces = ProbabilityModelFactory.fromProbabilities(ArrayUtils.copyItems(21285, 3, 1025, 1, 64, 7, 4, 52));
+		final IProbabilityModel modelEightPieces = ProbabilityModelFactory.fromProbabilities(ArrayUtils.copyItems(7264, 9, 4, 40));
 		
 		result[0] = new RecordedPiece(PieceType.PAWN, ~BoardConstants.RANK_18_MASK, modelEightPieces);
 		result[1] = new RecordedPiece(PieceType.KNIGHT, BitBoard.FULL, modelTwoPieces);

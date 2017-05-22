@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import bishop.base.MaterialHash;
+import bishop.base.IMaterialHashRead;
 import bishop.base.IPosition;
 import bishop.base.MirrorPosition;
 
@@ -23,7 +24,7 @@ public class TableSwitch implements IPositionResultSource {
 	
 	@Override
 	public int getPositionResult(final IPosition position) {
-		final MaterialHash directHash = position.getMaterialHash();
+		final IMaterialHashRead directHash = position.getMaterialHash();
 		final IPositionResultSource directTable = tableMap.get(directHash);
 		
 		if (directTable != null) {
@@ -60,7 +61,7 @@ public class TableSwitch implements IPositionResultSource {
 		}
 	}
 
-	public boolean canProcessSource(final MaterialHash materialHash) {
+	public boolean canProcessSource(final IMaterialHashRead materialHash) {
 		return bothColorMaterialSet.contains(materialHash);
 	}
 	

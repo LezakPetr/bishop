@@ -326,7 +326,7 @@ public final class SearchManagerImpl implements ISearchManager {
 			task.setHorizon(horizon);
 			task.setInitialSearch(initialSearch);
 			
-			final int materialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(rootPosition);
+			final int materialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(rootPosition.getMaterialHash());
 			task.setRootMaterialEvaluation(materialEvaluation);
 			
 			final RepeatedPositionRegister repeatedPositionRegister = new RepeatedPositionRegister();

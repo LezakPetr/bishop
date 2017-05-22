@@ -9,7 +9,7 @@ public interface IPositionCaching {
 	public void changeEpFile(final int from, final int to);
 	public void changeCastlingRights(final int fromIndex, final int toIndex);
 	public long getHash();
-	public void setHash(final long hash);
-	public void refreshHash(final Position position);
+	public void refreshCache(final Position position);
 	public void assign (final IPositionCaching orig);
+	public MaterialHash getMaterialHash();
 }

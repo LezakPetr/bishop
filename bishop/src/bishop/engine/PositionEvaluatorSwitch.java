@@ -4,20 +4,20 @@ import java.io.PrintWriter;
 import java.util.function.Supplier;
 
 import bishop.base.Color;
+import bishop.base.IMaterialHashRead;
 import bishop.base.IPieceCounts;
 import bishop.base.PieceType;
 import bishop.base.Position;
 
-public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPieceCounts {
+public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 	
 	private final MiddleGamePositionEvaluator middleGameEvaluator;
 	private final GeneralMatingPositionEvaluator generalMatingEvaluator;
 	private final EndingPositionEvaluator endingEvaluator;
 	private final DrawPositionEvaluator drawEvaluator;
 	private final PawnStructureCache pawnStructureCache;
-	
-	private final int[] colorCounts;
-	private final int[][] pieceCounts;
+
+	private IMaterialHashRead materialHash;
 	
 	private final boolean[] hasMatingMaterial;
 	
@@ -35,26 +35,9 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 		drawEvaluator = new DrawPositionEvaluator(evaluationFactory);
 		endingEvaluator = new EndingPositionEvaluator(pawnStructureCache, evaluationFactory);
 		
-		colorCounts = new int[Color.LAST];
-		pieceCounts = new int[Color.LAST][PieceType.LAST];
 		hasMatingMaterial = new boolean[Color.LAST];
 	}
-	
-	private void calculatePieceCounts() {
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			int currentColorCount = 0;
-			
-			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
-				final int count = position.getPieceCount(color, pieceType);
-				
-				pieceCounts[color][pieceType] = count;
-				currentColorCount += count;
-			}
-			
-			colorCounts[color] = currentColorCount;
-		}
-	}
-	
+		
 	private void selectCurrentEvaluator() {
 		currentEvaluator = null;
 		
@@ -62,8 +45,8 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int matedColor = Color.getOppositeColor(color);
 			
-			if (colorCounts[matedColor] == 1) {
-				final int pawnCount = pieceCounts[color][PieceType.PAWN];
+			if (materialHash.isAloneKing(matedColor)) {
+				final int pawnCount = materialHash.getPieceCount(color, PieceType.PAWN);
 				
 				if (pawnCount == 0 && hasMatingMaterial[color]) {
 					currentEvaluator = generalMatingEvaluator;
@@ -90,12 +73,10 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 		int count = 0;
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int[] colorPieceCounts = pieceCounts[color];
-			
-			count += 4*colorPieceCounts[PieceType.QUEEN];
-			count += 2*colorPieceCounts[PieceType.ROOK];
-			count += colorPieceCounts[PieceType.BISHOP];
-			count += colorPieceCounts[PieceType.KNIGHT];
+			count += 4 * materialHash.getPieceCount(color, PieceType.QUEEN);
+			count += 2 * materialHash.getPieceCount(color, PieceType.ROOK);
+			count += materialHash.getPieceCount(color, PieceType.BISHOP);
+			count += materialHash.getPieceCount(color, PieceType.KNIGHT);
 		}
 		
 		return count <= 8;
@@ -104,8 +85,8 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 	@Override
 	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
 		this.position = position;
+		this.materialHash = position.getMaterialHash();
 		
-		calculatePieceCounts();
 		calculateHasMatingMaterial();
 		selectCurrentEvaluator();
 		
@@ -129,7 +110,7 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 
 	private void calculateHasMatingMaterial() {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			hasMatingMaterial[color] = DrawChecker.hasMatingMaterial(this, color);
+			hasMatingMaterial[color] = DrawChecker.hasMatingMaterial(materialHash, color);
 		}		
 	}
 		
@@ -137,8 +118,4 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator, IPiece
 		currentEvaluator.writeLog(writer);
 	}
 
-	@Override
-	public int getPieceCount(final int color, final int pieceType) {
-		return pieceCounts[color][pieceType];
-	}
 }

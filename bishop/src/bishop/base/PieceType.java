@@ -33,6 +33,7 @@ public class PieceType {
 	// Subinterval of variable pieces (all pieces without king which is permanent).
 	public static final int VARIABLE_FIRST = 1;
 	public static final int VARIABLE_LAST = 6;
+	public static final int VARIABLE_COUNT = PieceType.VARIABLE_LAST - PieceType.VARIABLE_FIRST;
 	
 	
 	private static final char[] NOTATION = {'k', 'q', 'r', 'b', 'n', 'p'};

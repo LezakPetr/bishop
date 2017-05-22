@@ -123,7 +123,7 @@ public class SearchEngineTest {
 			task.setRepeatedPositionRegister(register);
 			task.getPosition().assign(position);
 			
-			final int materialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(position);
+			final int materialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(position.getMaterialHash());
 			task.setRootMaterialEvaluation(materialEvaluation);
 			
 			final SearchResult result = engine.search(task);			

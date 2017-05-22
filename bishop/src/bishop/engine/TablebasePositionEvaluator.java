@@ -3,6 +3,7 @@ package bishop.engine;
 import java.io.File;
 import java.util.Set;
 
+import bishop.base.IMaterialHashRead;
 import bishop.base.MaterialHash;
 import bishop.base.Position;
 import bishop.tablebase.FileNameCalculator;
@@ -40,7 +41,7 @@ public class TablebasePositionEvaluator {
 		}
 	}
 	
-	public boolean canEvaluate (final MaterialHash materialHash) {
+	public boolean canEvaluate (final IMaterialHashRead materialHash) {
 		return tableSwitch.canProcessSource(materialHash);
 	}
 	

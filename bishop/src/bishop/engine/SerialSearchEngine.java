@@ -347,7 +347,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			// Evaluate position
 			int whitePositionEvaluation = positionEvaluator.evaluateTactical(currentPosition, currentRecord.attackCalculator).getEvaluation();
 			
-			final int materialEvaluation = materialEvaluator.evaluateMaterial(currentPosition);
+			final int materialEvaluation = materialEvaluator.evaluateMaterial(currentPosition.getMaterialHash());
 			final int materialEvaluationShift = positionEvaluator.getMaterialEvaluationShift();
 			
 			whitePositionEvaluation += materialEvaluation >> materialEvaluationShift;
@@ -553,7 +553,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	}
 
 	private boolean updateRecordByHash(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta, final HashRecord hashRecord) {
-		if (hashTable.getRecord(currentPosition, hashRecord)) {
+		if (horizon > 0 && hashTable.getRecord(currentPosition, hashRecord)) {
 			if (currentDepth > 0 && hashRecord.getHorizon() >= horizon) {
 				final int hashEvaluation = hashRecord.getNormalizedEvaluation(currentDepth);
 				final int hashType = hashRecord.getType();
@@ -616,14 +616,14 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 */
 	private ISearchResult evaluateMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta) {
 		final NodeRecord currentRecord = nodeStack[currentDepth];
-		final int beginMaterialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(currentPosition);
+		final int beginMaterialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(currentPosition.getMaterialHash());
 		
 		currentPosition.makeMove(move);
 		
 		final int moveExtension;
 		
 		if (horizon >= searchSettings.getMinExtensionHorizon())
-			moveExtension = moveExtensionEvaluator.getExtension(currentPosition, move, task.getRootMaterialEvaluation(), beginMaterialEvaluation);
+			moveExtension = moveExtensionEvaluator.getExtension(currentPosition, move, task.getRootMaterialEvaluation(), beginMaterialEvaluation, currentRecord.attackCalculator);
 		else
 			moveExtension = 0;
 		
@@ -772,14 +772,14 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final SearchResult result = getResult(task.getHorizon());
 		result.setSearchTerminated(terminated);
 		
-		System.out.println("Time in quiescence search: " + normalSearchTimeSpent + "ms");
+/*		System.out.println("Time in quiescence search: " + normalSearchTimeSpent + "ms");
 		
 		final double winPercent = 100.0 * winMateTask.timeSpent / normalSearchTimeSpent;
 		System.out.println("Time in win mate search: " + winMateTask.timeSpent + "ms = " + Math.round(winPercent) + "%");
 		
 		final double losePercent = 100.0 * loseMateTask.timeSpent / normalSearchTimeSpent;
 		System.out.println("Time in lose mate search: " + loseMateTask.timeSpent + "ms = " + Math.round(losePercent) + "%");
-		
+		*/
 		return result;
 	}
 
@@ -939,30 +939,32 @@ public final class SerialSearchEngine implements ISearchEngine {
 	}
 
 	private void updateHashRecord(final NodeRecord currentRecord, final int horizon) {
-		final HashRecord record = new HashRecord();
-		final NodeEvaluation nodeEvaluation = currentRecord.evaluation;
-
-		record.setEvaluationAndType(nodeEvaluation, currentDepth);
-		
-		final int evaluation = nodeEvaluation.getEvaluation();
-		final int effectiveHorizon;
-		
-		if (evaluation >= Evaluation.MATE_MIN || evaluation <= -Evaluation.MATE_MIN) {
-			effectiveHorizon = ISearchEngine.MAX_HORIZON - 1;
+		if (horizon > 0) {
+			final HashRecord record = new HashRecord();
+			final NodeEvaluation nodeEvaluation = currentRecord.evaluation;
+	
+			record.setEvaluationAndType(nodeEvaluation, currentDepth);
+			
+			final int evaluation = nodeEvaluation.getEvaluation();
+			final int effectiveHorizon;
+			
+			if (evaluation >= Evaluation.MATE_MIN || evaluation <= -Evaluation.MATE_MIN) {
+				effectiveHorizon = ISearchEngine.MAX_HORIZON - 1;
+			}
+			else
+				effectiveHorizon = horizon;
+			
+			record.setHorizon(effectiveHorizon);
+	
+			if (currentRecord.principalVariation.getSize() > 0) {
+				record.setCompressedBestMove(currentRecord.principalVariation.get(0).getCompressedMove());
+			}
+			else {
+				record.setCompressedBestMove(Move.NONE_COMPRESSED_MOVE);
+			}
+			
+			hashTable.updateRecord(currentPosition, record);
 		}
-		else
-			effectiveHorizon = horizon;
-		
-		record.setHorizon(effectiveHorizon);
-
-		if (currentRecord.principalVariation.getSize() > 0) {
-			record.setCompressedBestMove(currentRecord.principalVariation.get(0).getCompressedMove());
-		}
-		else {
-			record.setCompressedBestMove(Move.NONE_COMPRESSED_MOVE);
-		}
-		
-		hashTable.updateRecord(currentPosition, record);
 	}
 	
 	/**
