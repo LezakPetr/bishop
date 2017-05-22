@@ -7,6 +7,6 @@ public interface IPosition extends IPieceCounts {
 	public long getColorOccupancy (final int color);
 	public long getPiecesMask (final int color, final int type);
 	public int getOnTurn();
-	public MaterialHash getMaterialHash();
+	public IMaterialHashRead getMaterialHash();
 	public CastlingRights getCastlingRights();
 }

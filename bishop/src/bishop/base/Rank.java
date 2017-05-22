@@ -72,4 +72,9 @@ public class Rank {
 	public static int getAbsolute(final int relativeRank, final int color) {
 		return (color == Color.WHITE) ? relativeRank : getOppositeRank(relativeRank);
 	}
+	
+	public static int getRelative(final int absoluteRank, final int color) {
+		return getAbsolute(absoluteRank, color);
+	}
+
 }

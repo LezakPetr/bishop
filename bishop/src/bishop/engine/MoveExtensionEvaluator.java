@@ -1,18 +1,20 @@
 package bishop.engine;
 
 import bishop.base.DefaultAdditiveMaterialEvaluator;
+import bishop.base.BitBoard;
 import bishop.base.Color;
 import bishop.base.Move;
 import bishop.base.PieceType;
 import bishop.base.Position;
 import bishop.base.Rank;
 import bishop.base.Square;
+import bishop.tables.PawnAttackTable;
 
 public class MoveExtensionEvaluator {
 			
 	private SearchSettings settings;
 		
-	public int getExtension (final Position targetPosition, final Move move, final int rootMaterialEvaluation, final int beginMaterialEvaluation) {
+	public int getExtension (final Position targetPosition, final Move move, final int rootMaterialEvaluation, final int beginMaterialEvaluation, final AttackCalculator attackCalculator) {
 		final int movingPieceType = move.getMovingPieceType();
 		final int onTurn = targetPosition.getOnTurn();
 		final int oppositeColor = Color.getOppositeColor(onTurn);
@@ -20,14 +22,21 @@ public class MoveExtensionEvaluator {
 		
 		// Passed pawn
 		if (movingPieceType == PieceType.PAWN) {
-			final int rank = Square.getRank(move.getTargetSquare());
+			final int targetSquare = move.getTargetSquare();
+			final int rank = Square.getRank(targetSquare);
+			final int relativeRank = Rank.getRelative (rank, oppositeColor);
 			
-			if (rank == Rank.R7 || rank == Rank.R2)
+			if (relativeRank == Rank.R7)
 				extension += settings.getPawnOnSevenRankExtension();
+
+			final long pawnMask = targetPosition.getPiecesMask(oppositeColor, PieceType.PAWN);
+					
+			if (relativeRank == Rank.R6 && (PawnAttackTable.getItem(oppositeColor, targetSquare) & pawnMask) != 0)
+				extension += settings.getProtectingPawnOnSixRankExtension();
 
 			final int promotionPieceType = move.getPromotionPieceType();
 
-			if ((rank == Rank.R8 || rank == Rank.R1) && promotionPieceType == PieceType.QUEEN)
+			if (relativeRank == Rank.R8 && promotionPieceType == PieceType.QUEEN)
 				extension += settings.getPawnOnSevenRankExtension();
 		}
 		
@@ -40,7 +49,7 @@ public class MoveExtensionEvaluator {
 			boolean isRecapture = false;
 			
 			if (move.getCapturedPieceType() != PieceType.NONE) {
-				final int materialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(targetPosition);
+				final int materialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(targetPosition.getMaterialHash());
 				final int relativeTargetEvaluation = Evaluation.getRelative(materialEvaluation, oppositeColor);
 				final int targetSquare = move.getTargetSquare();
 				final int sse = targetPosition.getStaticExchangeEvaluation(onTurn, targetSquare);
@@ -58,6 +67,14 @@ public class MoveExtensionEvaluator {
 				
 				extension += recaptureExtension;
 			}
+		}
+		
+		// Figure escape extension
+		if (PieceType.isFigure(movingPieceType)) {
+			final long cheaperAttackedMask = attackCalculator.getCheaperAttackedMask(onTurn, movingPieceType);
+			
+			if (BitBoard.containsSquare(cheaperAttackedMask, move.getBeginSquare()) && !BitBoard.containsSquare(cheaperAttackedMask, move.getTargetSquare()))
+				extension += settings.getFigureEscapeExtension (movingPieceType);
 		}
 		
 		return extension;

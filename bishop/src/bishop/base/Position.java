@@ -875,7 +875,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	}
 	
 	private void updateHash() {
-		caching.refreshHash(this);
+		caching.refreshCache(this);
 	}
 	
 	public int calculateMaterialEvaluation() {
@@ -1073,9 +1073,13 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
     	return false;
     }
     
-    public MaterialHash getMaterialHash() {
-    	return new MaterialHash (this, onTurn);
+    public IMaterialHashRead getMaterialHash() {
+    	return caching.getMaterialHash();
     }
+    
+	public MaterialHash calculateMaterialHash() {
+		return new MaterialHash (this, onTurn);
+	}
 	
 	public String toString() {
 		final Fen fen = new Fen();

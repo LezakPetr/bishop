@@ -1,6 +1,7 @@
 package bishop.engine;
 
 import bishop.base.Color;
+import bishop.base.IMaterialHashRead;
 import bishop.base.MaterialHash;
 import bishop.base.Position;
 
@@ -13,8 +14,7 @@ public final class FinitePositionEvaluator {
 	
 	public boolean evaluate (final Position position, final int depth, final int horizon, final int alpha, final int beta) {
 		// Mate depth pruning
-		final int advancedDepth = depth;
-		final int mateEvaluation = Evaluation.getMateEvaluation(advancedDepth);
+		final int mateEvaluation = Evaluation.getMateEvaluation(depth);
 		
 		if (alpha > Evaluation.MATE_MIN && mateEvaluation < alpha) {
 			evaluation = mateEvaluation;
@@ -29,7 +29,7 @@ public final class FinitePositionEvaluator {
 		}
 		
 		// Repeated positions
-		final boolean isRepetition = repeatedPositionRegister.isDrawByRepetition(position, advancedDepth);
+		final boolean isRepetition = repeatedPositionRegister.isDrawByRepetition(position, depth);
 		final boolean isDeadPosition = DrawChecker.isDeadPosition(position);
 
 		if (isRepetition || isDeadPosition) {
@@ -39,16 +39,12 @@ public final class FinitePositionEvaluator {
 		}
 		
 		// Tablebase
-		if (tablebaseEvaluator != null && (advancedDepth <= 1 || horizon > 0 * ISearchEngine.HORIZON_GRANULARITY)) {
-			final MaterialHash materialHash = position.getMaterialHash();
+		if (tablebaseEvaluator != null && (depth <= 1 || horizon > 0)) {
+			final IMaterialHashRead materialHash = position.getMaterialHash();
 			
 			if (tablebaseEvaluator.canEvaluate(materialHash)) {
-				final int whiteEvaluation = tablebaseEvaluator.evaluatePosition(position, advancedDepth);
-				
-				if (position.getOnTurn() == Color.WHITE)
-					evaluation = whiteEvaluation;
-				else
-					evaluation = -whiteEvaluation;
+				final int whiteEvaluation = tablebaseEvaluator.evaluatePosition(position, depth);
+				evaluation = Evaluation.getRelative(whiteEvaluation, position.getOnTurn());
 				
 				return true;
 			}

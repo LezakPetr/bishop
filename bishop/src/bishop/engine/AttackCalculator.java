@@ -19,7 +19,7 @@ import bishop.tables.FigureAttackTable;
 public class AttackCalculator {
 	
 	private final long[] kingMasks = new long[Color.LAST];   // Mask of kings
-	private final long[] pawnAttackedSquares = new long[Color.LAST];   // Squares attacked by pawns
+	private final long[][] pieceAttackedSquares = new long[Color.LAST][PieceType.LAST];   // Squares attacked by pieces
 	private final long[] directlyAttackedSquares = new long[Color.LAST];   // Squares attacked by some piece
 	private final long[] indirectlyAttackedSquares = new long[Color.LAST];   // Squares attacked by some piece, only pawns are blocking squares
 	private final int[] mobility = new int[Piece.LAST_PROMOTION_FIGURE_INDEX];
@@ -49,7 +49,7 @@ public class AttackCalculator {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final long pawnsMask = position.getPiecesMask(color, PieceType.PAWN);
 			
-			pawnAttackedSquares[color] = BoardConstants.getPawnsAttackedSquares(color, pawnsMask);
+			pieceAttackedSquares[color][PieceType.PAWN] = BoardConstants.getPawnsAttackedSquares(color, pawnsMask);
 		}
 	}
 	
@@ -62,10 +62,10 @@ public class AttackCalculator {
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int oppositeColor = Color.getOppositeColor(color);
-			final long oppositePawnAttacks = pawnAttackedSquares[oppositeColor];
+			final long oppositePawnAttacks = pieceAttackedSquares[oppositeColor][PieceType.PAWN];
 			final long freeSquares = ~(oppositePawnAttacks | occupancy);
 			final long blockingSquares = occupancy & ~kingMasks[oppositeColor];
-			long ownAttackedSquares = pawnAttackedSquares[color];
+			long ownAttackedSquares = pieceAttackedSquares[color][PieceType.PAWN];
 			
 			final long oppositeRooks = position.getPiecesMask(oppositeColor, PieceType.ROOK);
 			final long oppositeQueens = position.getPiecesMask(oppositeColor, PieceType.QUEEN);
@@ -83,6 +83,7 @@ public class AttackCalculator {
 				
 				mobility[Piece.getPromotionFigureIndex(color, PieceType.BISHOP)] += mobilityCount;
 				ownAttackedSquares |= attack;
+				pieceAttackedSquares[color][PieceType.BISHOP] = attack;
 				hasPin |= isPin (sourceSquare, oppositeRooks | oppositeQueens | oppositeKings, index);
 			}
 
@@ -98,6 +99,7 @@ public class AttackCalculator {
 				
 				mobility[Piece.getPromotionFigureIndex(color, PieceType.ROOK)] += mobilityCount;
 				ownAttackedSquares |= attack;
+				pieceAttackedSquares[color][PieceType.ROOK] = attack;
 				hasPin |= isPin (sourceSquare, oppositeQueens | oppositeKings, index);
 			}
 
@@ -116,8 +118,9 @@ public class AttackCalculator {
 				final int mobilityCount = BitBoard.getSquareCount((attackDiagonal | attackOrthogonal) & freeSquares);
 				mobility[Piece.getPromotionFigureIndex(color, PieceType.QUEEN)] += mobilityCount;
 				
-				ownAttackedSquares |= attackOrthogonal;
-				ownAttackedSquares |= attackDiagonal;
+				final long attack = attackOrthogonal | attackDiagonal;
+				pieceAttackedSquares[color][PieceType.QUEEN] = attack;
+				ownAttackedSquares |= attack;
 			}
 			
 			//Knight
@@ -129,12 +132,15 @@ public class AttackCalculator {
 				
 				final int mobilityCount = BitBoard.getSquareCount(attack & freeSquares);
 				mobility[Piece.getPromotionFigureIndex(color, PieceType.KNIGHT)] += mobilityCount;
+				pieceAttackedSquares[color][PieceType.KNIGHT] = attack;
 				ownAttackedSquares |= attack;
 			}
 			
 			// King
 			final int kingSquare = position.getKingPosition(color);
-			ownAttackedSquares |= FigureAttackTable.getItem(PieceType.KING, kingSquare);
+			final long kingAttack = FigureAttackTable.getItem(PieceType.KING, kingSquare);
+			pieceAttackedSquares[color][PieceType.KNIGHT] = kingAttack;
+			ownAttackedSquares |= kingAttack;
 			
 			directlyAttackedSquares[color] = ownAttackedSquares;
 		}
@@ -205,7 +211,8 @@ public class AttackCalculator {
 				
 				final long attackDiagonal = LineAttackTable.getAttackMask(indexDiagonal);
 				final long attackOrthogonal = LineAttackTable.getAttackMask(indexOrthogonal);
-				ownAttackedSquares |= attackDiagonal | attackOrthogonal;
+				final long attack = attackDiagonal | attackOrthogonal;
+				ownAttackedSquares |= attack;
 			}
 			
 			indirectlyAttackedSquares[color] = ownAttackedSquares;
@@ -239,7 +246,7 @@ public class AttackCalculator {
 	}
 
 	public long getPawnAttackedSquares(final int color) {
-		return pawnAttackedSquares[color];
+		return pieceAttackedSquares[color][PieceType.PAWN];
 	}
 
 	public long getDirectlyAttackedSquares(final int color) {
@@ -252,5 +259,27 @@ public class AttackCalculator {
 	
 	public boolean isPin() {
 		return hasPin;
+	}
+
+	public long getCheaperAttackedMask(final int color, final int attackedPieceType) {
+		long mask = BitBoard.EMPTY;
+		
+		switch (attackedPieceType) {
+			case PieceType.QUEEN:
+				mask |= pieceAttackedSquares[color][PieceType.ROOK];
+				// Switch is going down
+
+			case PieceType.ROOK:
+				mask |= pieceAttackedSquares[color][PieceType.BISHOP];
+				mask |= pieceAttackedSquares[color][PieceType.KNIGHT];
+				// Switch is going down
+
+			case PieceType.BISHOP:
+			case PieceType.KNIGHT:
+				mask |= pieceAttackedSquares[color][PieceType.PAWN];
+				break;
+		}
+		
+		return mask;
 	}
 }

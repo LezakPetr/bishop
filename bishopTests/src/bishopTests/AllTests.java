@@ -25,6 +25,7 @@ public class AllTests {
 		ParallelTaskRunnerTest.class,
 		BetweenTableTest.class,
 		CombinatorialNumberSystemTest.class,
+		TableMaterialEvaluatorTest.class,
 		LineIndexerTest.class,
 		FenTest.class,
 		LegalMoveGeneratorTest.class,

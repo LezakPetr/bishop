@@ -5,6 +5,7 @@ import bishop.tables.PieceHashTable;
 public final class PositionCachingImpl implements IPositionCaching {
 
 	private long hash;
+	private final MaterialHash materialHash = new MaterialHash();
 
 	public void movePiece(final int color, final int pieceType, final int beginSquare, final int targetSquare) {
 		hash ^= PieceHashTable.getItem(color, pieceType, beginSquare);
@@ -13,14 +14,17 @@ public final class PositionCachingImpl implements IPositionCaching {
 	
 	public void addPiece(final int color, final int pieceType, final int square) {
 		hash ^= PieceHashTable.getItem(color, pieceType, square);
+		materialHash.addPiece(color, pieceType);
 	}
 	
 	public void removePiece(final int color, final int pieceType, final int square) {
 		hash ^= PieceHashTable.getItem(color, pieceType, square);
+		materialHash.removePiece(color, pieceType);
 	}
 	
 	public void swapOnTurn() {
 		hash ^= HashConstants.getOnTurnHashDifference();
+		materialHash.swapOnTurn();
 	}
 	
 	public void changeEpFile(final int from, final int to) {
@@ -41,20 +45,22 @@ public final class PositionCachingImpl implements IPositionCaching {
 	public long getHash() {
 		return hash;
 	}
-
+	
 	@Override
-	public void setHash(final long hash) {
-		this.hash = hash;
+	public void refreshCache(final Position position) {
+		hash = position.calculateHash();
+		materialHash.assign(position.calculateMaterialHash());
 	}
 	
 	@Override
-	public void refreshHash(final Position position) {
-		setHash(position.calculateHash());
+	public MaterialHash getMaterialHash() {
+		return materialHash;
 	}
 
 	@Override
 	public void assign (final IPositionCaching orig) {
 		this.hash = orig.getHash();
+		this.materialHash.assign(orig.getMaterialHash());
 	}
 
 }

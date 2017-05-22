@@ -5,7 +5,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
+import utils.DoubleArrayBuilder;
+import utils.IntArrayBuilder;
+
+import static math.Utils.roundToInt;
+
 
 public final class SearchSettings {
 	
@@ -19,6 +25,7 @@ public final class SearchSettings {
 	private int mateExtension;
 	private int rankAttackExtension;
 	private int pawnOnSevenRankExtension;
+	private int protectingPawnOnSixRankExtension;
 	private int recaptureMinExtension;
 	private int recaptureMaxExtension;
 	private int recaptureBeginMinTreshold;
@@ -27,28 +34,37 @@ public final class SearchSettings {
 	private int pinExtension;
 	private int maxCheckSearchDepth;
 	
+	private final int[] figureEscapeExtensions = new DoubleArrayBuilder(PieceType.LAST)
+			.put(PieceType.KNIGHT, 0.5)
+			.put(PieceType.BISHOP, 0.5)
+			.put(PieceType.ROOK, 0.7)
+			.put(PieceType.QUEEN, 1.0)
+			.stream()
+			.mapToInt(x -> roundToInt(x * ISearchEngine.HORIZON_GRANULARITY))
+			.toArray();
 
 	public SearchSettings() {
-		maxQuiescenceDepth = (int) Math.round (5.0 * ISearchEngine.HORIZON_GRANULARITY);
-		nullMoveReduction = (int) Math.round (2.0 * ISearchEngine.HORIZON_GRANULARITY);
-		minExtensionHorizon = (int) Math.round (3.0 * ISearchEngine.HORIZON_GRANULARITY);
-		maxExtension = (int) Math.round (5.0 * ISearchEngine.HORIZON_GRANULARITY);
-		simpleCheckExtension = (int) Math.round (0.5 * ISearchEngine.HORIZON_GRANULARITY);
-		attackCheckExtension = (int) Math.round (1.0 * ISearchEngine.HORIZON_GRANULARITY);
-		forcedMoveExtension = (int) Math.round (0.8125 * ISearchEngine.HORIZON_GRANULARITY);
-		mateExtension = (int) Math.round (0.875 * ISearchEngine.HORIZON_GRANULARITY);
-		rankAttackExtension = (int) Math.round (0.6875 * ISearchEngine.HORIZON_GRANULARITY);
-		setPinExtension((int) Math.round (0.6875 * ISearchEngine.HORIZON_GRANULARITY));
+		maxQuiescenceDepth = roundToInt (5.0 * ISearchEngine.HORIZON_GRANULARITY);
+		nullMoveReduction = roundToInt (2.0 * ISearchEngine.HORIZON_GRANULARITY);
+		minExtensionHorizon = roundToInt (3.0 * ISearchEngine.HORIZON_GRANULARITY);
+		maxExtension = roundToInt (5.0 * ISearchEngine.HORIZON_GRANULARITY);
+		simpleCheckExtension = roundToInt (0.5 * ISearchEngine.HORIZON_GRANULARITY);
+		attackCheckExtension = roundToInt (1.0 * ISearchEngine.HORIZON_GRANULARITY);
+		forcedMoveExtension = roundToInt (0.8125 * ISearchEngine.HORIZON_GRANULARITY);
+		mateExtension = roundToInt (0.875 * ISearchEngine.HORIZON_GRANULARITY);
+		rankAttackExtension = roundToInt (0.6875 * ISearchEngine.HORIZON_GRANULARITY);
+		setPinExtension(roundToInt (0.6875 * ISearchEngine.HORIZON_GRANULARITY));
 		
-		pawnOnSevenRankExtension = (int) Math.round (1.0 * ISearchEngine.HORIZON_GRANULARITY);
+		pawnOnSevenRankExtension = roundToInt (1.0 * ISearchEngine.HORIZON_GRANULARITY);
+		protectingPawnOnSixRankExtension = roundToInt (1.0 * ISearchEngine.HORIZON_GRANULARITY);
 		
-		recaptureMinExtension = (int) Math.round (0.0 * ISearchEngine.HORIZON_GRANULARITY);
-		recaptureMaxExtension = (int) Math.round (0.75 * ISearchEngine.HORIZON_GRANULARITY);
+		recaptureMinExtension = roundToInt (0.0 * ISearchEngine.HORIZON_GRANULARITY);
+		recaptureMaxExtension = roundToInt (0.75 * ISearchEngine.HORIZON_GRANULARITY);
 
-		recaptureBeginMinTreshold = (int) Math.round (2.25 * PieceTypeEvaluations.PAWN_EVALUATION);
-		recaptureBeginMaxTreshold = (int) Math.round (5 * PieceTypeEvaluations.PAWN_EVALUATION);
-		recaptureTargetTreshold = (int) Math.round (0.5 * PieceTypeEvaluations.PAWN_EVALUATION);
-		maxCheckSearchDepth = (int) Math.round (3.0 * ISearchEngine.HORIZON_GRANULARITY);
+		recaptureBeginMinTreshold = roundToInt (2.25 * PieceTypeEvaluations.PAWN_EVALUATION);
+		recaptureBeginMaxTreshold = roundToInt (5 * PieceTypeEvaluations.PAWN_EVALUATION);
+		recaptureTargetTreshold = roundToInt (0.5 * PieceTypeEvaluations.PAWN_EVALUATION);
+		maxCheckSearchDepth = roundToInt (3.0 * ISearchEngine.HORIZON_GRANULARITY);
 	}
 	
 	public int getMaxQuiescenceDepth() {
@@ -245,6 +261,10 @@ public final class SearchSettings {
 	public void setPinExtension(final int pinExtension) {
 		this.pinExtension = pinExtension;
 	}
+	
+	public int getProtectingPawnOnSixRankExtension() {
+		return protectingPawnOnSixRankExtension;
+	}
 
 	public int getMaxCheckSearchDepth() {
 		return maxCheckSearchDepth;
@@ -252,6 +272,10 @@ public final class SearchSettings {
 
 	public void setMaxCheckSearchDepth(final int maxCheckSearchDepth) {
 		this.maxCheckSearchDepth =  maxCheckSearchDepth;
+	}
+
+	public int getFigureEscapeExtension(final int movingPieceType) {
+		return figureEscapeExtensions[movingPieceType];
 	}
 
 }

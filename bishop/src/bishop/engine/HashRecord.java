@@ -14,7 +14,9 @@ public final class HashRecord {
 		return horizon;
 	}
 	
-	public void setHorizon(int horizon) {
+	public void setHorizon(final int horizon) {
+		assert horizon >= 0;
+		
 		this.horizon = horizon;
 	}
 	

@@ -85,7 +85,7 @@ public class MaterialStatisticsPositionProcessor implements IPositionProcessor {
 	
 	@Override
 	public void processPosition (final Position position) {
-		final MaterialHash currentHash = position.getMaterialHash();
+		final MaterialHash currentHash = position.getMaterialHash().copy();
 		currentHash.setOnTurn(Color.WHITE);
 		
 		if (currentHash.equals(prevHash))
