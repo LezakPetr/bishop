@@ -31,6 +31,7 @@ public class AllTests {
 		LegalMoveGeneratorTest.class,
 		PseudoLegalMoveGeneratorTest.class,
 		QuiescencePseudoLegalMoveGeneratorTest.class,
+		UncompressMoveTest.class,
 		AttackCalculatorTest.class,
 		ReverseMoveGeneratorTest.class,
 		MatrixTest.class,

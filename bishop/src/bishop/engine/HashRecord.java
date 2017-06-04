@@ -1,8 +1,12 @@
 package bishop.engine;
 
 import bishop.base.Move;
+import bishop.base.PieceTypeEvaluations;
 
 public final class HashRecord {
+	
+	public static final int MAX_NORMAL_EVALUATION = 20 * PieceTypeEvaluations.PAWN_EVALUATION;
+	public static final int MIN_NORMAL_EVALUATION = -MAX_NORMAL_EVALUATION;
 
 	private int horizon;
 	private int evaluation;
@@ -94,4 +98,14 @@ public final class HashRecord {
 	public String toString() {
 		return "Horizon = " + horizon + ", evaluation = " + evaluation + ", bestMove = " + compressedBestMove + ", type = " + type;
 	}
+
+	public boolean canBeStored() {
+		if (type == HashRecordType.LAST)
+			return false;
+		
+		return (evaluation >= MIN_NORMAL_EVALUATION && evaluation <= MAX_NORMAL_EVALUATION) ||
+				evaluation >= Evaluation.MATE_MIN ||
+				evaluation <= -Evaluation.MATE_MIN;
+	}
+	
 }

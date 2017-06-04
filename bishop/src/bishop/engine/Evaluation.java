@@ -6,10 +6,10 @@ import bishop.base.Square;
 
 public class Evaluation {
 	
-	public static final int MATE_MIN = Square.LAST * PieceTypeEvaluations.QUEEN_EVALUATION;
-	public static final int MATE_ZERO_DEPTH =  MATE_MIN + (1 << 15);;
-
-	public static final int MAX = MATE_ZERO_DEPTH + 1;
+	public static final int MAX = (1 << 19) - 1;
+	public static final int MATE_ZERO_DEPTH = MAX - 1;
+	public static final int MATE_MIN = MATE_ZERO_DEPTH - (1 << 15);
+	
 	public static final int MIN = -MAX;
 	
 	public static final int DRAW = 0;

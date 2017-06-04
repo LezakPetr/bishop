@@ -137,7 +137,7 @@ public abstract class MoveGeneratorTestBase {
 	}
 	
 	@Test
-	public void makeUndoMoveTest() throws IOException {
+	public void makeUndoCompressMoveTest() throws IOException {
 		for (List<Object> parameters: getParameterCombinations()) {
 			this.parameters = parameters;
 
@@ -163,6 +163,13 @@ public abstract class MoveGeneratorTestBase {
 							copyPosition.checkIntegrity();
 							copyPosition.undoMove(move);
 							copyPosition.checkIntegrity();
+							
+							final int compressedMove = move.getCompressedMove();
+							final Move uncompressedMove = new Move();
+							uncompressedMove.uncompressMove(compressedMove, copyPosition);
+							
+							Assert.assertEquals(move, uncompressedMove);
+
 							break;
 							
 						case REVERSE:
