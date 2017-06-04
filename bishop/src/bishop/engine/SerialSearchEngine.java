@@ -36,7 +36,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		public final NodeEvaluation evaluation;
 		public final Move killerMove;
 		public final Move principalMove;
-		public int hashBestCompressedMove;
+		public final Move hashBestMove;
 		public int legalMoveCount;
 		public boolean allMovesGenerated;
 		public int maxExtension;
@@ -49,7 +49,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			evaluation = new NodeEvaluation();
 			killerMove = new Move();
 			principalMove = new Move();
-			hashBestCompressedMove = Move.NONE_COMPRESSED_MOVE;
+			hashBestMove = new Move();
 			attackCalculator = new AttackCalculator(evaluationFactory);
 		}
 
@@ -87,7 +87,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			if (move.equals(nodeRecord.principalMove))
 				estimate += PRINCIPAL_MOVE_ESTIMATE;
 
-			if (move.getCompressedMove() == nodeRecord.hashBestCompressedMove && nodeRecord.hashBestCompressedMove != Move.NONE_COMPRESSED_MOVE)
+			if (move.equals(nodeRecord.hashBestMove))
 				estimate += HASH_BEST_MOVE_ESTIMATE;
 			
 			moveStack.setRecord(moveStackTop, move, estimate);
@@ -378,8 +378,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 				final boolean precalculatedMoveFound;
 				boolean precalculatedBetaCutoff = false;
 				
-				if (currentRecord.hashBestCompressedMove != Move.NONE_COMPRESSED_MOVE) {
-					precalculatedMoveFound = precalculatedMove.uncompressMove(currentRecord.hashBestCompressedMove, currentPosition);
+				if (currentRecord.hashBestMove.getMoveType() != MoveType.INVALID) {
+					precalculatedMoveFound = true;
+					precalculatedMove.assign(currentRecord.hashBestMove);
 				}
 				else {
 					precalculatedMoveFound = precalculatedMove.uncompressMove(currentRecord.principalMove.getCompressedMove(), currentPosition);
@@ -491,10 +492,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		return isMate;
 	}
-
+	
 	private boolean updateRecordByHash(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta, final HashRecord hashRecord) {
-		if (horizon > 0 && hashTable.getRecord(currentPosition, hashRecord)) {
-			if (currentDepth > 0 && hashRecord.getHorizon() >= horizon) {
+		if (horizon <= 0 || !hashTable.getRecord(currentPosition, hashRecord) || !currentRecord.hashBestMove.uncompressMove(hashRecord.getCompressedBestMove(), currentPosition)) {
+			currentRecord.hashBestMove.clear();
+			return false;
+		}
+			
+		if (currentDepth > 0 && hashRecord.getHorizon() >= horizon) {
+			if (currentRecord.hashBestMove.uncompressMove(hashRecord.getCompressedBestMove(), currentPosition)) {
 				final int hashEvaluation = hashRecord.getNormalizedEvaluation(currentDepth);
 				final int hashType = hashRecord.getType();
 
@@ -504,11 +510,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					return true;
 				}
 			}
-			
-			currentRecord.hashBestCompressedMove = hashRecord.getCompressedBestMove();
 		}
-		else
-			currentRecord.hashBestCompressedMove = Move.NONE_COMPRESSED_MOVE;
 		
 		return false;
 	}

@@ -279,9 +279,11 @@ public final class Move implements Comparable<Move> {
 		return data & COMPRESSED_MOVE_MASK;
 	}
 	
+	
+	
 	/**
 	 * Tries to uncompress the move.
-	 * Move will be checked if it is correct pseudolegal move. Not all correct moves can be decompressed.
+	 * Move will be checked if it is correct pseudolegal move.
 	 * If decompression succeeds method sets the move and returns true, otherwise method clears
 	 * the move and returns false.
 	 * @param compressedMove compressed move
@@ -289,16 +291,21 @@ public final class Move implements Comparable<Move> {
 	 * @return true if move was uncompressed successfully, false if not
 	 */
 	public boolean uncompressMove(final int compressedMove, final Position position) {
-		this.clear();
-		
 		final int beginSquare = (compressedMove & BEGIN_SQUARE_MASK) >>> BEGIN_SQUARE_SHIFT;
 		final int targetSquare = (compressedMove & TARGET_SQUARE_MASK) >>> TARGET_SQUARE_SHIFT;
 		final int promotionPieceType = (compressedMove & PROMOTION_PIECE_TYPE_MASK) >>> PROMOTION_PIECE_TYPE_SHIFT;
+
+		return uncompressMove(beginSquare, targetSquare, promotionPieceType, position);
+	}
+	
+	public boolean uncompressMove(final int beginSquare, final int targetSquare, final int promotionPieceType, final Position position) {
+		this.clear();
 		
 		final int onTurn = position.getOnTurn();
 		final int oppositeColor = Color.getOppositeColor(onTurn);
 		final Piece movingPiece = position.getSquareContent(beginSquare);
 		
+		// Pre-checks for correctness
 		if (movingPiece == null || movingPiece.getColor() != onTurn)
 			return false;
 		
@@ -308,60 +315,98 @@ public final class Move implements Comparable<Move> {
 			return false;
 		
 		final int movingPieceType = movingPiece.getPieceType();
-		long allowedSquaresMask;
+    	final boolean shouldBePromotion = isPromotion(movingPieceType, targetSquare);
+    	
+    	if (shouldBePromotion) {
+    		if (!PieceType.isPromotionFigure(promotionPieceType))
+    			return false;
+    	}
+    	else {
+    		if (promotionPieceType != PieceType.NONE)
+    			return false;
+    	}
+    	
+    	// Castling
+		final int epFile = position.getEpFile();
 		
-		if (movingPiece.getPieceType() == PieceType.PAWN) {
-			if (capturedPiece == null)
+		if (movingPieceType == PieceType.KING) {
+			final CastlingRights castlingRights = position.getCastlingRights();
+			
+			if (castlingRights.isRightForColor(onTurn) && !position.isCheck()) {
+				// Now it is verified that the beginSquare == E1 or E8 (movingPieceType is king and king has not dropped castling rights)
+				for (int castlingType = CastlingType.FIRST; castlingType < CastlingType.LAST; castlingType++) {
+					if (targetSquare == BoardConstants.getCastlingKingTargetSquare(onTurn, castlingType) &&
+					    PseudoLegalMoveGenerator.isCastlingPossible(position, castlingType)) {
+						
+						initialize(position.getCastlingRights().getIndex(), epFile);
+			        	setMovingPieceType(movingPieceType);
+			        	setBeginSquare (beginSquare);
+			    		finishCastling(targetSquare);
+			    		
+			    		return true;
+					}
+				}
+			}
+			
+		}
+		
+		// EP
+		if (movingPieceType == PieceType.PAWN && Square.getFile(targetSquare) == epFile &&
+		    Square.getRank(beginSquare) == BoardConstants.getEpRank(oppositeColor) &&
+		    BitBoard.containsSquare(PawnAttackTable.getItem(onTurn, beginSquare), targetSquare)) {
+			
+    		initialize(position.getCastlingRights().getIndex(), epFile);
+        	setMovingPieceType(movingPieceType);
+        	setBeginSquare (beginSquare);
+    		finishEnPassant(targetSquare);
+    		
+    		return true;			
+		}
+		
+		// Normal move or promotion
+		final long allowedSquaresMask;
+		
+		if (movingPieceType == PieceType.PAWN) {
+			if (capturedPiece == null)				
 				allowedSquaresMask = PawnMoveTable.getItem(onTurn, beginSquare);
 			else
 				allowedSquaresMask = PawnAttackTable.getItem(onTurn, beginSquare);
 		}
-		else {
+		else
 			allowedSquaresMask = FigureAttackTable.getItem(movingPieceType, beginSquare);
-		}
 		
-		final long targetSquareMask = BitBoard.getSquareMask(targetSquare);
-		
-		if ((allowedSquaresMask & targetSquareMask) == 0)
-			return false;
-		
-    	// Check free space for sliding pieces
+    	// Check free space for sliding pieces and pawns
     	if (!PieceType.isShortMovingFigure(movingPieceType)) {
     		final long occupancy = position.getOccupancy();
     		
     		if ((BetweenTable.getItem(beginSquare, targetSquare) & occupancy) != 0)
     			return false;
     	}
-    	
-    	final boolean shouldBePromotion = isPromotion(movingPieceType, targetSquare);
-    	final int capturedPieceType = (capturedPiece == null) ? PieceType.NONE : capturedPiece.getPieceType();
-    	
-    	if (promotionPieceType == PieceType.NONE) {
-    		if (shouldBePromotion)
-    			return false;
-    		
-    		initialize(position.getCastlingRights().getIndex(), position.getEpFile());
-        	setMovingPieceType(movingPieceType);
-        	setBeginSquare (beginSquare);
-    		finishNormalMove(targetSquare, capturedPieceType);
-    	}
-    	else {
-    		if (!shouldBePromotion)
-    			return false;
 
-    		initialize(position.getCastlingRights().getIndex(), position.getEpFile());
+		if (!BitBoard.containsSquare(allowedSquaresMask, targetSquare))
+			return false;
+		
+		// Make the normal move or promotion
+    	final int capturedPieceType = (capturedPiece == null) ? PieceType.NONE : capturedPiece.getPieceType();
+    	    	
+    	if (shouldBePromotion) {
+    		initialize(position.getCastlingRights().getIndex(), epFile);
         	setMovingPieceType(PieceType.PAWN);
         	setBeginSquare (beginSquare);
     		finishPromotion(targetSquare, capturedPieceType, promotionPieceType);
+    	}
+    	else {
+    		initialize(position.getCastlingRights().getIndex(), epFile);
+        	setMovingPieceType(movingPieceType);
+        	setBeginSquare (beginSquare);
+    		finishNormalMove(targetSquare, capturedPieceType);
     	}
 		
 		return true;
 	}
 
 	public static boolean isPromotion(final int movingPieceType, final int targetSquare) {
-		final long targetSquareMask = BitBoard.getSquareMask(targetSquare);
-		
-		return movingPieceType == PieceType.PAWN && (targetSquareMask & BoardConstants.RANK_18_MASK) != 0;
+		return movingPieceType == PieceType.PAWN && BitBoard.containsSquare(BoardConstants.RANK_18_MASK, targetSquare);
 	}
 	
 	@Override
@@ -392,6 +437,13 @@ public final class Move implements Comparable<Move> {
 		}
 	}
 
+	/**
+	 * Compares moves in same position by:
+	 * - begin square
+	 * - target square
+	 * - promotion piece type
+	 * Do not change the order because book depends on it.
+	 */
 	@Override
 	public int compareTo(final Move that) {
 		// Begin square

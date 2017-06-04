@@ -252,28 +252,48 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     	if (position.isSquareAttacked(oppositeColor, kingPosition))
     		return true;
 
-    	final long occupancy = position.getOccupancy();
-
     	// Try both castlings
     	move.setMovingPieceType(PieceType.KING);
 		move.setBeginSquare(kingPosition);
 
     	for (int castlingType = CastlingType.FIRST; castlingType < CastlingType.LAST; castlingType++) {
-  	  		if (castlingRights.isRight(onTurn, castlingType) && (occupancy & BoardConstants.getCastlingMiddleSquareMask(onTurn, castlingType)) == 0) {
-  	  			// We should test square that king goes across. This is same square as rook destination square.
-  	  			final int testSquare = BoardConstants.getCastlingKingMiddleSquare(onTurn, castlingType);
+    		if (isCastlingPossible(position, castlingType)) {
+  				final int kingTargetSquare = BoardConstants.getCastlingKingTargetSquare(onTurn, castlingType);
+  				move.finishCastling(kingTargetSquare);
 
-  	  			if (!position.isSquareAttacked (oppositeColor, testSquare)) {
-  	  				final int kingTargetSquare = BoardConstants.getCastlingKingTargetSquare(onTurn, castlingType);
-  	  				move.finishCastling(kingTargetSquare);
-
-  	  				if (!walker.processMove(move))
-  	  					return false;
-  	  			}
+  				if (!walker.processMove(move))
+  					return false;
   	  		}
     	}
 
     	return true;
+    }
+    
+    /**
+     * This method checks if it is possible to do given castling in given position.
+     * This method does NOT check:
+     * - if the king is attacked (this is common to both castlings so it is faster to check it outside
+     *     of this method)
+     * - if  the king would be attacked after the move
+     * @param position position
+     * @param castlingType type of castling
+     * @return if the castling is possible
+     */
+    public static boolean isCastlingPossible(final Position position, final int castlingType) {
+    	final CastlingRights castlingRights = position.getCastlingRights();
+    	final long occupancy = position.getOccupancy();
+    	final int onTurn = position.getOnTurn();
+
+  		if (castlingRights.isRight(onTurn, castlingType) && (occupancy & BoardConstants.getCastlingMiddleSquareMask(onTurn, castlingType)) == 0) {
+  			// We should test square that king goes across. This is same square as rook destination square.
+  			final int testSquare = BoardConstants.getCastlingKingMiddleSquare(onTurn, castlingType);
+  			final int oppositeColor = Color.getOppositeColor(onTurn);
+  			
+  			if (!position.isSquareAttacked (oppositeColor, testSquare))
+  				return true;
+  		}
+  		
+  		return false;    	
     }
     
     /**

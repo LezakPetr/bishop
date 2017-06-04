@@ -119,6 +119,10 @@ public class PieceType {
 		return pieceType >= VARIABLE_FIRST && pieceType < VARIABLE_LAST;
 	}
 
+	public static boolean isPromotionFigure(final int pieceType) {
+		return pieceType >= PROMOTION_FIGURE_FIRST && pieceType < PROMOTION_FIGURE_LAST;
+	}
+
 	public static String getName(final int pieceType) {
 		return PIECE_TYPE_NAMES[pieceType];
 	}
