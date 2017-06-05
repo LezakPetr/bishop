@@ -1,5 +1,8 @@
 package utils;
 
+import java.nio.ByteBuffer;
+import java.nio.LongBuffer;
+
 /**
  * INumberArray implementation that stores data in bit slices.
  * Numbers are stored in 8 byte words in bit slices. Reads and writes to different words are independent.
@@ -17,7 +20,7 @@ public class BitNumberArray implements INumberArray {
 	private static final int WORD_MASK = (1 << WORD_SHIFT) - 1;
 	
 	private final long size;
-	private final long[][] data;
+	private final LongBuffer[] data;
 	
 	public BitNumberArray (final long size, final int elementBits) {
 		this.size = size;
@@ -27,7 +30,10 @@ public class BitNumberArray implements INumberArray {
 		if (dataLength > Integer.MAX_VALUE)
 			throw new RuntimeException("Size of BitNumberArray too big");
 
-		this.data = new long[elementBits][(int) dataLength];
+		this.data = new LongBuffer[elementBits];
+		
+		for (int i = 0; i < elementBits; i++)
+			this.data[i] = ByteBuffer.allocateDirect(Long.BYTES * (int) dataLength).asLongBuffer();
 	}
 	
 	/**
@@ -58,7 +64,7 @@ public class BitNumberArray implements INumberArray {
 		final int bitIndex = ((int) index) & WORD_MASK; 
 		
 		for (int i = data.length - 1; i >= 0; i--) {
-			element = (element << 1) | ((int) (data[i][wordIndex] >>> bitIndex) & 0x01);
+			element = (element << 1) | ((int) (data[i].get(wordIndex) >>> bitIndex) & 0x01);
 		}
 		
 		return element;
@@ -77,7 +83,7 @@ public class BitNumberArray implements INumberArray {
 		final long mask = ~(1L << bitIndex); 
 		
 		for (int i = 0; i < data.length; i++) {
-			data[i][wordIndex] = (data[i][wordIndex] & mask) | ((long) (tmp & 0x01) << bitIndex);
+			data[i].put(wordIndex, (data[i].get(wordIndex) & mask) | ((long) (tmp & 0x01) << bitIndex));
 			tmp >>>= 1;
 		}
 	}
