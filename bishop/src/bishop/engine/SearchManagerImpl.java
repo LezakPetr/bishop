@@ -4,6 +4,9 @@ package bishop.engine;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import utils.Logger;
 import bishop.base.DefaultAdditiveMaterialEvaluator;
@@ -13,8 +16,8 @@ import bishop.base.IHandlerRegistrar;
 import bishop.base.IMoveWalker;
 import bishop.base.LegalMoveGenerator;
 import bishop.base.Move;
-import bishop.base.MoveList;
 import bishop.base.Position;
+import parallel.Parallel;
 
 public final class SearchManagerImpl implements ISearchManager {
 	
@@ -26,8 +29,9 @@ public final class SearchManagerImpl implements ISearchManager {
 	private long maxTimeForMove;
 	private HandlerRegistrarImpl<ISearchManagerHandler> handlerRegistrar;
 	private int minHorizon = 3 * ISearchEngine.HORIZON_GRANULARITY;
+	private int threadCount = 1;
 	
-	private ISearchEngine searchEngine;
+	private final List<ISearchEngine> searchEngineList = new ArrayList<>();
 	
 	// Data for the search
 	private SearchSettings searchSettings;
@@ -45,6 +49,7 @@ public final class SearchManagerImpl implements ISearchManager {
 	private Thread checkingThread;
 	private ManagerState managerState;
 	private final Object monitor;
+	private Parallel parallel;
 	
 	private final Position rootPosition;
 	private int horizon;
@@ -184,7 +189,8 @@ public final class SearchManagerImpl implements ISearchManager {
 
 			handlerRegistrar.setChangesEnabled(false);
 
-			createSearchEngine();
+			parallel = new Parallel(threadCount);
+			createSearchEngines();
 			createSearchingThread();
 			createCheckingThread();
 
@@ -193,12 +199,18 @@ public final class SearchManagerImpl implements ISearchManager {
 		}
 	}
 
-	private void createSearchEngine() {
-		this.searchEngine = engineFactory.createEngine();
-		this.searchEngine.setSearchSettings(searchSettings);
-		this.searchEngine.getHandlerRegistrar().addHandler(engineHandler);
-		this.searchEngine.setTablebaseEvaluator(tablebaseEvaluator);
-		this.searchEngine.setHashTable(hashTable);
+	private void createSearchEngines() {
+		searchEngineList.clear();
+		
+		for (int i = 0; i < threadCount; i++) {
+			final ISearchEngine engine = engineFactory.createEngine();
+			engine.setSearchSettings(searchSettings);
+			engine.getHandlerRegistrar().addHandler(engineHandler);
+			engine.setTablebaseEvaluator(tablebaseEvaluator);
+			engine.setHashTable(hashTable);
+			
+			searchEngineList.add(engine);
+		}
 	}
 
 	private void createCheckingThread() {
@@ -229,13 +241,13 @@ public final class SearchManagerImpl implements ISearchManager {
 				}
 			}
 		});
-		
+			
 		searchingThread.setName("SearchManagerImpl searchingThread");
 		searchingThread.setDaemon(true);
 		searchingThread.start();
 	}
 	
-	private void doSearching() throws InterruptedException {
+	private void doSearching() throws InterruptedException, ExecutionException {
 		while (true) {
 			boolean shouldSearch = false;
 			
@@ -293,8 +305,10 @@ public final class SearchManagerImpl implements ISearchManager {
 					
 					updateSearchFinished();
 					
-					if (searchFinished)
-						searchEngine.stopSearching();
+					if (searchFinished) {
+						for (ISearchEngine engine: searchEngineList)
+							engine.stopSearching();
+					}
 				}
 				else
 					monitor.wait();
@@ -302,7 +316,7 @@ public final class SearchManagerImpl implements ISearchManager {
 		}		
 	}
 	
-	private void search() {
+	private void search() throws InterruptedException, ExecutionException {
 		final Move initialMove = initializeSearch();
 		
 		if (initialMove != null) {
@@ -341,8 +355,25 @@ public final class SearchManagerImpl implements ISearchManager {
 				taskMoveList.sortMoves(0, taskMoveList.getSize());
 			}
 			
-			final SearchResult result = searchEngine.search(task);
-			previousEvaluatedMoveList = result.getRootMoveList();
+			final List<Callable<SearchResult>> callableList = new ArrayList<>(threadCount);
+			
+			for (int i = 0; i < threadCount; i++) {
+				final ISearchEngine engine = searchEngineList.get(i);
+				
+				callableList.add(() -> engine.search(task));
+			}
+			
+			final List<Future<SearchResult>> futureList = parallel.getExecutor().invokeAll(callableList);
+			SearchResult bestResult = null;
+			
+			for (Future<SearchResult> future: futureList) {
+				final SearchResult result = future.get();
+				
+				if (bestResult == null || result.getNodeEvaluation().getEvaluation() > bestResult.getNodeEvaluation().getEvaluation())
+					bestResult = result;
+			}
+			
+			previousEvaluatedMoveList = bestResult.getRootMoveList();
 			
 			synchronized (monitor) {
 				updateSearchFinished();
@@ -353,8 +384,8 @@ public final class SearchManagerImpl implements ISearchManager {
 				horizon += ISearchEngine.HORIZON_GRANULARITY;
 				initialSearch = false;
 				
-				if (!result.isSearchTerminated()) {   // TODO
-					this.searchResult = result;
+				if (!bestResult.isSearchTerminated()) {   // TODO
+					this.searchResult = bestResult;
 					this.searchInfoChanged = true;
 				}
 				
@@ -445,6 +476,9 @@ public final class SearchManagerImpl implements ISearchManager {
 
 		Utils.joinThread(checkingThread);
 		Utils.joinThread(searchingThread);
+		parallel.shutdown();
+		
+		searchEngineList.clear();
 		
 		synchronized (monitor) {
 			handlerRegistrar.setChangesEnabled(true);
@@ -521,9 +555,9 @@ public final class SearchManagerImpl implements ISearchManager {
 			managerState = ManagerState.TERMINATING;
 			monitor.notifyAll();
 			
-			if (searchEngine != null)
-				searchEngine.stopSearching();
-		
+			for (ISearchEngine engine: searchEngineList)
+				engine.stopSearching();
+					
 			while (isSearchRunning) {
 				try {
 					monitor.wait();					
@@ -621,7 +655,6 @@ public final class SearchManagerImpl implements ISearchManager {
 			this.singleSearchEnabled = enabled;
 		}
 	}
-
 	
 	/**
 	 * Gets search settings.
@@ -644,6 +677,29 @@ public final class SearchManagerImpl implements ISearchManager {
 			
 			this.searchSettings = searchSettings;
 		}
+	}
+
+	/**
+	 * Gets thread count.
+	 * @return thread count
+	 */
+	public int getThreadCount() {
+		synchronized (monitor) {
+			return threadCount;
+		}
+	}
+
+	/**
+	 * Sets thread counts.
+	 * Manager must be in STOPPED state.
+	 * @param threadCount thread count
+	 */
+	public void setThreadCount(final int threadCount) {
+		synchronized (monitor) {
+			checkManagerState (ManagerState.STOPPED, ManagerState.WAITING);
+			this.threadCount = threadCount;
+		}
+
 	}
 	
 	/**

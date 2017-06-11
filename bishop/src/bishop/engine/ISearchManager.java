@@ -113,6 +113,19 @@ public interface ISearchManager {
 	public void setSearchSettings(final SearchSettings searchSettings);
 	
 	/**
+	 * Gets thread count.
+	 * @return thread count
+	 */
+	public int getThreadCount();
+
+	/**
+	 * Sets thread counts.
+	 * Manager must be in STOPPED state.
+	 * @param threadCount thread count
+	 */
+	public void setThreadCount(final int threadCount);
+
+	/**
 	 * Enables or disables book.
 	 * Manager must be in STOPPED or WAITING state.
 	 * @param enabled if book search is enabled

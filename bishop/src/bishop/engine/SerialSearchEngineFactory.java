@@ -11,7 +11,6 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 	private IPositionEvaluatorFactory positionEvaluatorFactory;
 	private Supplier<IPositionEvaluation> evaluationFactory;
 	private int maximalDepth;
-	private Parallel parallel;
 
 	public IPositionEvaluatorFactory getPositionEvaluatorFactory() {
 		return positionEvaluatorFactory;
@@ -68,7 +67,7 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 
 	private SerialSearchEngine createSingleEngine() {
 		final IPositionEvaluator evaluator = createPositionEvaluator();
-		final SerialSearchEngine searchEngine = new SerialSearchEngine(parallel);
+		final SerialSearchEngine searchEngine = new SerialSearchEngine();
 		
 		searchEngine.setEvaluationFactory(evaluationFactory);
 		searchEngine.setPositionEvaluator(evaluator);
@@ -76,14 +75,6 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 		searchEngine.setMaximalDepth(maximalDepth);
 		
 		return searchEngine;
-	}
-
-	public Parallel getParallel() {
-		return parallel;
-	}
-
-	public void setParallel(Parallel parallel) {
-		this.parallel = parallel;
 	}
 
 }

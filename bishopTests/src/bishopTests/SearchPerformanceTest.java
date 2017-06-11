@@ -9,8 +9,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.function.Supplier;
 
-import parallel.Parallel;
-import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.Game;
 import bishop.base.Holder;
 import bishop.base.IGameNode;
@@ -66,7 +64,6 @@ public class SearchPerformanceTest {
 		final int threadCount = Math.min(Runtime.getRuntime().availableProcessors(), SearchResources.MAX_THREADS);
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
 		
-		engineFactory.setParallel(new Parallel(threadCount));
 		engineFactory.setPositionEvaluatorFactory(evaluatorFactory);
 		engineFactory.setEvaluationFactory(evaluationFactory);
 		engineFactory.setMaximalDepth(25);
@@ -77,6 +74,7 @@ public class SearchPerformanceTest {
 		manager.setTablebaseEvaluator(tablebaseEvaluator);
 		manager.setEngineFactory(engineFactory);
 		manager.setHashTable(hashTable);
+		manager.setThreadCount(threadCount);
 		
 		System.out.println (threadCount);
 		

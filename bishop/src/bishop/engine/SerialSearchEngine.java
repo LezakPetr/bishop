@@ -5,8 +5,6 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
-import parallel.ITaskRunner;
-import parallel.Parallel;
 import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.BitBoard;
 import bishop.base.Color;
@@ -120,7 +118,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	// Synchronization
 	private EngineState engineState;
 	private final Object monitor;
-	private final Parallel parallel;
 
 	// Supplementary objects
 	private final QuiescencePseudoLegalMoveGenerator quiescenceLegalMoveGenerator;
@@ -145,8 +142,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private static final int LOSE_MAX_EXTENSION = 2;
 
 	
-	public SerialSearchEngine(final Parallel parallel) {
-		this.parallel = parallel;
+	public SerialSearchEngine() {
 		this.evaluatedMoveList = new EvaluatedMoveList(PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
 		this.handlerRegistrar = new HandlerRegistrarImpl<>();
 		
