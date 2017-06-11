@@ -47,7 +47,6 @@ public class SearchResources {
 		
 		final int threadCount = Math.min(application.getSettings().getEngineSettings().getThreadCount(), SearchResources.MAX_THREADS);
 		final Parallel parallel = new Parallel(threadCount);
-		searchEngineFactory.setParallel(parallel);
 
 		evaluationFactory = createEvaluationFactory(application.getRootUrl());
 		
@@ -70,6 +69,7 @@ public class SearchResources {
 		searchManager.setEngineFactory(searchEngineFactory);
 		searchManager.setHashTable(hashTable);
 		searchManager.setTablebaseEvaluator (tablebasePositionEvaluator);
+		searchManager.setThreadCount(threadCount);
 		
 		setBookToManager();
 		updateSettings();
@@ -151,6 +151,7 @@ public class SearchResources {
 		final EngineSettings engineSettings = applicationSettings.getEngineSettings();
 		
 		hashTable.resize (engineSettings.getHashTableExponent());
+		searchManager.setThreadCount(engineSettings.getThreadCount());
 	}
 	
 	public Supplier<IPositionEvaluation> getEvaluationFactory() {

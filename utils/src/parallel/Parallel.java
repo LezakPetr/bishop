@@ -180,9 +180,14 @@ public class Parallel {
 	 * Shots down the executor.
 	 * @throws InterruptedException
 	 */
-	public void shutdown() throws InterruptedException {
-		executor.shutdown();
-		executor.awaitTermination(1, TimeUnit.DAYS);
+	public void shutdown() {
+		try {
+			executor.shutdown();
+			executor.awaitTermination(1, TimeUnit.DAYS);
+		}
+		catch (Exception ex) {
+			throw new RuntimeException("Cannot shutdown parallel", ex);
+		}
 	}
 	
 	public void startTaskRunners() {

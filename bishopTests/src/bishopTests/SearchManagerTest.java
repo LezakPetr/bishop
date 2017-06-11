@@ -65,7 +65,7 @@ public class SearchManagerTest {
 		GlobalSettings.setDebug(true);
 		Logger.setStream(System.out);
 		
-		final HashTableImpl hashTable = new HashTableImpl(20);
+		final HashTableImpl hashTable = new HashTableImpl(24);
 
 		final ISearchManager manager = new SearchManagerImpl();
 		manager.setHashTable(hashTable);
@@ -125,10 +125,10 @@ public class SearchManagerTest {
 		engineFactory.setPositionEvaluatorFactory(new MaterialPositionEvaluatorFactory(evaluationFactory));
 		engineFactory.setMaximalDepth(25);
 		engineFactory.setEvaluationFactory(evaluationFactory);
-		engineFactory.setParallel(new Parallel(threadCount));
 		engineFactory.setMaterialEvaluator(DefaultAdditiveMaterialEvaluator.getInstance());
 
 		manager.setEngineFactory(engineFactory);
+		manager.setThreadCount(threadCount);
 
 		manager.start();
 		
