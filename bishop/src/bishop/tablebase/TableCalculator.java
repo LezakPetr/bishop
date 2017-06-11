@@ -4,8 +4,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -244,8 +246,8 @@ public class TableCalculator {
 		} while (changeCount > 0);
 	}
 
-	public List<MaterialHash> getNeededSubtables() {
-		final List<MaterialHash> neededSubtables = new LinkedList<MaterialHash>();
+	public Set<MaterialHash> getNeededSubtables() {
+		final Set<MaterialHash> neededSubtables = new HashSet<>();
 		
 		// Captures
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
@@ -275,7 +277,7 @@ public class TableCalculator {
 		return neededSubtables;
 	}
 
-	private static void addCapturesToSubtables(final List<MaterialHash> neededSubtables, final MaterialHash parentHash) {
+	private static void addCapturesToSubtables(final Set<MaterialHash> neededSubtables, final MaterialHash parentHash) {
 		final int capturedColor = parentHash.getOnTurn();
 		
 		for (int capturedPieceType = PieceType.VARIABLE_FIRST; capturedPieceType < PieceType.VARIABLE_LAST; capturedPieceType++) {
@@ -290,10 +292,16 @@ public class TableCalculator {
 		}
 	}
 
-	private static void addMaterialToSubtables(final List<MaterialHash> neededSubtables, final MaterialHash subMaterialHash) {
+	private static void addMaterialToSubtables(final Set<MaterialHash> neededSubtables, final MaterialHash subMaterialHash) {
 		final MaterialHash oppositeHash = subMaterialHash.getOpposite();
+		final boolean addDirect;
+
+		if (subMaterialHash.isBalancedExceptFor(PieceType.NONE))
+			addDirect = (subMaterialHash.getOnTurn() == Color.WHITE);
+		else
+			addDirect = subMaterialHash.isGreater (oppositeHash);
 		
-		if (subMaterialHash.isGreater (oppositeHash))
+		if (addDirect)
 			neededSubtables.add(subMaterialHash);
 		else
 			neededSubtables.add(oppositeHash);
