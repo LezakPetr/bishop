@@ -104,4 +104,12 @@ public interface ISearchEngine {
 	 * @return registrar
 	 */
 	public IHandlerRegistrar<ISearchEngineHandler> getHandlerRegistrar();
+	
+	/**
+	 * Returns number of searched nodes.
+	 * 
+	 * @return number of searched nodes
+	 */
+	public long getNodeCount();
+
 }

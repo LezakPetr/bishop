@@ -67,6 +67,8 @@ public final class SearchManagerImpl implements ISearchManager {
 		public void onResultUpdate(final SearchResult result) {
 			synchronized (monitor) {
 				searchResult = result;
+				updateNodeCountInResult();
+				
 				searchInfoChanged = true;
 			}
 		}
@@ -86,6 +88,16 @@ public final class SearchManagerImpl implements ISearchManager {
 		this.rootPosition = new Position();
 		
 		this.searchSettings = new SearchSettings();
+	}
+	
+	private void updateNodeCountInResult() {
+		long nodeCount = 0;
+		
+		for (ISearchEngine engine: searchEngineList) {
+			nodeCount += engine.getNodeCount();
+		}
+		
+		this.searchResult.setNodeCount(nodeCount);
 	}
 	
 	/**
@@ -384,10 +396,9 @@ public final class SearchManagerImpl implements ISearchManager {
 				horizon += ISearchEngine.HORIZON_GRANULARITY;
 				initialSearch = false;
 				
-				if (!bestResult.isSearchTerminated()) {   // TODO
-					this.searchResult = bestResult;
-					this.searchInfoChanged = true;
-				}
+				this.searchResult = bestResult;
+				updateNodeCountInResult();
+				this.searchInfoChanged = true;
 				
 				totalNodeCount += searchResult.getNodeCount();
 				this.searchResult.setNodeCount(0);
