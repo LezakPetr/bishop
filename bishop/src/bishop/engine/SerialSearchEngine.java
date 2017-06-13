@@ -111,7 +111,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final Position currentPosition;
 	private int currentDepth;
 	private int moveStackTop;
-	private long nodeCount;
+	private volatile long nodeCount;
 	private final RepeatedPositionRegister repeatedPositionRegister;
 	private final EvaluatedMoveList evaluatedMoveList;
 
@@ -908,9 +908,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 * @return number of searched nodes
 	 */
 	public long getNodeCount() {
-		synchronized (monitor) {
-			return nodeCount;
-		}
+		return nodeCount;
 	}
 
 	/**
