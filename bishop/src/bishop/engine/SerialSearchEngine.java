@@ -191,7 +191,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	}
 	
 	private void receiveUpdates() {
-		if ((nodeCount & 0xFFF) == 0) {
+		if ((nodeCount & 0xFFFF) == 0) {
 			synchronized (monitor) {
 				if (task.isTerminated())
 					throw new SearchTerminatedException();
@@ -981,5 +981,4 @@ public final class SerialSearchEngine implements ISearchEngine {
 	public IHandlerRegistrar<ISearchEngineHandler> getHandlerRegistrar() {
 		return handlerRegistrar;
 	}
-
 }
