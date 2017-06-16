@@ -62,7 +62,7 @@ public class LineIndexer {
 		6, 5, 5, 5, 5, 5, 5, 6
 	};
 	
-	private static class Cell {
+	private static final class Cell {
 		public final long mask;
 		public final long coeff;
 		public final int shift;

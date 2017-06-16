@@ -69,7 +69,7 @@ public class SearchPerformanceTest {
 		engineFactory.setMaximalDepth(25);
 		engineFactory.setMaterialEvaluator(materialEvaluator);
 		
-		final HashTableImpl hashTable = new HashTableImpl(20);
+		final HashTableImpl hashTable = new HashTableImpl(27);
 		
 		manager.setTablebaseEvaluator(tablebaseEvaluator);
 		manager.setEngineFactory(engineFactory);
