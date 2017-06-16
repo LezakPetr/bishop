@@ -5,7 +5,6 @@ import java.util.function.Supplier;
 
 import bishop.base.Color;
 import bishop.base.IMaterialHashRead;
-import bishop.base.IPieceCounts;
 import bishop.base.PieceType;
 import bishop.base.Position;
 
@@ -21,7 +20,6 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 	
 	private final boolean[] hasMatingMaterial;
 	
-	private Position position;
 	private IPositionEvaluator currentEvaluator;
 	private IPositionEvaluation tacticalEvaluation;
 	private IPositionEvaluation positionalEvaluation;
@@ -84,14 +82,12 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 	
 	@Override
 	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
-		this.position = position;
 		this.materialHash = position.getMaterialHash();
 		
 		calculateHasMatingMaterial();
 		selectCurrentEvaluator();
 		
 		tacticalEvaluation = currentEvaluator.evaluateTactical(position, attackCalculator);
-		this.position = null;
 		
 		return tacticalEvaluation;
 	}
