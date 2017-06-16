@@ -8,7 +8,6 @@ import java.util.function.Supplier;
 import org.junit.Assert;
 import org.junit.Test;
 
-import parallel.Parallel;
 import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.Fen;
 import bishop.base.MoveList;
@@ -65,8 +64,6 @@ public class SearchEngineTest {
 	}
 
 	public void runTest(final boolean runParallel) throws IOException, InterruptedException {
-		final int availableProcessors = Runtime.getRuntime().availableProcessors();
-		final int threadCount = (runParallel) ? Math.min(availableProcessors, 4) : 1;
 		final SerialSearchEngine engine = new SerialSearchEngine();
 		engine.setEvaluationFactory(AlgebraicPositionEvaluation.getTestingFactory());
 		

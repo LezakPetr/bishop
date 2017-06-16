@@ -5,13 +5,10 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.function.Supplier;
 
-import parallel.Parallel;
 import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.IMaterialEvaluator;
-import bishop.base.PgnReader;
 import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.BookReader;
-import bishop.engine.BookSource;
 import bishop.engine.HashTableImpl;
 import bishop.engine.IPositionEvaluation;
 import bishop.engine.ISearchManager;
@@ -46,7 +43,6 @@ public class SearchResources {
 		searchEngineFactory = new SerialSearchEngineFactory();
 		
 		final int threadCount = Math.min(application.getSettings().getEngineSettings().getThreadCount(), SearchResources.MAX_THREADS);
-		final Parallel parallel = new Parallel(threadCount);
 
 		evaluationFactory = createEvaluationFactory(application.getRootUrl());
 		

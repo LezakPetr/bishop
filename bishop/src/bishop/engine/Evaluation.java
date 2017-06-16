@@ -2,7 +2,6 @@ package bishop.engine;
 
 import bishop.base.Color;
 import bishop.base.PieceTypeEvaluations;
-import bishop.base.Square;
 
 public class Evaluation {
 	

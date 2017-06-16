@@ -1,6 +1,8 @@
 package bishop.engine;
 
 
+import static math.Utils.roundToInt;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -8,9 +10,6 @@ import java.io.StringWriter;
 import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import utils.DoubleArrayBuilder;
-import utils.IntArrayBuilder;
-
-import static math.Utils.roundToInt;
 
 
 public final class SearchSettings {

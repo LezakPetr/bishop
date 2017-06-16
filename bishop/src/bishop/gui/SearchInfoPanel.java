@@ -4,7 +4,6 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import javax.swing.JLabel;
@@ -26,7 +25,6 @@ import bishop.engine.ISearchEngine;
 import bishop.engine.ISearchManager;
 import bishop.engine.ISearchManagerHandler;
 import bishop.engine.SearchInfo;
-import utils.IoUtils;
 
 @SuppressWarnings("serial")
 public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, ILocalizedComponent {

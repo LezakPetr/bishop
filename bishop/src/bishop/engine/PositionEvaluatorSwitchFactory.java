@@ -1,7 +1,6 @@
 package bishop.engine;
 
 import java.util.function.Supplier;
-import bishop.base.IMaterialEvaluator;
 
 public class PositionEvaluatorSwitchFactory implements IPositionEvaluatorFactory {
 	

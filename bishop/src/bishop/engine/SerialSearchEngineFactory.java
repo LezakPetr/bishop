@@ -3,7 +3,6 @@ package bishop.engine;
 import java.util.function.Supplier;
 
 import bishop.base.IMaterialEvaluator;
-import parallel.Parallel;
 
 public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 	

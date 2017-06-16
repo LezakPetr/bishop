@@ -4,7 +4,6 @@ import bishop.base.BitBoard;
 import bishop.base.BoardConstants;
 import bishop.base.Color;
 import bishop.base.IMaterialHashRead;
-import bishop.base.IPieceCounts;
 import bishop.base.PieceType;
 import bishop.base.Position;
 

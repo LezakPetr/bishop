@@ -5,7 +5,6 @@ import java.util.List;
 
 import bishop.base.IMoveGenerator;
 import bishop.base.LegalMoveGenerator;
-import bishopTests.MoveGeneratorTestBase.TestValue;
 import bishopTests.PseudoLegalMoveGeneratorTest.PositionWithMoves;
 
 

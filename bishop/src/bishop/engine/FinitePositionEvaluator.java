@@ -1,8 +1,6 @@
 package bishop.engine;
 
-import bishop.base.Color;
 import bishop.base.IMaterialHashRead;
-import bishop.base.MaterialHash;
 import bishop.base.Position;
 
 public final class FinitePositionEvaluator {
