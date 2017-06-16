@@ -12,9 +12,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.GameResult;
-import bishop.base.IMaterialEvaluator;
 import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
@@ -22,7 +20,6 @@ import bishop.engine.AttackCalculator;
 import bishop.engine.CoeffCountPositionEvaluation;
 import bishop.engine.CoeffLink;
 import bishop.engine.CoeffRegistry;
-import bishop.engine.Evaluation;
 import bishop.engine.IPositionEvaluation;
 import bishop.engine.PositionEvaluationCoeffs;
 import bishop.engine.PositionEvaluatorSwitch;
@@ -38,7 +35,6 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private final EquationSystemSolver equationSolver = new EquationSystemSolver(PositionEvaluationCoeffs.LAST, 2);
 	private final PositionEvaluationCoeffs coeffs = new PositionEvaluationCoeffs();
 	private final Supplier<IPositionEvaluation> evaluationFactory = () -> new CoeffCountPositionEvaluation(coeffs);
-	private final IMaterialEvaluator materialEvaluator = DefaultAdditiveMaterialEvaluator.getInstance();
 	private final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 	
 	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);

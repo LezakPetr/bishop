@@ -5,15 +5,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
-import parallel.Parallel;
 
 import bishop.base.Color;
 import bishop.base.MaterialHash;
-import bishop.base.PieceType;
 import bishop.tablebase.BothColorPositionResultSource;
 import bishop.tablebase.FileNameCalculator;
 import bishop.tablebase.FilePositionResultSource;
@@ -26,6 +23,7 @@ import bishop.tablebase.TableReader;
 import bishop.tablebase.TableSwitch;
 import bishop.tablebase.TableValidator;
 import bishop.tablebase.TableWriter;
+import parallel.Parallel;
 
 public class GenerateTablebase {
 	

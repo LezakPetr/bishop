@@ -5,13 +5,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-import parallel.Parallel;
 import bishop.base.Color;
 import bishop.base.Fen;
 import bishop.base.LegalMoveFinder;
@@ -19,6 +17,7 @@ import bishop.base.MaterialHash;
 import bishop.base.PieceType;
 import bishop.base.Position;
 import bishop.base.PositionValidator;
+import parallel.Parallel;
 
 public class TableCalculator {
 	

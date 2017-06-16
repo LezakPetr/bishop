@@ -6,11 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
 
 import bishop.base.Color;
-import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.Fen;
 import bishop.base.Position;
 import bishop.base.Rank;
@@ -18,12 +17,10 @@ import bishop.engine.AttackCalculator;
 import bishop.engine.AttackEvaluationTable;
 import bishop.engine.CoeffCountPositionEvaluation;
 import bishop.engine.EndingPositionEvaluator;
-import bishop.engine.Evaluation;
 import bishop.engine.IPositionEvaluation;
 import bishop.engine.PawnStructureCache;
 import bishop.engine.PawnStructureCoeffs;
 import bishop.engine.PositionEvaluationCoeffs;
-
 import math.Utils;
 
 public class PawnStructureEvaluatorTest {

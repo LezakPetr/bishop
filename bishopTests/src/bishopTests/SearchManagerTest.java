@@ -8,9 +8,6 @@ import java.util.function.Supplier;
 import org.junit.Assert;
 import org.junit.Test;
 
-import parallel.Parallel;
-
-import utils.Logger;
 import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.Fen;
 import bishop.base.GlobalSettings;
@@ -30,6 +27,7 @@ import bishop.engine.SearchInfo;
 import bishop.engine.SearchManagerImpl;
 import bishop.engine.SearchResult;
 import bishop.engine.SerialSearchEngineFactory;
+import utils.Logger;
 
 public class SearchManagerTest {
 	private static class TestValue {

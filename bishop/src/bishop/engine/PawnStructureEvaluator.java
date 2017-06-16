@@ -4,13 +4,11 @@ import java.util.function.Supplier;
 
 import bishop.base.BitBoard;
 import bishop.base.BitLoop;
-import bishop.base.BoardConstants;
 import bishop.base.Color;
 import bishop.base.PieceType;
 import bishop.base.Position;
 import bishop.base.Square;
 import bishop.tables.FrontSquaresOnSameFileTable;
-import bishop.tables.PawnAttackTable;
 
 public class PawnStructureEvaluator {
 	

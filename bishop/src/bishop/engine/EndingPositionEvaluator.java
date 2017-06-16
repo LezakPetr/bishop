@@ -1,19 +1,12 @@
 package bishop.engine;
 
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.function.Supplier;
 
-import bishop.base.IMaterialEvaluator;
 import bishop.base.BitBoard;
-import bishop.base.BitLoop;
-import bishop.base.BoardConstants;
 import bishop.base.Color;
 import bishop.base.PieceType;
-import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
-import bishop.base.Rank;
-import bishop.tables.FrontSquaresOnSameFileTable;
 
 public final class EndingPositionEvaluator implements IPositionEvaluator {
 	
