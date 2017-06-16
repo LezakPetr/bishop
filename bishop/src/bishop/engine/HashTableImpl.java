@@ -134,7 +134,11 @@ public final class HashTableImpl implements IHashTable {
 	 * Clears the table.
 	 */
 	public void clear() {
-		for (int i = 0; i < table.length(); i++)
-			table.set(i, 0);
+		// Non-volatile writes
+		for (int i = table.length() - 1; i > 0; i--)
+			table.lazySet(i, 0);
+		
+		// Volatile write to flush cache
+		table.set(0, 0);
 	}
 }

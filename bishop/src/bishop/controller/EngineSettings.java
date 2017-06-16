@@ -17,7 +17,7 @@ public class EngineSettings implements Copyable<EngineSettings> {
 	
 	public static final int MIN_HASH_TABLE_EXPONENT = 10;
 	public static final int MAX_HASH_TABLE_EXPONENT = 30;
-	public static final int HASH_TABLE_EXPONENT_OFFSET = 4;
+	public static final int HASH_TABLE_EXPONENT_OFFSET = 3;   // 2^3 = 8 Bytes per hash table item
 	
 	
 	public int getThreadCount() {
