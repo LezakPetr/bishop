@@ -489,22 +489,46 @@ public final class SerialSearchEngine implements ISearchEngine {
 		return isMate;
 	}
 	
-	private boolean updateRecordByHash(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta, final HashRecord hashRecord) {
-		if (horizon <= 0 || !hashTable.getRecord(currentPosition, hashRecord) || !currentRecord.hashBestMove.uncompressMove(hashRecord.getCompressedBestMove(), currentPosition)) {
-			currentRecord.hashBestMove.clear();
+	private boolean readHashRecord(final int horizon, final NodeRecord currentRecord, final HashRecord hashRecord) {
+		if (horizon <= 0)
 			return false;
+		
+		if (!hashTable.getRecord(currentPosition, hashRecord))
+			return false;
+		
+		if (hashRecord.getCompressedBestMove() == Move.NONE_COMPRESSED_MOVE) {
+			currentRecord.hashBestMove.clear();
+			
+			return true;
+		}
+		
+		return currentRecord.hashBestMove.uncompressMove(hashRecord.getCompressedBestMove(), currentPosition);
+	}
+	
+	/**
+	 * Updates currentRecord by hash table.
+	 * @param horizon current horizon
+	 * @param currentRecord (updated) current record
+	 * @param initialAlpha initial alpha of the alpha-beta
+	 * @param initialBeta initial beta of the alpha-beta
+	 * @param hashRecord target hash record
+	 * @return true if the position evaluation with enough horizon was obtained
+	 */
+	private boolean updateRecordByHash(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta, final HashRecord hashRecord) {
+		if (!readHashRecord(horizon, currentRecord, hashRecord)) {
+			currentRecord.hashBestMove.clear();
+			
+			return false;			
 		}
 			
 		if (currentDepth > 0 && hashRecord.getHorizon() >= horizon) {
-			if (currentRecord.hashBestMove.uncompressMove(hashRecord.getCompressedBestMove(), currentPosition)) {
-				final int hashEvaluation = hashRecord.getNormalizedEvaluation(currentDepth);
-				final int hashType = hashRecord.getType();
+			final int hashEvaluation = hashRecord.getNormalizedEvaluation(currentDepth);
+			final int hashType = hashRecord.getType();
 
-				if (hashType == HashRecordType.VALUE || (hashType == HashRecordType.LOWER_BOUND && hashEvaluation > initialBeta) || (hashType == HashRecordType.UPPER_BOUND && hashEvaluation < initialAlpha)) {
-					currentRecord.evaluation.setEvaluation(hashEvaluation);
-					
-					return true;
-				}
+			if (hashType == HashRecordType.VALUE || (hashType == HashRecordType.LOWER_BOUND && hashEvaluation > initialBeta) || (hashType == HashRecordType.UPPER_BOUND && hashEvaluation < initialAlpha)) {
+				currentRecord.evaluation.setEvaluation(hashEvaluation);
+				
+				return true;
 			}
 		}
 		
