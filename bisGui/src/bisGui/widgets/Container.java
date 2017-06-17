@@ -40,4 +40,8 @@ public class Container extends Widget {
 		// TODO Auto-generated method stub
 		
 	}
+
+	public List<Widget> getChildren() {
+		return children;
+	}
 }

@@ -1,19 +1,19 @@
 package bishop.engine;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import bishop.base.BitBoard;
 import bishop.base.BoardConstants;
 import bishop.base.Color;
 import bishop.base.File;
+import utils.IntHolder;
 
 public class PawnStructureData {
 	
 	private PawnStructure structure;
 	private final long[] data;
 	
-	private static final AtomicInteger OFFSET = new AtomicInteger();
+	private static final IntHolder OFFSET = new IntHolder();
 	
 	// Contains 1 on squares behind pawns.
 	// Direction is relative.
@@ -75,7 +75,7 @@ public class PawnStructureData {
 	private static final int DOUBLED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
 	private static final int PROTECTED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
 	
-	private static final int DATA_SIZE = OFFSET.get();
+	private static final int DATA_SIZE = OFFSET.getValue();
 	
 	public PawnStructureData() {
 		data = new long[DATA_SIZE];

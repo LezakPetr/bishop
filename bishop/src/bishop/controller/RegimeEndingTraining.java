@@ -3,7 +3,6 @@ package bishop.controller;
 import javax.swing.JOptionPane;
 
 import bishop.base.HandlerRegistrarImpl;
-import bishop.base.Holder;
 import bishop.base.IMoveWalker;
 import bishop.base.LegalMoveGenerator;
 import bishop.base.Move;
@@ -11,6 +10,7 @@ import bishop.base.MoveType;
 import bishop.base.Position;
 import bishop.engine.Evaluation;
 import bishop.engine.TablebasePositionEvaluator;
+import utils.Holder;
 
 public class RegimeEndingTraining extends MoveRegime<IMoveRegimeListener> {
 	

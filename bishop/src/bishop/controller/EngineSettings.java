@@ -3,6 +3,8 @@ package bishop.controller;
 import org.w3c.dom.Element;
 
 import bishop.base.Copyable;
+import bishop.engine.HashTableImpl;
+import utils.IntUtils;
 
 public class EngineSettings implements Copyable<EngineSettings> {
 
@@ -15,9 +17,9 @@ public class EngineSettings implements Copyable<EngineSettings> {
 	private static final String ELEMENT_HASH_TABLE_EXPONENT = "hashTableExponent";
 	private static final String ELEMENT_TABLEBASE_DIRECTORY = "tablebaseDirectory";
 	
-	public static final int MIN_HASH_TABLE_EXPONENT = 10;
-	public static final int MAX_HASH_TABLE_EXPONENT = 30;
-	public static final int HASH_TABLE_EXPONENT_OFFSET = 3;   // 2^3 = 8 Bytes per hash table item
+	public static final int MIN_HASH_TABLE_EXPONENT = 17;
+	public static final int MAX_HASH_TABLE_EXPONENT = HashTableImpl.MAX_EXPONENT;
+	public static final int HASH_TABLE_EXPONENT_OFFSET = IntUtils.ceilLog(HashTableImpl.ITEM_SIZE);
 	
 	
 	public int getThreadCount() {
