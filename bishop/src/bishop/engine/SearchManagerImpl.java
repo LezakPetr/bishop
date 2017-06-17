@@ -8,10 +8,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import utils.Holder;
 import utils.Logger;
 import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.HandlerRegistrarImpl;
-import bishop.base.Holder;
 import bishop.base.IHandlerRegistrar;
 import bishop.base.IMoveWalker;
 import bishop.base.LegalMoveGenerator;

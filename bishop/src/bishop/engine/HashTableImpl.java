@@ -43,11 +43,18 @@ public final class HashTableImpl implements IHashTable {
 	private static final long HASH_MASK = ~HORIZON_MASK;
 	private static final int EVALUATION_OFFSET = Evaluation.MIN;
 	
+	public static final int MIN_EXPONENT = 0;
+	public static final int MAX_EXPONENT = 31;
+	public static final int ITEM_SIZE = Long.BYTES;   // Size of hash item [B]
+	
 	public HashTableImpl(final int exponent) {
 		resize(exponent);
 	}
 	
 	public void resize (final int exponent) {
+		if (exponent < MIN_EXPONENT || exponent > MAX_EXPONENT)
+			throw new RuntimeException("Exponent out of range: " + exponent);
+		
 		if (this.exponent != exponent) {
 			this.exponent = exponent;
 			

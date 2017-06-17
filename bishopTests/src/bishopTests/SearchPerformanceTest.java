@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import bishop.base.Game;
-import bishop.base.Holder;
 import bishop.base.IGameNode;
 import bishop.base.IMaterialEvaluator;
 import bishop.base.ITreeIterator;
@@ -31,6 +30,7 @@ import bishop.engine.SearchInfo;
 import bishop.engine.SearchManagerImpl;
 import bishop.engine.SerialSearchEngineFactory;
 import bishop.engine.TablebasePositionEvaluator;
+import utils.Holder;
 
 public class SearchPerformanceTest {
 

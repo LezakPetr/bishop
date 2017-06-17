@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import bishop.base.Holder;
 import bishop.base.IMoveWalker;
 import bishop.base.LegalMoveGenerator;
 import bishop.base.Move;
 import bishop.base.Position;
+import utils.Holder;
 
 public class BookCalculator implements IBook<EvaluatedBookRecord> {
 

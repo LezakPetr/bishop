@@ -78,6 +78,7 @@ public class TableCalculator {
 			return new MemoryStagedTable(tableDefinition, useCompressedTable);
 	}
 	
+	@SuppressWarnings("unused")
 	private void printData() {
 		final IStagedTable table = bothTables.getBaseSource(Color.WHITE);
 		long winCount = 0;

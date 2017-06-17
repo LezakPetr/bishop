@@ -11,7 +11,6 @@ import org.junit.Test;
 import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.Fen;
 import bishop.base.GlobalSettings;
-import bishop.base.Holder;
 import bishop.base.MoveList;
 import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
@@ -27,6 +26,7 @@ import bishop.engine.SearchInfo;
 import bishop.engine.SearchManagerImpl;
 import bishop.engine.SearchResult;
 import bishop.engine.SerialSearchEngineFactory;
+import utils.Holder;
 import utils.Logger;
 
 public class SearchManagerTest {
