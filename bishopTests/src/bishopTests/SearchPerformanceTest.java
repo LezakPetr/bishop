@@ -61,7 +61,7 @@ public class SearchPerformanceTest {
 		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, positionEvaluationFactory);
 
 		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
-		final int threadCount = Math.min(Runtime.getRuntime().availableProcessors(), SearchResources.MAX_THREADS);
+		final int threadCount = Runtime.getRuntime().availableProcessors();
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
 		
 		engineFactory.setPositionEvaluatorFactory(evaluatorFactory);

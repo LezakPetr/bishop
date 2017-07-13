@@ -6,6 +6,7 @@ import bishop.base.BitBoard;
 import bishop.base.BoardConstants;
 import bishop.base.Color;
 import bishop.base.File;
+import bishop.tables.PawnIslandFileTable;
 import utils.IntHolder;
 
 public class PawnStructureData {
@@ -75,7 +76,20 @@ public class PawnStructureData {
 	private static final int DOUBLED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
 	private static final int PROTECTED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
 	
+	private static final int SINGLE_DISADVANTAGE_ATTACK_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
+	private static final int DOUBLE_DISADVANTAGE_ATTACK_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
+	private static final int BLOCKED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
+	
+	private static final int PAWN_ISLANDS_OFFSET = OFFSET.getAndAdd(1);
+	
 	private static final int DATA_SIZE = OFFSET.getValue();
+	
+	
+	private static final int PAWN_ISLANDS_ITEM_SHIFT = 8;
+	private static final int PAWN_ISLANDS_COUNT_MASK = 0x7F;
+	private static final int PAWN_ISLANDS_ALIVE_MASK = 0X80;
+	public static final int MAX_PAWN_ISLAND_COUNT = 4;
+	
 	
 	public PawnStructureData() {
 		data = new long[DATA_SIZE];
@@ -89,9 +103,7 @@ public class PawnStructureData {
 		System.arraycopy(orig.data, 0, this.data, 0, DATA_SIZE);
 	}
 
-	private void fillOpenFileSquares(final PawnStructure structure) {
-		this.structure = structure;
-		
+	private void fillOpenFileSquares() {
 		// White
 		final long whiteNotFileOpenSquares = BitBoard.extendBackward(structure.getWhitePawnMask());
 		data[BACK_SQUARES_OFFSET + Color.WHITE] = whiteNotFileOpenSquares >>> File.LAST;
@@ -101,7 +113,7 @@ public class PawnStructureData {
 		data[BACK_SQUARES_OFFSET + Color.BLACK] = blackNotFileOpenSquares << File.LAST;
 	}
 	
-	private void fillOppositeFileAndAttackableSquares(final PawnStructure structure) {
+	private void fillOppositeFileAndAttackableSquares() {
 		// White
 		final long whitePawnSquares = structure.getWhitePawnMask();
 		final long whiteReachableSquares = BitBoard.extendForward(whitePawnSquares);
@@ -117,7 +129,7 @@ public class PawnStructureData {
 		data[NEIGHBOR_FRONT_SQUARES_OFFSET + Color.BLACK] = BoardConstants.getPawnsAttackedSquares(Color.BLACK, blackReachableSquares & ~BoardConstants.RANK_18_MASK);
 	}
 	
-	private void fillSecureSquares(final PawnStructure structure) {
+	private void fillSecureSquares() {
 		final long notPawnsSquares = ~structure.getBothColorPawnMask();
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
@@ -140,13 +152,15 @@ public class PawnStructureData {
 	public void calculate(final PawnStructure structure) {
 		this.structure = structure;
 		
-		fillOpenFileSquares(structure);
-		fillOppositeFileAndAttackableSquares(structure);
-		fillSecureSquares(structure);
-		calculatePawnTypes(structure);
+		fillOpenFileSquares();
+		fillOppositeFileAndAttackableSquares();
+		fillSecureSquares();
+		calculatePawnTypes();
+		calculatePawnDynamic();
+		calculatePawnIslands();
 	}
 	
-	private void calculatePawnTypes(final PawnStructure structure) {
+	private void calculatePawnTypes() {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int oppositeColor = Color.getOppositeColor(color);
 			
@@ -164,6 +178,96 @@ public class PawnStructureData {
 			data[BACKWARDS_PAWNS_OFFSET + color] = ownPawnMask & openSquares & data[NEIGHBOR_FRONT_SQUARES_OFFSET + oppositeColor] & ~data[NEIGHBOR_FRONT_SQUARES_OFFSET + color];
 			data[DOUBLED_PAWNS_OFFSET + color] = ownPawnMask & frontOrBackSquares;
 			data[PROTECTED_PAWNS_OFFSET + color] = ownPawnMask & BoardConstants.getPawnsAttackedSquares(color, ownPawnMask);
+		}
+	}
+	
+	private void calculatePawnIslands() {
+		final int files = (int) ((data[BACK_SQUARES_OFFSET + Color.WHITE] | data[FRONT_SQUARES_OFFSET + Color.BLACK]) & 0xFF);
+		final long[] islandFiles = PawnIslandFileTable.getIslandsFiles(files);
+		final long whitePawnMask = structure.getWhitePawnMask();
+		final long blackPawnMask = structure.getBlackPawnMask();
+		final long whiteActivePawns = getActivePawns(Color.WHITE);
+		final long blackActivePawns = getActivePawns(Color.BLACK);
+		
+		long result = 0;
+		
+		for (long islandMask: islandFiles) {
+			final long whiteIslandPawns = whitePawnMask & islandMask;
+			final long blackIslandPawns = blackPawnMask & islandMask;
+			
+			int whiteItem = BitBoard.getSquareCount(whiteIslandPawns);
+			int blackItem = BitBoard.getSquareCount(blackIslandPawns);
+			
+			if ((whiteIslandPawns & whiteActivePawns) != 0)
+				whiteItem |= PAWN_ISLANDS_ALIVE_MASK;
+
+			if ((blackIslandPawns & blackActivePawns) != 0)
+				blackItem |= PAWN_ISLANDS_ALIVE_MASK;
+
+			result = (result << PAWN_ISLANDS_ITEM_SHIFT) | blackItem;
+			result = (result << PAWN_ISLANDS_ITEM_SHIFT) | whiteItem;
+		}
+		
+		data[PAWN_ISLANDS_OFFSET] = result;
+	}
+	
+	private long getActivePawns(final int color) {
+		return
+				structure.getPawnMask(color) & (
+						getPassedPawnMask(color) | ~(
+								getBlockedPawnMask(color) |
+								getSingleDisadvantageAttackPawnMask(color) |
+								getDoubleDisadvantageAttackPawnMask(color)
+						)
+				);
+	}
+
+	private void calculatePawnDynamic() {
+		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			final int oppositeColor = Color.getOppositeColor(color);
+			final long ownPawnMask = structure.getPawnMask(color);
+			final long oppositePawnMask = structure.getPawnMask(oppositeColor);
+			
+			final long blockers = oppositePawnMask | BoardConstants.getPawnsAttackedSquares (oppositeColor, oppositePawnMask);
+			final long nonAttackReachableSquares = makeSteps (ownPawnMask, blockers, color);
+			
+			final long squaresAttackedFromLeft = BoardConstants.getPawnsAttackedSquaresFromLeft(oppositeColor, oppositePawnMask);
+			final long squaresAttackedFromRight = BoardConstants.getPawnsAttackedSquaresFromRight(oppositeColor, oppositePawnMask);
+			
+			final long squaresProtectableFromLeft = BoardConstants.getPawnsAttackedSquaresFromLeft(color, nonAttackReachableSquares);
+			final long squaresProtectableFromRight = BoardConstants.getPawnsAttackedSquaresFromRight(color, nonAttackReachableSquares);
+			
+			final long singleAttackedSquares = squaresAttackedFromLeft ^ squaresAttackedFromRight;
+			final long doubleAttackedSquares = squaresAttackedFromLeft & squaresAttackedFromRight;
+			
+			final long nonProtectableSquares = ~(squaresProtectableFromLeft | squaresProtectableFromRight);
+			final long singleProtectableSquares = squaresProtectableFromLeft ^ squaresProtectableFromRight;
+			
+			final long singleDisadvantageSquares =
+					(singleAttackedSquares & nonProtectableSquares) |
+					(doubleAttackedSquares & singleProtectableSquares);
+			final long extendedSingleDisadvantageSquares = makeSteps(singleDisadvantageSquares & ~oppositePawnMask, blockers, oppositeColor);
+			data[SINGLE_DISADVANTAGE_ATTACK_PAWNS_OFFSET + color] = extendedSingleDisadvantageSquares;
+			
+			final long doubleDisadvantageSquares = doubleAttackedSquares & nonProtectableSquares;
+			final long extendedDoubleDisadvantageSquares = makeSteps(doubleDisadvantageSquares & ~oppositePawnMask, blockers, oppositeColor);
+			data[DOUBLE_DISADVANTAGE_ATTACK_PAWNS_OFFSET + color] = extendedDoubleDisadvantageSquares;
+			
+			final long blockedSquares = makeSteps(oppositePawnMask, blockers, oppositeColor);
+			data[BLOCKED_PAWNS_OFFSET + color] = blockedSquares;
+		}
+	}
+
+	private long makeSteps(final long initialMask, final long blockers, final int color) {
+		long resultMask = initialMask;
+		
+		while (true) {
+			final long prevMask = resultMask;
+			final long advanced = (color == Color.WHITE) ? prevMask << File.COUNT : prevMask >>> File.COUNT;
+			resultMask |= advanced & ~blockers;
+			
+			if (resultMask == prevMask)
+				return resultMask;
 		}
 	}
 
@@ -198,4 +302,35 @@ public class PawnStructureData {
 	public long getProtectedPawnMask(final int color) {
 		return data[PROTECTED_PAWNS_OFFSET + color];
 	}
+	
+	public long getSingleDisadvantageAttackPawnMask(final int color) {
+		return data[SINGLE_DISADVANTAGE_ATTACK_PAWNS_OFFSET + color];
+	}
+
+	public long getDoubleDisadvantageAttackPawnMask(final int color) {
+		return data[DOUBLE_DISADVANTAGE_ATTACK_PAWNS_OFFSET + color];
+	}
+
+	public long getBlockedPawnMask(final int color) {
+		return data[BLOCKED_PAWNS_OFFSET + color];
+	}
+	
+	private int getPawnIslandItem(final int index, final int color) {
+		final int offset = ((index << Color.BIT_COUNT) + color) * PAWN_ISLANDS_ITEM_SHIFT;
+		
+		return (int) (data[PAWN_ISLANDS_OFFSET] >>> offset);
+	}
+
+	public int getIslandPawnCount(final int index, final int color) {
+		final int item = getPawnIslandItem(index, color);
+		
+		return item & PAWN_ISLANDS_COUNT_MASK;
+	}
+
+	public boolean isIslandAlive(final int index, final int color) {
+		final int item = getPawnIslandItem(index, color);
+		
+		return (item & PAWN_ISLANDS_ALIVE_MASK) != 0;
+	}
+
 }

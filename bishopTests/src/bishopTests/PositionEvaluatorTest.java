@@ -20,8 +20,7 @@ public class PositionEvaluatorTest {
 	private void testPositionEvaluatorSpeed (final Position position, final IPositionEvaluator evaluator, final boolean withPositionalEvaluation) {
 		final int iterationCount = 2000000;
 		final long t1 = System.currentTimeMillis();
-		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
-		final AttackCalculator attackCalculator = new AttackCalculator(evaluationFactory);
+		final AttackCalculator attackCalculator = new AttackCalculator();
 
 		for (int i = 0; i < iterationCount; i++) {
 			evaluator.evaluateTactical(position, attackCalculator);

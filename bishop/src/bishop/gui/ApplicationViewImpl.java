@@ -8,11 +8,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PushbackReader;
-import java.io.Reader;
 import java.net.URL;
 import java.util.List;
 
@@ -28,7 +25,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
 
-import utils.Logger;
 import bishop.base.Color;
 import bishop.base.Game;
 import bishop.base.GameHeader;
@@ -47,6 +43,7 @@ import bishop.controller.RegimeType;
 import bishop.controller.SideType;
 import bishop.controller.Utils;
 import bishop.engine.ISearchManager;
+import utils.Logger;
 
 
 @SuppressWarnings("serial")
@@ -490,7 +487,7 @@ public class ApplicationViewImpl extends JPanel implements IApplicationView, ILo
 			if (answer == JOptionPane.OK_OPTION) {
 				if (displayGameSettingsDialog()) {
 					application.newGame();
-					updateDeskOritntation();
+					updateDeskOritntation();					
 				}
 			}
 		}
@@ -503,24 +500,16 @@ public class ApplicationViewImpl extends JPanel implements IApplicationView, ILo
 				final PgnReader pgn = new PgnReader();
 				
 				try {
-					final Reader fileReader = new FileReader(pgnFileChooser.getSelectedFile());
+					pgn.readPgnFromFile(pgnFileChooser.getSelectedFile());
 					
-					try {
-						final PushbackReader pushBackReader = new PushbackReader(fileReader);
-						pgn.readPgn(pushBackReader);
+					final List<Game> gameList = pgn.getGameList();
+					final int selectedIndex = GameSelectorDialog.selectGameFromGameList(application, getMainFrame(), gameList, GameSelectorMode.LOAD);
+					
+					if (selectedIndex >= 0) {
+						final Game game = gameList.get(selectedIndex);
+						gameEditor.setGame(game);
 						
-						final List<Game> gameList = pgn.getGameList();
-						final int selectedIndex = GameSelectorDialog.selectGameFromGameList(application, getMainFrame(), gameList);
-						
-						if (selectedIndex >= 0) {
-							final Game game = gameList.get(selectedIndex);
-							gameEditor.setGame(game);
-							
-							application.setGameRegime();
-						}
-					}
-					finally {
-						fileReader.close();
+						application.setGameRegime();
 					}
 				}
 				catch (Throwable ex) {
@@ -534,17 +523,39 @@ public class ApplicationViewImpl extends JPanel implements IApplicationView, ILo
 	private final AbstractAction saveGameAction = new AbstractAction() {
 		public void actionPerformed(final ActionEvent event) {
 			if (pgnFileChooser.showSaveDialog(getMainFrame()) == JFileChooser.APPROVE_OPTION) {
-				final GameEditor gameEditor = application.getActualGameEditor();
-				final Game game = gameEditor.getGame();
-				final PgnWriter pgn = new PgnWriter();
-				
-				pgn.getGameList().add(game);
-				
 				try {
-					final FileOutputStream stream = new FileOutputStream(pgnFileChooser.getSelectedFile());
+					final java.io.File file = pgnFileChooser.getSelectedFile();
+					final PgnWriter pgnWriter = new PgnWriter();
+					final List<Game> gameList = pgnWriter.getGameList();
+					
+					if (file.exists()) {
+						final PgnReader pgnReader = new PgnReader();
+						pgnReader.readPgnFromFile(file);
+					
+						gameList.addAll(pgnReader.getGameList());
+					}
+	
+					final GameEditor gameEditor = application.getActualGameEditor();
+					final Game game = gameEditor.getGame();
+	
+					if (!gameList.isEmpty()) {
+						final int selectedIndex = GameSelectorDialog.selectGameFromGameList(application, getMainFrame(), gameList, GameSelectorMode.OVERWRITE);
+						
+						if (selectedIndex < 0)
+							return;   // User cancel
+						
+						if (selectedIndex < gameList.size())
+							gameList.set(selectedIndex, game);
+						else
+							gameList.add(game);	
+					}
+					else
+						gameList.add(game);
+					
+					final FileOutputStream stream = new FileOutputStream(file);
 
 					try {
-						pgn.writePgnToStream(stream);
+						pgnWriter.writePgnToStream(stream);
 					}
 					finally {
 						stream.close();

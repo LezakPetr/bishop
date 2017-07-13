@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import bishop.tables.FigureAttackTable;
+import bishop.tables.PawnAttackTable;
 import utils.IoUtils;
 
 public final class Piece {
@@ -115,6 +117,13 @@ public final class Piece {
 	@Override
 	public String toString() {
 		return Color.getName(color) + " " + PieceType.getName(pieceType);
+	}
+	
+	public long getAttackedSquares (final int square) {
+		if (pieceType == PieceType.PAWN)
+			return PawnAttackTable.getItem(color, square);
+		else
+			return FigureAttackTable.getItem(pieceType, square);
 	}
 	
 	public static final int LAST_PROMOTION_FIGURE_INDEX = (PieceType.PROMOTION_FIGURE_LAST - PieceType.PROMOTION_FIGURE_FIRST) << Color.BIT_COUNT;

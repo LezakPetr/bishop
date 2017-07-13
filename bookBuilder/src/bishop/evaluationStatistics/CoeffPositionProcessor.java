@@ -38,7 +38,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 	
 	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);
-	private final AttackCalculator attackCalculator = new AttackCalculator(evaluationFactory);
+	private final AttackCalculator attackCalculator = new AttackCalculator();
 	private GameResult result;
  
 	
@@ -129,6 +129,9 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 
 	private void fixCoeffs(final double[] bestCoeffs) {
 		bestCoeffs[PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS] = 5.0 * PieceTypeEvaluations.PAWN_EVALUATION;
+		bestCoeffs[PositionEvaluationCoeffs.KING_MAIN_PROTECTION_PAWN_BONUS] = 0.2 * PieceTypeEvaluations.PAWN_EVALUATION;
+		bestCoeffs[PositionEvaluationCoeffs.KING_SECOND_PROTECTION_PAWN_BONUS] = 0.01 * PieceTypeEvaluations.PAWN_EVALUATION;
+		bestCoeffs[PositionEvaluationCoeffs.KING_ATTACK] = 0.016 * PieceTypeEvaluations.PAWN_EVALUATION;
 	}
 
 }

@@ -1,7 +1,6 @@
 package bishopTests;
 
 import java.io.IOException;
-import java.util.function.Supplier;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -10,10 +9,8 @@ import bishop.base.BitBoard;
 import bishop.base.Color;
 import bishop.base.Fen;
 import bishop.base.Position;
-import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.AttackCalculator;
-import bishop.engine.AttackEvaluationTable;
-import bishop.engine.IPositionEvaluation;
+import bishop.engine.AttackEvaluationTableGroup;
 
 public class AttackCalculatorTest {
 	@Test
@@ -60,14 +57,13 @@ public class AttackCalculatorTest {
 		};
 		
 		final Fen fen = new Fen();
-		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
-		final AttackCalculator calculator = new AttackCalculator(evaluationFactory);
+		final AttackCalculator calculator = new AttackCalculator();
 		
 		for (TestValue testValue: testValueArray) {
 			fen.readFenFromString(testValue.positionFen);
 			
 			final Position position = fen.getPosition();
-			calculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
+			calculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
 			
 			for (int color = Color.FIRST; color < Color.LAST; color++) {
 				final long attackedSquares = calculator.getDirectlyAttackedSquares(color);
@@ -98,14 +94,13 @@ public class AttackCalculatorTest {
 		};
 		
 		final Fen fen = new Fen();
-		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
-		final AttackCalculator calculator = new AttackCalculator(evaluationFactory);
+		final AttackCalculator calculator = new AttackCalculator();
 		
 		for (TestValue testValue: testValueArray) {
 			fen.readFenFromString(testValue.positionFen);
 			
 			final Position position = fen.getPosition();
-			calculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
+			calculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
 			
 			Assert.assertEquals(testValue.canBeMate, calculator.getCanBeMate());
 		}

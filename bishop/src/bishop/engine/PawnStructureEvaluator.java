@@ -46,6 +46,9 @@ public class PawnStructureEvaluator {
 			final long passedPawnMask = structureData.getPassedPawnMask(color);
 			final long connectedPawnMask = structureData.getConnectedPawnMask(color);
 			final long protectedPawnMask = structureData.getProtectedPawnMask(color);
+			final long singleDisadvantageAttackPawnMask = structureData.getSingleDisadvantageAttackPawnMask(color);
+			final long doubleDisadvantageAttackPawnMask = structureData.getDoubleDisadvantageAttackPawnMask(color);
+			final long blockedPawnMask = structureData.getBlockedPawnMask(color);
 			
 			for (BitLoop loop = new BitLoop(ownPawnMask); loop.hasNextSquare(); ) {
 				final int square = loop.getNextSquare();
@@ -81,7 +84,16 @@ public class PawnStructureEvaluator {
 					else {
 						if ((protectedPawnMask & squareMask) != 0)
 							evaluation.addCoeff(coeffs.getProtectedNotPassedPawnBonusCoeff(color, rank), color);
-					}					
+					}
+					
+					if ((singleDisadvantageAttackPawnMask & squareMask) != 0)
+						evaluation.addCoeff(coeffs.getSingleDisadvantageAttackPawnBonusCoeff(color, rank), color);
+					
+					if ((doubleDisadvantageAttackPawnMask & squareMask) != 0)
+						evaluation.addCoeff(coeffs.getDoubleDisadvantageAttackPawnBonusCoeff(color, rank), color);
+					
+					if ((blockedPawnMask & squareMask) != 0)
+						evaluation.addCoeff(coeffs.getBlockedPawnBonusCoeff(color, rank), color);
 				}
 				
 				// Double pawn
@@ -89,6 +101,18 @@ public class PawnStructureEvaluator {
 					evaluation.addCoeff(coeffs.getDoublePawnBonusCoeff(color, rank), color);
 				}
 			}
+		}
+		
+		// Pawn islands
+		for (int i = 0; i < PawnStructureData.MAX_PAWN_ISLAND_COUNT; i++) {
+			final int whitePawnCount = structureData.getIslandPawnCount(i, Color.WHITE);
+			final int blackPawnCount = structureData.getIslandPawnCount(i, Color.BLACK);
+							
+			if (whitePawnCount > blackPawnCount && structureData.isIslandAlive(i, Color.WHITE))
+				evaluation.addCoeff(coeffs.getPawnMajorityCoeff(blackPawnCount), Color.WHITE);
+			
+			if (blackPawnCount > whitePawnCount && structureData.isIslandAlive(i, Color.BLACK))
+				evaluation.addCoeff(coeffs.getPawnMajorityCoeff(whitePawnCount), Color.BLACK);
 		}
 	}
 	

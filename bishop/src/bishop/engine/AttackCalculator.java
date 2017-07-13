@@ -1,7 +1,6 @@
 package bishop.engine;
 
 import java.util.Arrays;
-import java.util.function.Supplier;
 
 import bishop.base.BitBoard;
 import bishop.base.BitLoop;
@@ -18,20 +17,23 @@ import bishop.tables.FigureAttackTable;
 
 public class AttackCalculator {
 	
+	private static final int QUEEN_ATTACK_COEFF = 2;
+	private static final int ROOK_ATTACK_COEFF = 2;
+	private static final int BISHOP_ATTACK_COEFF = 1;
+	private static final int KNIGHT_ATTACK_COEFF = 1;
+	private static final int PAWN_ATTACK_COEFF = 1;
+	
 	private final long[] kingMasks = new long[Color.LAST];   // Mask of kings
 	private final long[][] pieceAttackedSquares = new long[Color.LAST][PieceType.LAST];   // Squares attacked by pieces
 	private final long[] directlyAttackedSquares = new long[Color.LAST];   // Squares attacked by some piece
 	private final long[] indirectlyAttackedSquares = new long[Color.LAST];   // Squares attacked by some piece, only pawns are blocking squares
 	private final int[] mobility = new int[Piece.LAST_PROMOTION_FIGURE_INDEX];
-	private final IPositionEvaluation attackEvaluation;
+	private final int[] attackEvaluation = new int[Color.LAST];   // Attack evaluation (always positive)
 	private boolean canBeMate;
 	private boolean hasPin;
 	
-	public AttackCalculator(final Supplier<IPositionEvaluation> evaluationFactory) {
-		this.attackEvaluation = evaluationFactory.get();
-	}
 	
-	public void calculate(final Position position, final AttackEvaluationTable[] attackTables) {
+	public void calculate(final Position position, final AttackEvaluationTableGroup attackTables) {
 		fillKingMasks(position);
 		calculatePawnAttacks(position);
 		calculateMobility(position);
@@ -159,15 +161,15 @@ public class AttackCalculator {
 		return false;
 	}
 
-	private void calculateAttacks(final Position position, final AttackEvaluationTable[] attackTables) {
+	private void calculateAttacks(final Position position, final AttackEvaluationTableGroup attackTables) {
 		final long blockingSquareMask = position.getBothColorPiecesMask(PieceType.PAWN);
 		final BitLoop sourceSquareLoop = new BitLoop();
 		
-		attackEvaluation.clear();
-		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final AttackEvaluationTable attackTable = attackTables[color];
+			final int oppositeColor = Color.getOppositeColor(color);
+			final LineAttackEvaluationTable attackTable = attackTables.getLineAttackTable(oppositeColor);
 			long ownAttackedSquares = BitBoard.EMPTY;
+			int evaluation = 0;
 			
 			// Bishop
 			final long bishopMask = position.getPiecesMask(color, PieceType.BISHOP);
@@ -176,7 +178,7 @@ public class AttackCalculator {
 				final int sourceSquare = sourceSquareLoop.getNextSquare();
 				
 				final int index = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, sourceSquare, blockingSquareMask);
-				attackEvaluation.addCoeff(PositionEvaluationCoeffs.BISHOP_ATTACK_COEFF, color, attackTable.getAttackEvaluation (index));
+				evaluation += BISHOP_ATTACK_COEFF * attackTable.getAttackEvaluation (index);
 				
 				final long attack = LineAttackTable.getAttackMask(index);
 				ownAttackedSquares |= attack;
@@ -189,7 +191,7 @@ public class AttackCalculator {
 				final int sourceSquare = sourceSquareLoop.getNextSquare();
 				
 				final int index = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, sourceSquare, blockingSquareMask);
-				attackEvaluation.addCoeff(PositionEvaluationCoeffs.ROOK_ATTACK_COEFF, color, attackTable.getAttackEvaluation (index));
+				evaluation += ROOK_ATTACK_COEFF * attackTable.getAttackEvaluation (index);
 				
 				final long attack = LineAttackTable.getAttackMask(index);
 				ownAttackedSquares |= attack;
@@ -207,7 +209,7 @@ public class AttackCalculator {
 				final int indexOrthogonal = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, sourceSquare, blockingSquareMask);
 				final int orthogonalEvaluation = attackTable.getAttackEvaluation (indexOrthogonal);
 				
-				attackEvaluation.addCoeff(PositionEvaluationCoeffs.QUEEN_ATTACK_COEFF, color, diagonalEvaluation + orthogonalEvaluation);
+				evaluation += QUEEN_ATTACK_COEFF * (diagonalEvaluation + orthogonalEvaluation);
 				
 				final long attackDiagonal = LineAttackTable.getAttackMask(indexDiagonal);
 				final long attackOrthogonal = LineAttackTable.getAttackMask(indexOrthogonal);
@@ -215,6 +217,27 @@ public class AttackCalculator {
 				ownAttackedSquares |= attack;
 			}
 			
+			// Knight
+			final long knightMask = position.getPiecesMask(color, PieceType.KNIGHT);
+			final ShortAttackEvaluationTable knightTable = attackTables.getKnightTable (oppositeColor);
+			
+			for (sourceSquareLoop.init(knightMask); sourceSquareLoop.hasNextSquare(); ) {
+				final int knightSquare = sourceSquareLoop.getNextSquare();
+				
+				evaluation += KNIGHT_ATTACK_COEFF * knightTable.getAttackEvaluation(knightSquare);
+			}
+			
+			// Pawn
+			final long pawnMask = position.getPiecesMask(color, PieceType.KNIGHT);
+			final ShortAttackEvaluationTable pawnTable = attackTables.getPawnTable (oppositeColor);
+			
+			for (sourceSquareLoop.init(pawnMask); sourceSquareLoop.hasNextSquare(); ) {
+				final int pawnSquare = sourceSquareLoop.getNextSquare();
+				
+				evaluation += PAWN_ATTACK_COEFF * pawnTable.getAttackEvaluation(pawnSquare);
+			}
+			
+			attackEvaluation[color] = evaluation;
 			indirectlyAttackedSquares[color] = ownAttackedSquares;
 		}
 	}
@@ -235,8 +258,8 @@ public class AttackCalculator {
 		return mobility[Piece.getPromotionFigureIndex(color, pieceType)];
 	}
 	
-	public IPositionEvaluation getAttackEvaluation() {
-		return attackEvaluation;
+	public int getAttackEvaluation(final int color) {
+		return attackEvaluation[color];
 	}
 	
 	public boolean isKingAttacked (final int color) {

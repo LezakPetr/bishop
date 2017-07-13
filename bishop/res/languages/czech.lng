@@ -108,7 +108,10 @@ AboutDialog.labelCompany.textPrefix=Společnost:
 
 GameSelectorTableModel.columnGame.name=Hra
 
-GameSelectorDialog.title=Výběr hry
+GameSelectorDialog.titleLoad=Výběr hry
+GameSelectorDialog.titleOverwrite=Přepsat hru
+
+GameSelectorDialog.addNewGame=--- Vložit novou hru ---
 
 GameHeaderDialog.title=Hlavička hry
 

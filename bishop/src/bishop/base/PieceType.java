@@ -126,5 +126,4 @@ public class PieceType {
 	public static String getName(final int pieceType) {
 		return PIECE_TYPE_NAMES[pieceType];
 	}
-	
 }

@@ -338,6 +338,9 @@ public class ApplicationImpl implements IApplication {
 		if (gameSettings.getGameType() == GameType.PLAY) {
 			header.setWhite(getPlayerName(Color.WHITE));
 			header.setBlack(getPlayerName(Color.BLACK));
+			
+			regimePlay.setSearchingEnabled (true);
+			regimePlay.updateSide();
 		}
 	}
 	

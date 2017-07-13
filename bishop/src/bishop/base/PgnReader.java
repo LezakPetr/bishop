@@ -1,9 +1,11 @@
 package bishop.base;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PushbackReader;
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Stack;
@@ -16,6 +18,16 @@ public class PgnReader extends Pgn {
 	private final StandardAlgebraicNotationReader sanReader = new StandardAlgebraicNotationReader();
 	protected final Stack<ITreeIterator<IGameNode>> nodeStack = new Stack<ITreeIterator<IGameNode>>();
 	
+	
+	public void readPgnFromFile (final java.io.File file) throws IOException {
+		try (
+			final Reader fileReader = new FileReader(file);
+			final PushbackReader pushBackReader = new PushbackReader(fileReader)
+		)
+		{
+			readPgn(pushBackReader);
+		}
+	}
 	
 	public void readPgnFromStream (final InputStream stream) throws IOException {
 		final PushbackReader pushbackReader = createPushbackReader(stream);
