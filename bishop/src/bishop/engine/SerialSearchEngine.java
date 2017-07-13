@@ -48,7 +48,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			killerMove = new Move();
 			principalMove = new Move();
 			hashBestMove = new Move();
-			attackCalculator = new AttackCalculator(evaluationFactory);
+			attackCalculator = new AttackCalculator();
 		}
 
 		public void openNode(final int alpha, final int beta) {

@@ -23,7 +23,8 @@ import bishop.controller.Utils;
 @SuppressWarnings("serial")
 public class GameSelectorDialog extends JDialog implements ILocalizedComponent {
 	private final IApplication application;
-	private final List<GameHeader> gameList;
+	private final String titleKey;
+	private final List<?> valueList;
 	private JTable gameTable;
 	private GameSelectorTableModel gameTableModel;
 	private JScrollPane scrollPane;
@@ -32,11 +33,12 @@ public class GameSelectorDialog extends JDialog implements ILocalizedComponent {
 	private int selectedIndex;
 
 	
-	public GameSelectorDialog (final IApplication application, final Frame owner, final List<GameHeader> gameList) {
+	public GameSelectorDialog (final IApplication application, final Frame owner, final String titleKey, final List<?> valueList) {
 		super (owner);
 		
 		this.application = application;
-		this.gameList = gameList;
+		this.titleKey = titleKey;
+		this.valueList = valueList;
 		this.selectedIndex = -1;
 		
 		initializeComponents();
@@ -50,7 +52,7 @@ public class GameSelectorDialog extends JDialog implements ILocalizedComponent {
 		
 		this.setModal(true);
 		
-		gameTableModel = new GameSelectorTableModel(application, gameList);
+		gameTableModel = new GameSelectorTableModel(application, valueList);
 		gameTable = new JTable(gameTableModel);
 		
 		scrollPane = new JScrollPane(gameTable);
@@ -75,7 +77,8 @@ public class GameSelectorDialog extends JDialog implements ILocalizedComponent {
 		public void actionPerformed(final ActionEvent event) {
 			selectedIndex = gameTable.getSelectedRow();
 			
-			dispose();
+			if (selectedIndex >= 0)
+				dispose();
 		}		
 	};
 	
@@ -86,24 +89,28 @@ public class GameSelectorDialog extends JDialog implements ILocalizedComponent {
 	};
 	
 	public void updateLanguage(final ILocalization localization) {
-		this.setTitle(localization.translateString("GameSelectorDialog.title"));
+		this.setTitle(localization.translateString(titleKey));
 	}
 	
-	public static int selectGameFromHeaderList (final IApplication application, final Frame owner, final List<GameHeader> gameHeaderList) {
-		final GameSelectorDialog dialog = new GameSelectorDialog(application, owner, gameHeaderList);
+	public static int selectGameFromHeaderList (final IApplication application, final Frame owner, final List<GameHeader> gameHeaderList, final GameSelectorMode mode) {
+		final List<Object> valueList = new ArrayList<>();
+		valueList.addAll(gameHeaderList);
+		valueList.addAll(mode.getAdditionalItems(application.getLocalization()));
+		
+		final GameSelectorDialog dialog = new GameSelectorDialog(application, owner, mode.getTitleKey(), valueList);
 		dialog.setVisible(true);
 		dialog.destroy();
 		
 		return dialog.selectedIndex;
 	}
 	
-	public static int selectGameFromGameList (final IApplication application, final Frame owner, final List<Game> gameList) {
+	public static int selectGameFromGameList (final IApplication application, final Frame owner, final List<Game> gameList, final GameSelectorMode mode) {
 		final List<GameHeader> headerList = new ArrayList<GameHeader>(gameList.size());
 		
 		for (Game game: gameList)
 			headerList.add(game.getHeader());
 		
-		return selectGameFromHeaderList (application, owner, headerList);
+		return selectGameFromHeaderList (application, owner, headerList, mode);
 	}
 
 }

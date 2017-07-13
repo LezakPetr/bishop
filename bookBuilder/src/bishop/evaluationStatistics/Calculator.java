@@ -52,6 +52,7 @@ public class Calculator {
 		System.out.println("Calculating");
 		materialProcessor.calculate();
 		coeffProcessor.calculate(materialProcessor);
+
 		parallel.shutdown();
 		
 		System.out.println("Finished");

@@ -340,6 +340,10 @@ public class BoardConstants {
 	public static long getRankMask (final int rank) {
 		return 0xFFL << (File.LAST * rank);
 	}
+	
+	public static long getFileMask(final int file) {
+		return 0x0101010101010101L << file;
+	}
 
 	/**
 	 * Returns rank where pawns with given color moves by two squares.
@@ -515,6 +519,24 @@ public class BoardConstants {
 		return getEpSquare(color, file);
 	}
 	
+	public static long getPawnsAttackedSquaresFromLeft(final int color, final long pawnsMask) {
+		final long rightPawnMask = pawnsMask & RIGHT_PAWN_CAPTURE_MASK;
+
+    	if (color == Color.WHITE)
+    		return rightPawnMask << 9;
+    	else
+    		return rightPawnMask >>> 7;
+	}
+
+	public static long getPawnsAttackedSquaresFromRight(final int color, final long pawnsMask) {
+		final long leftPawnMask = pawnsMask & LEFT_PAWN_CAPTURE_MASK;
+
+    	if (color == Color.WHITE)
+    		return leftPawnMask << 7;
+    	else
+    		return leftPawnMask >>> 9;
+	}
+
 	/**
 	 * Returns all squares attacked by some pawn.
 	 * @param color color of the pawn
@@ -522,15 +544,7 @@ public class BoardConstants {
 	 * @return mask of attacked squares
 	 */
 	public static long getPawnsAttackedSquares (final int color, final long pawnsMask) {
-		final long leftPawnMask = pawnsMask & LEFT_PAWN_CAPTURE_MASK;
-		final long rightPawnMask = pawnsMask & RIGHT_PAWN_CAPTURE_MASK;
-		
-    	if (color == Color.WHITE) {
-    		return (leftPawnMask << 7) | (rightPawnMask << 9);
-    	}
-    	else {
-    		return (leftPawnMask >>> 9) | (rightPawnMask >>> 7);
-    	}
+		return getPawnsAttackedSquaresFromLeft(color, pawnsMask) | getPawnsAttackedSquaresFromRight(color, pawnsMask);
 	}
 	
 	public static long getKingsAttackedSquares(final long kingsMask) {

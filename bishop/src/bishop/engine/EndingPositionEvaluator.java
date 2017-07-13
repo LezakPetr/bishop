@@ -73,7 +73,7 @@ public final class EndingPositionEvaluator implements IPositionEvaluator {
 		clear();
 		calculateHasFigures();
 		
-		attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
+		attackCalculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
 		evaluatePawns(attackCalculator);
 		
 		return tacticalEvaluation;

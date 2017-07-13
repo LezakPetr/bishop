@@ -1,7 +1,10 @@
 package bishop.engine;
 
+import java.util.Arrays;
+
 import bishop.base.Color;
 import bishop.base.Rank;
+import bishop.base.Square;
 
 public class PawnStructureCoeffs {
 	
@@ -15,11 +18,15 @@ public class PawnStructureCoeffs {
 	private final int[][] doublePawnBonusCoeffs;
 	private final int[][] connectedNotPassedPawnBonusCoeffs;
 	private final int[][] protectedNotPassedPawnBonusCoeffs;
+	private int[][] singleDisadvantageAttackPawnBonusCoeffs;
+	private int[][] doubleDisadvantageAttackPawnBonusCoeffs;
+	private int[][] blockedPawnBonusCoeffs;
+	private final int[] pawnMajorityCoeffs;
 	
 	private final int lastCoeff;
 	
-	public static final int COEFF_COUNT = 29;
-	
+	private static final int PAWN_COUNT = 8;
+		
 	
 	public PawnStructureCoeffs(final CoeffRegistry registry, final String category, final boolean withFigures) {
 		firstCoeff = registry.enterCategory(category);
@@ -40,6 +47,10 @@ public class PawnStructureCoeffs {
 		doublePawnBonusCoeffs = createRankCoeffs (registry, "double_pawn", Rank.R2, Rank.R6);
 		connectedNotPassedPawnBonusCoeffs = createRankCoeffs (registry, "connected_not_passed_pawn", Rank.R2, Rank.R6);
 		protectedNotPassedPawnBonusCoeffs = createRankCoeffs (registry, "protected_not_passed_pawn", Rank.R3, Rank.R6);
+		singleDisadvantageAttackPawnBonusCoeffs = createRankCoeffs (registry, "single_disadvantage_attack_pawn", Rank.R2, Rank.R6);
+		doubleDisadvantageAttackPawnBonusCoeffs = createRankCoeffs (registry, "double_disadvantage_attack_pawn", Rank.R2, Rank.R6);
+		blockedPawnBonusCoeffs = createRankCoeffs (registry, "blocked_pawn", Rank.R2, Rank.R6);
+		pawnMajorityCoeffs = createPawnMajorityCoeffs (registry);
 		
 		lastCoeff = registry.leaveCategory();
 	}
@@ -66,7 +77,24 @@ public class PawnStructureCoeffs {
 		
 		return coeffs;
 	}
-
+	
+	private int[] createPawnMajorityCoeffs(final CoeffRegistry registry) {
+		final int[] coeffs = new int[Square.COUNT];
+		
+		registry.enterCategory("pawn_majority");
+		
+		for (int i = 0; i < PAWN_COUNT; i++)
+			coeffs[i] = registry.add(Integer.toString(i));
+		
+		for (int i = 1; i < PAWN_COUNT; i++)
+			registry.addLink(new CoeffLink(coeffs[i - 1], coeffs[i], PositionEvaluationCoeffs.LINK_WEIGHT));
+		
+		Arrays.fill(coeffs, PAWN_COUNT, Square.COUNT, coeffs[PAWN_COUNT - 1]);
+		
+		registry.leaveCategory();
+		
+		return coeffs;
+	}
 
 	public int getCoeffUnprotectedOpenFilePawnBonus() {
 		return coeffUnprotectedOpenFilePawnBonus;
@@ -104,6 +132,22 @@ public class PawnStructureCoeffs {
 
 	public int getProtectedNotPassedPawnBonusCoeff(final int color, final int rank) {
 		return protectedNotPassedPawnBonusCoeffs[color][rank];
+	}
+	
+	public int getSingleDisadvantageAttackPawnBonusCoeff(int color, int rank) {
+		return singleDisadvantageAttackPawnBonusCoeffs[color][rank];
+	}
+
+	public int getDoubleDisadvantageAttackPawnBonusCoeff(int color, int rank) {
+		return doubleDisadvantageAttackPawnBonusCoeffs[color][rank];
+	}
+
+	public int getBlockedPawnBonusCoeff(int color, int rank) {
+		return blockedPawnBonusCoeffs[color][rank];
+	}
+
+	public int getPawnMajorityCoeff(final int minPieceCount) {
+		return pawnMajorityCoeffs[minPieceCount];
 	}
 	
 	public int getFirstCoeff() {

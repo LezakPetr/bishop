@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -14,7 +15,7 @@ import bishop.base.Fen;
 import bishop.base.Position;
 import bishop.base.Rank;
 import bishop.engine.AttackCalculator;
-import bishop.engine.AttackEvaluationTable;
+import bishop.engine.AttackEvaluationTableGroup;
 import bishop.engine.CoeffCountPositionEvaluation;
 import bishop.engine.EndingPositionEvaluator;
 import bishop.engine.IPositionEvaluation;
@@ -46,7 +47,11 @@ public class PawnStructureEvaluatorTest {
 			new int[] {
 				COEFFS.getProtectedNotPassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
 				COEFFS.getSinglePassedPawnBonusCoeff(Color.WHITE, Rank.R5), 1,
-				COEFFS.getProtectedPassedPawnBonusCoeff(Color.WHITE, Rank.R6), 1
+				COEFFS.getProtectedPassedPawnBonusCoeff(Color.WHITE, Rank.R6), 1,
+				COEFFS.getBlockedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R2), 2,
+				COEFFS.getBlockedPawnBonusCoeff(Color.BLACK, Rank.R4), -1,
+				COEFFS.getPawnMajorityCoeff(0), 1,
 			}
 		),
 		new TestCase(
@@ -54,7 +59,11 @@ public class PawnStructureEvaluatorTest {
 			new int[] {
 				COEFFS.getProtectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
 				COEFFS.getSinglePassedPawnBonusCoeff(Color.BLACK, Rank.R4), -1,
-				COEFFS.getProtectedPassedPawnBonusCoeff(Color.BLACK, Rank.R3), -1
+				COEFFS.getProtectedPassedPawnBonusCoeff(Color.BLACK, Rank.R3), -1,
+				COEFFS.getBlockedPawnBonusCoeff(Color.WHITE, Rank.R5), 1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R7), -2,
+				COEFFS.getBlockedPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
+				COEFFS.getPawnMajorityCoeff(0), -1,
 			}
 		),
 		new TestCase(
@@ -63,6 +72,10 @@ public class PawnStructureEvaluatorTest {
 				COEFFS.getConnectedPassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
 				COEFFS.getConnectedPassedPawnBonusCoeff(Color.WHITE, Rank.R2), 2,
 				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
+				COEFFS.getPawnMajorityCoeff(0), 1,
+				COEFFS.getPawnMajorityCoeff(1), 1,
 			}
 		),
 		new TestCase(
@@ -71,6 +84,30 @@ public class PawnStructureEvaluatorTest {
 				COEFFS.getConnectedPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
 				COEFFS.getConnectedPassedPawnBonusCoeff(Color.BLACK, Rank.R7), -2,
 				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
+				COEFFS.getPawnMajorityCoeff(0), -1,
+				COEFFS.getPawnMajorityCoeff(1), -1,
+			}
+		),
+		new TestCase(
+			"3k4/8/8/3p4/2p1p3/2P1P3/8/3K4 w - - 0 1",
+			new int[] {
+				COEFFS.getProtectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R4), -2,
+				COEFFS.getDoubleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R5), -1,
+				COEFFS.getBlockedPawnBonusCoeff(Color.WHITE, Rank.R3), 2,
+				COEFFS.getBlockedPawnBonusCoeff(Color.BLACK, Rank.R4), -2,
+			}
+		),
+		new TestCase(
+			"3k4/2p5/1ppppp2/8/1P3P2/8/8/3K4 w - - 0 1",
+			new int[] {
+				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -4,
+				COEFFS.getConnectedPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
+				COEFFS.getDoublePawnBonusCoeff(Color.BLACK, Rank.R7), -1,
+				COEFFS.getBlockedPawnBonusCoeff(Color.BLACK, Rank.R6), -2,
+				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R4), 2,
+				COEFFS.getPawnMajorityCoeff(2), -1,
 			}
 		)
 	};
@@ -143,7 +180,7 @@ public class PawnStructureEvaluatorTest {
 		final PawnStructureCache cache = new PawnStructureCache();
 		final Supplier<IPositionEvaluation> evaluationFactory = () -> new CoeffCountPositionEvaluation(positionEvaluationCoeffs);
 		final EndingPositionEvaluator evaluator = new EndingPositionEvaluator(cache, evaluationFactory);
-		final AttackCalculator attackCalculator = new AttackCalculator(evaluationFactory);
+		final AttackCalculator attackCalculator = new AttackCalculator();
 		final Fen fen = new Fen();
 		final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
 		
@@ -151,7 +188,7 @@ public class PawnStructureEvaluatorTest {
 			fen.readFenFromString(testCase.position);
 			
 			final Position position = fen.getPosition();
-			attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
+			attackCalculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
 			
 			evaluation.clear();
 			
@@ -170,7 +207,21 @@ public class PawnStructureEvaluatorTest {
 					givenCoeffMap.put(coeff, count);
 			}
 			
-			Assert.assertEquals(testCase.position, testCase.coeffMap, givenCoeffMap);
+			Assert.assertEquals(testCase.position, buildCoeffNameMap(testCase.coeffMap), buildCoeffNameMap(givenCoeffMap));
 		}
+	}
+	
+	private static Map<String, Integer> buildCoeffNameMap (final Map<Integer, Integer> coeffMap) {
+		return coeffMap.entrySet().stream()
+				.collect(
+						Collectors.toMap(
+								e -> coeffToName (e.getKey()),
+								e-> e.getValue()
+						)
+				);
+	}
+	
+	private static String coeffToName(final int coeff) {
+		return coeff + " " + PositionEvaluationCoeffs.getCoeffRegistry().getName(coeff);
 	}
 }

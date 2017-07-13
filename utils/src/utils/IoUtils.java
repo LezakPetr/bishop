@@ -16,6 +16,8 @@ import java.net.URL;
 
 public class IoUtils {
 	
+	public static final String NEW_LINE = System.lineSeparator();
+	
 	public static final char QUOTE_CHAR = '"';
 	public static final char BACKSLASH_CHAR = '\\';
 	

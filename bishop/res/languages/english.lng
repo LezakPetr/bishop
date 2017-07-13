@@ -108,7 +108,9 @@ AboutDialog.labelCompany.textPrefix=Company:
 
 GameSelectorTableModel.columnGame.name=Game
 
-GameSelectorDialog.title=Select game
+GameSelectorDialog.titleLoad=Select game
+GameSelectorDialog.titleOverwrite=Overwrite game
+GameSelectorDialog.addNewGame=--- Add new game ---
 
 GameHeaderDialog.title=Game header
 

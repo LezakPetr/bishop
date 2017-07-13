@@ -2,6 +2,8 @@ package bishop.engine;
 
 import java.util.Arrays;
 
+import utils.IoUtils;
+
 
 public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 	
@@ -71,6 +73,25 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 	
 	public double getCoeffCount (final int index) {
 		return (double) coeffCounts[index] / (double) COEFF_MULTIPLICATOR;
+	}
+	
+	@Override
+	public String toString() {
+		final CoeffRegistry registry = PositionEvaluationCoeffs.getCoeffRegistry();
+		final StringBuilder result = new StringBuilder();
+		
+		for (int i = 0; i < coeffCounts.length; i++) {
+			final double count = getCoeffCount(i);
+			
+			if (count != 0) {
+				result.append (registry.getName(i));
+				result.append (" = ");
+				result.append (count);
+				result.append (IoUtils.NEW_LINE);
+			}
+		}
+		
+		return result.toString();
 	}
 
 }

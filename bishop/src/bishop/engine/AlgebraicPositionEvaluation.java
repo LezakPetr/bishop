@@ -8,7 +8,7 @@ public class AlgebraicPositionEvaluation implements IPositionEvaluation {
 
 	private static final Supplier<IPositionEvaluation> TESTING_FACTORY = () -> new AlgebraicPositionEvaluation(new PositionEvaluationCoeffs());
 	
-	private PositionEvaluationCoeffs coeffs;
+	private final PositionEvaluationCoeffs coeffs;
 	private int evaluation;
 	
 	public AlgebraicPositionEvaluation (final PositionEvaluationCoeffs coeffs) {

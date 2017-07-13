@@ -16,7 +16,7 @@ public class ConstantPositionEvaluator implements IPositionEvaluator {
 	
 	@Override
 	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
-		attackCalculator.calculate(position, AttackEvaluationTable.BOTH_COLOR_ZERO_TABLES);
+		attackCalculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
 		
 		return tacticalEvaluation;		
 	}

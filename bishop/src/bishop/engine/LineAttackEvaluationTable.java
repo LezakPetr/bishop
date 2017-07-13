@@ -7,11 +7,11 @@ import bishop.base.LineAttackTable;
 import bishop.base.LineIndexer;
 import bishop.base.Square;
 
-public class AttackEvaluationTable {
+public class LineAttackEvaluationTable {
 	
 	private final byte[] attackTable;
 	
-	public AttackEvaluationTable(final double[] squareEvaluation) {
+	public LineAttackEvaluationTable(final double[] squareEvaluation) {
 		attackTable = new byte[LineIndexer.getLastIndex()];
 		
 		setTable(squareEvaluation);
@@ -44,7 +44,6 @@ public class AttackEvaluationTable {
 		}
 	}
 	
-	public static final AttackEvaluationTable ZERO_TABLE = new AttackEvaluationTable(new double[Square.LAST]);
+	public static final LineAttackEvaluationTable ZERO_TABLE = new LineAttackEvaluationTable(new double[Square.LAST]);
 	
-	public static final AttackEvaluationTable[] BOTH_COLOR_ZERO_TABLES = {ZERO_TABLE, ZERO_TABLE};
 }
