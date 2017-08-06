@@ -7,28 +7,18 @@ import bishop.base.BitBoard;
 import bishop.base.BoardConstants;
 import bishop.base.Color;
 import bishop.base.PieceType;
-import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
 import bishop.base.SquareColor;
 
 public final class BishopColorPositionEvaluator {
-	
-	private static final double PAWN_ON_SAME_COLOR_BONUS = -0.05;
-	
-	private final int[] pawnOnSameColorBonus;
+		
+	private final GameStageCoeffs coeffs;
 	private final IPositionEvaluation evaluation;
 	
 	
-	public BishopColorPositionEvaluator(final Supplier<IPositionEvaluation> evaluationFactory) {
-		this.evaluation = evaluationFactory.get();
-		
-		pawnOnSameColorBonus = new int[SquareColor.LAST];
-		
-		for (int color = SquareColor.FIRST; color < SquareColor.LAST; color++) {
-			final int pawnEvaluation = PieceTypeEvaluations.getPieceEvaluation(color, PieceType.PAWN);
-			
-			pawnOnSameColorBonus[color] = (int) Math.round (pawnEvaluation * PAWN_ON_SAME_COLOR_BONUS);
-		}
+	public BishopColorPositionEvaluator(final GameStageCoeffs coeffs, final Supplier<IPositionEvaluation> evaluationFactory) {
+		this.coeffs = coeffs;
+		this.evaluation = evaluationFactory.get();		
 	}
 
 	public IPositionEvaluation evaluatePosition(final Position position) {
@@ -53,7 +43,7 @@ public final class BishopColorPositionEvaluator {
 				if ((bishopMask & squareMask) != 0) {
 					final int pawnCount = BitBoard.getSquareCount(pawnMask & squareMask);
 				
-					evaluation.addCoeff(PositionEvaluationCoeffs.PAWN_ON_SAME_COLOR_BONUS, pieceColor, pawnCount);
+					evaluation.addCoeff(coeffs.pawnOnSameColorBonus, pieceColor, pawnCount);
 				}
 			}
 		}

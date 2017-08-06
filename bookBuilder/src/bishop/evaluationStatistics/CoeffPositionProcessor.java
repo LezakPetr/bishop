@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -20,11 +21,14 @@ import bishop.engine.AttackCalculator;
 import bishop.engine.CoeffCountPositionEvaluation;
 import bishop.engine.CoeffLink;
 import bishop.engine.CoeffRegistry;
+import bishop.engine.GameStage;
+import bishop.engine.GameStageCoeffs;
 import bishop.engine.IPositionEvaluation;
 import bishop.engine.PositionEvaluationCoeffs;
 import bishop.engine.PositionEvaluatorSwitch;
 import bishop.engine.PositionEvaluatorSwitchSettings;
 import math.EquationSystemSolver;
+import math.Sigmoid;
 import math.Utils;
 
 public class CoeffPositionProcessor implements IPositionProcessor {
@@ -50,14 +54,18 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 		
 		for (CoeffLink link: registry.getCoeffLinks()) {
 			final double[] equationCoeffs = new double[PositionEvaluationCoeffs.LAST];
-			equationCoeffs[link.getCoeff1()] = +1;
-			equationCoeffs[link.getCoeff2()] = -1;
+			
+			for (int i = 0; i < link.getNodeCount(); i++) {
+				final CoeffLink.Node node = link.getNodeAt(i);
+				
+				equationCoeffs[node.getCoeff()] = node.getMultiplier();
+			}
 			
 			equationSolver.addEquation(equationCoeffs, rightSides, link.getWeight());
 		}
 		
-		PositionEvaluationCoeffs.MIDDLE_GAME_TABLE_EVALUATOR_COEFFS.addZeroSumEquation(equationSolver);
-		PositionEvaluationCoeffs.ENDING_TABLE_EVALUATOR_COEFFS.addZeroSumEquation(equationSolver);
+		for (int stage = GameStage.FIRST; stage < GameStage.LAST; stage++)
+			PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(stage).tableEvaluatorCoeffs.addZeroSumEquation(equationSolver);
 	}
 	
 	@Override
@@ -85,18 +93,26 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional(attackCalculator);
 			evaluation.addSubEvaluation(positionalEvaluation);
 
-			final double[] equationCoeffs = new double[PositionEvaluationCoeffs.LAST];
+			final Set<Integer> nonZeroCoeffs = evaluation.getNonZeroCoeffs();
+			final int coeffCount = nonZeroCoeffs.size();
 			
-			for (int i = 0; i < PositionEvaluationCoeffs.LAST; i++) {
-				equationCoeffs[i] = evaluation.getCoeffCount(i);
+			final int[] coeffIndices = new int[coeffCount];
+			final double[] equationCoeffs = new double[coeffCount];
+			
+			int index = 0;
+			
+			for (Integer coeff: nonZeroCoeffs) {
+				coeffIndices[index] = coeff;
+				equationCoeffs[index] = evaluation.getCoeffCount(coeff);
+				index++;
 			}
-			
+						
 			final double probabilityRightSide = PROBABILITY_RIGHT_SIDES.get(result);   // We will update the right side vector later in calculate
 			final double evaluationRightSide = -evaluation.getConstantEvaluation();
 			
 			final double[] rightSide = new double[] {probabilityRightSide, evaluationRightSide};
 			
-			equationSolver.addEquation(equationCoeffs, rightSide, 1.0);
+			equationSolver.addEquation(coeffIndices, equationCoeffs, rightSide, 1.0);
 		}
 	}
 
@@ -129,9 +145,19 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 
 	private void fixCoeffs(final double[] bestCoeffs) {
 		bestCoeffs[PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS] = 5.0 * PieceTypeEvaluations.PAWN_EVALUATION;
-		bestCoeffs[PositionEvaluationCoeffs.KING_MAIN_PROTECTION_PAWN_BONUS] = 0.2 * PieceTypeEvaluations.PAWN_EVALUATION;
-		bestCoeffs[PositionEvaluationCoeffs.KING_SECOND_PROTECTION_PAWN_BONUS] = 0.01 * PieceTypeEvaluations.PAWN_EVALUATION;
-		bestCoeffs[PositionEvaluationCoeffs.KING_ATTACK] = 0.016 * PieceTypeEvaluations.PAWN_EVALUATION;
+		
+		final Sigmoid sigmoid = new Sigmoid(0.4 * GameStage.LAST, 0.7 * GameStage.LAST, 1.0, 0.0);
+		
+		for (int stage = GameStage.FIRST; stage < GameStage.LAST; stage++) {
+			final double c = sigmoid.applyAsDouble(stage);
+			final GameStageCoeffs coeffs = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(stage);
+			
+			if (stage != GameStage.PAWNS_ONLY) {
+				bestCoeffs[coeffs.kingMainProtectionPawnBonus] = 0.2 * c * PieceTypeEvaluations.PAWN_EVALUATION;
+				bestCoeffs[coeffs.kingSecondProtectionPawnBonus] = 0.01 * c * PieceTypeEvaluations.PAWN_EVALUATION;
+				bestCoeffs[coeffs.kingAttackBonus] = 0.016 * c * PieceTypeEvaluations.PAWN_EVALUATION;
+			}
+		}
 	}
 
 }

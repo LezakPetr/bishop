@@ -2,13 +2,13 @@ package bishop.engine;
 
 public final class PositionEvaluatorSwitchSettings {
 	
-	private final MiddleGameEvaluatorSettings middleGameEvaluatorSettings;
+	private final GeneralEvaluatorSettings generalEvaluatorSettings;
 	
 	public PositionEvaluatorSwitchSettings() {
-		middleGameEvaluatorSettings = new MiddleGameEvaluatorSettings();
+		generalEvaluatorSettings = new GeneralEvaluatorSettings();
 	}
 
-	public MiddleGameEvaluatorSettings getMiddleGameEvaluatorSettings() {
-		return middleGameEvaluatorSettings;
+	public GeneralEvaluatorSettings getGeneralEvaluatorSettings() {
+		return generalEvaluatorSettings;
 	}
 }

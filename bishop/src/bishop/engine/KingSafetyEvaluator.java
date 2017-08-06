@@ -21,9 +21,11 @@ public class KingSafetyEvaluator {
 			new Sigmoid(100, 200, 0, 50),
 			0, 300);
 			
+	private final GameStageCoeffs coeffs;
 	private final IPositionEvaluation evaluation;
 	
-	public KingSafetyEvaluator (final Supplier<IPositionEvaluation> evaluationFactory) {
+	public KingSafetyEvaluator (final GameStageCoeffs coeffs, final Supplier<IPositionEvaluation> evaluationFactory) {
+		this.coeffs = coeffs;
 		this.evaluation = evaluationFactory.get();
 	}
 	
@@ -41,7 +43,7 @@ public class KingSafetyEvaluator {
 			final int attackEvaluation = attackCalculator.getAttackEvaluation(color);
 			final int transformedEvaluation = transformAttackEvaluation(attackEvaluation);
 			
-			evaluation.addCoeff(PositionEvaluationCoeffs.KING_ATTACK, color, transformedEvaluation);
+			evaluation.addCoeff(coeffs.kingAttackBonus, color, transformedEvaluation);
 		}	
 	}
 
@@ -54,12 +56,12 @@ public class KingSafetyEvaluator {
 		
 		final long mainPawnMask = pawnMask & MainKingProtectionPawnsTable.getItem(color, castlingType);
 		final int mainPawnCount = BitBoard.getSquareCount(mainPawnMask);
-		evaluation.addCoeff(PositionEvaluationCoeffs.KING_MAIN_PROTECTION_PAWN_BONUS, color, mainPawnCount << shift);
+		evaluation.addCoeff(coeffs.kingMainProtectionPawnBonus, color, mainPawnCount << shift);
 		
 		final long alreadyProtected = (mainPawnMask << File.COUNT) | (mainPawnMask >>> File.COUNT);
 		final long secondPawnMask = pawnMask & SecondKingProtectionPawnsTable.getItem(color, castlingType) & ~alreadyProtected;
 		final int secondPawnCount = BitBoard.getSquareCount(secondPawnMask);
-		evaluation.addCoeff(PositionEvaluationCoeffs.KING_SECOND_PROTECTION_PAWN_BONUS, color, secondPawnCount << shift);
+		evaluation.addCoeff(coeffs.kingSecondProtectionPawnBonus, color, secondPawnCount << shift);
 	}
 	
 	private void evaluateKingFiles(final Position position) {

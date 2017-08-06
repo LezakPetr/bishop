@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+
 public class EquationSystemSolver {
 	
 	private final int variableCount;
@@ -18,28 +19,23 @@ public class EquationSystemSolver {
 		this.updatedB = new double[rightSideCount][variableCount];
 	}
 	
-	public void addEquation (final double[] coeffs, final double[] rightSides, final double weight) {
-		// Find non zero coeff indices
-		final int[] nonZeroCoeffIndices = new int[variableCount];
-		int coeffCount = 0;
+	// Adds equation - sparse version
+	public void addEquation (final int[] coeffIndices, final double coeffs[], final double[] rightSides, final double weight) {
+		final int coeffCount = coeffs.length;
 		
-		for (int i = 0; i < variableCount; i++) {
-			if (coeffs[i] != 0) {
-				nonZeroCoeffIndices[coeffCount] = i;
-				coeffCount++;
-			}
-		}
+		if (coeffIndices.length != coeffCount)
+			throw new RuntimeException("Different lengths of array");
 		
 		// m - elements below and above diagonal
 		final double normalizedWeight = Math.sqrt(weight);
 		
 		for (int i = 0; i < coeffCount; i++) {
-			final int firstIndex = nonZeroCoeffIndices[i];
-			final double subProduct = coeffs[firstIndex] * normalizedWeight;
+			final int firstIndex = coeffIndices[i];
+			final double subProduct = coeffs[i] * normalizedWeight;
 			
 			for (int j = 0; j < i; j++) {
-				final int secondIndex = nonZeroCoeffIndices[j];
-				final double product = subProduct * coeffs[secondIndex];
+				final int secondIndex = coeffIndices[j];
+				final double product = subProduct * coeffs[j];
 				final double element = m[firstIndex][secondIndex] + product;
 				
 				m[firstIndex][secondIndex] = element;
@@ -49,8 +45,8 @@ public class EquationSystemSolver {
 		
 		// m - diagonal
 		for (int i = 0; i < coeffCount; i++) {
-			final int index = nonZeroCoeffIndices[i];
-			final double coeff = coeffs[index];
+			final int index = coeffIndices[i];
+			final double coeff = coeffs[i];
 			final double product = coeff * coeff * normalizedWeight;
 			m[index][index] += product;
 		}
@@ -60,12 +56,41 @@ public class EquationSystemSolver {
 			final double weightedRightSide = normalizedWeight * rightSides[rightSideIndex];
 			
 			for (int i = 0; i < coeffCount; i++) {
-				final int index = nonZeroCoeffIndices[i];
+				final int index = coeffIndices[i];
 
-				final double product = weightedRightSide * coeffs[index];
+				final double product = weightedRightSide * coeffs[i];
 				updatedB[rightSideIndex][index] += product;
 			}
 		}
+	}
+	
+	// Adds equation - dense version
+	public void addEquation (final double[] coeffs, final double[] rightSides, final double weight) {
+		// Find non zero coeff indices
+		int coeffCount = 0;
+		
+		for (int i = 0; i < variableCount; i++) {
+			if (coeffs[i] != 0)
+				coeffCount++;
+		}
+		
+		final int[] nonZeroCoeffIndices = new int[coeffCount];
+		final double[] nonZeroCoeffs = new double[coeffCount];
+		
+		int index = 0;
+		
+		for (int i = 0; i < variableCount; i++) {
+			if (coeffs[i] != 0) {
+				nonZeroCoeffIndices[index] = i;
+				nonZeroCoeffs[index] = coeffs[i];
+				index++;
+			}
+		}
+	
+		if (index != coeffCount)
+			throw new RuntimeException("Internal error");
+		
+		addEquation(nonZeroCoeffIndices, nonZeroCoeffs, rightSides, weight);
 	}
 	
 	public List<List<Double>> solveEquations() {
