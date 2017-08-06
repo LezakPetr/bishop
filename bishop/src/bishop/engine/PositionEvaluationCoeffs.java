@@ -3,38 +3,61 @@ package bishop.engine;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
+import collections.ImmutableList;
 import utils.IoUtils;
 
 public class PositionEvaluationCoeffs {
 	
 	public static final double LINK_WEIGHT = 1024;
+	public static final double GAME_STAGE_LINK_WEIGHT = 65536;
 	
 	public static final int FIRST = 0;
 	private static final CoeffRegistry registry = new CoeffRegistry();
 	
 	public static final int RULE_OF_SQUARE_BONUS = registry.add("rule_of_square");
-	public static final int PAWN_ON_SAME_COLOR_BONUS = registry.add("pawn_on_same_color");
-	public static final int ROOK_ON_OPEN_FILE_BONUS = registry.add("rook_on_open_file");
-	
-	public static final int KING_MAIN_PROTECTION_PAWN_BONUS = registry.add("king_main_protection_pawn");
-	public static final int KING_SECOND_PROTECTION_PAWN_BONUS = registry.add("king_second_protection_pawn");
-	public static final int FIGURE_ON_SECURE_SQUARE_BONUS = registry.add("figure_on_secure_square");
-	public static final int QUEEN_MOVE_BONUS = registry.add("queen_move");
-	public static final int KING_ATTACK = registry.add("king_attack");
-	
-	public static final TablePositionCoeffs MIDDLE_GAME_TABLE_EVALUATOR_COEFFS = new TablePositionCoeffs(registry, "middle_game_table_evaluator");
-	public static final TablePositionCoeffs ENDING_TABLE_EVALUATOR_COEFFS = new TablePositionCoeffs(registry, "ending_table_evaluator");
+
+	public static final List<GameStageCoeffs> GAME_STAGE_COEFFS = createGameStageCoeffs();
 	
 	public static final int MOBILITY_OFFSET = MobilityPositionEvaluator.registerCoeffs(registry);
-	
-	public static final PawnStructureCoeffs MIDDLE_GAME_PAWN_STRUCTURE_COEFFS = new PawnStructureCoeffs(registry, "middle_game_pawn_structure", true);
-	public static final PawnStructureCoeffs ENDING_WITH_FIGURES_PAWN_STRUCTURE_COEFFS = new PawnStructureCoeffs(registry, "ending_with_figures_pawn_structure", true);
-	public static final PawnStructureCoeffs ENDING_PAWNS_ONLY_PAWN_STRUCTURE_COEFFS = new PawnStructureCoeffs(registry, "ending_pawns_only_pawn_structure", false);
 	
 	public static final int LAST = registry.finish();
 	
 	private final short[] coeffs = new short[LAST];
+	
+	
+	private static List<GameStageCoeffs> createGameStageCoeffs() {
+		final ImmutableList.Builder<GameStageCoeffs> builder = ImmutableList.<GameStageCoeffs>builder().withCapacity(GameStage.LAST);
+		builder.addTimes(null, GameStage.FIRST);
+		
+		for (int i = GameStage.FIRST; i < GameStage.LAST; i++)
+			builder.add(new GameStageCoeffs(registry, i));
+		
+		List<GameStageCoeffs> coeffList = builder.build();
+		
+		for (int stage = GameStage.WITH_FIGURES_FIRST + 1; stage < GameStage.WITH_FIGURES_LAST - 1; stage++) {
+			final GameStageCoeffs prev = coeffList.get(stage - 1);
+			final GameStageCoeffs current = coeffList.get(stage);
+			final GameStageCoeffs next = coeffList.get(stage + 1);
+			
+			for (int prevCoeff = prev.getFirstCoeff(); prevCoeff < prev.getLastCoeff(); prevCoeff++) {
+				final int coeffOffset = prevCoeff - prev.getFirstCoeff();
+				final int currentCoeff = current.getFirstCoeff() + coeffOffset;
+				final int nextCoeff = next.getFirstCoeff() + coeffOffset;
+				
+				// Link - second derivation is 0
+				final CoeffLink link = new CoeffLink(GAME_STAGE_LINK_WEIGHT);
+				link.addNode(prevCoeff, 1.0);
+				link.addNode(currentCoeff, -2.0);
+				link.addNode(nextCoeff, 1.0);
+				
+				registry.addLink(link);
+			}
+		}
+		
+		return coeffList;
+	}
 	
 	public int getEvaluationCoeff (final int index) {
 		return coeffs[index];

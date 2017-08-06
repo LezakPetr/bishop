@@ -1,6 +1,9 @@
 package bishop.engine;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import utils.IoUtils;
 
@@ -11,12 +14,12 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 	private static final int COEFF_MULTIPLICATOR = 1 << COEFF_COUNT_SHIFT;
 	
 	private int constantEvaluation;
-	private final int[] coeffCounts;
+	private final Map<Integer, Integer> coeffCounts;
 	
 	public CoeffCountPositionEvaluation(final PositionEvaluationCoeffs coeffs) {
 		super (coeffs);
 		
-		this.coeffCounts = new int[PositionEvaluationCoeffs.LAST];
+		this.coeffCounts = new HashMap<>();
 	}
 
 	@Override
@@ -24,7 +27,7 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 		super.clear();
 		
 		constantEvaluation = 0;
-		Arrays.fill(coeffCounts, 0);
+		coeffCounts.clear();
 	}
 	
 	@Override
@@ -38,7 +41,9 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 	public void addCoeffWithCount(final int index, final int count) {
 		super.addCoeffWithCount(index, count);
 		
-		coeffCounts[index] += count << COEFF_COUNT_SHIFT;
+		final int shiftedCount = count << COEFF_COUNT_SHIFT;
+		
+		coeffCounts.merge(index, shiftedCount, Integer::sum);
 	}
 	
 	@Override
@@ -47,8 +52,7 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 		
 		constantEvaluation >>= shift;
 		
-		for (int i = PositionEvaluationCoeffs.FIRST; i < PositionEvaluationCoeffs.LAST; i++)
-			coeffCounts[i] >>= shift;
+		coeffCounts.replaceAll((k, v) -> k >> shift);
 	}
 	
 	@Override
@@ -60,8 +64,9 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 			
 			this.constantEvaluation += subCoeffEvaluation.constantEvaluation;
 			
-			for (int i = PositionEvaluationCoeffs.FIRST; i < PositionEvaluationCoeffs.LAST; i++)
-				this.coeffCounts[i] += subCoeffEvaluation.coeffCounts[i];
+			subCoeffEvaluation.coeffCounts.forEach(
+				(k, v) -> this.coeffCounts.merge(k, v, Integer::sum)	
+			);
 		}
 		else
 			this.constantEvaluation += subEvaluation.getEvaluation();
@@ -72,7 +77,7 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 	}
 	
 	public double getCoeffCount (final int index) {
-		return (double) coeffCounts[index] / (double) COEFF_MULTIPLICATOR;
+		return (double) coeffCounts.getOrDefault(index, 0) / (double) COEFF_MULTIPLICATOR;
 	}
 	
 	@Override
@@ -80,11 +85,11 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 		final CoeffRegistry registry = PositionEvaluationCoeffs.getCoeffRegistry();
 		final StringBuilder result = new StringBuilder();
 		
-		for (int i = 0; i < coeffCounts.length; i++) {
-			final double count = getCoeffCount(i);
+		for (Integer coeff: coeffCounts.keySet()) {
+			final double count = getCoeffCount(coeff);
 			
 			if (count != 0) {
-				result.append (registry.getName(i));
+				result.append (registry.getName(coeff));
 				result.append (" = ");
 				result.append (count);
 				result.append (IoUtils.NEW_LINE);
@@ -92,6 +97,10 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 		}
 		
 		return result.toString();
+	}
+	
+	public Set<Integer> getNonZeroCoeffs() {
+		return Collections.unmodifiableSet(coeffCounts.keySet());
 	}
 
 }

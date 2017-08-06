@@ -10,9 +10,8 @@ import bishop.base.Position;
 
 public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 	
-	private final MiddleGamePositionEvaluator middleGameEvaluator;
-	private final GeneralMatingPositionEvaluator generalMatingEvaluator;
-	private final EndingPositionEvaluator endingEvaluator;
+	private final GeneralPositionEvaluator generalPositionEvaluator;
+	private final MatingPositionEvaluator generalMatingEvaluator;
 	private final DrawPositionEvaluator drawEvaluator;
 	private final PawnStructureCache pawnStructureCache;
 
@@ -28,10 +27,9 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 	public PositionEvaluatorSwitch(final PositionEvaluatorSwitchSettings settings, final Supplier<IPositionEvaluation> evaluationFactory) {
 		pawnStructureCache = new PawnStructureCache();
 		
-		middleGameEvaluator = new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), pawnStructureCache, evaluationFactory);
-		generalMatingEvaluator = new GeneralMatingPositionEvaluator(evaluationFactory);
+		generalPositionEvaluator = new GeneralPositionEvaluator(settings.getGeneralEvaluatorSettings(), pawnStructureCache, evaluationFactory);
+		generalMatingEvaluator = new MatingPositionEvaluator(evaluationFactory);
 		drawEvaluator = new DrawPositionEvaluator(evaluationFactory);
-		endingEvaluator = new EndingPositionEvaluator(pawnStructureCache, evaluationFactory);
 		
 		hasMatingMaterial = new boolean[Color.LAST];
 	}
@@ -51,7 +49,7 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 					return;
 				}
 				
-				currentEvaluator = endingEvaluator;
+				currentEvaluator = generalPositionEvaluator;
 				return;
 			}
 		}
@@ -61,23 +59,7 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 			return;
 		}
 		
-		if (isEnding())
-			currentEvaluator = endingEvaluator;
-		else
-			currentEvaluator = middleGameEvaluator;
-	}
-	
-	private boolean isEnding() {
-		int count = 0;
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			count += 4 * materialHash.getPieceCount(color, PieceType.QUEEN);
-			count += 2 * materialHash.getPieceCount(color, PieceType.ROOK);
-			count += materialHash.getPieceCount(color, PieceType.BISHOP);
-			count += materialHash.getPieceCount(color, PieceType.KNIGHT);
-		}
-		
-		return count <= 8;
+		currentEvaluator = generalPositionEvaluator;
 	}
 	
 	@Override

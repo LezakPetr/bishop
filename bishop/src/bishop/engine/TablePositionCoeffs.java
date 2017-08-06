@@ -23,14 +23,14 @@ public class TablePositionCoeffs {
 		return (color << COLOR_SHIFT) + (pieceType << PIECE_TYPE_SHIFT) + square;
 	}
 
-	public TablePositionCoeffs(final CoeffRegistry registry, final String category) {
+	public TablePositionCoeffs(final CoeffRegistry registry) {
 		coeffIndices = new short[1 << TOTAL_BITS];
-		fillCoeffIndices(registry, category);
+		fillCoeffIndices(registry);
 	}
 	
 
-	private void fillCoeffIndices(final CoeffRegistry registry, final String category) {
-		registry.enterCategory(category);
+	private void fillCoeffIndices(final CoeffRegistry registry) {
+		registry.enterCategory("table_position");
 		
 		Arrays.fill(coeffIndices, (short) -1);
 		

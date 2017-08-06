@@ -8,13 +8,13 @@ import bishop.base.Position;
 import bishop.tables.MatedKingEvaluationTable;
 import bishop.tables.MatingKingEvaluationTable;
 
-public final class GeneralMatingPositionEvaluator implements IPositionEvaluator {
+public final class MatingPositionEvaluator implements IPositionEvaluator {
 	
 	private final IPositionEvaluation positionalEvaluation;
 	private final IPositionEvaluation tacticalEvaluation;
 	private Position position;
 	
-	public GeneralMatingPositionEvaluator (final Supplier<IPositionEvaluation> evaluationFactory) {
+	public MatingPositionEvaluator (final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.tacticalEvaluation = evaluationFactory.get();
 		this.positionalEvaluation = evaluationFactory.get();
 	}

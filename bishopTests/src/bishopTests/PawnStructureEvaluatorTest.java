@@ -17,7 +17,9 @@ import bishop.base.Rank;
 import bishop.engine.AttackCalculator;
 import bishop.engine.AttackEvaluationTableGroup;
 import bishop.engine.CoeffCountPositionEvaluation;
-import bishop.engine.EndingPositionEvaluator;
+import bishop.engine.GameStage;
+import bishop.engine.GeneralEvaluatorSettings;
+import bishop.engine.GeneralPositionEvaluator;
 import bishop.engine.IPositionEvaluation;
 import bishop.engine.PawnStructureCache;
 import bishop.engine.PawnStructureCoeffs;
@@ -26,7 +28,7 @@ import math.Utils;
 
 public class PawnStructureEvaluatorTest {
 	
-	private static final PawnStructureCoeffs COEFFS = PositionEvaluationCoeffs.ENDING_PAWNS_ONLY_PAWN_STRUCTURE_COEFFS;
+	private static final PawnStructureCoeffs COEFFS = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(GameStage.PAWNS_ONLY).pawnStructureCoeffs;
 	
 	private static class TestCase {
 		public final String position;
@@ -179,7 +181,8 @@ public class PawnStructureEvaluatorTest {
 		
 		final PawnStructureCache cache = new PawnStructureCache();
 		final Supplier<IPositionEvaluation> evaluationFactory = () -> new CoeffCountPositionEvaluation(positionEvaluationCoeffs);
-		final EndingPositionEvaluator evaluator = new EndingPositionEvaluator(cache, evaluationFactory);
+		final GeneralEvaluatorSettings settings = new GeneralEvaluatorSettings();
+		final GeneralPositionEvaluator evaluator = new GeneralPositionEvaluator(settings, cache, evaluationFactory);
 		final AttackCalculator attackCalculator = new AttackCalculator();
 		final Fen fen = new Fen();
 		final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();

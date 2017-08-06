@@ -1,26 +1,55 @@
 package bishop.engine;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CoeffLink {
 	
-	private final int coeff1;
-	private final int coeff2;
+	public static class Node {
+		private final int coeff;
+		private final double multiplier;
+		
+		public Node (final int coeff, final double multiplier) {
+			this.coeff = coeff;
+			this.multiplier = multiplier;
+		}
+
+		public int getCoeff() {
+			return coeff;
+		}
+
+		public double getMultiplier() {
+			return multiplier;
+		}
+	}
+	
+	private final List<Node> nodeList = new ArrayList<>();
 	private final double weight;
 	
 	public CoeffLink (final int coeff1, final int coeff2, final double weight) {
-		this.coeff1 = coeff1;
-		this.coeff2 = coeff2;
+		addNode(coeff1, 1.0);
+		addNode(coeff2, -1.0);
+		
 		this.weight = weight;
 	}
-
-	public int getCoeff1() {
-		return coeff1;
+	
+	public CoeffLink (final double weight) {
+		this.weight = weight;
 	}
-
-	public int getCoeff2() {
-		return coeff2;
+	
+	public void addNode (final int coeff, final double multiplicator) {
+		this.nodeList.add(new Node (coeff, multiplicator));
 	}
 
 	public double getWeight() {
 		return weight;
+	}
+	
+	public int getNodeCount() {
+		return nodeList.size();
+	}
+	
+	public Node getNodeAt (final int index) {
+		return nodeList.get(index);
 	}
 }

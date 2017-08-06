@@ -7,10 +7,9 @@ import org.junit.Test;
 import bishop.base.Position;
 import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.AttackCalculator;
-import bishop.engine.EndingPositionEvaluator;
+import bishop.engine.GeneralPositionEvaluator;
 import bishop.engine.IPositionEvaluation;
 import bishop.engine.IPositionEvaluator;
-import bishop.engine.MiddleGamePositionEvaluator;
 import bishop.engine.PawnStructureCache;
 import bishop.engine.PositionEvaluatorSwitch;
 import bishop.engine.PositionEvaluatorSwitchSettings;
@@ -53,8 +52,7 @@ public class PositionEvaluatorTest {
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
 		final PawnStructureCache pawnStructureCache = new PawnStructureCache();
 		
-		testPositionEvaluatorSpeed (position, new MiddleGamePositionEvaluator(settings.getMiddleGameEvaluatorSettings(), pawnStructureCache, evaluationFactory));
-		testPositionEvaluatorSpeed (position, new EndingPositionEvaluator(pawnStructureCache, evaluationFactory));
+		testPositionEvaluatorSpeed (position, new GeneralPositionEvaluator(settings.getGeneralEvaluatorSettings(), pawnStructureCache, evaluationFactory));
 		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings, evaluationFactory));
 	}
 }

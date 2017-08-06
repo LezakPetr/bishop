@@ -28,8 +28,8 @@ public class PawnStructureCoeffs {
 	private static final int PAWN_COUNT = 8;
 		
 	
-	public PawnStructureCoeffs(final CoeffRegistry registry, final String category, final boolean withFigures) {
-		firstCoeff = registry.enterCategory(category);
+	public PawnStructureCoeffs(final CoeffRegistry registry, final boolean withFigures) {
+		firstCoeff = registry.enterCategory("pawn_structure");
 		
 		if (withFigures) {
 			coeffUnprotectedOpenFilePawnBonus = registry.add("unprotected_open_file_pawn");
