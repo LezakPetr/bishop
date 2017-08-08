@@ -146,7 +146,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private void fixCoeffs(final double[] bestCoeffs) {
 		bestCoeffs[PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS] = 5.0 * PieceTypeEvaluations.PAWN_EVALUATION;
 		
-		final Sigmoid sigmoid = new Sigmoid(0.4 * GameStage.LAST, 0.7 * GameStage.LAST, 1.0, 0.0);
+		final Sigmoid sigmoid = new Sigmoid(0.4 * GameStage.LAST, 0.7 * GameStage.LAST, 0.0, 1.0);
 		
 		for (int stage = GameStage.FIRST; stage < GameStage.LAST; stage++) {
 			final double c = sigmoid.applyAsDouble(stage);
