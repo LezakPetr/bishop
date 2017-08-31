@@ -2,6 +2,8 @@ package collections;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public final class ImmutableList<E> extends ImmutableListBase<E> {
 	
@@ -72,9 +74,7 @@ public final class ImmutableList<E> extends ImmutableListBase<E> {
 			
 			return new ImmutableList<>(data);
 		}
-
 	}
-
 	
 	@SuppressWarnings("rawtypes")
 	private static ImmutableList EMPTY_LIST = new ImmutableList(new Object[0]);
@@ -137,5 +137,5 @@ public final class ImmutableList<E> extends ImmutableListBase<E> {
 	public static <E> Builder<E> builder() {
 		return new Builder<>();
 	}
-
+	
 }
