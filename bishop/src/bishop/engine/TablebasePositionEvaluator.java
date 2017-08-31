@@ -1,6 +1,8 @@
 package bishop.engine;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import bishop.base.IMaterialHashRead;
@@ -32,43 +34,51 @@ public class TablebasePositionEvaluator {
 
 	private void scanDirectory() {
 		final File[] files = directory.listFiles(new TablebaseFileNameFilter());
+		final Map<MaterialHash, ITableRead> tableMap = new HashMap<>();
 		
 		for (File file: files) {
 			final MaterialHash materialHash = FileNameCalculator.parseFileName(file.getName());
 			final ITableRead table = new LazyFilePositionResultSource(file, blockCache);
 			
-			tableSwitch.addTable(materialHash, table);
+			tableMap.put(materialHash, table);
 		}
+		
+		tableSwitch.setTables(tableMap);
 	}
 	
-	public boolean canEvaluate (final IMaterialHashRead materialHash) {
-		return tableSwitch.canProcessSource(materialHash);
-	}
-	
+	/**
+	 * Returns relative evaluation of given position.
+	 * @param position position to evaluate
+	 * @param depth actual depth
+	 * @return relative evaluation
+	 */
 	public int evaluatePosition(final Position position, final int depth) {
-		final int result = tableSwitch.getPositionResult(position);
-		int evaluation = Evaluation.DRAW;
+		final int result = tableSwitch.getPositionResultIfPossible(position);
 		
-		if (result == TableResult.ILLEGAL) {
-			evaluation = Evaluation.MAX;
-		}
-		else {
-			if (TableResult.isWin(result)) {
-				final int mateDepth = TableResult.getWinDepth(result);
-				final int totalDepth =  2*mateDepth + depth + 1;
+		switch (result) {
+			case TableResult.UNKNOWN_MATERIAL:
+				return Evaluation.UNKNOWN;
 				
-				evaluation = Evaluation.getMateEvaluation(totalDepth);
-			}
-			
-			if (TableResult.isLose(result)) {
-				final int mateDepth = TableResult.getLoseDepth(result);
-				final int totalDepth =  2*mateDepth + depth;
+			case TableResult.ILLEGAL:
+				return Evaluation.MAX;
 				
-				evaluation = -Evaluation.getMateEvaluation(totalDepth);
-			}
+			default:
+				if (TableResult.isWin(result)) {
+					final int mateDepth = TableResult.getWinDepth(result);
+					final int totalDepth = 2*mateDepth + depth + 1;
+					
+					return Evaluation.getMateEvaluation(totalDepth);
+				}
+				
+				if (TableResult.isLose(result)) {
+					final int mateDepth = TableResult.getLoseDepth(result);
+					final int totalDepth = 2*mateDepth + depth;
+					
+					return -Evaluation.getMateEvaluation(totalDepth);
+				}
+				
+				return Evaluation.DRAW;
 		}
-		
-		return Evaluation.getAbsolute(evaluation, position.getOnTurn());
 	}
 	
 	public Set<MaterialHash> getMaterialHashSet() {

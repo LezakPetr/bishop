@@ -7,6 +7,8 @@ public class TableResult {
 	public static final int DRAW = 0;
 	public static final int MATE = ILLEGAL + 10;
 	
+	public static final int UNKNOWN_MATERIAL = ILLEGAL - 10;   // Internal error, outside of BIT_COUNT bits
+	
 	public static final byte COMPRESSED_ILLEGAL = Byte.MIN_VALUE;
 	public static final byte COMPRESSED_DRAW = 0;
 	public static final byte COMPRESSED_MATE = -Byte.MAX_VALUE;

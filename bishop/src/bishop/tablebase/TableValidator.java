@@ -1,7 +1,9 @@
 package bishop.tablebase;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 import parallel.Parallel;
@@ -13,6 +15,7 @@ public class TableValidator {
 	
 	private final Parallel parallel;
 	private final TableSwitch resultSource;
+	private final Map<MaterialHash, ITableRead> subTables = new HashMap<>();
 	private BothColorPositionResultSource<? extends ITable> bothTables;
 	
 	
@@ -80,29 +83,22 @@ public class TableValidator {
 	}
 	
 	public boolean validateTable() throws Exception {
+		final Map<MaterialHash, ITableRead> allTables = new HashMap<>(subTables);
+
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
 			final ITable table = bothTables.getBaseSource(onTurn);
 			final TableDefinition definiton = table.getDefinition();
 			final MaterialHash materialHash = definiton.getMaterialHash();
 			
-			resultSource.addTable(materialHash, table);
+			allTables.put(materialHash, table);
 		}
 		
-		try {
-			return checkTable();
-		}
-		finally {
-			for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
-				final ITable table = bothTables.getBaseSource(onTurn);
-				final TableDefinition definiton = table.getDefinition();
-				final MaterialHash materialHash = definiton.getMaterialHash();
-				
-				resultSource.removeSource(materialHash);
-			}
-		}
+		resultSource.setTables(allTables);
+		
+		return checkTable();
 	}
 
 	public void addSubTable(final MaterialHash materialHash, final ITableRead table) {
-		resultSource.addTable(materialHash, table);
+		subTables.put(materialHash, table);
 	}
 }

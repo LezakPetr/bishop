@@ -1,6 +1,9 @@
 package bishopTests;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -11,6 +14,7 @@ import bishop.base.MaterialHash;
 import bishop.tablebase.BothColorPositionResultSource;
 import bishop.tablebase.IStagedTable;
 import bishop.tablebase.ITable;
+import bishop.tablebase.ITableRead;
 import bishop.tablebase.TableCalculator;
 import bishop.tablebase.TableReader;
 import bishop.tablebase.TableSwitch;
@@ -26,18 +30,20 @@ public class TablebaseTest {
 		
 		final TableSwitch tableSwitch = new TableSwitch();
 		final Parallel parallel = new Parallel();
+		
+		final Map<MaterialHash, ITableRead> subTables = new HashMap<>();
 
 		for (String definition: MATERIAL_HASHES) {
 			final MaterialHash materialHash = new MaterialHash(definition, Color.WHITE);
 			final MaterialHash[] materialHashArray = materialHash.getBothSideHashes();
 			final TableCalculator calculator = new TableCalculator(materialHashArray, parallel);
 			
-			for (MaterialHash subHash: tableSwitch.getMaterialHashSet()) {
-				calculator.addSubTable(subHash, tableSwitch.getTable(subHash));
-			}
-			
 			calculator.setUsePersistentTable(usePersistentTable);
 			calculator.setUseCompressedTable(useCompressedTable);
+			
+			for (Map.Entry<MaterialHash, ITableRead> entry: subTables.entrySet())
+				calculator.addSubTable(entry.getKey(), entry.getValue());
+			
 			calculator.calculate();
 			
 			final BothColorPositionResultSource<IStagedTable> bothTables = new BothColorPositionResultSource<>();
@@ -69,11 +75,13 @@ public class TablebaseTest {
 			final TableValidator validator = new TableValidator(tableSwitch, parallel);
 			validator.setTable(bothTablesRead);
 			
-			Assert.assertTrue("Table is invalid", validator.validateTable());
+			for (Map.Entry<MaterialHash, ITableRead> entry: subTables.entrySet())
+				validator.addSubTable(entry.getKey(), entry.getValue());
 
-			for (int color = Color.FIRST; color < Color.LAST; color++) {
-				tableSwitch.addTable(materialHashArray[color], bothTablesRead.getBaseSource(color));	
-			}			
+			Assert.assertTrue("Table is invalid", validator.validateTable());
+			
+			for (int color = Color.FIRST; color < Color.LAST; color++)
+				subTables.put(materialHashArray[color], bothTablesRead.getBaseSource(color));
 		}
 		
 		final long t2 = System.currentTimeMillis();

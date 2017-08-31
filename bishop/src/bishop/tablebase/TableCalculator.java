@@ -4,8 +4,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -25,6 +27,7 @@ public class TableCalculator {
 	private final Parallel parallel;
 	private final BothColorPositionResultSource<IStagedTable> bothTables;
 	private final TableSwitch resultSource;
+	private final Map<MaterialHash, ITableRead> subTables = new HashMap<>();
 	
 	private BitArray prevPositionsToCheck;
 	private BitArray nextPositionsToCheck;
@@ -46,29 +49,23 @@ public class TableCalculator {
 	}
 	
 	public void addSubTable(final MaterialHash materialHash, final ITableRead subTable) {
-		resultSource.addTable(materialHash, subTable);
+		subTables.put(materialHash, subTable);
 	}
 	
 	public void calculate() throws Exception {
+		final Map<MaterialHash, ITableRead> allTables = new HashMap<>(subTables);
+		
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
 			final TableDefinition tableDefinition = new TableDefinition(TableWriter.VERSION, materialHashArray[onTurn]);
 			final MaterialHash materialHash = tableDefinition.getMaterialHash();
 			final IStagedTable table = createStagedTable(tableDefinition);
 			
 			bothTables.setBaseSource(onTurn, table);
-			resultSource.addTable(materialHash, table);
+			allTables.put(materialHash, table);
 		}
 		
-		try {
-			generateTableBase();
-		}
-		finally {
-			for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
-				final MaterialHash materialHash = bothTables.getBaseSource(onTurn).getDefinition().getMaterialHash();
-				
-				resultSource.removeSource(materialHash);
-			}
-		}
+		resultSource.setTables(allTables);
+		generateTableBase();
 	}
 
 	private IStagedTable createStagedTable(final TableDefinition tableDefinition) {

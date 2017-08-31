@@ -63,8 +63,7 @@ public class RegimeEndingTraining extends MoveRegime<IMoveRegimeListener> {
 
 		position.makeMove (move);
 		
-		final int absoluteEvaluation = -tablebaseEvaluator.evaluatePosition(position, 0);
-		final int relativeEvaluation = Evaluation.getRelative(absoluteEvaluation, position.getOnTurn());
+		final int relativeEvaluation = -tablebaseEvaluator.evaluatePosition(position, 0);
 		
 		position.undoMove (move);
 		

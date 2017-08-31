@@ -12,6 +12,7 @@ public class Evaluation {
 	public static final int MIN = -MAX;
 	
 	public static final int DRAW = 0;
+	public static final int UNKNOWN = MAX + 1;
 	
 	public static final int BYTES = 3;
 	
