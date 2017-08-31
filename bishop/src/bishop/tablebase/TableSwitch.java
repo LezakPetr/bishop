@@ -1,8 +1,9 @@
 package bishop.tablebase;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,21 +11,34 @@ import bishop.base.MaterialHash;
 import bishop.base.IMaterialHashRead;
 import bishop.base.IPosition;
 import bishop.base.MirrorPosition;
+import collections.ImmutableProbabilisticSet;
 
 public class TableSwitch implements IPositionResultSource {
 	
 	private final Map<MaterialHash, ITableRead> tableMap;
-	private final Set<MaterialHash> bothColorMaterialSet;
+	private ImmutableProbabilisticSet<IMaterialHashRead> bothColorMaterialSet;
 	
 	
 	public TableSwitch() {
 		this.tableMap = new HashMap<>();
-		this.bothColorMaterialSet = new HashSet<>();
 	}
 	
 	@Override
 	public int getPositionResult(final IPosition position) {
+		final int result = getPositionResultIfPossible(position);
+		
+		if (result == TableResult.UNKNOWN_MATERIAL)
+			throw new RuntimeException("Unknown material " + position.getMaterialHash());
+		
+		return result;
+	}
+	
+	public int getPositionResultIfPossible(final IPosition position) {
 		final IMaterialHashRead directHash = position.getMaterialHash();
+		
+		if (!canProcessSource(directHash))
+			return TableResult.UNKNOWN_MATERIAL;   // Speed up
+		
 		final IPositionResultSource directTable = tableMap.get(directHash);
 		
 		if (directTable != null) {
@@ -40,28 +54,28 @@ public class TableSwitch implements IPositionResultSource {
 			return oppositeTable.getPositionResult(oppositePosition);
 		}
 		
-		throw new RuntimeException("Unknown material");
+		return TableResult.UNKNOWN_MATERIAL;
 	}
 	
-	public void addTable (final MaterialHash materialHash, final ITableRead table) {
-		final MaterialHash copyMaterialHash = materialHash.copy();
-		final MaterialHash oppositeMaterialHash = materialHash.getOpposite();
+	public void setTables (final Map<MaterialHash, ? extends ITableRead> tables) {
+		final List<MaterialHash> bothColorHashes = new ArrayList<>();
+		tableMap.clear();
 		
-		tableMap.put(copyMaterialHash, table);
-		bothColorMaterialSet.add(copyMaterialHash);
-		bothColorMaterialSet.add(oppositeMaterialHash);
-	}
-	
-	public void removeSource (final MaterialHash materialHash) {
-		final MaterialHash oppositeMaterialHash = materialHash.getOpposite();
-		
-		if (tableMap.remove(materialHash) != null && !tableMap.containsKey(oppositeMaterialHash)) {
-			bothColorMaterialSet.remove(materialHash);
-			bothColorMaterialSet.remove(oppositeMaterialHash);
+		for (Map.Entry<MaterialHash, ? extends ITableRead> entry: tables.entrySet()) {
+			final MaterialHash materialHash = entry.getKey();
+			final MaterialHash copyMaterialHash = materialHash.copy();
+			final MaterialHash oppositeMaterialHash = materialHash.getOpposite();
+			
+			tableMap.put(copyMaterialHash, entry.getValue());
+			
+			bothColorHashes.add(copyMaterialHash);
+			bothColorHashes.add(oppositeMaterialHash);
 		}
+		
+		bothColorMaterialSet = new ImmutableProbabilisticSet<>(bothColorHashes);
 	}
-
-	public boolean canProcessSource(final IMaterialHashRead materialHash) {
+	
+	private boolean canProcessSource(final IMaterialHashRead materialHash) {
 		return bothColorMaterialSet.contains(materialHash);
 	}
 	

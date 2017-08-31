@@ -38,11 +38,10 @@ public final class FinitePositionEvaluator {
 		
 		// Tablebase
 		if (tablebaseEvaluator != null && (depth <= 1 || horizon > 0)) {
-			final IMaterialHashRead materialHash = position.getMaterialHash();
+			final int tablebaseEvaluation = tablebaseEvaluator.evaluatePosition(position, depth);
 			
-			if (tablebaseEvaluator.canEvaluate(materialHash)) {
-				final int whiteEvaluation = tablebaseEvaluator.evaluatePosition(position, depth);
-				evaluation = Evaluation.getRelative(whiteEvaluation, position.getOnTurn());
+			if (tablebaseEvaluation != Evaluation.UNKNOWN) {
+				evaluation = tablebaseEvaluation;
 				
 				return true;
 			}

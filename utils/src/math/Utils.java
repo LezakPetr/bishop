@@ -110,8 +110,8 @@ public class Utils {
 		return roundedToByte;
 	}
 
-
 	public static int roundToPercents(final double value) {
 		return roundToInt(100.0 * value);
 	}
+	
 }
