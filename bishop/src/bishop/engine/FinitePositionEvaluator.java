@@ -1,6 +1,5 @@
 package bishop.engine;
 
-import bishop.base.IMaterialHashRead;
 import bishop.base.Position;
 
 public final class FinitePositionEvaluator {

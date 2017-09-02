@@ -4,11 +4,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import bishop.tablebase.FileNameCalculator;
+import utils.Mixer;
 
 public final class MaterialHash implements IMaterialHashRead {
-	
-	private static final long HASH_CODE_COEFF = 0xb2c9ae1182d84b7bL;
-	private static final int HASH_CODE_SHIFT = 32;
 	
 	private long hash;
 	
@@ -126,7 +124,7 @@ public final class MaterialHash implements IMaterialHashRead {
 	
 	@Override
 	public int hashCode() {
-		return (int) ((hash * HASH_CODE_COEFF) >>> HASH_CODE_SHIFT);
+		return Mixer.mixLongToInt(hash);
 	}
 
 	@Override

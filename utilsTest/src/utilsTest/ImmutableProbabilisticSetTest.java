@@ -1,18 +1,18 @@
 package utilsTest;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import collections.ImmutableList;
 import collections.ImmutableProbabilisticSet;
+import utils.Mixer;
 
 public class ImmutableProbabilisticSetTest {
 
@@ -23,18 +23,50 @@ public class ImmutableProbabilisticSetTest {
 	
 	private static final Random RNG = new Random (42);
 	
-	private static final List<List<Integer>> TEST_DATA = ImmutableList.of(
-		IntStream.range(0, NOT_CONTAIN_SIZE).boxed().collect (Collectors.toList()),
-		IntStream.range(0, NOT_CONTAIN_SIZE).map (x -> 65536 * x).boxed().collect (Collectors.toList()),
-		RNG.ints().limit(NOT_CONTAIN_SIZE).boxed().collect (Collectors.toList())
+	
+	private static class TestItem {
+		private final long value;
+		
+		public TestItem (final long value) {
+			this.value = value;
+		}
+		
+		@Override
+		public int hashCode() {
+			return Mixer.mixLongToInt(value);
+		}
+		
+		public boolean equals (final Object o) {
+			if (o == null || o.getClass() != this.getClass())
+				return false;
+			
+			final TestItem that = (TestItem) o;
+			
+			return this.value == that.value;
+		}
+	};
+	
+	private static List<TestItem> createSequentialList(final int shift) {
+		return LongStream
+				.range(0, NOT_CONTAIN_SIZE)
+				.mapToObj(x -> new TestItem(x << shift))
+				.collect (Collectors.toList());
+	}
+	
+	private static final List<List<TestItem>> TEST_DATA = ImmutableList.of(
+		createSequentialList (0),
+		createSequentialList (16),
+		createSequentialList (32),
+		createSequentialList (48),
+		RNG.longs().limit(NOT_CONTAIN_SIZE).mapToObj(x -> new TestItem (x)).collect (Collectors.toList())
 	);
 	
-	private static final Collection<Integer> getInsertedElements(final List<Integer> data) {
+	private static final Collection<TestItem> getInsertedElements(final List<TestItem> data) {
 		return data.subList(0, SIZE);
 	}
 	
-	private static final Collection<Integer> getNotInsertedElements(final List<Integer> data) {
-		final HashSet<Integer> result = new HashSet<>(data);
+	private static final Collection<TestItem> getNotInsertedElements(final List<TestItem> data) {
+		final HashSet<TestItem> result = new HashSet<>(data);
 		result.removeAll(getInsertedElements(data));
 		
 		return result;		
@@ -42,31 +74,32 @@ public class ImmutableProbabilisticSetTest {
 
 	@Test
 	public void testContainsEverything() {
-		for (List<Integer> testData: TEST_DATA) {
-			final Collection<Integer> insertedElements = getInsertedElements(testData);
-			final ImmutableProbabilisticSet<Integer> set = new ImmutableProbabilisticSet<>(insertedElements, FALSE_POSITIVE_PROBABILITY);
+		for (List<TestItem> testData: TEST_DATA) {
+			final Collection<TestItem> insertedElements = getInsertedElements(testData);
+			final ImmutableProbabilisticSet<TestItem> set = new ImmutableProbabilisticSet<>(insertedElements, FALSE_POSITIVE_PROBABILITY);
 			
-			for (Integer element: insertedElements)
+			for (TestItem element: insertedElements)
 				Assert.assertTrue(set.contains(element));
 		}
 	}
 	
 	@Test
 	public void testNotContainProbability() {
-		for (List<Integer> testData: TEST_DATA) {
-			final Collection<Integer> insertedElements = getInsertedElements(testData);
-			final ImmutableProbabilisticSet<Integer> set = new ImmutableProbabilisticSet<>(insertedElements, FALSE_POSITIVE_PROBABILITY);
-			final Collection<Integer> notInsertedElements = getNotInsertedElements(testData);
+		for (List<TestItem> testData: TEST_DATA) {
+			final Collection<TestItem> insertedElements = getInsertedElements(testData);
+			final ImmutableProbabilisticSet<TestItem> set = new ImmutableProbabilisticSet<>(insertedElements, FALSE_POSITIVE_PROBABILITY);
+			final Collection<TestItem> notInsertedElements = getNotInsertedElements(testData);
 			int failCount = 0;
 			
-			for (Integer element: notInsertedElements) {
+			for (TestItem element: notInsertedElements) {
 				if (set.contains(element))
 					failCount++;
 			}
 			
 			final double falsePositiveProbability = (double) failCount / (double) notInsertedElements.size();
+			System.out.println("False positive probability = " + falsePositiveProbability);
 			
-			Assert.assertTrue(falsePositiveProbability < FALSE_POSITIVE_PROBABILITY * 1.2);
+			Assert.assertTrue(falsePositiveProbability < FALSE_POSITIVE_PROBABILITY * 1.1);
 		}
 	}
 	

@@ -8,6 +8,7 @@ import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
 import utils.Logger;
+import utilsTest.ImmutableProbabilisticSetTest;
 import utilsTest.NumberArrayTest;
 import utilsTest.ParallelTaskRunnerTest;
 import utilsTest.RangeTest;
@@ -42,6 +43,7 @@ public class AllTests {
 		NotationTest.class,
 		PgnTest.class,
 		RangeTest.class,
+		ImmutableProbabilisticSetTest.class,
 		NumberArrayTest.class,
 		PositionEvaluatorTest.class,
 		TableResultCompressionTest.class,
