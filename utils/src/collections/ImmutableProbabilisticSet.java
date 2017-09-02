@@ -11,8 +11,6 @@ import utils.IntUtils;
  */
 public class ImmutableProbabilisticSet<T> {
 
-	private static final long HASH_CODE_COEFF = 0xf37ba6b080d03acdL;
-
 	private static final double DEFUALT_FALSE_POSITIVE_PROBABILITY = 0.01;
 	
 	private static final int DATA_INDEX_SHIFT = 6;
@@ -20,7 +18,7 @@ public class ImmutableProbabilisticSet<T> {
 	
 	
 	private final long[] data;
-	private final int indexShift;
+	private final int hashMask;
 	
 	public ImmutableProbabilisticSet(final Collection<? extends T> elements) {
 		this (elements, DEFUALT_FALSE_POSITIVE_PROBABILITY);
@@ -29,7 +27,7 @@ public class ImmutableProbabilisticSet<T> {
 	public ImmutableProbabilisticSet(final Collection<? extends T> elements, final double falsePositiveProbabilitty) {
 		final int bits = Math.max(IntUtils.ceilLog(elements.size() / falsePositiveProbabilitty), DATA_INDEX_SHIFT);
 		data = new long[1 << (bits - DATA_INDEX_SHIFT)];
-		indexShift = Long.SIZE - bits;
+		hashMask = (1 << bits) - 1;
 		
 		for (T element: elements)
 			addElement (element);
@@ -59,7 +57,7 @@ public class ImmutableProbabilisticSet<T> {
 	
 	private int getIndex (final T element) {
 		final int hash = element.hashCode();
-		final int index = (int) ((hash * HASH_CODE_COEFF) >>> indexShift);
+		final int index = hash & hashMask;
 		
 		return index;
 	}
