@@ -136,7 +136,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final MateFinder mateFinder;
 	
 	private static final int WIN_MATE_DEPTH_IN_MOVES = 1;
-	private static final int WIN_MAX_EXTENSION = 4;
+	private static final int WIN_MAX_EXTENSION = 3;
 	
 	private static final int LOSE_MATE_DEPTH_IN_MOVES = 1;
 	private static final int LOSE_MAX_EXTENSION = 2;

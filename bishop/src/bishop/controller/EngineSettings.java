@@ -72,7 +72,7 @@ public class EngineSettings implements Copyable<EngineSettings> {
 		final Runtime runtime = Runtime.getRuntime();
 		
 		threadCount = runtime.availableProcessors();
-		hashTableExponent = 20;
+		hashTableExponent = 23;
 		tablebaseDirectory = "";
 	}
 	
