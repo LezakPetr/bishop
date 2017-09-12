@@ -18,7 +18,7 @@ public class RangeTest {
 	private static final int SYMBOL_COUNT = 256;
 	private static final int MIN_PROBABILITY = 1;
 	private static final int MAX_PROBABILITY = 255;
-	private static final int SEQUENCE_LENGTH = 1000000;
+	private static final int SEQUENCE_LENGTH = 10000000;
 	private static final int PREWARM_COUNT = 10;
 
 	
