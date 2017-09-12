@@ -5,7 +5,7 @@ package range;
 public class EnumerationProbabilityModel implements IProbabilityModel {
 	
 	private static final int SYMBOL_MASK = RangeBase.MAX_SYMBOL_CDF - 1;
-	private static final int SYMBOLS_BY_CDF_BITS = 10;
+	private static final int SYMBOLS_BY_CDF_BITS = 8;
 	private static final int SYMBOLS_BY_CDF_COUNT = 1 << SYMBOLS_BY_CDF_BITS;
 	private static final int SYMBOLS_BY_CDF_SHIFT = RangeBase.MAX_SYMBOL_BITS - SYMBOLS_BY_CDF_BITS;
 	

@@ -10,8 +10,7 @@ import java.io.InputStream;
  */
 public final class RangeDecoder extends RangeBase {
 	
-	private InputStream stream;
-	volatile long x; 
+	private InputStream stream; 
 	
 	/**
 	 * Initializes the decoder - sets given stream as input stream
