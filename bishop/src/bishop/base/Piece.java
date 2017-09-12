@@ -3,16 +3,28 @@ package bishop.base;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.PushbackReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import bishop.tables.FigureAttackTable;
 import bishop.tables.PawnAttackTable;
 import utils.IoUtils;
 
-public final class Piece {
+public enum Piece {
 
+	WHITE_PAWN(Color.WHITE, PieceType.PAWN),
+	BLACK_PAWN(Color.BLACK, PieceType.PAWN),
+	WHITE_KNIGHT(Color.WHITE, PieceType.KNIGHT),
+	BLACK_KNIGHT(Color.BLACK, PieceType.KNIGHT),
+	WHITE_BISHOP(Color.WHITE, PieceType.BISHOP),
+	BLACK_BISHOP(Color.BLACK, PieceType.BISHOP),
+	WHITE_ROOK(Color.WHITE, PieceType.ROOK),
+	BLACK_ROOK(Color.BLACK, PieceType.ROOK),
+	WHITE_QUEEN(Color.WHITE, PieceType.QUEEN),
+	BLACK_QUEEN(Color.BLACK, PieceType.QUEEN),
+	WHITE_KING(Color.WHITE, PieceType.KING),
+	BLACK_KING(Color.BLACK, PieceType.KING);
+
+	public static final Piece EMPTY = null;
+	
 	private final int color;
 	private final int pieceType;
 
@@ -44,7 +56,6 @@ public final class Piece {
 
 	// Table of precreated instances
 	private static final Piece[][] instances = initializeInstances();
-	private static final List<Piece> instanceList = initializeInstanceList();
 	
 	/**
 	 * Creates instances of Piece.
@@ -53,23 +64,13 @@ public final class Piece {
 	private static final Piece[][] initializeInstances() {
 		final Piece[][] table = new Piece[Color.LAST][PieceType.LAST];
 		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++)
-				table[color][pieceType] = new Piece (color, pieceType);
+		for (Piece piece: values()) {
+			final int color = piece.getColor();
+			final int pieceType = piece.getPieceType();
+			table[color][pieceType] = piece;
 		}
 		
 		return table;
-	}
-	
-	private static List<Piece> initializeInstanceList() {
-		final List<Piece> list = new ArrayList<Piece>();
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++)
-				list.add(Piece.withColorAndType(color, pieceType));
-		}
-		
-		return Collections.unmodifiableList(list);
 	}
 
 	/**
@@ -80,10 +81,6 @@ public final class Piece {
 	 */
 	public static Piece withColorAndType (final int color, final int pieceType) {
 		return instances[color][pieceType];
-	}
-	
-	public static List<Piece> getAllPieces() {
-		return instanceList; 
 	}
 	
 	/**
@@ -132,18 +129,5 @@ public final class Piece {
 		return ((pieceType - PieceType.PROMOTION_FIGURE_FIRST) << Color.BIT_COUNT) + color;
 	}
 	
-	public static final Piece WHITE_PAWN = withColorAndType(Color.WHITE, PieceType.PAWN);
-	public static final Piece BLACK_PAWN = withColorAndType(Color.BLACK, PieceType.PAWN);
-	public static final Piece WHITE_KNIGHT = withColorAndType(Color.WHITE, PieceType.KNIGHT);
-	public static final Piece BLACK_KNIGHT = withColorAndType(Color.BLACK, PieceType.KNIGHT);
-	public static final Piece WHITE_BISHOP = withColorAndType(Color.WHITE, PieceType.BISHOP);
-	public static final Piece BLACK_BISHOP = withColorAndType(Color.BLACK, PieceType.BISHOP);
-	public static final Piece WHITE_ROOK = withColorAndType(Color.WHITE, PieceType.ROOK);
-	public static final Piece BLACK_ROOK = withColorAndType(Color.BLACK, PieceType.ROOK);
-	public static final Piece WHITE_QUEEN = withColorAndType(Color.WHITE, PieceType.QUEEN);
-	public static final Piece BLACK_QUEEN = withColorAndType(Color.BLACK, PieceType.QUEEN);
-	public static final Piece WHITE_KING = withColorAndType(Color.WHITE, PieceType.KING);
-	public static final Piece BLACK_KING = withColorAndType(Color.BLACK, PieceType.KING);
-	public static final Piece EMPTY = null;
 
 }
