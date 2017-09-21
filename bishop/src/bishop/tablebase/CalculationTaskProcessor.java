@@ -9,8 +9,7 @@ public class CalculationTaskProcessor implements Callable<Throwable> {
 
 	private boolean firstIteration;
 	private BitArray prevPositionsToCheck;
-	private BitArray nextPositionsToCheck;
-
+	
 	private final Position position;
 	private final PseudoLegalMoveGenerator moveGenerator;
 	private final ForwardTableWalker moveWalker;
@@ -41,14 +40,11 @@ public class CalculationTaskProcessor implements Callable<Throwable> {
 		this.reverseMoveGenerator.setPosition(position);
 	}
 	
-	public void initialize(final boolean firstIteration, final TableDefinition oppositeTableDefinition, final BitArray prevPositionsToCheck, final IStagedTable ownTable) {
+	public void initialize(final boolean firstIteration, final TableDefinition oppositeTableDefinition, final BitArray prevPositionsToCheck, final BitArray nextPositionsToCheck, final IStagedTable ownTable) {
 		this.firstIteration = firstIteration;
 		this.prevPositionsToCheck = prevPositionsToCheck;
 		this.ownTable = ownTable;
 		
-		final long itemCount = oppositeTableDefinition.getTableIndexCount();
-				
-		this.nextPositionsToCheck = new BitArray(itemCount);
 		this.reverseMoveWalker.setNextPositionsToCheck (nextPositionsToCheck);
 		this.changeCount = 0;
 		
@@ -62,11 +58,7 @@ public class CalculationTaskProcessor implements Callable<Throwable> {
 	public void setPrevPositionsToCheck(final BitArray prevPositionsToCheck) {
 		this.prevPositionsToCheck = prevPositionsToCheck;
 	}
-
-	public BitArray getNextPositionsToCheck() {
-		return nextPositionsToCheck;
-	}
-
+	
 	public long getChangeCount() {
 		return changeCount;
 	}

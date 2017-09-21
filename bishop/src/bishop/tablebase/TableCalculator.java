@@ -203,6 +203,8 @@ public class TableCalculator {
 			processorList.add (new CalculationTaskProcessor(resultSource));
 		}
 		
+		prevPositionsToCheck = null;
+		nextPositionsToCheck = null;
 		long changeCount;
 		
 		do {
@@ -214,7 +216,11 @@ public class TableCalculator {
 				final TableDefinition oppositeTableDefinition = oppositeTable.getDefinition();
 				
 				final long itemCount = oppositeTableDefinition.getTableIndexCount();
-				nextPositionsToCheck = new BitArray(itemCount);
+				
+				if (nextPositionsToCheck == null)
+					nextPositionsToCheck = new BitArray(itemCount);
+				else
+					nextPositionsToCheck.clear();
 				
 				// Initialize
 				ownTable.switchToModeWrite();
@@ -222,7 +228,7 @@ public class TableCalculator {
 				
 				for (int i = 0; i < processorList.size(); i++) {
 					final CalculationTaskProcessor processor = processorList.get(i);
-					processor.initialize(firstIteration, oppositeTableDefinition, prevPositionsToCheck, ownTable);
+					processor.initialize(firstIteration, oppositeTableDefinition, prevPositionsToCheck, nextPositionsToCheck, ownTable);
 				}
 				
 				// Execute
@@ -231,10 +237,11 @@ public class TableCalculator {
 				// Aggregate
 				for (CalculationTaskProcessor processor: processorList) {
 					changeCount += processor.getChangeCount();
-					nextPositionsToCheck.assignOr (processor.getNextPositionsToCheck());
 				}
 				
+				final BitArray tmp = prevPositionsToCheck;
 				prevPositionsToCheck = nextPositionsToCheck;
+				nextPositionsToCheck = tmp;
 			}
 			
 			System.out.println ("Change count " + changeCount);
