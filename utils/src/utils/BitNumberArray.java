@@ -19,21 +19,29 @@ public class BitNumberArray implements INumberArray {
 	private static final int WORD_SHIFT = 6;
 	private static final int WORD_MASK = (1 << WORD_SHIFT) - 1;
 	
+	private static final int PAGE_SHIFT = 24;
+	private static final int PAGE_SIZE = 1 << PAGE_SHIFT;
+	private static final int PAGE_MASK = PAGE_SIZE - 1;
+	
 	private final long size;
-	private final LongBuffer[] data;
+	private final int elementBits;
+	private final LongBuffer[][] data;
 	
 	public BitNumberArray (final long size, final int elementBits) {
 		this.size = size;
+		this.elementBits = elementBits;
 		
 		final long dataLength = (size + WORD_MASK) >>> WORD_SHIFT;
+		final int pageCount = (int) IntUtils.divideRoundUp(dataLength, PAGE_SIZE);
 
-		if (dataLength > Integer.MAX_VALUE)
-			throw new RuntimeException("Size of BitNumberArray too big");
-
-		this.data = new LongBuffer[elementBits];
+		this.data = new LongBuffer[pageCount][elementBits];
 		
-		for (int i = 0; i < elementBits; i++)
-			this.data[i] = ByteBuffer.allocateDirect(Long.BYTES * (int) dataLength).asLongBuffer();
+		for (int i = 0; i < pageCount; i++) {
+			final int pageDataLength = (int) Math.min(dataLength - (i << PAGE_SHIFT), PAGE_SIZE);
+			
+			for (int j = 0; j < elementBits; j++)
+				this.data[i][j] = ByteBuffer.allocateDirect(Long.BYTES * pageDataLength).asLongBuffer();
+		}
 	}
 	
 	/**
@@ -60,11 +68,14 @@ public class BitNumberArray implements INumberArray {
 	public int getAt (final long index) {
 		int element = 0;
 		
-		final int wordIndex = (int) (index >>> WORD_SHIFT);
-		final int bitIndex = ((int) index) & WORD_MASK; 
+		final int pageIndex = (int) (index >>> (PAGE_SHIFT + WORD_SHIFT));
+		final int wordIndex = ((int) (index >>> WORD_SHIFT)) & PAGE_MASK;
+		final int bitIndex = ((int) index) & WORD_MASK;
 		
-		for (int i = data.length - 1; i >= 0; i--) {
-			element = (element << 1) | ((int) (data[i].get(wordIndex) >>> bitIndex) & 0x01);
+		final LongBuffer[] page = data[pageIndex];
+		
+		for (int i = elementBits - 1; i >= 0; i--) {
+			element = (element << 1) | ((int) (page[i].get(wordIndex) >>> bitIndex) & 0x01);
 		}
 		
 		return element;
@@ -78,12 +89,15 @@ public class BitNumberArray implements INumberArray {
 	public void setAt (final long index, final int element) {
 		int tmp = element;
 
-		final int wordIndex = (int) (index >>> WORD_SHIFT);
+		final int pageIndex = (int) (index >>> (PAGE_SHIFT + WORD_SHIFT));
+		final int wordIndex = ((int) (index >>> WORD_SHIFT)) & PAGE_MASK;
 		final int bitIndex = ((int) index) & WORD_MASK; 
 		final long mask = ~(1L << bitIndex); 
 		
-		for (int i = 0; i < data.length; i++) {
-			data[i].put(wordIndex, (data[i].get(wordIndex) & mask) | ((long) (tmp & 0x01) << bitIndex));
+		final LongBuffer[] page = data[pageIndex];
+		
+		for (int i = 0; i < elementBits; i++) {
+			page[i].put(wordIndex, (page[i].get(wordIndex) & mask) | ((long) (tmp & 0x01) << bitIndex));
 			tmp >>>= 1;
 		}
 	}
