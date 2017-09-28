@@ -38,6 +38,10 @@ public class IntUtils {
 		return (divident + divisor - 1) / divisor;
 	}
 
+	public static long divideRoundUp(final long divident, final long divisor) {
+		return (divident + divisor - 1) / divisor;
+	}
+
 	public static String intToStringWithSignum(final int x) {
 		if (x > 0)
 			return "+" + Integer.toString(x);
