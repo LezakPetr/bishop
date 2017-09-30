@@ -4,20 +4,22 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 /**
- * INumberArray implementation that stores data in bit slices.
- * Numbers are stored in 8 byte words in bit slices. Reads and writes to different words are independent.
- * This means that if we logically divide the array into block with length multiple of 64 and let different
+ * INumberArray implementation that stores data in long direct buffers.
+ * Numbers are stored in 8 byte words (longs) in chunks of elementBits bits.
+ * The implementation ensures that after WORD_SIZE = 64 numbers the bit chunks are aligned to the words.
+ * This means that if we logically divide the array into blocks with length multiple of 64 and let different
  * threads to write to different blocks they don't have to be synchronized.
  * More generally, for parallelism:
  * - reads doesn't have to be synchronized
- * - more writes or read + write doesn't have to be synchronized if they are in different words
+ * - more writes or read + write doesn't have to be synchronized if they are in different WORD_SIZE blocks
  * 
  * @author Ing. Petr Ležák
  */
 public class BitNumberArray implements INumberArray {
 	
 	private static final int WORD_SHIFT = 6;
-	private static final int WORD_MASK = (1 << WORD_SHIFT) - 1;
+	private static final int WORD_SIZE = 1 << WORD_SHIFT;
+	private static final int WORD_MASK = WORD_SIZE - 1;
 	
 	private static final int PAGE_SHIFT = 24;
 	private static final int PAGE_SIZE = 1 << PAGE_SHIFT;
@@ -25,22 +27,21 @@ public class BitNumberArray implements INumberArray {
 	
 	private final long size;
 	private final int elementBits;
-	private final LongBuffer[][] data;
+	private final LongBuffer[] data;
 	
 	public BitNumberArray (final long size, final int elementBits) {
 		this.size = size;
 		this.elementBits = elementBits;
 		
-		final long dataLength = (size + WORD_MASK) >>> WORD_SHIFT;
+		final long dataLength = IntUtils.divideRoundUp(size, WORD_SIZE) * elementBits;
 		final int pageCount = (int) IntUtils.divideRoundUp(dataLength, PAGE_SIZE);
 
-		this.data = new LongBuffer[pageCount][elementBits];
+		this.data = new LongBuffer[pageCount];
 		
 		for (int i = 0; i < pageCount; i++) {
 			final int pageDataLength = (int) Math.min(dataLength - (i << PAGE_SHIFT), PAGE_SIZE);
 			
-			for (int j = 0; j < elementBits; j++)
-				this.data[i][j] = ByteBuffer.allocateDirect(Long.BYTES * pageDataLength).asLongBuffer();
+			this.data[i] = ByteBuffer.allocateDirect(Long.BYTES * pageDataLength).asLongBuffer();
 		}
 	}
 	
@@ -49,7 +50,7 @@ public class BitNumberArray implements INumberArray {
 	 * @return maximal possible stored element
 	 */
 	public int getMaxElement() {
-		return 1 << data.length;
+		return 1 << elementBits;
 	}
 	
 	/**
@@ -66,16 +67,28 @@ public class BitNumberArray implements INumberArray {
 	 * @return value
 	 */
 	public int getAt (final long index) {
-		int element = 0;
+		final long bitOffset = index * elementBits;
 		
-		final int pageIndex = (int) (index >>> (PAGE_SHIFT + WORD_SHIFT));
-		final int wordIndex = ((int) (index >>> WORD_SHIFT)) & PAGE_MASK;
-		final int bitIndex = ((int) index) & WORD_MASK;
+		final long firstTotalWordIndex = bitOffset >>> WORD_SHIFT;
+		final int firstPageIndex = (int) (firstTotalWordIndex >>> PAGE_SHIFT);
+		final int firstWordIndex = (int) firstTotalWordIndex & PAGE_MASK;
+		final int firstBitOffset = (int) (bitOffset & WORD_MASK);
+		final int firstBitCount = Math.min(WORD_SIZE - firstBitOffset, elementBits);
 		
-		final LongBuffer[] page = data[pageIndex];
+		final long firstWord = data[firstPageIndex].get(firstWordIndex);
+		final int firstElementMask = (1 << firstBitCount) - 1;
+		int element = (int) (firstWord >>> firstBitOffset) & firstElementMask;
+
+		final int secondBitCount = elementBits - firstBitCount;
 		
-		for (int i = elementBits - 1; i >= 0; i--) {
-			element = (element << 1) | ((int) (page[i].get(wordIndex) >>> bitIndex) & 0x01);
+		if (secondBitCount > 0) {
+			final long secondTotalWordIndex = firstTotalWordIndex + 1;
+			final int secondPageIndex = (int) (secondTotalWordIndex >>> PAGE_SHIFT);
+			final int secondWordIndex = (int) secondTotalWordIndex & PAGE_MASK;
+			
+			final long secondWord = data[secondPageIndex].get(secondWordIndex);
+			final int secondElementMask = (1 << secondBitCount) - 1;
+			element |= ((int) secondWord & secondElementMask) << firstBitCount;
 		}
 		
 		return element;
@@ -87,18 +100,30 @@ public class BitNumberArray implements INumberArray {
 	 * @param element new value
 	 */
 	public void setAt (final long index, final int element) {
-		int tmp = element;
+		final long bitOffset = index * elementBits;
+		
+		final long firstTotalWordIndex = bitOffset >>> WORD_SHIFT;
+		final int firstPageIndex = (int) (firstTotalWordIndex >>> PAGE_SHIFT);
+		final int firstWordIndex = (int) firstTotalWordIndex & PAGE_MASK;
+		final int firstBitOffset = (int) (bitOffset & WORD_MASK);
+		final int firstBitCount = Math.min(WORD_SIZE - firstBitOffset, elementBits);
+		
+		final long firstElementMask = (1 << firstBitCount) - 1;
+		final long firstOrigWord = data[firstPageIndex].get(firstWordIndex);
+		final long firstUpdatedWord = (firstOrigWord & ~(firstElementMask << firstBitOffset)) | ((element & firstElementMask) << firstBitOffset);
+		data[firstPageIndex].put(firstWordIndex, firstUpdatedWord);
 
-		final int pageIndex = (int) (index >>> (PAGE_SHIFT + WORD_SHIFT));
-		final int wordIndex = ((int) (index >>> WORD_SHIFT)) & PAGE_MASK;
-		final int bitIndex = ((int) index) & WORD_MASK; 
-		final long mask = ~(1L << bitIndex); 
+		final int secondBitCount = elementBits - firstBitCount;
 		
-		final LongBuffer[] page = data[pageIndex];
-		
-		for (int i = 0; i < elementBits; i++) {
-			page[i].put(wordIndex, (page[i].get(wordIndex) & mask) | ((long) (tmp & 0x01) << bitIndex));
-			tmp >>>= 1;
+		if (secondBitCount > 0) {
+			final long secondTotalWordIndex = firstTotalWordIndex + 1;
+			final int secondPageIndex = (int) (secondTotalWordIndex >>> PAGE_SHIFT);
+			final int secondWordIndex = (int) secondTotalWordIndex & PAGE_MASK;
+
+			final int secondElementMask = (1 << secondBitCount) - 1;
+			final long secondOrigWord = data[secondPageIndex].get(secondWordIndex);
+			final long secondUpdatedWord = (secondOrigWord & ~secondElementMask) | ((element >> firstBitCount) & secondElementMask);
+			data[secondPageIndex].put(secondWordIndex, secondUpdatedWord);
 		}
 	}
 }
