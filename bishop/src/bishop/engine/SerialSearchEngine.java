@@ -3,7 +3,9 @@ package bishop.engine;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.BitBoard;
@@ -137,9 +139,18 @@ public final class SerialSearchEngine implements ISearchEngine {
 	
 	private static final int WIN_MATE_DEPTH_IN_MOVES = 1;
 	private static final int WIN_MAX_EXTENSION = 3;
+	private static final int WIN_RISK_EXTENSION = 5;
 	
 	private static final int LOSE_MATE_DEPTH_IN_MOVES = 1;
 	private static final int LOSE_MAX_EXTENSION = 2;
+	private static final int LOSE_RISK_EXTENSION = 4;
+	
+	private static final int MIN_ATTACK_EVALUATION_FOR_EXTENSION = 150;
+	
+	private static final int MAX_ATTACK = 300;
+	
+	private final static LongAdder[] mateSearchSuccess = createMateStatistics();
+	private final static LongAdder[] mateSearchFail = createMateStatistics();
 
 	
 	public SerialSearchEngine() {
@@ -174,6 +185,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 		setHashTable(new NullHashTable());
 
 		task = null;
+	}
+	
+	private static LongAdder[] createMateStatistics() {
+		return IntStream.rangeClosed(0, MAX_ATTACK)
+				.mapToObj(i -> new LongAdder())
+				.toArray(LongAdder[]::new);
 	}
 
 	/**
@@ -246,6 +263,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	public void alphaBetaInLegalPosition(final int horizon) {
 		final NodeRecord currentRecord = nodeStack[currentDepth];
 		final int onTurn = currentPosition.getOnTurn();
+		final int oppositeColor = Color.getOppositeColor(onTurn);
 		final int initialAlpha = currentRecord.evaluation.getAlpha();
 		final int initialBeta = currentRecord.evaluation.getBeta();
 		
@@ -264,13 +282,16 @@ public final class SerialSearchEngine implements ISearchEngine {
 		currentRecord.isQuiescenceSearch = isQuiescenceSearch;
 		
 		final boolean isFirstQuiescence = isQuiescenceSearch && currentDepth > 0 && !nodeStack[currentDepth - 1].isQuiescenceSearch;
+		final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, currentRecord.attackCalculator).getEvaluation();
 		
 		if (isFirstQuiescence) {
 			mateFinder.setPosition(currentPosition);
 			mateFinder.setDepthAdvance(currentDepth);
 			
 			// Win
-			mateFinder.setMaxExtension(WIN_MAX_EXTENSION);
+			final int winAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(onTurn);
+			final int winExtension = (winAttackEvaluation >= MIN_ATTACK_EVALUATION_FOR_EXTENSION) ? WIN_RISK_EXTENSION : WIN_MAX_EXTENSION;
+			mateFinder.setMaxExtension(winExtension);
 			
 			final int winEvaluation = mateFinder.findWin(WIN_MATE_DEPTH_IN_MOVES);
 			
@@ -280,11 +301,17 @@ public final class SerialSearchEngine implements ISearchEngine {
 				currentRecord.evaluation.setBeta(Evaluation.MAX);
 				currentRecord.principalVariation.clear();
 				
+				mateSearchSuccess[Math.min(winAttackEvaluation, MAX_ATTACK)].increment();
+				
 				return;
 			}
+			else
+				mateSearchFail[Math.min(winAttackEvaluation, MAX_ATTACK)].increment();
 			
 			// Lose
-			mateFinder.setMaxExtension(LOSE_MAX_EXTENSION);
+			final int loseAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(oppositeColor);
+			final int loseExtension = (loseAttackEvaluation >= MIN_ATTACK_EVALUATION_FOR_EXTENSION) ? LOSE_RISK_EXTENSION : LOSE_MAX_EXTENSION;
+			mateFinder.setMaxExtension(loseExtension);
 			
 			final int loseEvaluation = mateFinder.findLose(LOSE_MATE_DEPTH_IN_MOVES);
 			
@@ -294,13 +321,18 @@ public final class SerialSearchEngine implements ISearchEngine {
 				currentRecord.evaluation.setBeta(Evaluation.MAX);
 				currentRecord.principalVariation.clear();
 				
+				mateSearchSuccess[Math.min(loseAttackEvaluation, MAX_ATTACK)].increment();
+				
 				return;
 			}	
+			else
+				mateSearchFail[Math.min(loseAttackEvaluation, MAX_ATTACK)].increment();
+
 		}
 		
 		try {
 			// Evaluate position
-			int whitePositionEvaluation = positionEvaluator.evaluateTactical(currentPosition, currentRecord.attackCalculator).getEvaluation();
+			int whitePositionEvaluation = tacticalEvaluation;
 			
 			final int materialEvaluation = materialEvaluator.evaluateMaterial(currentPosition.getMaterialHash());
 			final int materialEvaluationShift = positionEvaluator.getMaterialEvaluationShift();
@@ -865,6 +897,23 @@ public final class SerialSearchEngine implements ISearchEngine {
 				
 				if (task != null)
 					task.setTerminated(true);
+				
+				printStatistics();
+			}
+		}
+	}
+	
+	private void printStatistics() {
+		System.out.println("Mate search");
+		
+		for (int i = 0; i <= MAX_ATTACK; i++) {
+			final long successCount = mateSearchSuccess[i].longValue();
+			final long failCount = mateSearchFail[i].longValue();
+			final long total = failCount + successCount;
+			
+			if (total > 0) {
+				final double probability = (double) successCount / (double) total;
+				System.out.println(i + ", " + probability);
 			}
 		}
 	}
