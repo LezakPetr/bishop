@@ -155,7 +155,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 			if (stage != GameStage.PAWNS_ONLY) {
 				bestCoeffs[coeffs.kingMainProtectionPawnBonus] = 0.2 * c * PieceTypeEvaluations.PAWN_EVALUATION;
 				bestCoeffs[coeffs.kingSecondProtectionPawnBonus] = 0.01 * c * PieceTypeEvaluations.PAWN_EVALUATION;
-				bestCoeffs[coeffs.kingAttackBonus] = 0.016 * c * PieceTypeEvaluations.PAWN_EVALUATION;
+				//bestCoeffs[coeffs.kingAttackBonus] = 0.016 * c * PieceTypeEvaluations.PAWN_EVALUATION;
 			}
 		}
 	}
