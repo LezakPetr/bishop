@@ -18,7 +18,7 @@ public class FilePositionResultSource implements ITableRead {
 	}
 	
 	private ITable getBlockWithResult (final long tableIndex) throws IOException {
-		final long blockIndex = reader.getBlockIndex(tableIndex);
+		final long blockIndex = reader.getBlockIndex(tableIndex);   // No need to synchronize here
 		final BlockKey key = new BlockKey(definition.getMaterialHash(), blockIndex);
 		ITable block = blockCache.getBlock(key);
 		
@@ -26,8 +26,10 @@ public class FilePositionResultSource implements ITableRead {
 			return block;
 		}
 		
-		reader.readBlockWithResult(tableIndex);
-		block = reader.getTable();
+		synchronized (this) {
+			reader.readBlockWithResult(tableIndex);
+			block = reader.getTable();
+		}
 		
 		blockCache.addBlock(key, block);
 		
@@ -35,7 +37,7 @@ public class FilePositionResultSource implements ITableRead {
 	}
 
 	@Override
-	public synchronized int getPositionResult(final IPosition position) {
+	public int getPositionResult(final IPosition position) {
 		final long tableIndex = definition.calculateTableIndex(position);
 		
 		return getResult(tableIndex);
