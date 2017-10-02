@@ -18,7 +18,7 @@ import math.Sigmoid;
 public class KingSafetyEvaluator {
 	
 	private static final IntUnaryOperator attackTransformationFunction = new SampledIntFunction(
-			new Sigmoid(100, 200, 0, 50),
+			new Sigmoid(150, 300, 0, 50),
 			0, 300);
 			
 	private final GameStageCoeffs coeffs;
