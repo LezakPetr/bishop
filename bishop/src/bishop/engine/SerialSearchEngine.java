@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import bishop.base.DefaultAdditiveMaterialEvaluator;
+import bishop.base.GlobalSettings;
 import bishop.base.BitBoard;
 import bishop.base.Color;
 import bishop.base.HandlerRegistrarImpl;
@@ -25,6 +26,7 @@ import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
 import bishop.base.QuiescencePseudoLegalMoveGenerator;
 import bishop.base.Square;
+import utils.Logger;
 import utils.RatioCalculator;
 
 public final class SerialSearchEngine implements ISearchEngine {
@@ -138,7 +140,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private int lastPositionalEvaluation;
 	private final MateFinder mateFinder;
 	
-	private static boolean calculateStatistics;
 	
 	private static final int WIN_MATE_DEPTH_IN_MOVES = 1;
 	private static final int WIN_MAX_EXTENSION = 3;
@@ -153,7 +154,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private static final int MAX_ATTACK = 300;
 	
 	private final static RatioCalculator[] mateSearchSuccessRatio = createMateStatistics();
-	
 	private final static RatioCalculator hashSuccessRatio = new RatioCalculator();
 
 	
@@ -305,13 +305,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 				currentRecord.evaluation.setBeta(Evaluation.MAX);
 				currentRecord.principalVariation.clear();
 				
-				if (calculateStatistics)
+				if (GlobalSettings.isDebug())
 					mateSearchSuccessRatio[Math.min(winAttackEvaluation, MAX_ATTACK)].addInvocation(true);
 				
 				return;
 			}
 			else {
-				if (calculateStatistics)
+				if (GlobalSettings.isDebug())
 					mateSearchSuccessRatio[Math.min(winAttackEvaluation, MAX_ATTACK)].addInvocation(false);
 			}
 			
@@ -328,13 +328,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 				currentRecord.evaluation.setBeta(Evaluation.MAX);
 				currentRecord.principalVariation.clear();
 				
-				if (calculateStatistics)
+				if (GlobalSettings.isDebug())
 					mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(true);
 				
 				return;
 			}	
 			else {
-				if (calculateStatistics)
+				if (GlobalSettings.isDebug())
 					mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(false);
 			}
 
@@ -537,7 +537,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		final boolean success = readHashRecordImpl(currentRecord, hashRecord);
 		
-		if (calculateStatistics)
+		if (GlobalSettings.isDebug())
 			hashSuccessRatio.addInvocation(success);
 		
 		return success;
@@ -917,23 +917,23 @@ public final class SerialSearchEngine implements ISearchEngine {
 				if (task != null)
 					task.setTerminated(true);
 				
-				if (calculateStatistics)
+				if (GlobalSettings.isDebug())
 					printStatistics();
 			}
 		}
 	}
 	
 	private void printStatistics() {
-		System.out.println("Mate search");
+		Logger.logMessage("Mate search");
 		
 		for (int i = 0; i <= MAX_ATTACK; i++) {
 			final double probability = mateSearchSuccessRatio[i].getRatio();
 			
 			if (Double.isFinite(probability))
-				System.out.println(i + ", " + probability);
+				Logger.logMessage(i + ", " + probability);
 		}
 		
-		System.out.println("Hash hitratio = " + hashSuccessRatio.getRatio());
+		Logger.logMessage("Hash hitratio = " + hashSuccessRatio.getRatio());
 	}
 
 	/**
