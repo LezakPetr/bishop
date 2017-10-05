@@ -25,6 +25,7 @@ import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
 import bishop.base.QuiescencePseudoLegalMoveGenerator;
 import bishop.base.Square;
+import utils.RatioCalculator;
 
 public final class SerialSearchEngine implements ISearchEngine {
 
@@ -137,6 +138,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private int lastPositionalEvaluation;
 	private final MateFinder mateFinder;
 	
+	private static boolean calculateStatistics;
+	
 	private static final int WIN_MATE_DEPTH_IN_MOVES = 1;
 	private static final int WIN_MAX_EXTENSION = 3;
 	private static final int WIN_RISK_EXTENSION = 5;
@@ -149,8 +152,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 	
 	private static final int MAX_ATTACK = 300;
 	
-	private final static LongAdder[] mateSearchSuccess = createMateStatistics();
-	private final static LongAdder[] mateSearchFail = createMateStatistics();
+	private final static RatioCalculator[] mateSearchSuccessRatio = createMateStatistics();
+	
+	private final static RatioCalculator hashSuccessRatio = new RatioCalculator();
 
 	
 	public SerialSearchEngine() {
@@ -187,10 +191,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 		task = null;
 	}
 	
-	private static LongAdder[] createMateStatistics() {
+	private static RatioCalculator[] createMateStatistics() {
 		return IntStream.rangeClosed(0, MAX_ATTACK)
-				.mapToObj(i -> new LongAdder())
-				.toArray(LongAdder[]::new);
+				.mapToObj(i -> new RatioCalculator())
+				.toArray(RatioCalculator[]::new);
 	}
 
 	/**
@@ -301,12 +305,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 				currentRecord.evaluation.setBeta(Evaluation.MAX);
 				currentRecord.principalVariation.clear();
 				
-				mateSearchSuccess[Math.min(winAttackEvaluation, MAX_ATTACK)].increment();
+				if (calculateStatistics)
+					mateSearchSuccessRatio[Math.min(winAttackEvaluation, MAX_ATTACK)].addInvocation(true);
 				
 				return;
 			}
-			else
-				mateSearchFail[Math.min(winAttackEvaluation, MAX_ATTACK)].increment();
+			else {
+				if (calculateStatistics)
+					mateSearchSuccessRatio[Math.min(winAttackEvaluation, MAX_ATTACK)].addInvocation(false);
+			}
 			
 			// Lose
 			final int loseAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(oppositeColor);
@@ -321,12 +328,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 				currentRecord.evaluation.setBeta(Evaluation.MAX);
 				currentRecord.principalVariation.clear();
 				
-				mateSearchSuccess[Math.min(loseAttackEvaluation, MAX_ATTACK)].increment();
+				if (calculateStatistics)
+					mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(true);
 				
 				return;
 			}	
-			else
-				mateSearchFail[Math.min(loseAttackEvaluation, MAX_ATTACK)].increment();
+			else {
+				if (calculateStatistics)
+					mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(false);
+			}
 
 		}
 		
@@ -525,6 +535,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 		if (horizon <= 0)
 			return false;
 		
+		final boolean success = readHashRecordImpl(currentRecord, hashRecord);
+		
+		if (calculateStatistics)
+			hashSuccessRatio.addInvocation(success);
+		
+		return success;
+	}
+
+	private boolean readHashRecordImpl(final NodeRecord currentRecord, final HashRecord hashRecord) {
 		if (!hashTable.getRecord(currentPosition, hashRecord))
 			return false;
 		
@@ -550,7 +569,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		if (!readHashRecord(horizon, currentRecord, hashRecord)) {
 			currentRecord.hashBestMove.clear();
 			
-			return false;			
+			return false;
 		}
 			
 		if (currentDepth > 0 && hashRecord.getHorizon() >= horizon) {
@@ -898,7 +917,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 				if (task != null)
 					task.setTerminated(true);
 				
-				printStatistics();
+				if (calculateStatistics)
+					printStatistics();
 			}
 		}
 	}
@@ -907,15 +927,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 		System.out.println("Mate search");
 		
 		for (int i = 0; i <= MAX_ATTACK; i++) {
-			final long successCount = mateSearchSuccess[i].longValue();
-			final long failCount = mateSearchFail[i].longValue();
-			final long total = failCount + successCount;
+			final double probability = mateSearchSuccessRatio[i].getRatio();
 			
-			if (total > 0) {
-				final double probability = (double) successCount / (double) total;
+			if (Double.isFinite(probability))
 				System.out.println(i + ", " + probability);
-			}
 		}
+		
+		System.out.println("Hash hitratio = " + hashSuccessRatio.getRatio());
 	}
 
 	/**
