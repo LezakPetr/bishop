@@ -5,14 +5,15 @@ public class Mixer {
 	private static final long LONG_TO_INT_COEFF = 0xb2c9ae1182d84b7bL;
 	
 	/**
-	 * Mapping long to int value with following properties:
+	 * Mixing long bits with following properties:
 	 * - it is non-linear
 	 * - it mixes the bits of the original value to all bits of the result so good hash code is generated
-	 * - for random input with uniform probability distribution we gets random output with uniform probability distribution 
-	 * @param value input
-	 * @return outout
+	 * - the mapping is bijective 
+
+	 * @param input input
+	 * @return mixed input
 	 */
-	public static int mixLongToInt (final long input) {
+	public static long mixLong (final long input) {
 		// Xor the upper half of the input to the lower half.
 		// This is bijective mapping because we can undo it by same operation.
 		final long x = input ^ (input >>> 32);
@@ -33,8 +34,20 @@ public class Mixer {
 		final long y = LONG_TO_INT_COEFF * x;
 		
 		// Xor two halves of the 'y' - nonlinear step with respect to the multiplication.
-		final int z = ((int) y) ^ ((int) (y >>> 32));
+		final long z =  y ^ (y >>> 32);
 		
 		return z;
+	}
+	
+	/**
+	 * Mapping long to int value with following properties:
+	 * - it is non-linear
+	 * - it mixes the bits of the original value to all bits of the result so good hash code is generated
+	 * - for random input with uniform probability distribution we gets random output with uniform probability distribution 
+	 * @param value input
+	 * @return outout
+	 */
+	public static int mixLongToInt (final long input) {
+		return (int) mixLong(input);
 	}
 }
