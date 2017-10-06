@@ -3,6 +3,7 @@ package bishop.engine;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 import bishop.base.Position;
+import utils.Mixer;
 
 /**
  * Implementation of the hash table.
@@ -14,9 +15,9 @@ import bishop.base.Position;
  * greater horizon wins because it is more important.
  * When the record is read we verify that it contains searched position by:
  * - verifying hash stored in REST_MASK - it contains 17 bits just with the diffused hash, without data
- * - verifying evaluation - we prevent 943034 / 1048576 combination = 3.31 bits
- * - verifying type - we prevent 1 / 4 combination = 0.42 bits
- * In total we verifies 20.7 bits which is not enough. The caller should try to uncompress the best move.
+ * - verifying evaluation - we allow 105542 / 1048576 combination = 3.31 bits
+ * - verifying type - we allow 3 / 4 combination = 0.42 bits
+ * In total we verifies 20.73 bits which is not enough. The caller should try to uncompress the best move.
  * This would verify if the move is pseudolegal in the position so it will also indirectly verify the
  * hash. If we count up to 52 moves in the position this is additional 9.7 bits of verification.
  * So in total we would have 30 bits which is enough, the probability of obtaining collision is
@@ -47,6 +48,9 @@ public final class HashTableImpl implements IHashTable {
 	public static final int MAX_EXPONENT = 31;
 	public static final int ITEM_SIZE = Long.BYTES;   // Size of hash item [B]
 	
+	// Probability that the collision will be detected by the hash table itself (without uncompressing move)
+	public static double PRIMARY_COLLISION_RATE = Math.pow(2, -(17 + 3.31 + 0.42));
+	
 	public HashTableImpl(final int exponent) {
 		resize(exponent);
 	}
@@ -70,7 +74,7 @@ public final class HashTableImpl implements IHashTable {
 	}
 	
 	private static long diffuseHash(final long hash) {
-		return (hash ^ (hash >>> 32)) & HASH_MASK;
+		return Mixer.mixLong(hash) & HASH_MASK;
 	}
 	
 	public boolean getRecord (final long hash, final HashRecord record) {

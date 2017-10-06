@@ -153,8 +153,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 	
 	private static final int MAX_ATTACK = 300;
 	
-	private final static RatioCalculator[] mateSearchSuccessRatio = createMateStatistics();
-	private final static RatioCalculator hashSuccessRatio = new RatioCalculator();
+	private static final RatioCalculator[] mateSearchSuccessRatio = createMateStatistics();
+	private static final RatioCalculator hashSuccessRatio = new RatioCalculator();
+	private static final RatioCalculator hashPrimaryCollisionRate = new RatioCalculator();
 
 	
 	public SerialSearchEngine() {
@@ -550,10 +551,18 @@ public final class SerialSearchEngine implements ISearchEngine {
 		if (hashRecord.getCompressedBestMove() == Move.NONE_COMPRESSED_MOVE) {
 			currentRecord.hashBestMove.clear();
 			
+			if (GlobalSettings.isDebug())
+				hashPrimaryCollisionRate.addInvocation (false);
+			
 			return true;
 		}
 		
-		return currentRecord.hashBestMove.uncompressMove(hashRecord.getCompressedBestMove(), currentPosition);
+		final boolean success = currentRecord.hashBestMove.uncompressMove(hashRecord.getCompressedBestMove(), currentPosition);
+		
+		if (GlobalSettings.isDebug())
+			hashPrimaryCollisionRate.addInvocation (!success);
+		
+		return success;
 	}
 	
 	/**
@@ -933,7 +942,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 				Logger.logMessage(i + ", " + probability);
 		}
 		
-		Logger.logMessage("Hash hitratio = " + hashSuccessRatio.getRatio());
+		final double hitRatio = hashSuccessRatio.getRatio();
+		final double primaryColissionRate = hashPrimaryCollisionRate.getRatio();
+		
+		Logger.logMessage("Hash hitratio = " + hitRatio);
+		
+		// primaryColissionRate is rate of undetected collisions against all claimed hits
+		// collissionsNotDetectedRate is rate of undetected collisions against hash fails (detected fails and collisions)
+		final double collissionsNotDetectedRate = (hitRatio * primaryColissionRate) / (primaryColissionRate * hitRatio * primaryColissionRate - hitRatio + 1);
+		Logger.logMessage("Collision not detected rate = " + collissionsNotDetectedRate + ", should be " + HashTableImpl.PRIMARY_COLLISION_RATE);
 	}
 
 	/**
