@@ -9,6 +9,7 @@ import org.junit.runner.notification.Failure;
 
 import utils.Logger;
 import utilsTest.ImmutableProbabilisticSetTest;
+import utilsTest.MixerTest;
 import utilsTest.NumberArrayTest;
 import utilsTest.ParallelTaskRunnerTest;
 import utilsTest.RangeTest;
@@ -23,6 +24,7 @@ import bishop.base.GlobalSettings;
 public class AllTests {
 	
 	private static final Class<?>[] classArray = {
+		MixerTest.class,
 		ParallelTaskRunnerTest.class,
 		BetweenTableTest.class,
 		CombinatorialNumberSystemTest.class,
