@@ -26,12 +26,14 @@ public class MixerTest {
 	@Test
 	public void testInversibility() {
 		final Random rng = new Random();
-		final long inverseCoeff = getInverseCoeff(Mixer.MIX_COEFF);
+		final long inverseCoeff1 = getInverseCoeff(Mixer.MIX_COEFF1);
+		final long inverseCoeff2 = getInverseCoeff(Mixer.MIX_COEFF2);
+		final long inverseXor = Mixer.MIX_CONSTANT_XOR ^ (Mixer.MIX_CONSTANT_XOR >>> 32);
 		
 		for (int i = 0; i < TEST_COUNT; i++) {
 			final long input = rng.nextLong();
 			final long mixed = Mixer.mixLong(input);
-			final long reversed = Mixer.mixLongWithCoeff(mixed, inverseCoeff);
+			final long reversed = Mixer.mixLongWithCoeffs(mixed, inverseCoeff2, inverseCoeff1, inverseXor);
 			
 			Assert.assertEquals(input, reversed);
 		}
