@@ -3,7 +3,6 @@ package bishop.engine;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
