@@ -16,14 +16,8 @@ public class PositionValidator {
 	}
 	
 	private Position position;
-	private Set<Error> errorSet;
-	
-	
-	public PositionValidator() {
-		errorSet = EnumSet.noneOf (Error.class);
-	}
-	
-	
+	private final Set<Error> errorSet = EnumSet.noneOf (Error.class);
+		
 	public void setPosition(final Position position) {
 		this.position = position;
 	}
@@ -41,6 +35,20 @@ public class PositionValidator {
 		}
 		
 		checkPawnsOnBorderRanks();
+		checkWrongEpFile();
+		
+		return errorSet.isEmpty();
+	}
+	
+	// Reduced version of checkPosition that checks only rules that can be broken in tablebases.
+	// It does not call:
+	// - checkKingCount because there are always two kings (ensured by Chunk)
+	// - checkCastlingRights because castling rights are not set so nothing is checked
+	// - checkPawnsOnBorderRanks because pawns on border ranks are not allowed (ensured by Chunk.getAllowedSquareMask)
+	public boolean checkPositionForTablebase() {
+		errorSet.clear();
+		
+		checkNotOnTurnCheck();
 		checkWrongEpFile();
 		
 		return errorSet.isEmpty();

@@ -1,5 +1,6 @@
 package bishop.tablebase;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -96,15 +97,17 @@ public class TableReader extends TableIo {
 
 	public void readBlockWithResult (final long tableIndex) throws IOException {
 		final FileInputStream fileStream = new FileInputStream(file);
-		final CountingInputStream countingStream = new CountingInputStream(fileStream);
+		
+		// Allocate buffer for 2 block positions because they are read byte by byte. We don't have to
+		// allocate buffer for the whole block because it is read by single bulk read.
+		final BufferedInputStream bufferedStream = new BufferedInputStream(fileStream, 2 * bytesPerBlockPosition);
+		final CountingInputStream countingStream = new CountingInputStream(bufferedStream);
 		
 		try {
-			skipHeader(countingStream);
-			
 			final long blockIndex = getBlockIndex (tableIndex);
 			final long blockOffset = blockIndex << blockIndexExponent;
 			
-			IoUtils.skip (countingStream, blockIndex * bytesPerBlockPosition);
+			IoUtils.skip (countingStream, headerLength + blockIndex * bytesPerBlockPosition);
 			
 			final long prevPos = IoUtils.readUnsignedNumberBinary(countingStream, bytesPerBlockPosition);
 			final long nextPos = IoUtils.readUnsignedNumberBinary(countingStream, bytesPerBlockPosition);
@@ -131,10 +134,12 @@ public class TableReader extends TableIo {
 	}
 
 	private void readOneBlock(final InputStream stream, final ITableIterator it, final int blockIndexCount, final int blockLength) throws IOException {
-		final byte[] blockData = IoUtils.readByteArray(stream, blockLength - CRC_SIZE);
-		final ByteArrayInputStream memoryStream = new ByteArrayInputStream(blockData);
+		final byte[] blockData = IoUtils.readByteArray(stream, blockLength);
+		final int dataSize = blockLength - CRC_SIZE;
+		final ByteArrayInputStream memoryStream = new ByteArrayInputStream(blockData, 0, dataSize);
 		
-		final long expectedCrc = IoUtils.readUnsignedNumberBinary(stream, CRC_SIZE);
+		final ByteArrayInputStream crcStream = new ByteArrayInputStream(blockData, dataSize, CRC_SIZE);
+		final long expectedCrc = IoUtils.readUnsignedNumberBinary(crcStream, CRC_SIZE);
 		final CRC32 crcChecksum = new CRC32();
 		final ChecksumStream checksumStream = new ChecksumStream(crcChecksum);
 				
@@ -145,7 +150,7 @@ public class TableReader extends TableIo {
 		for (int i = 0; i < blockIndexCount && it.isValid(); i++, it.next()) {
 			it.fillPosition(position);
 			
-			final boolean isValid = table.getDefinition().hasSameCountOfPieces(position) && validator.checkPosition();
+			final boolean isValid = table.getDefinition().hasSameCountOfPieces(position) && validator.checkPositionForTablebase();
 			int result = TableResult.ILLEGAL;
 			
 			if (isValid) {
