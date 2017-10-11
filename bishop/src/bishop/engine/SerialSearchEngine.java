@@ -149,7 +149,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private static final int LOSE_MAX_EXTENSION = 2;
 	private static final int LOSE_RISK_EXTENSION = 4;
 	
-	private static final int MIN_ATTACK_EVALUATION_FOR_EXTENSION = 150;
+	private static final int MIN_ATTACK_EVALUATION_FOR_EXTENSION = 200;
 	
 	private static final int MAX_ATTACK = 300;
 	
