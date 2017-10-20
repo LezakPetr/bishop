@@ -713,8 +713,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 		if (currentRecord.evaluation.update(parentEvaluation)) {
 			// Update principal variation
 			currentRecord.principalVariation.clear();
-			currentRecord.principalVariation.add(move);
-			currentRecord.principalVariation.addAll(result.getPrincipalVariation());
+			
+			if (currentRecord.evaluation.getEvaluation() != Evaluation.MIN) {   // Move where king is left attacked is not legal
+				
+				currentRecord.principalVariation.add(move);
+				currentRecord.principalVariation.addAll(result.getPrincipalVariation());
+			}
 			
 			// Update alpha and beta
 			if (currentRecord.evaluation.isBetaCutoff()) {

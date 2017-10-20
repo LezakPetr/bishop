@@ -67,8 +67,15 @@ public class StandardAlgebraicNotationWriter extends StandardAlgebraicNotationBa
 		
 		generator.generateMoves();
 		
-		if (!moveFound)
-			throw new RuntimeException("Invalid move");
+		if (!moveFound) {
+			final int compressedMove = move.getCompressedMove();
+			final Move uncompressedMove = new Move();
+			
+			if (uncompressedMove.uncompressMove(compressedMove, position))
+				throw new RuntimeException("Invalid move, but the move is uncompressable");
+			else
+				throw new RuntimeException("Invalid move");
+		}
 		
 		final int moveType = move.getMoveType();
 		
