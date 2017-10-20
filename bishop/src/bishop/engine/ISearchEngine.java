@@ -14,7 +14,9 @@ public interface ISearchEngine {
 	
 	public static final int HORIZON_FRACTION_BITS = 2;
 	public static final int HORIZON_GRANULARITY = 1 << HORIZON_FRACTION_BITS;
-	public static final int MAX_HORIZON = 1 << (8 + HORIZON_FRACTION_BITS);
+	public static final int INTEGRAL_HORIZON_BITS = 8;
+	public static final int MAX_INTEGRAL_HORIZON = 1 << INTEGRAL_HORIZON_BITS;
+	public static final int MAX_HORIZON = 1 << (INTEGRAL_HORIZON_BITS + HORIZON_FRACTION_BITS);
 	
 	/**
 	 * Sets maximal total depth of the search.

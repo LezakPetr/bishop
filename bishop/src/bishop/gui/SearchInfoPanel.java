@@ -272,36 +272,41 @@ public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, IL
 	}
 	
 	private void updateData(final SearchInfo info) {
-		final MoveList principalVariation = info.getPrincipalVariation();
-		final MoveList shownPrincipalVariation;
-		
-		if (application.getRegimeType() == RegimeType.PLAY && principalVariation.getSize() > 0)
-		{
-			shownPrincipalVariation = new MoveList();
-			shownPrincipalVariation.add(principalVariation.get(0));
+		try {
+			final MoveList principalVariation = info.getPrincipalVariation();
+			final MoveList shownPrincipalVariation;
+			
+			if (application.getRegimeType() == RegimeType.PLAY && principalVariation.getSize() > 0)
+			{
+				shownPrincipalVariation = new MoveList();
+				shownPrincipalVariation.add(principalVariation.get(0));
+			}
+			else
+				shownPrincipalVariation = principalVariation;
+	
+			final Position position = info.getPosition();
+			final String principalVariationStr = shownPrincipalVariation.toString(position, notation);
+			fieldPrincipalVariation.setText(principalVariationStr);
+			fieldPrincipalVariation.setCaretPosition(0);
+			
+			fieldEvaluation.setText(Evaluation.toString(info.getEvaluation()));
+			fieldHorizon.setText(Integer.toString(info.getHorizon() / ISearchEngine.HORIZON_GRANULARITY));
+			
+			final long elapsedTime = info.getElapsedTime();
+			fieldElapsedTime.setText(Long.toString(elapsedTime / 1000));
+			
+			final long nodeCount = info.getNodeCount();
+			fieldNodeCount.setText(Long.toString(nodeCount));
+			
+			final long nodesPerSecond = (elapsedTime > 0) ? (1000*nodeCount / elapsedTime) : 0;
+			fieldNodesPerSecond.setText(Long.toString(nodesPerSecond));	
+			
+			final String additionalInfo = info.getAdditionalInfo().stream().collect(Collectors.joining("\n"));
+			fieldAdditionalInfo.setText(additionalInfo);
 		}
-		else
-			shownPrincipalVariation = principalVariation;
-
-		final Position position = info.getPosition();
-		final String principalVariationStr = shownPrincipalVariation.toString(position, notation);
-		fieldPrincipalVariation.setText(principalVariationStr);
-		fieldPrincipalVariation.setCaretPosition(0);
-		
-		fieldEvaluation.setText(Evaluation.toString(info.getEvaluation()));
-		fieldHorizon.setText(Integer.toString(info.getHorizon() / ISearchEngine.HORIZON_GRANULARITY));
-		
-		final long elapsedTime = info.getElapsedTime();
-		fieldElapsedTime.setText(Long.toString(elapsedTime / 1000));
-		
-		final long nodeCount = info.getNodeCount();
-		fieldNodeCount.setText(Long.toString(nodeCount));
-		
-		final long nodesPerSecond = (elapsedTime > 0) ? (1000*nodeCount / elapsedTime) : 0;
-		fieldNodesPerSecond.setText(Long.toString(nodesPerSecond));	
-		
-		final String additionalInfo = info.getAdditionalInfo().stream().collect(Collectors.joining("\n"));
-		fieldAdditionalInfo.setText(additionalInfo);
+		catch (RuntimeException ex) {
+			ex.printStackTrace();
+		}
 	}
 	
 	/**

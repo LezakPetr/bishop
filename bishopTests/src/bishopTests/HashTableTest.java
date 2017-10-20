@@ -19,7 +19,7 @@ public class HashTableTest {
 		final HashRecord record = new HashRecord();
 		record.setCompressedBestMove(rnd.nextInt(Move.LAST_COMPRESSED_MOVE));
 		record.setEvaluation(HashRecord.MIN_NORMAL_EVALUATION + rnd.nextInt(2 * HashRecord.MAX_NORMAL_EVALUATION));
-		record.setHorizon(rnd.nextInt(ISearchEngine.MAX_HORIZON));
+		record.setHorizon(rnd.nextInt(ISearchEngine.MAX_HORIZON >> ISearchEngine.HORIZON_FRACTION_BITS) << ISearchEngine.HORIZON_FRACTION_BITS);
 		record.setType(rnd.nextInt(HashRecordType.LAST));
 		
 		return record;
