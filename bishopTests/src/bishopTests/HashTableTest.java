@@ -39,7 +39,7 @@ public class HashTableTest {
 	public void testHashTable() {
 		final Random rnd = new Random();
 		final int exponent = 8;
-		final long mask = (1L << exponent) - 1;
+		final long mask = ((1L << exponent) - 1) & ~1L;
 		
 		final HashTableImpl hashTable = new HashTableImpl(exponent);
 		final Map<Integer, Data> expectedMap = new HashMap<>();

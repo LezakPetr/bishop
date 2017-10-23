@@ -26,11 +26,18 @@ public final class FinitePositionEvaluator {
 		}
 		
 		// Repeated positions
-		final boolean isRepetition = repeatedPositionRegister.isDrawByRepetition(position, depth);
 		final boolean isDeadPosition = DrawChecker.isDeadPosition(position);
 
-		if (isRepetition || isDeadPosition) {
+		if (isDeadPosition) {
 			evaluation = Evaluation.DRAW;
+
+			return true;
+		}
+
+		final boolean isRepetition = repeatedPositionRegister.isDrawByRepetition(position, depth);
+
+		if (isRepetition) {
+			evaluation = Evaluation.DRAW_BY_REPETITION;
 
 			return true;
 		}

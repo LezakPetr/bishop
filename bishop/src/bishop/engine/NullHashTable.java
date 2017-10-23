@@ -32,8 +32,4 @@ public final class NullHashTable implements IHashTable {
 	@Override
 	public void clear() {
 	}
-
-	@Override
-	public void setRootHorizon(final int horizon) {
-	}
 }

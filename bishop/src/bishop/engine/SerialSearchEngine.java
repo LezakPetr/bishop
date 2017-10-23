@@ -974,13 +974,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 	}
 
 	private void updateHashRecord(final NodeRecord currentRecord, final int horizon) {
-		if (horizon > 0) {
+		final NodeEvaluation nodeEvaluation = currentRecord.evaluation;
+		final int evaluation = nodeEvaluation.getEvaluation();
+		
+		if (horizon > 0 && !Evaluation.isDrawByRepetition(evaluation)) {
 			final HashRecord record = new HashRecord();
-			final NodeEvaluation nodeEvaluation = currentRecord.evaluation;
-	
-			record.setEvaluationAndType(nodeEvaluation, currentDepth);
-			
-			final int evaluation = nodeEvaluation.getEvaluation();
+			record.setEvaluationAndType(nodeEvaluation, currentDepth);			
+		
 			final int effectiveHorizon;
 			
 			if (evaluation >= Evaluation.MATE_MIN || evaluation <= -Evaluation.MATE_MIN) {
