@@ -337,7 +337,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 				if (GlobalSettings.isDebug())
 					mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(false);
 			}
-
 		}
 		
 		try {
@@ -357,7 +356,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			
 			whitePositionEvaluation += lastPositionalEvaluation;
 			
-			final int positionEvaluation = Evaluation.getRelative(whitePositionEvaluation, onTurn);
+			final int positionEvaluation = Evaluation.getRelative(fixDrawByRepetitionEvaluation(whitePositionEvaluation), onTurn);
 			final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
 			final boolean isCheck = currentPosition.isCheck();
 			
@@ -478,6 +477,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 	}
 	
+	private int fixDrawByRepetitionEvaluation(final int evaluation) {
+		return (Evaluation.isDrawByRepetition(evaluation)) ? Evaluation.DRAW : evaluation;
+	}
+
 	private boolean checkFiniteEvaluation(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta) {
 		if (currentDepth > 0 && finiteEvaluator.evaluate(currentPosition, currentDepth, horizon, initialAlpha, initialBeta)) {
 			currentRecord.evaluation.setEvaluation(finiteEvaluator.getEvaluation());
@@ -535,7 +538,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		if (horizon <= 0)
 			return false;
 		
-		final boolean success = readHashRecordImpl(currentRecord, hashRecord);
+		final boolean success = readHashRecordImpl(horizon, currentRecord, hashRecord);
 		
 		if (GlobalSettings.isDebug())
 			hashSuccessRatio.addInvocation(success);
@@ -543,8 +546,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		return success;
 	}
 
-	private boolean readHashRecordImpl(final NodeRecord currentRecord, final HashRecord hashRecord) {
-		if (!hashTable.getRecord(currentPosition, hashRecord))
+	private boolean readHashRecordImpl(final int horizon, final NodeRecord currentRecord, final HashRecord hashRecord) {
+		if (!hashTable.getRecord(currentPosition, horizon, hashRecord))
 			return false;
 		
 		if (hashRecord.getCompressedBestMove() == Move.NONE_COMPRESSED_MOVE) {

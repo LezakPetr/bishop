@@ -107,5 +107,31 @@ public final class HashRecord {
 				evaluation >= Evaluation.MATE_MIN ||
 				evaluation <= -Evaluation.MATE_MIN;
 	}
+
+	public void assign(final HashRecord orig) {
+		this.horizon = orig.horizon;
+		this.evaluation = orig.evaluation;
+		this.type = orig.type;
+		this.compressedBestMove = orig.compressedBestMove;
+	}
 	
+	public boolean isBetterThan (final HashRecord that, final int expectedHorizon) {
+		// Compare by validity
+		if (that.type == HashRecordType.INVALID)
+			return true;
+		
+		if (this.type == HashRecordType.INVALID)
+			return false;
+		
+		// Compare by horizon
+		if (this.horizon < expectedHorizon || that.horizon < expectedHorizon)
+			return this.horizon > that.horizon;
+			
+		// Compare by type
+		if ((this.type == HashRecordType.VALUE && that.type == HashRecordType.VALUE) &&
+			(this.type != HashRecordType.VALUE && that.type != HashRecordType.VALUE))
+			return this.horizon > that.horizon;
+			
+		return this.type == HashRecordType.VALUE;
+	}
 }

@@ -9,7 +9,7 @@ public interface IHashTable {
 	 * @param record storage for the record
 	 * @return true if record is found, false if not
 	 */
-	public boolean getRecord (final Position position, final HashRecord record);
+	public boolean getRecord (final Position position, final int expectedHorizon, final HashRecord record);
 	
 	/**
 	 * Updates hash record for given position.

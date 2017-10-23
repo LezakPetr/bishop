@@ -58,7 +58,7 @@ public class HashTableTest {
 		
 		for (Map.Entry<Integer, Data> entry: expectedMap.entrySet()) {
 			final HashRecord record = new HashRecord();
-			hashTable.getRecord(entry.getValue().hash, record);
+			hashTable.getRecord(entry.getValue().hash, 0, record);
 			
 			Assert.assertEquals(entry.getValue().record, record);
 		}
