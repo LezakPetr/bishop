@@ -71,20 +71,23 @@ public final class HashTableImpl implements IHashTable {
 		}
 	}
 	
-	public boolean getRecord (final Position position, final HashRecord record) {
-		return getRecord(position.getHash(), record);
+	public boolean getRecord (final Position position, final int expectedHorizon, final HashRecord record) {
+		return getRecord(position.getHash(), expectedHorizon, record);
 	}
 	
 	private static long diffuseHash(final long hash) {
 		return Mixer.mixLong(hash) & HASH_MASK;
 	}
 	
-	private boolean readRecordFromIndex (final int index, final long diffusedHash, final HashRecord record) {
+	private void readRecordFromIndex (final int index, final long diffusedHash, final HashRecord record) {
 		final long tableItem = table.get(index);
 		final long data = tableItem ^ diffusedHash;
 		
-		if ((data & REST_MASK) != 0)
-			return false;
+		if ((data & REST_MASK) != 0) {
+			record.setType(HashRecordType.INVALID);
+			
+			return;
+		}
 		
 		final int evaluation = (int) ((data & EVALUATION_MASK) >>> EVALUATION_SHIFT) + EVALUATION_OFFSET;
 		final int integralHorizon = (int) ((data & HORIZON_MASK) >>> HORIZON_SHIFT);
@@ -97,24 +100,27 @@ public final class HashTableImpl implements IHashTable {
 		record.setCompressedBestMove(compressedBestMove);
 		
 		if (!record.canBeStored())
-			return false;
-		
-		return true;
+			record.setType(HashRecordType.INVALID);
 	}
 	
-	public boolean getRecord (final long hash, final HashRecord record) {
+	public boolean getRecord (final long hash, final int expectedHorizon, final HashRecord record) {
 		final int index = (int) (hash & indexMask);
 		final long diffusedHash = diffuseHash (hash);
 		
-		if (readRecordFromIndex(index, diffusedHash, record))
-			return true;
-
-		if (readRecordFromIndex(index + 1, diffusedHash, record))
-			return true;
-
-		record.setType(HashRecordType.INVALID);
+		final HashRecord record1 = new HashRecord();
+		readRecordFromIndex(index, diffusedHash, record1);
 		
-		return false;
+		final HashRecord record2 = new HashRecord();
+		readRecordFromIndex(index + 1, diffusedHash, record2);
+		
+		final int roundedHorizon = expectedHorizon & ISearchEngine.HROZION_INTEGRAL_MASK;
+		
+		if (record1.isBetterThan(record2, roundedHorizon))
+			record.assign(record1);
+		else
+			record.assign(record2);
+
+		return record.getType() != HashRecordType.INVALID;
 	}
 	
 	public void updateRecord (final Position position, final HashRecord record) {
