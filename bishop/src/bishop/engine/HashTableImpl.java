@@ -1,13 +1,8 @@
 package bishop.engine;
 
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLongArray;
-import java.util.stream.IntStream;
 
-import bishop.base.GlobalSettings;
 import bishop.base.Position;
-import utils.IntUtils;
-import utils.Logger;
 import utils.Mixer;
 
 /**
@@ -36,8 +31,6 @@ public final class HashTableImpl implements IHashTable {
 	private int exponent;
 	private AtomicLongArray table;
 	private long indexMask;
-	private int rootHorizon;
-	private int permanentHorizon;
 	
 	private static final int HORIZON_SHIFT              = 0;
 	private static final int EVALUATION_SHIFT           = 8;
@@ -56,14 +49,7 @@ public final class HashTableImpl implements IHashTable {
 	public static final int MIN_EXPONENT = 0;
 	public static final int MAX_EXPONENT = 31;
 	public static final int ITEM_SIZE = Long.BYTES;   // Size of hash item [B]
-	
-	public static final double BRANCH_FACTOR = 6.3;
-	public static final double PERMANENT_SIZE_COEFF = 0.1;
-	
-	public static final int STATISTICS_SIZE = 10000;
-	public static final int STATISTICS_MIN_TOTAL_COUNT = STATISTICS_SIZE / 10;
-	public static final double STATISTICS_MAX_PERMANENT_RATIO = 0.5;
-	
+		
 	// Probability that the collision will be detected by the hash table itself (without uncompressing move)
 	public static double PRIMARY_COLLISION_RATE = Math.pow(2, -(19 + 3.31 + 0.42));
 	
@@ -81,7 +67,7 @@ public final class HashTableImpl implements IHashTable {
 			final int recordCount = 1 << exponent;
 			
 			table = new AtomicLongArray(recordCount);
-			indexMask = (long) recordCount - 1;
+			indexMask = ((long) recordCount - 1) & ~1L;
 		}
 	}
 	
@@ -93,17 +79,12 @@ public final class HashTableImpl implements IHashTable {
 		return Mixer.mixLong(hash) & HASH_MASK;
 	}
 	
-	public boolean getRecord (final long hash, final HashRecord record) {
-		final int index = (int) (hash & indexMask);
-		final long diffusedHash = diffuseHash (hash);
+	private boolean readRecordFromIndex (final int index, final long diffusedHash, final HashRecord record) {
 		final long tableItem = table.get(index);
 		final long data = tableItem ^ diffusedHash;
 		
-		if ((data & REST_MASK) != 0) {
-			record.setType(HashRecordType.INVALID);
-			
+		if ((data & REST_MASK) != 0)
 			return false;
-		}
 		
 		final int evaluation = (int) ((data & EVALUATION_MASK) >>> EVALUATION_SHIFT) + EVALUATION_OFFSET;
 		final int integralHorizon = (int) ((data & HORIZON_MASK) >>> HORIZON_SHIFT);
@@ -115,13 +96,25 @@ public final class HashTableImpl implements IHashTable {
 		record.setType(type);
 		record.setCompressedBestMove(compressedBestMove);
 		
-		if (!record.canBeStored()) {
-			record.setType(HashRecordType.INVALID);
-			
+		if (!record.canBeStored())
 			return false;
-		}
 		
 		return true;
+	}
+	
+	public boolean getRecord (final long hash, final HashRecord record) {
+		final int index = (int) (hash & indexMask);
+		final long diffusedHash = diffuseHash (hash);
+		
+		if (readRecordFromIndex(index, diffusedHash, record))
+			return true;
+
+		if (readRecordFromIndex(index + 1, diffusedHash, record))
+			return true;
+
+		record.setType(HashRecordType.INVALID);
+		
+		return false;
 	}
 	
 	public void updateRecord (final Position position, final HashRecord record) {
@@ -134,28 +127,30 @@ public final class HashTableImpl implements IHashTable {
 				
 		final int index = (int) (hash & indexMask);
 		final int integralHorizon = record.getHorizon() >> ISearchEngine.HORIZON_FRACTION_BITS;
+
+		final long biasedEvaluation = record.getEvaluation() - EVALUATION_OFFSET;
 		
+		long data = 0;
+		data |= ((long) biasedEvaluation << EVALUATION_SHIFT) & EVALUATION_MASK;
+		data |= ((long) integralHorizon << HORIZON_SHIFT) & HORIZON_MASK;
+		data |= ((long) record.getType() << TYPE_SHIFT) & TYPE_MASK;
+		data |= ((long) record.getCompressedBestMove() << COMPRESSED_BEST_MOVE_SHIFT) & COMPRESSED_BEST_MOVE_MASK;
+		
+		final long diffusedHash = diffuseHash(hash);
+		final long newTableItem = data ^ diffusedHash;
+
 		while (true) {
 			final long oldTableItem = table.get(index);
 			final int oldIntegralHorizon = (int) ((oldTableItem & HORIZON_MASK) >> HORIZON_SHIFT);
 			
-			if (oldIntegralHorizon >= permanentHorizon && integralHorizon < oldIntegralHorizon)
+			if (integralHorizon < oldIntegralHorizon)
 				break;
-			
-			long data = 0;
-			
-			final long biasedEvaluation = record.getEvaluation() - EVALUATION_OFFSET;
-			data |= ((long) biasedEvaluation << EVALUATION_SHIFT) & EVALUATION_MASK;
-			data |= ((long) integralHorizon << HORIZON_SHIFT) & HORIZON_MASK;
-			data |= ((long) record.getType() << TYPE_SHIFT) & TYPE_MASK;
-			data |= ((long) record.getCompressedBestMove() << COMPRESSED_BEST_MOVE_SHIFT) & COMPRESSED_BEST_MOVE_MASK;
-			
-			final long diffusedHash = diffuseHash(hash);
-			final long newTableItem = data ^ diffusedHash;
 			
 			if (table.compareAndSet(index, oldTableItem, newTableItem))
 				break;
-		}		
+		}
+		
+		table.set(index + 1, newTableItem);
 	}
 	
 	/**
@@ -170,82 +165,4 @@ public final class HashTableImpl implements IHashTable {
 		table.set(0, 0);
 	}
 	
-	@Override
-	public void setRootHorizon (final int horizon) {
-		final int newRootHorizon = horizon >> ISearchEngine.HORIZON_FRACTION_BITS;
-		updatePermanentHorizon(newRootHorizon);
-		this.rootHorizon = newRootHorizon;
-	}
-	
-	private void updatePermanentHorizon(final int newRootHorizon) {
-		final int[] countsByHorizon = calculateCountOfRecordsByHorizon();
-		final int totalCount = Arrays.stream(countsByHorizon).sum();
-		
-		if (totalCount >= STATISTICS_MIN_TOTAL_COUNT) {
-			if (GlobalSettings.isDebug()) {
-				printCountOfRecordsByHorizon(countsByHorizon, totalCount);
-				printPermanentRecordsRatio(countsByHorizon);
-			}
-			
-			final int newPermanentHorizon = getNewPermanentHorizon (countsByHorizon, totalCount);
-			final int permanentDepth = rootHorizon - newPermanentHorizon;
-			
-			permanentHorizon = newRootHorizon - permanentDepth;			
-		}
-		else
-			permanentHorizon = 0;
-		
-		if (GlobalSettings.isDebug())
-			Logger.logMessage("totalCount = " + totalCount + ", permanentHorizon = " + permanentHorizon);
-	}
-
-	private void printCountOfRecordsByHorizon(final int[] countsByHorizon, final int totalCount) {
-		Logger.logMessage("Hash table count of records by horizon: ");
-		
-		for (int i = 0; i < ISearchEngine.MAX_INTEGRAL_HORIZON; i++) {
-			final double probability = 100.0 * countsByHorizon[i] / totalCount;
-			
-			if (probability > 0)
-				Logger.logMessage("Horizon " + i + " = " + probability);
-		}
-	}
-
-	private void printPermanentRecordsRatio(final int[] countsByHorizon) {
-		final int permanentCount = IntStream.range(permanentHorizon, ISearchEngine.MAX_INTEGRAL_HORIZON)
-				.map(i -> countsByHorizon[i])
-				.sum();
-		
-		final double permanentHorizonRatio = 100.0 * permanentCount / STATISTICS_SIZE;
-		Logger.logMessage("Permanent horizon ratio = " + permanentHorizonRatio + "%");
-	}
-
-	private int[] calculateCountOfRecordsByHorizon() {
-		final int[] countsByHorizon = new int[ISearchEngine.MAX_INTEGRAL_HORIZON];
-		final int statisticsSize = Math.min(table.length(), STATISTICS_SIZE);
-		
-		for (int i = 0; i < statisticsSize; i++) {
-			final long data = table.get(i);
-			
-			if (data != 0) {
-				final int horizon = (int) ((data & HORIZON_MASK) >>> HORIZON_SHIFT);
-				countsByHorizon[horizon]++;
-			}
-		}
-		return countsByHorizon;
-	}
-	
-	private int getNewPermanentHorizon(final int[] countsByHorizon, final int totalCount) {
-		final int maxCount = math.Utils.roundToInt(totalCount * STATISTICS_MAX_PERMANENT_RATIO);
-		int runningSum = 0;
-		
-		for (int i = ISearchEngine.MAX_INTEGRAL_HORIZON - 1; i >= 0 ; i--) {
-			runningSum += countsByHorizon[i];
-			
-			if (runningSum > maxCount)
-				return i + 1;
-		}
-		
-		return 0;
-	}
-
 }

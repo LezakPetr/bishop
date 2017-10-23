@@ -22,10 +22,4 @@ public interface IHashTable {
 	 * Clears the table.
 	 */
 	public void clear();
-	
-	/**
-	 * Sets horizon of the root node.
-	 * @param horizon root horizon
-	 */
-	public void setRootHorizon (final int horizon);
 }

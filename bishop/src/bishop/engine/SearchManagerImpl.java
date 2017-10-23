@@ -11,7 +11,6 @@ import java.util.concurrent.Future;
 import utils.Holder;
 import utils.Logger;
 import bishop.base.DefaultAdditiveMaterialEvaluator;
-import bishop.base.GlobalSettings;
 import bishop.base.HandlerRegistrarImpl;
 import bishop.base.IHandlerRegistrar;
 import bishop.base.IMoveWalker;
@@ -396,8 +395,6 @@ public final class SearchManagerImpl implements ISearchManager {
 				
 				horizon += ISearchEngine.HORIZON_GRANULARITY;
 				initialSearch = false;
-				
-				hashTable.setRootHorizon(horizon);
 				
 				this.searchResult = bestResult;
 				updateNodeCountInResult();

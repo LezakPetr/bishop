@@ -12,6 +12,7 @@ public class Evaluation {
 	public static final int MIN = -MAX;
 	
 	public static final int DRAW = 0;
+	public static final int DRAW_BY_REPETITION = -1;
 	public static final int UNKNOWN = MAX + 1;
 	
 	public static final int BYTES = 3;
@@ -61,4 +62,7 @@ public class Evaluation {
 		return alpha > MATE_MIN && alpha <= MATE_ZERO_DEPTH;
 	}
 	
+	public static boolean isDrawByRepetition (final int evaluation) {
+		return evaluation == DRAW_BY_REPETITION || evaluation == -DRAW_BY_REPETITION;
+	}
 }
