@@ -128,7 +128,7 @@ public final class HashRecord {
 			return this.horizon > that.horizon;
 			
 		// Compare by type
-		if ((this.type == HashRecordType.VALUE && that.type == HashRecordType.VALUE) &&
+		if ((this.type == HashRecordType.VALUE && that.type == HashRecordType.VALUE) ||
 			(this.type != HashRecordType.VALUE && that.type != HashRecordType.VALUE))
 			return this.horizon > that.horizon;
 			
