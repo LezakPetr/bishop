@@ -4,7 +4,9 @@ import java.util.function.Supplier;
 
 import bishop.base.BitBoard;
 import bishop.base.BitLoop;
+import bishop.base.BoardConstants;
 import bishop.base.Color;
+import bishop.base.File;
 import bishop.base.PieceType;
 import bishop.base.Position;
 import bishop.base.Square;
@@ -49,6 +51,7 @@ public class PawnStructureEvaluator {
 			final long singleDisadvantageAttackPawnMask = structureData.getSingleDisadvantageAttackPawnMask(color);
 			final long doubleDisadvantageAttackPawnMask = structureData.getDoubleDisadvantageAttackPawnMask(color);
 			final long blockedPawnMask = structureData.getBlockedPawnMask(color);
+			final int oppositePawnFiles = structureData.getPawnFiles(oppositeColor);
 			
 			for (BitLoop loop = new BitLoop(ownPawnMask); loop.hasNextSquare(); ) {
 				final int square = loop.getNextSquare();
@@ -66,6 +69,11 @@ public class PawnStructureEvaluator {
 						else
 							evaluation.addCoeff(coeffs.getSinglePassedPawnBonusCoeff(color, rank), color);
 					}
+					
+					// Outside passed pawn bonus
+					final int file = Square.getFile(square);
+					final int minOppositePawnFileDistance = BoardConstants.getMinFileDistance (oppositePawnFiles, file);
+					evaluation.addCoeff(coeffs.getOutsidePassedPawnBonusCoeff(minOppositePawnFileDistance), color);
 					
 					// Pawn with rooks
 					final long rearSquaresOnSameFile = FrontSquaresOnSameFileTable.getItem(oppositeColor, square);
