@@ -54,6 +54,8 @@ public class PawnStructureEvaluatorTest {
 				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R2), 2,
 				COEFFS.getBlockedPawnBonusCoeff(Color.BLACK, Rank.R4), -1,
 				COEFFS.getPawnMajorityCoeff(0), 1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(4), 1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(5), 1,
 			}
 		),
 		new TestCase(
@@ -66,6 +68,8 @@ public class PawnStructureEvaluatorTest {
 				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R7), -2,
 				COEFFS.getBlockedPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
 				COEFFS.getPawnMajorityCoeff(0), -1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(4), -1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(5), -1,
 			}
 		),
 		new TestCase(
@@ -78,6 +82,9 @@ public class PawnStructureEvaluatorTest {
 				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
 				COEFFS.getPawnMajorityCoeff(0), 1,
 				COEFFS.getPawnMajorityCoeff(1), 1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(2), 1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(4), 1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(5), 1,
 			}
 		),
 		new TestCase(
@@ -90,6 +97,9 @@ public class PawnStructureEvaluatorTest {
 				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
 				COEFFS.getPawnMajorityCoeff(0), -1,
 				COEFFS.getPawnMajorityCoeff(1), -1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(2), -1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(4), -1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(5), -1,
 			}
 		),
 		new TestCase(
@@ -110,6 +120,7 @@ public class PawnStructureEvaluatorTest {
 				COEFFS.getBlockedPawnBonusCoeff(Color.BLACK, Rank.R6), -2,
 				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R4), 2,
 				COEFFS.getPawnMajorityCoeff(2), -1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(2), -1,
 			}
 		)
 	};

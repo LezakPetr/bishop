@@ -37,8 +37,10 @@ public class CoeffLink {
 		this.weight = weight;
 	}
 	
-	public void addNode (final int coeff, final double multiplicator) {
+	public CoeffLink addNode (final int coeff, final double multiplicator) {
 		this.nodeList.add(new Node (coeff, multiplicator));
+		
+		return this;
 	}
 
 	public double getWeight() {

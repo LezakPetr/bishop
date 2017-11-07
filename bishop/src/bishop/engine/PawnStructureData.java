@@ -7,6 +7,7 @@ import bishop.base.BoardConstants;
 import bishop.base.Color;
 import bishop.base.File;
 import bishop.tables.PawnIslandFileTable;
+import utils.IntArrayBuilder;
 import utils.IntHolder;
 
 public class PawnStructureData {
@@ -90,6 +91,10 @@ public class PawnStructureData {
 	private static final int PAWN_ISLANDS_ALIVE_MASK = 0X80;
 	public static final int MAX_PAWN_ISLAND_COUNT = 4;
 	
+	private static final int[] PAWN_FILES_OFFSETS = new IntArrayBuilder(Color.LAST)
+		.put(Color.WHITE, BACK_SQUARES_OFFSET + Color.WHITE)
+		.put(Color.BLACK, FRONT_SQUARES_OFFSET + Color.BLACK)
+		.build();
 	
 	public PawnStructureData() {
 		data = new long[DATA_SIZE];
@@ -182,7 +187,7 @@ public class PawnStructureData {
 	}
 	
 	private void calculatePawnIslands() {
-		final int files = (int) ((data[BACK_SQUARES_OFFSET + Color.WHITE] | data[FRONT_SQUARES_OFFSET + Color.BLACK]) & 0xFF);
+		final int files = getPawnFiles(Color.WHITE) | getPawnFiles(Color.BLACK);
 		final long[] islandFiles = PawnIslandFileTable.getIslandsFiles(files);
 		final long whitePawnMask = structure.getWhitePawnMask();
 		final long blackPawnMask = structure.getBlackPawnMask();
@@ -331,6 +336,10 @@ public class PawnStructureData {
 		final int item = getPawnIslandItem(index, color);
 		
 		return (item & PAWN_ISLANDS_ALIVE_MASK) != 0;
+	}
+
+	public int getPawnFiles(final int color) {
+		return (int) data[PAWN_FILES_OFFSETS[color]] & 0xFF;
 	}
 
 }

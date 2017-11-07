@@ -3,6 +3,7 @@ package bishop.engine;
 import java.util.Arrays;
 
 import bishop.base.Color;
+import bishop.base.File;
 import bishop.base.Rank;
 import bishop.base.Square;
 
@@ -18,10 +19,11 @@ public class PawnStructureCoeffs {
 	private final int[][] doublePawnBonusCoeffs;
 	private final int[][] connectedNotPassedPawnBonusCoeffs;
 	private final int[][] protectedNotPassedPawnBonusCoeffs;
-	private int[][] singleDisadvantageAttackPawnBonusCoeffs;
-	private int[][] doubleDisadvantageAttackPawnBonusCoeffs;
-	private int[][] blockedPawnBonusCoeffs;
+	private final int[][] singleDisadvantageAttackPawnBonusCoeffs;
+	private final int[][] doubleDisadvantageAttackPawnBonusCoeffs;
+	private final int[][] blockedPawnBonusCoeffs;
 	private final int[] pawnMajorityCoeffs;
+	private final int[] outsidePassedPawnBonusCoeffs;
 	
 	private final int lastCoeff;
 	
@@ -51,6 +53,7 @@ public class PawnStructureCoeffs {
 		doubleDisadvantageAttackPawnBonusCoeffs = createRankCoeffs (registry, "double_disadvantage_attack_pawn", Rank.R2, Rank.R6);
 		blockedPawnBonusCoeffs = createRankCoeffs (registry, "blocked_pawn", Rank.R2, Rank.R6);
 		pawnMajorityCoeffs = createPawnMajorityCoeffs (registry);
+		outsidePassedPawnBonusCoeffs = createOutsidePassedPawnBonusCoeffs(registry);
 		
 		lastCoeff = registry.leaveCategory();
 	}
@@ -90,6 +93,28 @@ public class PawnStructureCoeffs {
 			registry.addLink(new CoeffLink(coeffs[i - 1], coeffs[i], PositionEvaluationCoeffs.LINK_WEIGHT));
 		
 		Arrays.fill(coeffs, PAWN_COUNT, Square.COUNT, coeffs[PAWN_COUNT - 1]);
+		
+		registry.leaveCategory();
+		
+		return coeffs;
+	}
+
+	private int[] createOutsidePassedPawnBonusCoeffs(final CoeffRegistry registry) {
+		registry.enterCategory("outside_passed_pawn");
+		
+		final int maxDistance = File.LAST + 1;
+		final int[] coeffs = new int[maxDistance];
+		
+		for (int distance = 0; distance < maxDistance; distance++) {
+			final int coeffIndex = registry.add(Integer.toString(distance));
+			
+			coeffs[distance] = coeffIndex;
+		}
+		
+		for (int distance = 1; distance < maxDistance; distance++)
+			registry.addLink(new CoeffLink(coeffs[distance - 1], coeffs[distance], PositionEvaluationCoeffs.LINK_WEIGHT));
+		
+		registry.addLink(new CoeffLink(PositionEvaluationCoeffs.LINK_WEIGHT).addNode(coeffs[0], 1.0));
 		
 		registry.leaveCategory();
 		
@@ -148,6 +173,10 @@ public class PawnStructureCoeffs {
 
 	public int getPawnMajorityCoeff(final int minPieceCount) {
 		return pawnMajorityCoeffs[minPieceCount];
+	}
+	
+	public int getOutsidePassedPawnBonusCoeff(final int minOppositePawnFileDistance) {
+		return outsidePassedPawnBonusCoeffs[minOppositePawnFileDistance];
 	}
 	
 	public int getFirstCoeff() {
