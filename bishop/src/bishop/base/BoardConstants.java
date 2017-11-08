@@ -643,11 +643,25 @@ public class BoardConstants {
 
 		for (int fileMask = 0; fileMask < maxFileMask; fileMask++) {
 			for (int file = File.FIRST; file < File.LAST; file++) {
-				int minDistance = File.LAST;
-
-				for (int testedFile = File.FIRST; testedFile < File.LAST; testedFile++) {
-					if ((fileMask & (1 << testedFile)) != 0)
-						minDistance = Math.min(minDistance, Math.abs(testedFile - file));
+				double minDistance = File.LAST;
+				int islandBeginFile = File.NONE;
+				
+				// Loop thru all bits of fileMask. We splits the files into islands and calculates the distance
+				// to the middle of that islands. The trick with adding one more file ensures that
+				// we will always end with bit 0 and finish the last island.
+				for (int testedFile = File.FIRST; testedFile <= File.LAST; testedFile++) {
+					if ((fileMask & (1 << testedFile)) != 0) {
+						if (islandBeginFile == File.NONE)
+							islandBeginFile = testedFile;
+					}
+					else {
+						if (islandBeginFile != File.NONE) {
+							final int islandEndFile = testedFile - 1;
+							final double islandMiddleFile = (islandBeginFile + islandEndFile) / 2.0;
+							minDistance = Math.min(minDistance, Math.abs(islandMiddleFile - file));
+							islandBeginFile = File.NONE;
+						}
+					}
 				}
 
 				final int index = getMinFileDistanceIndex(fileMask, file);
@@ -659,7 +673,7 @@ public class BoardConstants {
 	}
 
 	/**
-	 * Returns distance from given file to the nearest file in fileMask.
+	 * Returns distance from given file to the middle file of nearest pawn island in fileMask.
 	 * 
 	 * @return distance
 	 */
