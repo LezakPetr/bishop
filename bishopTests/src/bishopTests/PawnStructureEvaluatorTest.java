@@ -122,7 +122,52 @@ public class PawnStructureEvaluatorTest {
 				COEFFS.getPawnMajorityCoeff(2), -1,
 				COEFFS.getOutsidePassedPawnBonusCoeff(2), -1,
 			}
+		),
+		new TestCase(
+			"3k4/8/4pp1p/8/4PPP1/P7/8/3K4 w - - 0 1",
+			new int[] {
+				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.WHITE, Rank.R4), 3,
+				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R4), 1,
+				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -2,
+				COEFFS.getSinglePassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R6), -2,
+				COEFFS.getPawnMajorityCoeff(0), 1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(4), 1,
+			}
+		),
+		new TestCase(
+			"3k4/8/4ppp1/8/4PPP1/P7/8/3K4 w - - 0 1",
+			new int[] {
+				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.WHITE, Rank.R4), 3,
+				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -3,
+				COEFFS.getSinglePassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
+				COEFFS.getPawnMajorityCoeff(0), 1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(5), 1,
+			}
+		),
+		new TestCase(
+			"4k3/8/p1pp4/8/1PPP4/7P/8/4K3 w - - 0 1",
+			new int[] {
+				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.WHITE, Rank.R4), 3,
+				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R4), 1,
+				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -2,
+				COEFFS.getSinglePassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R6), -2,
+				COEFFS.getPawnMajorityCoeff(0), 1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(4), 1,
+			}
+		),
+		new TestCase(
+			"4k3/8/1ppp4/8/1PPP4/7P/8/4K3 w - - 0 1",
+			new int[] {
+				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.WHITE, Rank.R4), 3,
+				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -3,
+				COEFFS.getSinglePassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
+				COEFFS.getPawnMajorityCoeff(0), 1,
+				COEFFS.getOutsidePassedPawnBonusCoeff(5), 1,
+			}
 		)
+
 	};
 	
 	public TestCase[] RULE_OF_SQUARE_TEST_CASES = {
