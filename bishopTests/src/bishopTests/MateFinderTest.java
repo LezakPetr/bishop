@@ -22,11 +22,10 @@ public class MateFinderTest {
 	public void testFindWin() throws Exception {
 		final TestValue[] testValueArray = {
 			new TestValue("k7/7Q/2K5/8/8/1n6/8/8 w - - 0 1", 1),
-			new TestValue("k7/7Q/2K5/2n5/8/8/8/8 w - - 0 1", 2),
 			new TestValue("3r3k/8/8/8/8/8/6PP/7K b - - 0 1", 1),
 			new TestValue("3r3k/8/8/8/8/5B2/6PP/7K b - - 0 1", Integer.MAX_VALUE),
-			new TestValue("3K4/8/3k4/8/3r4/8/8/8 b - - 0 1", 3),
-			new TestValue("6K1/8/3k4/8/3r4/8/8/8 b - - 0 1", 5)
+			new TestValue("r6k/6pp/1R6/2R5/6BB/8/6PP/7K b - - 0 1", 5),
+			new TestValue("6rk/6pp/7N/8/8/8/5PPP/6K1 w - - 0 1", 1)			
 		};
 		
 		final int maxDepth = 5;
@@ -43,7 +42,7 @@ public class MateFinderTest {
 				final int evaluation = finder.findWin(depth);
 				final int expectedEvaluation = (testValue.depth <= depth) ? Evaluation.getMateEvaluation(2 * testValue.depth - 1) : Evaluation.DRAW;
 				
-				Assert.assertEquals(expectedEvaluation, evaluation);
+				Assert.assertEquals(testValue.positionFen, expectedEvaluation, evaluation);
 			}
 		}
 	}
@@ -53,8 +52,10 @@ public class MateFinderTest {
 		final TestValue[] testValueArray = {
 			new TestValue("7k/8/8/1B6/8/8/6PP/3r3K w - - 0 1", 1),
 			new TestValue("3r3k/8/8/8/8/5B2/6PP/7K b - - 0 1", Integer.MAX_VALUE),
-			new TestValue("3K4/8/3k4/8/3r4/8/8/8 w - - 0 1", 2),
-			new TestValue("6K1/4k3/8/8/3r4/8/8/8 w - - 0 1", 4)
+			new TestValue("6rk/5Npp/8/8/8/8/5PPP/6K1 b - - 0 1", 0),
+			new TestValue("5rQk/6pp/7N/8/8/8/5PPP/6K1 b - - 0 1", 1),
+			new TestValue("5rk1/6pp/4Q2N/8/8/8/5PPP/6K1 b - - 0 1", 2),
+			new TestValue("5r1k/5Npp/4Q3/8/8/8/5PPP/6K1 b - - 0 1", 3)
 		};
 		
 		final int maxDepth = 4;

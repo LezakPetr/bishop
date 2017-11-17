@@ -2,6 +2,7 @@ package bishop.engine;
 
 import java.util.Arrays;
 
+import bishop.base.Color;
 import bishop.base.IMoveWalker;
 import bishop.base.LegalMoveFinder;
 import bishop.base.Move;
@@ -16,9 +17,7 @@ public class MateFinder {
 	private int moveStackTop;
 	private int[] killerMoves;
 	private int depthAdvance;
-	private int maxExtension;
-	
-	private static final int CHECK_EXTENSION = 2;
+	private int attackerColor;
 	
 	private final IMoveWalker walker = new IMoveWalker() {
 		public boolean processMove(final Move move) {
@@ -28,7 +27,6 @@ public class MateFinder {
 			return true;
 		}
 	};
-
 	
 	private final PseudoLegalMoveGenerator moveGenerator;
 	private final LegalMoveFinder legalMoveFinder = new LegalMoveFinder(true);
@@ -50,7 +48,7 @@ public class MateFinder {
 		return position.isCheck() && !legalMoveFinder.existsLegalMove(position);
 	}
 	
-	private int findMate(final int depth, final int horizon, final int maxCheckExtensions, final int alpha, final int beta) {
+	private int findMate(final int depth, final int horizon, final int alpha, final int beta) {
 		if (position.isKingNotOnTurnAttacked())
 			return Evaluation.MAX;
 		
@@ -58,13 +56,18 @@ public class MateFinder {
 			return (isMate()) ? -Evaluation.getMateEvaluation(depth + depthAdvance) : Evaluation.DRAW;
 		
 		final boolean isCheck = position.isCheck();
+		final boolean isAttacker = position.getOnTurn() == attackerColor;
+		
+		if (!isCheck && !isAttacker)
+			return Evaluation.DRAW;
+		
 		final Move killerMove = new Move();
 		boolean existLegalMove = false;
 		int updatedAlpha = alpha;
 		int evaluation = Evaluation.MIN;
 		
 		if (killerMove.uncompressMove(killerMoves[depth + depthAdvance], position)) {
-			final int subEvaluation = evaluateMove(depth, horizon, maxCheckExtensions, isCheck, updatedAlpha, beta, killerMove);
+			final int subEvaluation = evaluateMove(depth, horizon, updatedAlpha, beta, killerMove);
 			
 			if (subEvaluation > beta)
 				return subEvaluation;
@@ -75,7 +78,8 @@ public class MateFinder {
 		}
 		
 		final int moveStackBegin = moveStackTop;
-		moveGenerator.setGenerateOnlyChecks(horizon == 0);
+		moveGenerator.setGenerateOnlyChecks(isAttacker);
+		moveGenerator.setReduceMovesInCheck(!isAttacker);
 		moveGenerator.generateMoves();
 		final int moveStackEnd = moveStackTop;
 		
@@ -85,7 +89,7 @@ public class MateFinder {
 			moveStack.getMove(i, move);
 			
 			if (!move.equals(killerMove)) {
-				final int subEvaluation = evaluateMove(depth, horizon, maxCheckExtensions, isCheck, updatedAlpha, beta, move);
+				final int subEvaluation = evaluateMove(depth, horizon, updatedAlpha, beta, move);
 				
 				evaluation = Math.max(evaluation, subEvaluation);
 				
@@ -113,12 +117,11 @@ public class MateFinder {
 		}
 	}
 
-	public int evaluateMove(final int depth, final int horizon, final int maxExtension, final boolean isCheck, int alpha, final int beta, final Move move) {
+	public int evaluateMove(final int depth, final int horizon, int alpha, final int beta, final Move move) {
 		position.makeMove(move);
 		
-		final int extension = (isCheck && maxExtension >= CHECK_EXTENSION) ? CHECK_EXTENSION : 0;
-		final int subHorizon = SerialSearchEngine.matePrunning(depth, horizon + extension - 1, alpha, beta, 1);
-		final int subEvaluation = -findMate(depth + 1, subHorizon, maxExtension - extension, -beta, -alpha);
+		final int subHorizon = SerialSearchEngine.matePrunning(depth, horizon - 1, alpha, beta, 1);
+		final int subEvaluation = -findMate(depth + 1, subHorizon, -beta, -alpha);
 		position.undoMove(move);
 		
 		return subEvaluation;
@@ -131,10 +134,16 @@ public class MateFinder {
 			throw new RuntimeException("Too deep");
 		
 		moveStackTop = 0;
+		attackerColor = position.getOnTurn();
 		
-		return findMate(0, horizon, maxExtension, Evaluation.MATE_MIN, Evaluation.MAX);
+		return findMate(0, horizon, Evaluation.MATE_MIN, Evaluation.MAX);
 	}
 	
+	/**
+	 * Finds lose. Can be called on position with check.
+	 * @param depthInMoves
+	 * @return
+	 */
 	public int findLose(final int depthInMoves) {
 		final int horizon = 2 * depthInMoves - 1;
 		
@@ -142,8 +151,9 @@ public class MateFinder {
 			throw new RuntimeException("Too deep");
 		
 		moveStackTop = 0;
+		attackerColor = Color.getOppositeColor(position.getOnTurn());
 		
-		return findMate(0, horizon, maxExtension, Evaluation.MIN, -Evaluation.MATE_MIN);
+		return findMate(0, horizon, Evaluation.MIN, -Evaluation.MATE_MIN);
 	}
 
 	public void setMaxDepth (final int maxDepthInMoves, final int maxDepthAdvance) {
@@ -151,10 +161,6 @@ public class MateFinder {
 		moveStack = new MoveStack((maxDepth + 1) * PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
 		
 		this.killerMoves = new int[maxDepth + maxDepthAdvance + 1];
-	}
-	
-	public void setMaxExtension(final int maxExtension) {
-		this.maxExtension = maxExtension;
 	}
 	
 	public void setDepthAdvance (final int depthAdvance) {
