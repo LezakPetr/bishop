@@ -14,8 +14,7 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
 	
 	private int onTurn;
 	private int oppositeColor;
-	private int oppositeKingSquare;
-	
+		
 	private long orthogonalCheckingMask;
 	private long diagonalCheckingMask;
 	private long indirectCheckingBlockers;
@@ -24,6 +23,7 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     // Returns if generation should continue.
     private boolean generateShortMovingFigureMoves(final int figure, final long possibleDestinationSquares) {
     	final long beginSquareMask = position.getPiecesMask(onTurn, figure);
+    	final int oppositeKingSquare = position.getKingPosition(Color.getOppositeColor(onTurn));
     	
     	final BitLoop beginSquareLoop = new BitLoop();
     	final BitLoop targetSquareLoop = new BitLoop();
@@ -178,6 +178,7 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     	
     	if (generateOnlyChecks) {
     		final long promotionRankMask = BoardConstants.getRankMask(BoardConstants.getPawnPromotionRank(onTurn));
+    		final int oppositeKingSquare = position.getKingPosition(Color.getOppositeColor(onTurn));
     		final long directCheckingTargetSquares = PawnAttackTable.getItem(oppositeColor, oppositeKingSquare) | promotionRankMask;
     		final long directCheckingSourceSquares;
     		

@@ -137,6 +137,27 @@ public class PseudoLegalMoveGeneratorTest extends MoveGeneratorTestBase {
 					"e8d8, e8d7, e8e7, e8f7, e8f8, b2a1q, b2a1r, b2a1b, b2a1n, b2b1q, b2b1r, b2b1b, b2b1n, g2g1q, g2g1r, g2g1b, g2g1n, g2h1q, g2h1r, g2h1b, g2h1n",
 					"e8d8, e8d7, e8e7, e8f7, e8f8, b2a1q, b2a1r, b2a1b, b2a1n, b2b1q, b2b1r, b2b1b, b2b1n, g2g1q, g2g1r, g2g1b, g2g1n, g2h1q, g2h1r, g2h1b, g2h1n",
 					"b2a1q, b2a1r, b2b1q, b2b1r, g2g1q, g2g1r, g2h1q, g2h1r"
+				),
+				new PositionWithMoves(
+					"6rk/6pp/7N/8/8/8/5PPP/6K1 w - - 0 1",
+					false,
+					"g1f1, g1h1, f2f3, f2f4, g2g3, g2g4, h2h3, h2h4, h6g4, h6f5, h6f7, h6g8",
+					"g1f1, g1h1, f2f3, f2f4, g2g3, g2g4, h2h3, h2h4, h6g4, h6f5, h6f7, h6g8",
+					"h6f7"
+				),
+				new PositionWithMoves(
+					"b7/1k6/8/8/8/6p1/4p3/7K b - - 0 1",
+					false,
+					"b7a7, b7a6, b7b6, b7c6, b7c7, b7c8, b7b8, g3g2, e2e1q, e2e1r, e2e1n, e2e1b",
+					"b7a7, b7a6, b7b6, b7c6, b7c7, b7c8, b7b8, g3g2, e2e1q, e2e1r, e2e1n, e2e1b",
+					"b7a7, b7a6, b7b6, b7c7, b7c8, b7b8, g3g2, e2e1q, e2e1r"
+				),
+				new PositionWithMoves(
+					"5r2/4P2k/8/8/8/8/8/7K w - - 0 1",
+					false,
+					"h1g1, h1g2, h1h2, e7e8q, e7e8r, e7e8n, e7e8b, e7f8q, e7f8r, e7f8n, e7f8b",
+					"h1g1, h1g2, h1h2, e7e8q, e7e8r, e7e8n, e7e8b, e7f8q, e7f8r, e7f8n, e7f8b",
+					"e7f8n"
 				)
 		};
 	}

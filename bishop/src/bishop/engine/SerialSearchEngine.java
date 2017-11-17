@@ -140,11 +140,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final MateFinder mateFinder;
 	
 	
-	private static final int WIN_MATE_DEPTH_IN_MOVES = 1;
 	private static final int WIN_MAX_EXTENSION = 3;
 	private static final int WIN_RISK_EXTENSION = 5;
 	
-	private static final int LOSE_MATE_DEPTH_IN_MOVES = 1;
 	private static final int LOSE_MAX_EXTENSION = 2;
 	private static final int LOSE_RISK_EXTENSION = 4;
 	
@@ -295,9 +293,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 			// Win
 			final int winAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(onTurn);
 			final int winExtension = (winAttackEvaluation >= MIN_ATTACK_EVALUATION_FOR_EXTENSION) ? WIN_RISK_EXTENSION : WIN_MAX_EXTENSION;
-			mateFinder.setMaxExtension(winExtension);
 			
-			final int winEvaluation = mateFinder.findWin(WIN_MATE_DEPTH_IN_MOVES);
+			final int winEvaluation = mateFinder.findWin(winExtension);
 			
 			if (winEvaluation >= Evaluation.MATE_MIN) {
 				currentRecord.evaluation.setEvaluation(winEvaluation);				
@@ -318,9 +315,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 			// Lose
 			final int loseAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(oppositeColor);
 			final int loseExtension = (loseAttackEvaluation >= MIN_ATTACK_EVALUATION_FOR_EXTENSION) ? LOSE_RISK_EXTENSION : LOSE_MAX_EXTENSION;
-			mateFinder.setMaxExtension(loseExtension);
 			
-			final int loseEvaluation = mateFinder.findLose(LOSE_MATE_DEPTH_IN_MOVES);
+			final int loseEvaluation = mateFinder.findLose(loseExtension);
 			
 			if (loseEvaluation <= -Evaluation.MATE_MIN) {
 				currentRecord.evaluation.setEvaluation(loseEvaluation);				
@@ -840,7 +836,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			for (int i = 0; i < nodeStack.length; i++)
 				this.nodeStack[i] = new NodeRecord(maxTotalDepth - i - 1, evaluationFactory);
 			
-			mateFinder.setMaxDepth (Math.max(WIN_MATE_DEPTH_IN_MOVES, LOSE_MATE_DEPTH_IN_MOVES), maxTotalDepth);
+			mateFinder.setMaxDepth (Math.max(WIN_RISK_EXTENSION, LOSE_RISK_EXTENSION), maxTotalDepth);
 		}
 	}
 
