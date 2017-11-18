@@ -34,6 +34,9 @@ import utils.Holder;
 
 public class SearchPerformanceTest {
 
+	private static final int HASH_TABLE_EXPONENT = 27;
+	private static final int MAX_DEPTH = 25;
+	
 	private final ISearchManager manager = new SearchManagerImpl();
 	private final Holder<Boolean> searchFinished = new Holder<Boolean>();
 	private final Holder<Long> endTimeHolder = new Holder<Long>();
@@ -66,10 +69,10 @@ public class SearchPerformanceTest {
 		
 		engineFactory.setPositionEvaluatorFactory(evaluatorFactory);
 		engineFactory.setEvaluationFactory(evaluationFactory);
-		engineFactory.setMaximalDepth(25);
+		engineFactory.setMaximalDepth(MAX_DEPTH);
 		engineFactory.setMaterialEvaluator(materialEvaluator);
 		
-		final HashTableImpl hashTable = new HashTableImpl(27);
+		final HashTableImpl hashTable = new HashTableImpl(HASH_TABLE_EXPONENT);
 		
 		manager.setTablebaseEvaluator(tablebaseEvaluator);
 		manager.setEngineFactory(engineFactory);

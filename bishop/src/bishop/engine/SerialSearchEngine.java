@@ -30,6 +30,8 @@ import utils.RatioCalculator;
 
 public final class SerialSearchEngine implements ISearchEngine {
 
+	private static final int NODE_COUNT_MASK_FOR_RECEIVING_UPDATES = 0xFFFF;
+
 	private static class NodeRecord implements ISearchResult {
 		public final Move currentMove;
 		public int moveListBegin;
@@ -143,8 +145,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private static final int WIN_MAX_EXTENSION = 3;
 	private static final int WIN_RISK_EXTENSION = 5;
 	
-	private static final int LOSE_MAX_EXTENSION = 2;
-	private static final int LOSE_RISK_EXTENSION = 4;
+	private static final int LOSE_MAX_EXTENSION = 3;
+	private static final int LOSE_RISK_EXTENSION = 5;
 	
 	private static final int MIN_ATTACK_EVALUATION_FOR_EXTENSION = 200;
 	
@@ -210,7 +212,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	}
 	
 	private void receiveUpdates() {
-		if ((nodeCount & 0xFFFF) == 0) {
+		if ((nodeCount & NODE_COUNT_MASK_FOR_RECEIVING_UPDATES) == 0) {
 			synchronized (monitor) {
 				if (task.isTerminated())
 					throw new SearchTerminatedException();
@@ -313,25 +315,27 @@ public final class SerialSearchEngine implements ISearchEngine {
 			}
 			
 			// Lose
-			final int loseAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(oppositeColor);
-			final int loseExtension = (loseAttackEvaluation >= MIN_ATTACK_EVALUATION_FOR_EXTENSION) ? LOSE_RISK_EXTENSION : LOSE_MAX_EXTENSION;
-			
-			final int loseEvaluation = mateFinder.findLose(loseExtension);
-			
-			if (loseEvaluation <= -Evaluation.MATE_MIN) {
-				currentRecord.evaluation.setEvaluation(loseEvaluation);				
-				currentRecord.evaluation.setAlpha(Evaluation.MIN);
-				currentRecord.evaluation.setBeta(Evaluation.MAX);
-				currentRecord.principalVariation.clear();
+			if (currentRecord.attackCalculator.isKingAttacked(onTurn)) {
+				final int loseAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(oppositeColor);
+				final int loseExtension = (loseAttackEvaluation >= MIN_ATTACK_EVALUATION_FOR_EXTENSION) ? LOSE_RISK_EXTENSION : LOSE_MAX_EXTENSION;
 				
-				if (GlobalSettings.isDebug())
-					mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(true);
+				final int loseEvaluation = mateFinder.findLose(loseExtension);
 				
-				return;
-			}	
-			else {
-				if (GlobalSettings.isDebug())
-					mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(false);
+				if (loseEvaluation <= -Evaluation.MATE_MIN) {
+					currentRecord.evaluation.setEvaluation(loseEvaluation);				
+					currentRecord.evaluation.setAlpha(Evaluation.MIN);
+					currentRecord.evaluation.setBeta(Evaluation.MAX);
+					currentRecord.principalVariation.clear();
+					
+					if (GlobalSettings.isDebug())
+						mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(true);
+					
+					return;
+				}	
+				else {
+					if (GlobalSettings.isDebug())
+						mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(false);
+				}
 			}
 		}
 		

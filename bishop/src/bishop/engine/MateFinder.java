@@ -10,14 +10,21 @@ import bishop.base.MoveStack;
 import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
 
+
+/**
+ * MateFinder uses a simple implementation of alpha-beta algorithm to find a forced mate in
+ * a series of moves check - reaction to check - check ...
+ *   
+ * @author Ing. Petr Ležák
+ */
 public class MateFinder {
 	
 	private int maxDepth;
 	private MoveStack moveStack;
 	private int moveStackTop;
-	private int[] killerMoves;
+	private int[] killerMoves;   // Killer moves for given depth
 	private int depthAdvance;
-	private int attackerColor;
+	private int attackerColor;   // Color of the side that gives mate
 	
 	private final IMoveWalker walker = new IMoveWalker() {
 		public boolean processMove(final Move move) {
@@ -55,10 +62,9 @@ public class MateFinder {
 		if (horizon < 0)
 			return (isMate()) ? -Evaluation.getMateEvaluation(depth + depthAdvance) : Evaluation.DRAW;
 		
-		final boolean isCheck = position.isCheck();
 		final boolean isAttacker = position.getOnTurn() == attackerColor;
 		
-		if (!isCheck && !isAttacker)
+		if (!isAttacker && !position.isCheck())
 			return Evaluation.DRAW;
 		
 		final Move killerMove = new Move();
@@ -140,7 +146,7 @@ public class MateFinder {
 	}
 	
 	/**
-	 * Finds lose. Can be called on position with check.
+	 * Finds lose. Must be called on position with check.
 	 * @param depthInMoves
 	 * @return
 	 */
