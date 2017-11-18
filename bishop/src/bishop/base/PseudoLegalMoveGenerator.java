@@ -195,13 +195,21 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     private boolean generatePawnMoves(final long possibleTargetSquaresForReductionInCheck) {
     	long beginSquareMask = position.getPiecesMask(onTurn, PieceType.PAWN);
     	
-    	if (generateOnlyChecks) {
-    		// If we want to generate only checks then we restricts the begin squares to those where it is possible to give check
-    		// by the move. Promotion is always taken as a potential checking move.
-    		final long promotionRankMask = BoardConstants.getRankMask(BoardConstants.getPawnPromotionRank(onTurn));
-    		final long directCheckingTargetSquares = PawnAttackTable.getItem(oppositeColor, oppositeKingSquare) | promotionRankMask;
-    		final long directCheckingMoveSourceSquares = calculateDirectCheckingMoveSourceSquares(directCheckingTargetSquares);
-    		final long directCheckingCaptureBeginSquares = BoardConstants.getPawnsAttackedSquares(oppositeColor, directCheckingTargetSquares);
+    	if (generateOnlyChecks || reduceMovesInCheck) {
+    		// allowedDirectCheckingTargetSquareMask are those target squares that complies to
+    		// possibleTargetSquaresForReductionInCheck and where direct check is done if forced
+    		long allowedDirectCheckingTargetSquareMask = possibleTargetSquaresForReductionInCheck;
+    		
+    		if (generateOnlyChecks) {
+    			// If we want to generate only checks then we restricts the target squares to those where it is possible to give check
+    			// by the move. Promotion is always taken as a potential checking move.
+    			final long promotionRankMask = BoardConstants.getRankMask(BoardConstants.getPawnPromotionRank(onTurn));
+    			final long directCheckingTargetSquares = PawnAttackTable.getItem(oppositeColor, oppositeKingSquare) | promotionRankMask;
+    			allowedDirectCheckingTargetSquareMask &= directCheckingTargetSquares;
+    		}
+    		
+    		final long directCheckingMoveSourceSquares = calculateMoveBeginSquaresFromTargetSquares(allowedDirectCheckingTargetSquareMask);
+    		final long directCheckingCaptureBeginSquares = BoardConstants.getPawnsAttackedSquares(oppositeColor, allowedDirectCheckingTargetSquareMask);
     		
     		beginSquareMask &= (directCheckingMoveSourceSquares | directCheckingCaptureBeginSquares | indirectCheckingBlockers);
     	}
@@ -254,14 +262,14 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     	return true;
     }
 
-	private long calculateDirectCheckingMoveSourceSquares(final long directCheckingTargetSquares) {
+	private long calculateMoveBeginSquaresFromTargetSquares(final long targetSquareMask) {
 		if (onTurn == Color.WHITE) {
-			return (directCheckingTargetSquares >>> File.LAST) |   // Move by one rank
-			       ((directCheckingTargetSquares & BoardConstants.RANK_4_MASK) >>> (2*File.LAST));   // Move by two ranks
+			return (targetSquareMask >>> File.LAST) |   // Move by one rank
+			       ((targetSquareMask & BoardConstants.RANK_4_MASK) >>> (2*File.LAST));   // Move by two ranks
 		}
 		else {
-			return (directCheckingTargetSquares << File.LAST) |   // Move by one rank
-			       ((directCheckingTargetSquares & BoardConstants.RANK_5_MASK) << (2*File.LAST));   // Move by two ranks
+			return (targetSquareMask << File.LAST) |   // Move by one rank
+			       ((targetSquareMask & BoardConstants.RANK_5_MASK) << (2*File.LAST));   // Move by two ranks
 		}
 	}
 
