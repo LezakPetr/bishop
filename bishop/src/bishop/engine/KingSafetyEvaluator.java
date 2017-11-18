@@ -19,7 +19,7 @@ public class KingSafetyEvaluator {
 	
 	private static final IntUnaryOperator attackTransformationFunction = new SampledIntFunction(
 			new Sigmoid(150, 300, 0, 50),
-			0, 300);
+			AttackCalculator.MIN_ATTACK_EVALUATION, AttackCalculator.MAX_REASONABLE_ATTACK_EVALUATION);
 			
 	private final GameStageCoeffs coeffs;
 	private final IPositionEvaluation evaluation;
