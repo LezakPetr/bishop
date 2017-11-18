@@ -3,6 +3,7 @@ package bishop.engine;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.function.IntUnaryOperator;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -25,6 +26,8 @@ import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
 import bishop.base.QuiescencePseudoLegalMoveGenerator;
 import bishop.base.Square;
+import math.SampledIntFunction;
+import math.Sigmoid;
 import utils.Logger;
 import utils.RatioCalculator;
 
@@ -142,15 +145,17 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final MateFinder mateFinder;
 	
 	
-	private static final int WIN_MAX_EXTENSION = 3;
-	private static final int WIN_RISK_EXTENSION = 5;
+	private static final int MAX_ATTACK = AttackCalculator.MAX_REASONABLE_ATTACK_EVALUATION;
 	
-	private static final int LOSE_MAX_EXTENSION = 3;
-	private static final int LOSE_RISK_EXTENSION = 5;
+	private static final int MIN_MATE_EXTENSION = 1;
+	private static final int MAX_MATE_EXTENSION = 5;
+	private static final int MIN_MATE_ATTACK_EVALUATION = 0;
+	private static final int MAX_MATE_ATTACK_EVALUATION = 200;
 	
-	private static final int MIN_ATTACK_EVALUATION_FOR_EXTENSION = 200;
-	
-	private static final int MAX_ATTACK = 300;
+	private static final SampledIntFunction MATE_EXTENSION_CALCULATOR = new SampledIntFunction(
+		new Sigmoid(MIN_MATE_ATTACK_EVALUATION, MAX_MATE_ATTACK_EVALUATION, MIN_MATE_EXTENSION, MAX_MATE_EXTENSION),
+		AttackCalculator.MIN_ATTACK_EVALUATION, AttackCalculator.MAX_REASONABLE_ATTACK_EVALUATION
+	);
 	
 	private static final RatioCalculator[] mateSearchSuccessRatio = createMateStatistics();
 	private static final RatioCalculator hashSuccessRatio = new RatioCalculator();
@@ -294,7 +299,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			
 			// Win
 			final int winAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(onTurn);
-			final int winExtension = (winAttackEvaluation >= MIN_ATTACK_EVALUATION_FOR_EXTENSION) ? WIN_RISK_EXTENSION : WIN_MAX_EXTENSION;
+			final int winExtension = MATE_EXTENSION_CALCULATOR.applyAsInt(winAttackEvaluation);
 			
 			final int winEvaluation = mateFinder.findWin(winExtension);
 			
@@ -317,7 +322,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			// Lose
 			if (currentRecord.attackCalculator.isKingAttacked(onTurn)) {
 				final int loseAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(oppositeColor);
-				final int loseExtension = (loseAttackEvaluation >= MIN_ATTACK_EVALUATION_FOR_EXTENSION) ? LOSE_RISK_EXTENSION : LOSE_MAX_EXTENSION;
+				final int loseExtension = MATE_EXTENSION_CALCULATOR.applyAsInt(loseAttackEvaluation);
 				
 				final int loseEvaluation = mateFinder.findLose(loseExtension);
 				
@@ -840,7 +845,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			for (int i = 0; i < nodeStack.length; i++)
 				this.nodeStack[i] = new NodeRecord(maxTotalDepth - i - 1, evaluationFactory);
 			
-			mateFinder.setMaxDepth (Math.max(WIN_RISK_EXTENSION, LOSE_RISK_EXTENSION), maxTotalDepth);
+			mateFinder.setMaxDepth (MAX_MATE_EXTENSION, maxTotalDepth);
 		}
 	}
 

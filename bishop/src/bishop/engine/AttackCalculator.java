@@ -16,6 +16,9 @@ import bishop.tables.BetweenTable;
 import bishop.tables.FigureAttackTable;
 
 public class AttackCalculator {
+
+	public static final int MIN_ATTACK_EVALUATION = 0;
+	public static final int MAX_REASONABLE_ATTACK_EVALUATION = 300;
 	
 	private static final int QUEEN_ATTACK_COEFF = 2;
 	private static final int ROOK_ATTACK_COEFF = 2;
