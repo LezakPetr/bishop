@@ -145,19 +145,26 @@ public class PseudoLegalMoveGeneratorTest extends MoveGeneratorTestBase {
 					"g1f1, g1h1, f2f3, f2f4, g2g3, g2g4, h2h3, h2h4, h6g4, h6f5, h6f7, h6g8",
 					"h6f7"
 				),
-				new PositionWithMoves(
+				new PositionWithMoves(   // Generating checks
 					"b7/1k6/8/8/8/6p1/4p3/7K b - - 0 1",
 					false,
 					"b7a7, b7a6, b7b6, b7c6, b7c7, b7c8, b7b8, g3g2, e2e1q, e2e1r, e2e1n, e2e1b",
 					"b7a7, b7a6, b7b6, b7c6, b7c7, b7c8, b7b8, g3g2, e2e1q, e2e1r, e2e1n, e2e1b",
 					"b7a7, b7a6, b7b6, b7c7, b7c8, b7b8, g3g2, e2e1q, e2e1r"
 				),
-				new PositionWithMoves(
+				new PositionWithMoves(   // Generating checks by pawn promotion
 					"5r2/4P2k/8/8/8/8/8/7K w - - 0 1",
 					false,
 					"h1g1, h1g2, h1h2, e7e8q, e7e8r, e7e8n, e7e8b, e7f8q, e7f8r, e7f8n, e7f8b",
 					"h1g1, h1g2, h1h2, e7e8q, e7e8r, e7e8n, e7e8b, e7f8q, e7f8r, e7f8n, e7f8b",
 					"e7f8n"
+				),
+				new PositionWithMoves(   // Generating checks by pawns
+					"8/8/8/3k4/4p3/5P2/2P5/7K w - - 0 1",
+					false,
+					"h1g1, h1g2, h1h2, c2c3, c2c4, f3f4, f3e4",
+					"h1g1, h1g2, h1h2, c2c3, c2c4, f3f4, f3e4",
+					"c2c4, f3e4"
 				)
 		};
 	}
