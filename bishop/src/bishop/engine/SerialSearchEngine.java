@@ -2,8 +2,6 @@ package bishop.engine;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.function.IntUnaryOperator;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -25,7 +23,6 @@ import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
 import bishop.base.QuiescencePseudoLegalMoveGenerator;
-import bishop.base.Square;
 import math.SampledIntFunction;
 import math.Sigmoid;
 import utils.Logger;
@@ -79,25 +76,27 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 	private class MoveWalker implements IMoveWalker {
 		public boolean processMove(final Move move) {
-			int estimate = historyTable[move.getBeginSquare()][move.getTargetSquare()];
-			
-			final int movingPieceType = move.getMovingPieceType();
-			final int capturedPieceType = move.getCapturedPieceType();
-
-			estimate += Utils.estimateCapture(movingPieceType, capturedPieceType); 
-
 			final NodeRecord nodeRecord = nodeStack[currentDepth];
-
-			if (move.equals(nodeRecord.killerMove))
-				estimate += KILLER_MOVE_ESTIMATE;
-
-			if (move.equals(nodeRecord.principalMove))
-				estimate += PRINCIPAL_MOVE_ESTIMATE;
-
-			if (move.equals(nodeRecord.hashBestMove))
-				estimate += HASH_BEST_MOVE_ESTIMATE;
+			int estimate;
 			
-			moveStack.setRecord(moveStackTop, move, estimate);
+			if (move.equals(nodeRecord.hashBestMove))
+				estimate = HASH_BEST_MOVE_ESTIMATE;
+			else {
+				estimate = historyTable.getEvaluation(currentPosition.getOnTurn(), move);
+			
+				final int movingPieceType = move.getMovingPieceType();
+				final int capturedPieceType = move.getCapturedPieceType();
+	
+				estimate += Utils.estimateCapture(movingPieceType, capturedPieceType); 
+	
+				if (move.equals(nodeRecord.killerMove))
+					estimate += KILLER_MOVE_ESTIMATE;
+	
+				if (move.equals(nodeRecord.principalMove))
+					estimate += PRINCIPAL_MOVE_ESTIMATE;
+			}
+			
+			moveStack.setRecord(moveStackTop, move, (int) estimate);
 			moveStackTop++;
 
 			return true;
@@ -106,7 +105,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 	private static final int KILLER_MOVE_ESTIMATE = 5 * PieceTypeEvaluations.PAWN_EVALUATION;
 	private static final int PRINCIPAL_MOVE_ESTIMATE = 10 * PieceTypeEvaluations.PAWN_EVALUATION;
-	private static final int HASH_BEST_MOVE_ESTIMATE = 30 * PieceTypeEvaluations.PAWN_EVALUATION;
+	private static final int HASH_BEST_MOVE_ESTIMATE = Integer.MAX_VALUE;
 	
 	// Settings
 	private int maxTotalDepth;
@@ -133,7 +132,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final PseudoLegalMoveGenerator pseudoLegalMoveGenerator;
 	private final LegalMoveFinder legalMoveFinder;
 	private final MoveWalker moveWalker;
-	private final int[][] historyTable;
+	private final HistoryTable historyTable;
 	private final FinitePositionEvaluator finiteEvaluator;
 	private final SearchExtensionCalculator extensionCalculator;
 	private final MoveExtensionEvaluator moveExtensionEvaluator;
@@ -149,7 +148,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	
 	private static final int MIN_MATE_EXTENSION = 1;
 	private static final int MAX_MATE_EXTENSION = 5;
-	private static final int MIN_MATE_ATTACK_EVALUATION = 0;
+	private static final int MIN_MATE_ATTACK_EVALUATION = 100;
 	private static final int MAX_MATE_ATTACK_EVALUATION = 200;
 	
 	private static final SampledIntFunction MATE_EXTENSION_CALCULATOR = new SampledIntFunction(
@@ -178,7 +177,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		engineState = EngineState.STOPPED;
 		monitor = new Object();
-		historyTable = new int[Square.LAST][Square.LAST];
+		historyTable = new HistoryTable();
 		
 		currentPosition = new Position();
 		repeatedPositionRegister = new RepeatedPositionRegister();
@@ -732,8 +731,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			if (currentRecord.evaluation.isBetaCutoff()) {
 				currentRecord.killerMove.assign(move);
 				
-				if (horizon > 0)
-					historyTable[move.getBeginSquare()][move.getTargetSquare()] += horizon * horizon;
+				historyTable.addCutoff(currentPosition.getOnTurn(), move, horizon);
 				
 				betaCutoff = true;
 			}
@@ -779,9 +777,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		nodeCount = 0;
 
 		if (task.isInitialSearch()) {
-			for (int i = 0; i < Square.LAST; i++) {
-				Arrays.fill(historyTable[i], 0);
-			}
+			historyTable.clear();
 		}
 		
 		// Do the search
