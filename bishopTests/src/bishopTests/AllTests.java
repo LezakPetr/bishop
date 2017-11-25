@@ -13,8 +13,8 @@ import utilsTest.MixerTest;
 import utilsTest.NumberArrayTest;
 import utilsTest.ParallelTaskRunnerTest;
 import utilsTest.RangeTest;
+import utilsTest.SimpleLinearModelTest;
 import bishop.base.GlobalSettings;
-import math.SimpleLinearModel;
 
 
 
@@ -57,7 +57,7 @@ public class AllTests {
 		HashTableTest.class,
 		PawnStructureEvaluatorTest.class,
 		PositionIoTest.class,
-		SimpleLinearModel.class
+		SimpleLinearModelTest.class
 	};
 	
 	public static final void main (final String[] args) {
