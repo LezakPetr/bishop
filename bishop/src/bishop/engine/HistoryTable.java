@@ -7,13 +7,12 @@ import bishop.base.Move;
 import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import bishop.base.Square;
-import utils.IntUtils;
 
 public class HistoryTable {
-	private static final int FINAL_SHIFT = 32;
-	private static final int MAX_EVALUATION = 8000 * PieceTypeEvaluations.PAWN_EVALUATION;
+	private static final int MAX_EVALUATION = 1000;
 	
 	private final long[] historyTable = new long[Color.LAST * PieceType.LAST * Square.LAST];
+	//private int maxEvaluation;
 	private long maxEntry;
 	private double coeff;
 	
@@ -26,13 +25,14 @@ public class HistoryTable {
 			
 			if (newEntry > maxEntry) {
 				maxEntry = newEntry;
-				recalculateDivision();
+				recalculateCoeff();
 			}
 		}
 	}
 	
-	private void recalculateDivision() {
-		coeff = (double) MAX_EVALUATION / (double) maxEntry;
+	public void recalculateCoeff() {
+		if (maxEntry > 0)
+			coeff = (double) MAX_EVALUATION / (double) maxEntry;
 	}
 	
 	public int getEvaluation(final int color, final Move move) {
@@ -51,6 +51,7 @@ public class HistoryTable {
 	public void clear() {
 		Arrays.fill(historyTable, 0);
 		maxEntry = 0;
+		coeff = 1.0;
 	}
 	
 }

@@ -19,7 +19,6 @@ import bishop.base.MoveList;
 import bishop.base.MoveStack;
 import bishop.base.MoveType;
 import bishop.base.PieceType;
-import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
 import bishop.base.QuiescencePseudoLegalMoveGenerator;
@@ -32,48 +31,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 	private static final int NODE_COUNT_MASK_FOR_RECEIVING_UPDATES = 0xFFFF;
 
-	private static class NodeRecord implements ISearchResult {
-		public final Move currentMove;
-		public int moveListBegin;
-		public int moveListEnd;
-		public final MoveList principalVariation;
-		public final NodeEvaluation evaluation;
-		public final Move killerMove;
-		public final Move principalMove;
-		public final Move hashBestMove;
-		public int legalMoveCount;
-		public boolean allMovesGenerated;
-		public int maxExtension;
-		public final AttackCalculator attackCalculator;
-		public boolean isQuiescenceSearch;
-
-		public NodeRecord(final int maxPrincipalDepth, final Supplier<IPositionEvaluation> evaluationFactory) {
-			currentMove = new Move();
-			principalVariation = new MoveList(maxPrincipalDepth);
-			evaluation = new NodeEvaluation();
-			killerMove = new Move();
-			principalMove = new Move();
-			hashBestMove = new Move();
-			attackCalculator = new AttackCalculator();
-		}
-
-		public void openNode(final int alpha, final int beta) {
-			this.evaluation.setEvaluation(Evaluation.MIN);
-			this.evaluation.setAlpha(alpha);
-			this.evaluation.setBeta(beta);
-			this.legalMoveCount = 0;
-			this.allMovesGenerated = false;
-		}
-		
-		public NodeEvaluation getNodeEvaluation() {
-			return evaluation;
-		}
-		
-		public MoveList getPrincipalVariation() {
-			return principalVariation;
-		}
-	}
-
 	private class MoveWalker implements IMoveWalker {
 		public boolean processMove(final Move move) {
 			final NodeRecord nodeRecord = nodeStack[currentDepth];
@@ -81,30 +38,16 @@ public final class SerialSearchEngine implements ISearchEngine {
 			
 			if (move.equals(nodeRecord.hashBestMove))
 				estimate = HASH_BEST_MOVE_ESTIMATE;
-			else {
-				estimate = historyTable.getEvaluation(currentPosition.getOnTurn(), move);
+			else
+				estimate = moveEstimator.getMoveEstimate(nodeRecord, currentPosition.getOnTurn(), move);
 			
-				final int movingPieceType = move.getMovingPieceType();
-				final int capturedPieceType = move.getCapturedPieceType();
-	
-				estimate += Utils.estimateCapture(movingPieceType, capturedPieceType); 
-	
-				if (move.equals(nodeRecord.killerMove))
-					estimate += KILLER_MOVE_ESTIMATE;
-	
-				if (move.equals(nodeRecord.principalMove))
-					estimate += PRINCIPAL_MOVE_ESTIMATE;
-			}
-			
-			moveStack.setRecord(moveStackTop, move, (int) estimate);
+			moveStack.setRecord(moveStackTop, move, estimate);
 			moveStackTop++;
 
 			return true;
 		}
 	};
 
-	private static final int KILLER_MOVE_ESTIMATE = 5 * PieceTypeEvaluations.PAWN_EVALUATION;
-	private static final int PRINCIPAL_MOVE_ESTIMATE = 10 * PieceTypeEvaluations.PAWN_EVALUATION;
 	private static final int HASH_BEST_MOVE_ESTIMATE = Integer.MAX_VALUE;
 	
 	// Settings
@@ -132,7 +75,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final PseudoLegalMoveGenerator pseudoLegalMoveGenerator;
 	private final LegalMoveFinder legalMoveFinder;
 	private final MoveWalker moveWalker;
-	private final HistoryTable historyTable;
+	private final MoveEstimator moveEstimator;
 	private final FinitePositionEvaluator finiteEvaluator;
 	private final SearchExtensionCalculator extensionCalculator;
 	private final MoveExtensionEvaluator moveExtensionEvaluator;
@@ -177,7 +120,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		engineState = EngineState.STOPPED;
 		monitor = new Object();
-		historyTable = new HistoryTable();
+		moveEstimator = new MoveEstimator();
 		
 		currentPosition = new Position();
 		repeatedPositionRegister = new RepeatedPositionRegister();
@@ -451,7 +394,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 						moveStack.getMove(currentRecord.moveListEnd - 1, move);
 						
 						if (!move.equals(precalculatedMove)) {
-							if (currentRecord.legalMoveCount > 0 && beta - alpha != 1) {
+							if (currentRecord.firstLegalMove.getMoveType() != MoveType.INVALID && beta - alpha != 1) {
 								evaluateMove(move, horizon, positionExtension, alpha, alpha + 1);
 								
 								final int childEvaluation = -nextRecord.evaluation.getEvaluation();
@@ -509,7 +452,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private boolean checkMate(final int onTurn, final boolean isCheck, final int horizon, final NodeRecord currentRecord, final int mateEvaluation, final AttackCalculator attackCalculator) {
 		boolean isMate = false;
 		
-		if (currentRecord.legalMoveCount == 0) {
+		if (currentRecord.firstLegalMove.getMoveType() == MoveType.INVALID) {
 			if (currentRecord.allMovesGenerated) {
 				final int evaluation;
 
@@ -713,8 +656,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final boolean isLegalMove = move.getMoveType() != MoveType.NULL && evaluation > Evaluation.MIN;
 		boolean betaCutoff = false;
 		
-		if (isLegalMove) {
-			currentRecord.legalMoveCount++;
+		if (isLegalMove && currentRecord.firstLegalMove.getMoveType() == MoveType.INVALID) {
+			currentRecord.firstLegalMove.assign(move);
 		}
 		
 		if (currentRecord.evaluation.update(parentEvaluation)) {
@@ -729,10 +672,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 			
 			// Update alpha and beta
 			if (currentRecord.evaluation.isBetaCutoff()) {
-				currentRecord.killerMove.assign(move);
-				
-				historyTable.addCutoff(currentPosition.getOnTurn(), move, horizon);
-				
+				moveEstimator.addCutoff(currentRecord, currentPosition.getOnTurn(), move, horizon);
+
+				currentRecord.killerMove.assign(move);				
+
 				betaCutoff = true;
 			}
 		}
@@ -777,7 +720,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		nodeCount = 0;
 
 		if (task.isInitialSearch()) {
-			historyTable.clear();
+			moveEstimator.clear();
 		}
 		
 		// Do the search
