@@ -29,7 +29,7 @@ import utils.RatioCalculator;
 
 public final class SerialSearchEngine implements ISearchEngine {
 
-	private static final int NODE_COUNT_MASK_FOR_RECEIVING_UPDATES = 0xFFFF;
+	private static final int RECEIVE_UPDATES_COUNT = 8192;
 
 	private class MoveWalker implements IMoveWalker {
 		public boolean processMove(final Move move) {
@@ -69,6 +69,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	// Synchronization
 	private EngineState engineState;
 	private final Object monitor;
+	private int receiveUpdatesCounter;
 
 	// Supplementary objects
 	private final QuiescencePseudoLegalMoveGenerator quiescenceLegalMoveGenerator;
@@ -159,11 +160,17 @@ public final class SerialSearchEngine implements ISearchEngine {
 	}
 	
 	private void receiveUpdates() {
-		if ((nodeCount & NODE_COUNT_MASK_FOR_RECEIVING_UPDATES) == 0) {
+		receiveUpdatesCounter++;
+		
+		if (receiveUpdatesCounter >= RECEIVE_UPDATES_COUNT) {
 			synchronized (monitor) {
-				if (task.isTerminated())
+				if (task.isTerminated()) {
+					Logger.logMessage("SerialSearchEngine task termination received");
 					throw new SearchTerminatedException();
+				}
 			}
+			
+			receiveUpdatesCounter = 0;
 		}
 	}
 	
@@ -878,6 +885,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 				
 				if (GlobalSettings.isDebug())
 					printStatistics();
+				
+				Logger.logMessage("SerialSearchEngine stopSearching");
 			}
 		}
 	}

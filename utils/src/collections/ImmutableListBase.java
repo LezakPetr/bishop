@@ -1,6 +1,5 @@
 package collections;
 
-import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -193,34 +192,12 @@ abstract public class ImmutableListBase<E> implements List<E> {
 
 	@Override
 	public Object[] toArray() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new RuntimeException("Method not implemented");
 	}
 
 	@Override
 	public <T> T[] toArray(final T[] a) {
-		if (a == null)
-			throw new NullPointerException();
-		
-		final int listSize = size();
-		final T[] data;
-		
-		if (a.length >= listSize) {
-			data = a;
-			
-			if (a.length > listSize)
-				data[listSize] = null;
-		}
-		else {
-			final Class<?> componentType = a.getClass().getComponentType();
-		
-			data = (T[]) Array.newInstance(componentType, listSize);
-		}
-	
-		for (int i = 0; i < listSize; i++)
-			data[i] = (T) get(i);
-		
-		return data;
+		throw new RuntimeException("Method not implemented");
 	}
 	
 }
