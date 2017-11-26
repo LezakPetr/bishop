@@ -5,14 +5,21 @@ import java.util.function.Consumer;
 import bishop.base.Color;
 import bishop.base.Move;
 import bishop.base.PieceType;
-import bishop.base.PieceTypeEvaluations;
-import math.IntBoundaries;
 import math.SimpleLinearModel;
 import utils.IntArrayBuilder;
 
+/**
+ * Estimator that estimates the moves to order them in alpha-beta search.
+ * This class maintains linear models of history evaluation -> probability of cutoff
+ * for every combination of color, killer heuristic, moving and captured piece type.
+ *  
+ * @author Ing. Petr Ležák
+ */
 public class MoveEstimator {
 	// Following must be true:
-	//   2 * SAMPLE_COUNT_TO_RECALCULATE_ESTIMATES * REDUCTION_FREQUENCY * MOVE_ESTIMATE^2 < 2^63
+	//   2 * SAMPLE_COUNT_TO_RECALCULATE_ESTIMATES * REDUCTION_FREQUENCY * e^2 < 2^63
+	// where e = min (MOVE_ESTIMATE, HistoryTable.MAX_EVALUATION)
+	// to prevent potential overflows
 	private static final int SAMPLE_COUNT_TO_RECALCULATE_ESTIMATES = 65536;
 	private static final int REDUCTION_FREQUENCY = 256;
 	private static final int MOVE_ESTIMATE = 1000;
@@ -106,21 +113,15 @@ public class MoveEstimator {
 			forEachModel(SimpleLinearModel::reduceWeightOfSamples);
 			reductionCounter = 0;
 		}
-
-		printSettings();
 	}
 	
 	public void clear() {
-		printSettings();
 		historyTable.clear();
 		
 		sampleCounter = 0;
 		reductionCounter = 0;
 	}
-	
-	private void printSettings() {
-	}
-	
+		
 	private static int estimateCapture (final int movingPieceType, final int capturedPieceType) {
 		if (capturedPieceType == PieceType.NONE)
 			return 0;

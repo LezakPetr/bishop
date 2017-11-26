@@ -86,6 +86,8 @@ public class MixerTest {
 		}
 	}
 	
+	// This method is used only to calculate MIN_OUTPUT_SET_SIZE
+	@SuppressWarnings("unused")
 	private static int calculateExpectedOutputSetSize(final int counterSize) {
 		final double[] coeffs = IntStream.rangeClosed(0, counterSize).mapToDouble(x -> (double) x / (double) counterSize).toArray();
 		double[] actual = new double[counterSize + 1];   // Probability, that there is index items in the set

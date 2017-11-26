@@ -5,14 +5,17 @@ import java.util.Arrays;
 import bishop.base.Color;
 import bishop.base.Move;
 import bishop.base.PieceType;
-import bishop.base.PieceTypeEvaluations;
 import bishop.base.Square;
 
+/**
+ * Table that holds weighted number of cutoffs per color, moving piece type and target square.
+ *  
+ * @author Ing. Petr Ležák
+ */
 public class HistoryTable {
 	private static final int MAX_EVALUATION = 1000;
 	
 	private final long[] historyTable = new long[Color.LAST * PieceType.LAST * Square.LAST];
-	//private int maxEvaluation;
 	private long maxEntry;
 	private double coeff;
 	
