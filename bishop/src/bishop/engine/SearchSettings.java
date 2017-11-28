@@ -36,34 +36,38 @@ public final class SearchSettings {
 	private final int[] figureEscapeExtensions = new DoubleArrayBuilder(PieceType.LAST)
 			.put(PieceType.KNIGHT, 0.5)
 			.put(PieceType.BISHOP, 0.5)
-			.put(PieceType.ROOK, 0.7)
+			.put(PieceType.ROOK, 0.75)
 			.put(PieceType.QUEEN, 1.0)
 			.stream()
-			.mapToInt(x -> roundToInt(x * ISearchEngine.HORIZON_GRANULARITY))
+			.mapToInt(SearchSettings::makeHorizon)
 			.toArray();
 
 	public SearchSettings() {
-		maxQuiescenceDepth = roundToInt (5.0 * ISearchEngine.HORIZON_GRANULARITY);
-		nullMoveReduction = roundToInt (2.0 * ISearchEngine.HORIZON_GRANULARITY);
-		minExtensionHorizon = roundToInt (3.0 * ISearchEngine.HORIZON_GRANULARITY);
-		maxExtension = roundToInt (5.0 * ISearchEngine.HORIZON_GRANULARITY);
-		simpleCheckExtension = roundToInt (0.5 * ISearchEngine.HORIZON_GRANULARITY);
-		attackCheckExtension = roundToInt (1.0 * ISearchEngine.HORIZON_GRANULARITY);
-		forcedMoveExtension = roundToInt (0.8125 * ISearchEngine.HORIZON_GRANULARITY);
-		mateExtension = roundToInt (0.875 * ISearchEngine.HORIZON_GRANULARITY);
-		rankAttackExtension = roundToInt (0.6875 * ISearchEngine.HORIZON_GRANULARITY);
-		setPinExtension(roundToInt (0.6875 * ISearchEngine.HORIZON_GRANULARITY));
+		maxQuiescenceDepth = makeHorizon(5.0);
+		nullMoveReduction = makeHorizon(2.0);
+		minExtensionHorizon = makeHorizon(3.0);
+		maxExtension = makeHorizon(5.0);
+		simpleCheckExtension = makeHorizon(0.5);
+		attackCheckExtension = makeHorizon(1.0);
+		forcedMoveExtension = makeHorizon(0.75);
+		mateExtension = makeHorizon(1.0);
+		rankAttackExtension = makeHorizon(0.75);
+		pinExtension = makeHorizon(0.75);
 		
-		pawnOnSevenRankExtension = roundToInt (1.0 * ISearchEngine.HORIZON_GRANULARITY);
-		protectingPawnOnSixRankExtension = roundToInt (1.0 * ISearchEngine.HORIZON_GRANULARITY);
+		pawnOnSevenRankExtension = makeHorizon(1.0);
+		protectingPawnOnSixRankExtension = makeHorizon(1.0);
 		
-		recaptureMinExtension = roundToInt (0.0 * ISearchEngine.HORIZON_GRANULARITY);
-		recaptureMaxExtension = roundToInt (0.75 * ISearchEngine.HORIZON_GRANULARITY);
+		recaptureMinExtension = makeHorizon(0.0);
+		recaptureMaxExtension = makeHorizon(0.75);
 
 		recaptureBeginMinTreshold = roundToInt (2.25 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureBeginMaxTreshold = roundToInt (5 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureTargetTreshold = roundToInt (0.5 * PieceTypeEvaluations.PAWN_EVALUATION);
-		maxCheckSearchDepth = roundToInt (3.0 * ISearchEngine.HORIZON_GRANULARITY);
+		maxCheckSearchDepth = makeHorizon(3.0);
+	}
+	
+	private static int makeHorizon (final double extension) {
+		return roundToInt(extension * ISearchEngine.HORIZON_GRANULARITY);
 	}
 	
 	public int getMaxQuiescenceDepth() {
