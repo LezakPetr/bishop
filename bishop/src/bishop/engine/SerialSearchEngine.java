@@ -350,17 +350,22 @@ public final class SerialSearchEngine implements ISearchEngine {
 				
 				// Null move heuristic
 				if (!isQuiescenceSearch && isNullSearchPossible(isCheck)) {
-					int nullHorizon = horizon - searchSettings.getNullMoveReduction();
-					final Move move = new Move();
-					move.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
+					final int nullReduction = Math.min(searchSettings.getNullMoveReduction(), horizon / 2);
 					
-					evaluateMove(move, nullHorizon, 0, initialBeta, initialBeta + 1);
-					
-					final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
-					
-					if (parentEvaluation.getEvaluation() > initialBeta) {
-						currentRecord.evaluation.update(parentEvaluation);
-						return;
+					if (nullReduction >= ISearchEngine.HORIZON_GRANULARITY) {
+						int nullHorizon = horizon - (nullReduction  & ISearchEngine.HROZION_INTEGRAL_MASK);
+						
+						final Move move = new Move();
+						move.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
+						
+						evaluateMove(move, nullHorizon, 0, initialBeta, initialBeta + 1);
+						
+						final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
+						
+						if (parentEvaluation.getEvaluation() > initialBeta) {
+							currentRecord.evaluation.update(parentEvaluation);
+							return;
+						}
 					}
 				}
 				

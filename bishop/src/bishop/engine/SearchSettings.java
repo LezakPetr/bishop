@@ -44,7 +44,7 @@ public final class SearchSettings {
 
 	public SearchSettings() {
 		maxQuiescenceDepth = makeHorizon(5.0);
-		nullMoveReduction = makeHorizon(2.0);
+		nullMoveReduction = makeHorizon(3.0);
 		minExtensionHorizon = makeHorizon(3.0);
 		maxExtension = makeHorizon(5.0);
 		simpleCheckExtension = makeHorizon(0.5);
