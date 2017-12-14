@@ -15,14 +15,14 @@ import zip.ZipRecord;
 import bishop.base.Color;
 import bishop.base.PieceType;
 import bishop.controller.Utils;
-import math.IVector;
+import math.IVectorRead;
 import math.Vector2D;
 import math.Vectors;
 
 public abstract class PieceSetBase implements IPieceSet {
 	private String name;
-	private IVector centerPoint;
-	private IVector pieceSize;
+	private IVectorRead centerPoint;
+	private IVectorRead pieceSize;
 
 
 	public String getName() {
@@ -33,19 +33,19 @@ public abstract class PieceSetBase implements IPieceSet {
 		this.name = name;
 	}
 
-	public IVector getCenterPoint() {
+	public IVectorRead getCenterPoint() {
 		return centerPoint;
 	}
 	
-	public void setCenterPoint(final IVector point) {
+	public void setCenterPoint(final IVectorRead point) {
 		this.centerPoint = point;
 	}
 
-	public IVector getPieceSize() {
+	public IVectorRead getPieceSize() {
 		return pieceSize;
 	}
 
-	public void setPieceSize(final IVector pieceSize) {
+	public void setPieceSize(final IVectorRead pieceSize) {
 		this.pieceSize = pieceSize;
 	}
 

@@ -18,9 +18,9 @@ import bishop.base.Piece;
 import bishop.base.Position;
 import bishop.base.Rank;
 import bishop.base.Square;
-import math.IVector;
+import math.IVectorRead;
 import math.Vector2D;
-import math.VectorImpl;
+import math.DenseVector;
 import math.Vectors;
 import bisGui.graphics.IGraphics;
 import bisGui.graphics.IImage;
@@ -46,9 +46,9 @@ public class DeskImpl2D implements IDesk {
 	private RasterBoard scaledBoard;
 	private RasterPieceSet scaledPieceSet;
 	
-	private IVector squareSize;   // Unscaled size of the square
+	private IVectorRead squareSize;   // Unscaled size of the square
 	
-	private IVector boardCenter;
+	private IVectorRead boardCenter;
 	private ICoordinateTransformation squareTransformation;
 	
 	private boolean dimensionsValid;
@@ -57,15 +57,15 @@ public class DeskImpl2D implements IDesk {
 	private boolean showCoordinates;
 	private long markedSquareMask;
 	
-	private IVector buttonPressPosition;
+	private IVectorRead buttonPressPosition;
 	private MouseButton pressedButton;
 	private int draggingBeginSquare;
-	private IVector draggingPoint;
+	private IVectorRead draggingPoint;
 	
 	private Frame ownerFrame;
 	
-	private static void drawImage(final IGraphics g, final IImage image, final IVector imageCenter, final IVector point) {
-		final IVector corner = Vectors.minus(point, imageCenter);
+	private static void drawImage(final IGraphics g, final IImage image, final IVectorRead imageCenter, final IVectorRead point) {
+		final IVectorRead corner = Vectors.minus(point, imageCenter);
 		
 		g.drawImage(image, corner);
 	}
@@ -75,7 +75,7 @@ public class DeskImpl2D implements IDesk {
 		public void paintWidget (final IGraphics g) {
 			updateDimensions();
 			
-			final IVector size = getSize();
+			final IVectorRead size = getSize();
 			
 			g.fillRect(Vector2D.ZERO, size, bisGui.graphics.Color.BLACK);
 			
@@ -86,7 +86,7 @@ public class DeskImpl2D implements IDesk {
 		}
 		
 		private void paintBoard (final IGraphics g) {
-			final IVector centerPoint = scaledBoard.getBoardCenterPoint();
+			final IVectorRead centerPoint = scaledBoard.getBoardCenterPoint();
 			
 			final IImage boardImage = scaledBoard.getBoardImage();
 			drawImage(g, boardImage, centerPoint, boardCenter);
@@ -103,7 +103,7 @@ public class DeskImpl2D implements IDesk {
 				
 				if (piece != null) {
 					final IImage image = scaledPieceSet.getPieceImage(piece.getColor(), piece.getPieceType());
-					final IVector pieceCenter = scaledPieceSet.getCenterPoint();
+					final IVectorRead pieceCenter = scaledPieceSet.getCenterPoint();
 					
 					drawImage(g, image, pieceCenter, draggingPoint);		
 				}
@@ -116,7 +116,7 @@ public class DeskImpl2D implements IDesk {
 					final Piece piece = position.getSquareContent(square);
 					
 					if (piece != null) {
-						final VectorImpl squareVector = getSquareVector (square);
+						final DenseVector squareVector = getSquareVector (square);
 						
 						paintPiece (g, piece, squareVector);
 					}
@@ -125,10 +125,10 @@ public class DeskImpl2D implements IDesk {
 
 		}
 		
-		private void paintPiece(final IGraphics g, final Piece piece, final IVector squareVector) {
+		private void paintPiece(final IGraphics g, final Piece piece, final IVectorRead squareVector) {
 			final IImage image = scaledPieceSet.getPieceImage(piece.getColor(), piece.getPieceType());
-			final IVector position = squareTransformation.transformPointForward(squareVector);
-			final IVector pieceCenter = scaledPieceSet.getCenterPoint();
+			final IVectorRead position = squareTransformation.transformPointForward(squareVector);
+			final IVectorRead pieceCenter = scaledPieceSet.getCenterPoint();
 			
 			drawImage(g, image, pieceCenter, position);
 		}
@@ -136,22 +136,22 @@ public class DeskImpl2D implements IDesk {
 		private void paintAllMarks (final IGraphics g) {
 			for (BitLoop loop = new BitLoop(markedSquareMask); loop.hasNextSquare(); ) {
 				final int square = loop.getNextSquare();
-				final VectorImpl squareVector = getSquareVector (square);
+				final DenseVector squareVector = getSquareVector (square);
 				
 				paintMark (g, squareVector);			
 			}
 		}
 
-		private void paintMark(final IGraphics g, final VectorImpl squareVector) {
+		private void paintMark(final IGraphics g, final DenseVector squareVector) {
 			final IImage image = scaledBoard.getMarkImage();
-			final IVector position = squareTransformation.transformPointForward(squareVector);
-			final IVector markCenter = scaledBoard.getMarkCenterPoint();
+			final IVectorRead position = squareTransformation.transformPointForward(squareVector);
+			final IVectorRead markCenter = scaledBoard.getMarkCenterPoint();
 			
 			drawImage(g, image, markCenter, position);
 		}
 		
 		@Override
-		public void mousePressed (final IVector position, final MouseButton button) {
+		public void mousePressed (final IVectorRead position, final MouseButton button) {
 			if (pressedButton == null) {
 				pressedButton = button;
 				buttonPressPosition = position;
@@ -159,8 +159,8 @@ public class DeskImpl2D implements IDesk {
 		}
 		
 		@Override
-		public void mouseDragged (final IVector position, final MouseButton button) {
-			final IVector oldDraggingPoint = draggingPoint;
+		public void mouseDragged (final IVectorRead position, final MouseButton button) {
+			final IVectorRead oldDraggingPoint = draggingPoint;
 			draggingPoint = position;
 			
 			if (draggingBeginSquare == Square.NONE) {
@@ -181,7 +181,7 @@ public class DeskImpl2D implements IDesk {
 		}
 		
 		@Override
-		public void mouseReleased (final IVector position, final MouseButton button) {
+		public void mouseReleased (final IVectorRead position, final MouseButton button) {
 			final int square = getSquareOnPoint(position);
 			
 			if (pressedButton != null && button == pressedButton) {
@@ -207,14 +207,14 @@ public class DeskImpl2D implements IDesk {
 		}
 
 		@Override
-		public IVector getPosition() {
+		public IVectorRead getPosition() {
 			final Rectangle rectangle = bridge.getBounds();
 			
 			return Vector2D.fromComponents(rectangle.x, rectangle.y);
 		}
 
 		@Override
-		public IVector getSize() {
+		public IVectorRead getSize() {
 			final Rectangle rectangle = bridge.getBounds();
 			
 			return Vector2D.fromComponents(rectangle.width, rectangle.height);
@@ -232,8 +232,8 @@ public class DeskImpl2D implements IDesk {
 		}
 	};
 		
-	private int getSquareOnPoint(final IVector point) {
-		final IVector squareVector = squareTransformation.transformPointBackward(point);
+	private int getSquareOnPoint(final IVectorRead point) {
+		final IVectorRead squareVector = squareTransformation.transformPointBackward(point);
 		
 		final int file = (int) Math.round(squareVector.getElement(Vector2D.COORDINATE_X));
 		final int rank = (int) Math.round(squareVector.getElement(Vector2D.COORDINATE_Y));
@@ -244,8 +244,8 @@ public class DeskImpl2D implements IDesk {
 			return Square.NONE;
 	}
 	
-	private Rectangle getImageRectangle (final IVector imageSize, final IVector imageCenter, final IVector point) {
-		final IVector leftCorner = Vectors.minus(point, imageCenter);
+	private Rectangle getImageRectangle (final IVectorRead imageSize, final IVectorRead imageCenter, final IVectorRead point) {
+		final IVectorRead leftCorner = Vectors.minus(point, imageCenter);
 		
 		final Rectangle rectangle = new Rectangle(
 			(int) Math.floor(leftCorner.getElement(Vector2D.COORDINATE_X)),
@@ -262,7 +262,7 @@ public class DeskImpl2D implements IDesk {
 	 * @param point position of the piece
 	 * @return bounding rectangle
 	 */
-	private Rectangle getPieceRectangle (final IVector point) {
+	private Rectangle getPieceRectangle (final IVectorRead point) {
 		return getImageRectangle(scaledPieceSet.getPieceSize(), scaledPieceSet.getCenterPoint(), point);
 	}
 
@@ -272,9 +272,9 @@ public class DeskImpl2D implements IDesk {
 	 * @return bounding rectangle
 	 */
 	private Rectangle getSquareRectangle (final int square) {
-		final IVector squareVector = getSquareVector(square);
-		final IVector point = squareTransformation.transformPointForward(squareVector);
-		final IVector imageCenter = Vectors.multiply(0.5, squareSize);
+		final IVectorRead squareVector = getSquareVector(square);
+		final IVectorRead point = squareTransformation.transformPointForward(squareVector);
+		final IVectorRead imageCenter = Vectors.multiply(0.5, squareSize);
 
 		return getImageRectangle(squareSize, imageCenter, point);
 	}
@@ -331,22 +331,22 @@ public class DeskImpl2D implements IDesk {
 	
 	private void updateDimensions() {
 		if (!dimensionsValid) {
-			final IVector position = widget.getPosition();
-			final IVector size = widget.getSize();
-			final IVector boardSize = Vectors.multiply(2, origBoard.getBoardCenterPoint());
+			final IVectorRead position = widget.getPosition();
+			final IVectorRead size = widget.getSize();
+			final IVectorRead boardSize = Vectors.multiply(2, origBoard.getBoardCenterPoint());
 			final double boardWidth = boardSize.getElement(0);
 			final double boardHeight = boardSize.getElement(1);
 			final double boardScale = Math.min(size.getElement(Vector2D.COORDINATE_X) / boardWidth, size.getElement(Vector2D.COORDINATE_Y) / boardHeight);
 			scaledBoard = origBoard.renderScaledBoard(boardScale);
 			
-			final IVector squaresVector = Vectors.minus(scaledBoard.getMaxSquareCorner(), scaledBoard.getMinSquareCorner());
+			final IVectorRead squaresVector = Vectors.minus(scaledBoard.getMaxSquareCorner(), scaledBoard.getMinSquareCorner());
 			
 			squareSize = Vector2D.fromComponents(
 				squaresVector.getElement(0) / File.LAST,
 				squaresVector.getElement(1) / Rank.LAST
 			);
 			
-			final IVector pieceImageSize = origPieceSet.getPieceSize();
+			final IVectorRead pieceImageSize = origPieceSet.getPieceSize();
 			final double pieceScaleX = squareSize.getElement(Vector2D.COORDINATE_X) / pieceImageSize.getElement(Vector2D.COORDINATE_X);
 			final double pieceScaleY = squareSize.getElement(Vector2D.COORDINATE_Y) / pieceImageSize.getElement(Vector2D.COORDINATE_Y);
 			
@@ -354,8 +354,8 @@ public class DeskImpl2D implements IDesk {
 			scaledPieceSet = origPieceSet.renderScaledPieceSet(pieceScale);
 			boardCenter = Vectors.plus(position, Vectors.multiply(0.5, size));
 						
-			final IVector orientationVector = (orientation == Color.WHITE) ? Vector2D.fromComponents(+1, -1) : Vector2D.fromComponents(-1, +1);
-			final IVector squareTranslationVector = Vector2D.fromComponents (-0.5*(File.LAST-1), -0.5*(Rank.LAST-1));
+			final IVectorRead orientationVector = (orientation == Color.WHITE) ? Vector2D.fromComponents(+1, -1) : Vector2D.fromComponents(-1, +1);
+			final IVectorRead squareTranslationVector = Vector2D.fromComponents (-0.5*(File.LAST-1), -0.5*(Rank.LAST-1));
 			
 			final ILinearCoordinateTransformation[] transformations = {
 				Transformations.getTranslation(boardCenter),
@@ -370,7 +370,7 @@ public class DeskImpl2D implements IDesk {
 	}
 	
 	
-	private static VectorImpl getSquareVector (final int square) {
+	private static DenseVector getSquareVector (final int square) {
 		final int file = Square.getFile(square);
 		final int rank = Square.getRank(square);
 

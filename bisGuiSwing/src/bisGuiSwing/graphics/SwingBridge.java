@@ -10,7 +10,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.JComponent;
 
 import bisGui.widgets.Widget;
-import math.IVector;
+import math.IVectorRead;
 import math.Vector2D;
 import bisGui.widgets.MouseButton;
 
@@ -38,9 +38,9 @@ public class SwingBridge extends JComponent {
 		widget.paintWidget(new AwtGraphics(graphics));
 	}
 	
-	private IVector getMouseEventPosition(final MouseEvent event) {
+	private IVectorRead getMouseEventPosition(final MouseEvent event) {
 		final Point point = event.getPoint();
-		final IVector pointVector = Vector2D.fromComponents(point.getX(), point.getY());
+		final IVectorRead pointVector = Vector2D.fromComponents(point.getX(), point.getY());
 
 		return pointVector;
 	}
@@ -63,21 +63,21 @@ public class SwingBridge extends JComponent {
 	private MouseAdapter mouseListener = new MouseAdapter() {
 		public void mousePressed (final MouseEvent event) {
 			final MouseButton button = getMouseButton(event);
-			final IVector position = getMouseEventPosition(event);
+			final IVectorRead position = getMouseEventPosition(event);
 			
 			widget.mousePressed(position, button);
 		}
 		
 		public void mouseDragged (final MouseEvent event) {
 			final MouseButton button = getMouseButton(event);
-			final IVector position = getMouseEventPosition(event);
+			final IVectorRead position = getMouseEventPosition(event);
 			
 			widget.mouseDragged(position, button);
 		}
 		
 		public void mouseReleased (final MouseEvent event) {
 			final MouseButton button = getMouseButton(event);
-			final IVector position = getMouseEventPosition(event);
+			final IVectorRead position = getMouseEventPosition(event);
 			
 			widget.mouseReleased(position, button);
 		}

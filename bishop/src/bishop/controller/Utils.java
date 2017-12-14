@@ -24,7 +24,7 @@ import zip.ZipReader;
 import zip.ZipRecord;
 import bisGui.graphics.GraphicContext;
 import bisGui.graphics.IImage;
-import math.IVector;
+import math.IVectorRead;
 import math.Vector2D;
 
 import com.kitfox.svg.SVGDiagram;
@@ -168,7 +168,7 @@ public final class Utils {
 		return target;
 	}
 	
-	public static BufferedImage renderScaledSvg(final SVGDiagram svg, final IVector origSize, final double scale) throws SVGException {
+	public static BufferedImage renderScaledSvg(final SVGDiagram svg, final IVectorRead origSize, final double scale) throws SVGException {
 		final int width = (int) Math.round(scale * origSize.getElement(Vector2D.COORDINATE_X));
 		final int height = (int) Math.round(scale * origSize.getElement(Vector2D.COORDINATE_Y));
 		

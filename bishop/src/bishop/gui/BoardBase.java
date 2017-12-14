@@ -16,16 +16,16 @@ import zip.ZipReader;
 import zip.ZipRecord;
 import bishop.base.Color;
 import bishop.controller.Utils;
-import math.IVector;
+import math.IVectorRead;
 import math.Vector2D;
 import math.Vectors;
 
 public abstract class BoardBase implements IBoard {
 	private String name;
-	private IVector minSquareCorner;
-	private IVector maxSquareCorner;
-	private IVector boardCenterPoint;
-	private IVector markCenterPoint;
+	private IVectorRead minSquareCorner;
+	private IVectorRead maxSquareCorner;
+	private IVectorRead boardCenterPoint;
+	private IVectorRead markCenterPoint;
 	
 
 	private static final String MANIFEST_PATH = "manifest.xml";
@@ -174,35 +174,35 @@ public abstract class BoardBase implements IBoard {
 		this.name = name;
 	}
 
-	public IVector getMinSquareCorner() {
+	public IVectorRead getMinSquareCorner() {
 		return minSquareCorner;
 	}
 
-	public void setMinSquareCorner(final IVector position) {
+	public void setMinSquareCorner(final IVectorRead position) {
 		this.minSquareCorner = position;
 	}
 
-	public IVector getMaxSquareCorner() {
+	public IVectorRead getMaxSquareCorner() {
 		return maxSquareCorner;
 	}
 
-	public void setMaxSquareCorner(final IVector position) {
+	public void setMaxSquareCorner(final IVectorRead position) {
 		this.maxSquareCorner = position;
 	}
 
-	public IVector getBoardCenterPoint() {
+	public IVectorRead getBoardCenterPoint() {
 		return boardCenterPoint;
 	}
 
-	public void setBoardCenterPoint(final IVector position) {
+	public void setBoardCenterPoint(final IVectorRead position) {
 		this.boardCenterPoint = position;
 	}
 
-	public IVector getMarkCenterPoint() {
+	public IVectorRead getMarkCenterPoint() {
 		return markCenterPoint;
 	}
 
-	public void setMarkCenterPoint(final IVector position) {
+	public void setMarkCenterPoint(final IVectorRead position) {
 		this.markCenterPoint = position;
 	}
 	

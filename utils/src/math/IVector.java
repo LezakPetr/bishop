@@ -1,16 +1,30 @@
 package math;
 
-public interface IVector {
+public interface IVector extends IVectorRead {
 	/**
-	 * Returns dimension of this vector.
-	 * @return number of elements of this vector
+	 * Sets element with given index.
+	 * @param index index of element
+	 * @value value of element
 	 */
-	public int getDimension(); 
+	public IVector setElement (final int index, final double value);
+	
+	public IVectorRead freeze();
 
 	/**
-	 * Returns element with given index.
-	 * @param index index of element
-	 * @return value of element
+	 * Assigns given original vector to this vector.
+	 * @param orig original vector
 	 */
-	public double getElement (final int index);
+	public default void assign (final IVectorRead orig) {
+		final int dimension = this.getDimension();
+		
+		if (orig.getDimension() != dimension)
+			throw new RuntimeException("Dimension does not match");
+		
+		for (int i = 0; i < dimension; i++)
+			this.setElement(i, orig.getElement(i));
+	}
+
+	public default IVector subVector(final int begin, final int end) {
+		return new SubVector(this, begin, end - begin);
+	}
 }

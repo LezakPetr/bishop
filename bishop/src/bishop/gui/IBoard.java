@@ -1,6 +1,6 @@
 package bishop.gui;
 
-import math.IVector;
+import math.IVectorRead;
 
 public interface IBoard {
 	/**
@@ -19,19 +19,19 @@ public interface IBoard {
 	 * Returns position of corner with lower coordinates.
 	 * @return position
 	 */
-	public IVector getMinSquareCorner();
+	public IVectorRead getMinSquareCorner();
 
 	/**
 	 * Returns position of corner with upper coordinates.
 	 * @return position
 	 */
-	public IVector getMaxSquareCorner();
+	public IVectorRead getMaxSquareCorner();
 	
 	/**
 	 * Returns position of board center.
 	 * @return position
 	 */	
-	public IVector getBoardCenterPoint();
+	public IVectorRead getBoardCenterPoint();
 	
 	/**
 	 * Returns board scaled by given ratio.

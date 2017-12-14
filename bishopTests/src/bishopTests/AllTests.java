@@ -9,11 +9,13 @@ import org.junit.runner.notification.Failure;
 
 import utils.Logger;
 import utilsTest.ImmutableProbabilisticSetTest;
+import utilsTest.MatrixTest;
 import utilsTest.MixerTest;
 import utilsTest.NumberArrayTest;
 import utilsTest.ParallelTaskRunnerTest;
 import utilsTest.RangeTest;
 import utilsTest.SimpleLinearModelTest;
+import utilsTest.VectorTest;
 import bishop.base.GlobalSettings;
 
 
@@ -38,6 +40,7 @@ public class AllTests {
 		UncompressMoveTest.class,
 		AttackCalculatorTest.class,
 		ReverseMoveGeneratorTest.class,
+		VectorTest.class,
 		MatrixTest.class,
 		PieceMoveTablesTest.class,
 		PositionTest.class,

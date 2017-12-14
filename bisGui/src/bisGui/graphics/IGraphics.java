@@ -1,11 +1,11 @@
 package bisGui.graphics;
 
-import math.IVector;
+import math.IVectorRead;
 
 
 public interface IGraphics {
 	
-	public void fillRect (final IVector position, final IVector size, final Color color);
-	public void drawImage(final IImage image, final IVector position);
+	public void fillRect (final IVectorRead position, final IVectorRead size, final Color color);
+	public void drawImage(final IImage image, final IVectorRead position);
 	public GraphicContext getContext();
 }
