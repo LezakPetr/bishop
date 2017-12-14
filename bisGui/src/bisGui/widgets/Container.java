@@ -4,13 +4,13 @@ import java.util.LinkedList;
 import java.util.List;
 
 import bisGui.graphics.IGraphics;
-import math.IVector;
+import math.IVectorRead;
 
 public class Container extends Widget {
 	
 	private final List<Widget> children;
-	private IVector position;
-	private IVector size;
+	private IVectorRead position;
+	private IVectorRead size;
 	
 	
 	public Container () {
@@ -18,20 +18,20 @@ public class Container extends Widget {
 	}
 
 	@Override
-	public IVector getPosition() {
+	public IVectorRead getPosition() {
 		return position;
 	}
 
-	public void setPosition(final IVector size) {
+	public void setPosition(final IVectorRead size) {
 		this.size = size;
 	}
 
 	@Override
-	public IVector getSize() {
+	public IVectorRead getSize() {
 		return size;
 	}
 
-	public void setSize(final IVector position) {
+	public void setSize(final IVectorRead position) {
 		this.position = position;
 	}
 

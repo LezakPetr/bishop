@@ -5,7 +5,7 @@ import bisGui.graphics.Color;
 import bisGui.graphics.GraphicContext;
 import bisGui.graphics.IGraphics;
 import bisGui.graphics.IImage;
-import math.IVector;
+import math.IVectorRead;
 import math.Vector2D;
 
 public class AwtGraphics implements IGraphics {
@@ -24,7 +24,7 @@ public class AwtGraphics implements IGraphics {
 	}
 
 	@Override
-	public void fillRect (final IVector position, final IVector size, final Color color) {
+	public void fillRect (final IVectorRead position, final IVectorRead size, final Color color) {
 		setColor(color);
 		
 		final int x = Vector2D.getRoundedX(position);
@@ -36,7 +36,7 @@ public class AwtGraphics implements IGraphics {
 	}
 	
 	@Override
-	public void drawImage(final IImage image, final IVector position) {
+	public void drawImage(final IImage image, final IVectorRead position) {
 		final int x = Vector2D.getRoundedX(position);
 		final int y = Vector2D.getRoundedY(position);
 		

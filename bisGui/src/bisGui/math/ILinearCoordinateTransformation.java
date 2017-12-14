@@ -1,24 +1,24 @@
 package bisGui.math;
 
-import math.IMatrix;
-import math.IVector;
+import math.IMatrixRead;
+import math.IVectorRead;
 
 public interface ILinearCoordinateTransformation extends ICoordinateTransformation {
 	/**
 	 * Returns origin of the inner coordinate system.
 	 * @return origin of the inner coordinate system defined in outer coordinate system
 	 */
-	public IVector getOrigin();
+	public IVectorRead getOrigin();
 	
 	/**
 	 * Returns forward transformation matrix.
 	 * @return forward transformation matrix
 	 */
-	public IMatrix getForwardMatrix();
+	public IMatrixRead getForwardMatrix();
 	
 	/**
 	 * Returns backward transformation matrix.
 	 * @return backward transformation matrix
 	 */
-	public IMatrix getBackwardMatrix();
+	public IMatrixRead getBackwardMatrix();
 }

@@ -1,7 +1,36 @@
 package math;
 
+import java.util.Objects;
+import java.util.function.DoubleBinaryOperator;
 
 public class Matrices {
+	
+	public static IMatrixRead applyToElementsBinaryOneNonzero (final IMatrixRead a, final IMatrixRead b, final DoubleBinaryOperator operator) {
+		Objects.requireNonNull(a);
+		Objects.requireNonNull(b);
+		
+		final int rowCount = a.getRowCount();
+		final int columnCount = a.getColumnCount();
+		
+		if (rowCount != b.getRowCount() || columnCount != b.getColumnCount())
+			throw new RuntimeException("Dimensions of input matrices does not match");
+
+		final IVectorRead[] result = new IVectorRead[rowCount];
+		
+		for (int row = 0; row < rowCount; row++)
+			result[row] = Vectors.processElementsBinaryOneNonzero(a.getRowVector(row), b.getRowVector(row), operator, new VectorSetter()).getVector();
+		
+		return new MatrixImpl(rowCount, columnCount, result);
+	}
+	
+	private static IVector[] createMatrixRows (final Density density, final int rowCount, final int columnCount) {
+		final IVector[] rows = new IVector[rowCount];
+		
+		for (int i = 0; i < rowCount; i++)
+			rows[i] = Vectors.vectorWithDensity(density, columnCount);
+		
+		return rows;
+	}
 	
 	/**
 	 * Adds two matrices.
@@ -9,21 +38,8 @@ public class Matrices {
 	 * @param b matrix
 	 * @return a + b
 	 */
-	public static IMatrix plus (final IMatrix a, final IMatrix b) {
-		final int rowCount = a.getRowCount();
-		final int columnCount = a.getColumnCount();
-		
-		if (rowCount != b.getRowCount() || columnCount != b.getColumnCount())
-			throw new RuntimeException("Dimensions of input matrices does not match");
-
-		final double[][] elements = new double[rowCount][columnCount];
-		
-		for (int row = 0; row < rowCount; row++) {
-			for (int column = 0; column < columnCount; column++)
-				elements[row][column] = a.getElement(row, column) + b.getElement(row, column);
-		}
-		
-		return new MatrixImpl (elements);
+	public static IMatrixRead plus (final IMatrixRead a, final IMatrixRead b) {
+		return applyToElementsBinaryOneNonzero(a, b, Double::sum);
 	}
 	
 	/**
@@ -32,37 +48,37 @@ public class Matrices {
 	 * @param b matrix
 	 * @return a - b
 	 */
-	public static IMatrix minus (final IMatrix a, final IMatrix b) {
-		final int rowCount = a.getRowCount();
-		final int columnCount =a.getColumnCount();
-		
-		if (rowCount != b.getRowCount() || columnCount != b.getColumnCount())
-			throw new RuntimeException("Dimensions of input matrices does not match");
-
-		final double[][] elements = new double[rowCount][columnCount];
-		
-		for (int row = 0; row < rowCount; row++) {
-			for (int column = 0; column < columnCount; column++)
-				elements[row][column] = a.getElement(row, column) - b.getElement(row, column);
-		}
-		
-		return new MatrixImpl (elements);
+	public static IMatrixRead minus (final IMatrixRead a, final IMatrixRead b) {
+		return applyToElementsBinaryOneNonzero(a, b, (x, y) -> x - y);
 	}
 
-	public static IMatrix getIdentityMatrix (final int dimension) {
-		final double[][] elements = Utils.createIdentityMatrix(dimension);
+	private static IMatrix getMutableIdentityMatrix(int dimension) {
+		final IMatrix result = createMutableMatrix(Density.SPARSE, dimension, dimension);
 		
-		return new MatrixImpl(elements);
+		for (int i = 0; i < dimension; i++)
+			result.setElement(i, i, 1.0);
+		
+		return result;
+	}
+
+	public static IMatrixRead getIdentityMatrix (final int dimension) {
+		return getMutableIdentityMatrix(dimension).freeze();
 	}
 	
-	public static IMatrix getDiagonalMatrix (final IVector diagonalVector) {
+	public static IMatrix createMutableMatrix (final Density density, final int rowCount, final int columnCount) {
+		final IVector[] rows = createMatrixRows(density, rowCount, columnCount);
+		
+		return new MatrixImpl(rowCount, columnCount, rows);
+	}
+	
+	public static IMatrixRead getDiagonalMatrix (final IVectorRead diagonalVector) {
 		final int dimension = diagonalVector.getDimension();
-		final double[][] elements = new double[dimension][dimension];   // Elements initialized to 0.0
+		final IMatrix result = createMutableMatrix(Density.SPARSE, dimension, dimension);
 		
 		for (int row = 0; row < dimension; row++)
-			elements[row][row] = diagonalVector.getElement(row);
+			result.setElement(row, row, diagonalVector.getElement(row));
 		
-		return new MatrixImpl (elements);
+		return result.freeze();
 	}
 
 	/**
@@ -70,22 +86,17 @@ public class Matrices {
 	 * @param m matrix
 	 * @return inverse matrix
 	 */
-	public static IMatrix inverse (final IMatrix m) {
+	public static IMatrixRead inverse (final IMatrixRead m) {
 		final int dimension = m.getRowCount();
 		
 		if (m.getColumnCount() != dimension)
 			throw new RuntimeException("Matrix is not square matrix");
 		
 		// Get elements of original matrix
-		final double[][] orig = new double[dimension][dimension];
-		 
-		for (int row = 0; row < dimension; row++) {
-			for (int column = 0; column < dimension; column++)
-				orig[row][column] = m.getElement(row, column);
-		}
+		final IMatrix orig = m.copy();
 		
 		// Prepare inverse matrix - initialize it by identity matrix
-		final double[][] inverse = Utils.createIdentityMatrix(dimension);
+		final IMatrix inverse = getMutableIdentityMatrix(dimension);
 		
 		// Gaussian elimination - create triangular matrix
 		for (int i = 0; i < dimension-1; i++) {
@@ -93,55 +104,56 @@ public class Matrices {
 			int pivotRow = i;
 			
 			for (int row = i+1; row < dimension; row++) {
-				if (Math.abs (orig[row][i]) > Math.abs (orig[pivotRow][i]))
+				if (Math.abs (orig.getElement(row, i)) > Math.abs (orig.getElement(pivotRow, i)))
 					pivotRow = row;
 			}
 			
 			// Swap pivot row and row 'i'
-			Utils.swapArrayItems(orig, pivotRow, i);
-			Utils.swapArrayItems(inverse, pivotRow, i);
+			Vectors.swap(orig.getRowVector(pivotRow), orig.getRowVector(i));
+			Vectors.swap(inverse.getRowVector(pivotRow), inverse.getRowVector(i));
 			
 			// Elimination
-			final double divider = orig[i][i];
+			final double divider = orig.getElement(i, i);
 			
 			if (divider == 0)
 				throw new RuntimeException("Matrix is singular");
 			
-			final int origOffset = i;
-			final int origCount = dimension - origOffset;
-			
 			for (int row = i+1; row < dimension; row++) {
-				if (orig[row][i] != 0.0) {
-					final double coeff = -orig[row][i] / divider;
+				if (orig.getElement(row, i) != 0.0) {
+					final double coeff = -orig.getElement(row, i) / divider;
 					
-					Utils.inPlaceCombineVectors (orig[i], origOffset, orig[row], origOffset, origCount, coeff, 1.0);
-					Utils.inPlaceCombineVectors (inverse[i], 0, inverse[row], 0, dimension, coeff, 1.0);
+					if (coeff != 0) {
+						orig.setRowVector (row, Vectors.multiplyAndAdd (orig.getRowVector(row), orig.getRowVector(i), coeff));
+						inverse.setRowVector (row, Vectors.multiplyAndAdd (inverse.getRowVector(row), inverse.getRowVector(i), coeff));
+					}
 				}
 			}
 		}
 		
 		// Divide rows by diagonal elements
 		for (int row = 0; row < dimension; row++) {
-			final double coeff = 1.0 / orig[row][row];
+			final double coeff = 1.0 / orig.getElement(row, row);
 			
 			for (int column = row; column < dimension; column++)
-				orig[row][column] *= coeff;
+				orig.setElement(row, column, orig.getElement(row, column) * coeff);
 			
 			for (int column = 0; column < dimension; column++)
-				inverse[row][column] *= coeff;
+				inverse.setElement(row, column, inverse.getElement(row, column) * coeff);
 		}
 		
 		// Eliminate elements above diagonal
 		for (int i = dimension - 1; i >= 0; i--) {
 			for (int row = 0; row < i; row++) {
-				final double coeff = -orig[row][i];
+				final double coeff = -orig.getElement(row, i);
 				
-				Utils.inPlaceCombineVectors (orig[i], i, orig[row], i, dimension-i, coeff, 1.0);
-				Utils.inPlaceCombineVectors (inverse[i], 0, inverse[row], 0, dimension, coeff, 1.0);
+				if (coeff != 0) {
+					orig.setRowVector (row, Vectors.multiplyAndAdd (orig.getRowVector(row), orig.getRowVector(i), coeff));
+					inverse.setRowVector (row, Vectors.multiplyAndAdd (inverse.getRowVector(row), inverse.getRowVector(i), coeff));
+				}
 			}
 		}
 		
-		return new MatrixImpl(inverse);
+		return inverse.freeze();
 	}
 
 	/**
@@ -150,7 +162,7 @@ public class Matrices {
 	 * @param b input matrix
 	 * @return matrix a*b
 	 */
-	public static IMatrix multiply (final IMatrix a, final IMatrix b) {
+	public static IMatrixRead multiply (final IMatrixRead a, final IMatrixRead b) {
 		final int innerCount = a.getColumnCount();
 		
 		if (innerCount != b.getRowCount())
@@ -159,20 +171,22 @@ public class Matrices {
 		final int rowCount = a.getRowCount();
 		final int columnCount = b.getColumnCount();
 		
-		final double[][] result = new double[rowCount][columnCount];
+		final Density density = minDensity(a.density(), b.density());
+		final IMatrix result = createMutableMatrix(density, rowCount, columnCount);
 		
 		for (int row = 0; row < rowCount; row++) {
 			for (int column = 0; column < columnCount; column++) {
-				double sum = 0.0;
+				final double dotProduct = Vectors.dotProduct (a.getRowVector(row), b.getColumnVector (column));
 				
-				for (int i = 0; i < innerCount; i++)
-					sum += a.getElement(row, i) * b.getElement(i, column);
-				
-				result[row][column] = sum;
+				result.setElement(row, column, dotProduct);
 			}
 		}
 		
-		return new MatrixImpl (result);
+		return result.freeze();
+	}
+	
+	private static Density minDensity (final Density a, final Density b) {
+		return (a == Density.SPARSE && b == Density.SPARSE) ? Density.SPARSE : Density.DENSE;
 	}
 
 	/**
@@ -181,25 +195,24 @@ public class Matrices {
 	 * @param m input matrix
 	 * @return vector v*m
 	 */
-	public static IVector multiply (final IVector v, final IMatrix m) {
+	public static IVectorRead multiply (final IVectorRead v, final IMatrixRead m) {
 		final int rowCount = m.getRowCount();
 		
 		if (rowCount != v.getDimension())
 			throw new RuntimeException("Bad dimensions");
 		
 		final int columnCount = m.getColumnCount();
-		final double[] result = new double[columnCount];
+		final Density density = minDensity(v.density(), m.density());
+		final IVector result = Vectors.vectorWithDensity(density, columnCount);
 		
 		for (int column = 0; column < columnCount; column++) {
-			double sum = 0.0;
+			final double dotProduct = Vectors.dotProduct (v, m.getColumnVector (column));
 			
-			for (int row = 0; row < rowCount; row++)
-				sum += v.getElement(row) * m.getElement (row, column);
-			
-			result[column] =  sum;
+			if (dotProduct != 0)
+				result.setElement(column, dotProduct);
 		}
 		
-		return new VectorImpl (result);
+		return result.freeze();
 	}
 	
 	/**
@@ -208,25 +221,22 @@ public class Matrices {
 	 * @param v input vector
 	 * @return vector m*v
 	 */
-	public static IVector multiply (final IMatrix m, final IVector v) {
+	public static IVectorRead multiply (final IMatrixRead m, final IVectorRead v) {
 		final int columnCount = m.getColumnCount();
 		
 		if (columnCount != v.getDimension())
 			throw new RuntimeException("Bad dimensions");
 		
 		final int rowCount = m.getRowCount();
-		final double[] result = new double[rowCount];
+		final Density density = minDensity(v.density(), m.density());
+		final IVector result = Vectors.vectorWithDensity(density, rowCount);
 		
 		for (int row = 0; row < rowCount; row++) {
-			double sum = 0.0;
-			
-			for (int column = 0; column < columnCount; column++)
-				sum += v.getElement(column) * m.getElement (row, column);
-			
-			result[row] =  sum;
+			final double dotProduct = Vectors.dotProduct (v, m.getRowVector(row));
+			result.setElement(row, dotProduct);
 		}
 		
-		return new VectorImpl (result);
+		return result.freeze();
 	}
 
 	
@@ -235,7 +245,7 @@ public class Matrices {
 	 * @param matrix matrix
 	 * @return maximal absolute element
 	 */
-	public static double maxAbsElement (final IMatrix matrix) {
+	public static double maxAbsElement (final IMatrixRead matrix) {
 		final int rowCount = matrix.getRowCount();
 		final int columnCount = matrix.getColumnCount();
 
@@ -252,35 +262,32 @@ public class Matrices {
 		return maxAbsElement;
 	}
 	
-	public static IMatrix transpose (final IMatrix matrix) {
-		final double[][] result = new double[matrix.getColumnCount()][matrix.getRowCount()];
+	public static IMatrixRead transpose (final IMatrixRead matrix) {
+		final IMatrix result = createMutableMatrix(matrix.density(), matrix.getColumnCount(), matrix.getRowCount());
 		
 		for (int i = 0; i < matrix.getRowCount(); i++) {
-			for (int j = 0; j < matrix.getColumnCount(); j++) {
-				result[j][i] = matrix.getElement(i, j);
+			for (IVectorIterator it = matrix.getRowVector(i).getNonZeroElementIterator(); it.isValid(); it.next()) {
+				result.setElement(it.getIndex(), i, it.getElement());
 			}
 		}
 		
-		return new MatrixImpl(result);
+		return result.freeze();
 	}
 
-	public static IMatrix multiplyRows(final IMatrix m, final IVector v) {
+	public static IMatrixRead multiplyRows(final IMatrixRead m, final IVectorRead v) {
 		final int rowCount = m.getRowCount();
 		
 		if (rowCount != v.getDimension())
 			throw new RuntimeException("Bad dimensions");
 		
 		final int columnCount = m.getColumnCount();
-
-		final double[][] result = new double[rowCount][columnCount];
+		final IVectorRead[] result = new IVector[rowCount];
 		
 		for (int row = 0; row < rowCount; row++) {
-			for (int column = 0; column < columnCount; column++) {
-				result[row][column] = m.getElement(row, column) * v.getElement(row);
-			}
+			result[row] = Vectors.multiply(v.getElement(row), m.getRowVector(row));
 		}
 		
-		return new MatrixImpl(result);
-	}
+		return new MatrixImpl(rowCount, columnCount, result).freeze();
+	} 
 	
 }

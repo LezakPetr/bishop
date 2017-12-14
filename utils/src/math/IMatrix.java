@@ -1,24 +1,21 @@
 package math;
 
-public interface IMatrix {
-	
+public interface IMatrix extends IMatrixRead {
 	/**
-	 * Returns number of rows.
-	 * @return number of rows
-	 */
-	public int getRowCount();
-	
-	/**
-	 * Returns number of columns.
-	 * @return number of columns
-	 */
-	public int getColumnCount();
-	
-	/**
-	 * Returns element on given row and column.
+	 * Sets element on given row and column.
 	 * @param row row index
 	 * @param column column index
-	 * @return element on given row and column
+	 * @value element on given row and column
 	 */
-	public double getElement (final int row, final int column);
+	public IMatrix setElement (final int row, final int column, final double value);
+	
+	public IMatrixRead freeze();
+
+	@Override
+	public IVector getRowVector(final int index);
+
+	public default void setRowVector(final int index, final IVectorRead row) {
+		getRowVector(index).assign(row);
+	}
+
 }

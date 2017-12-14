@@ -5,7 +5,7 @@ import java.io.IOException;
 import zip.ZipReader;
 import bishop.base.Color;
 import bishop.controller.Utils;
-import math.IVector;
+import math.IVectorRead;
 import math.Vector2D;
 import bisGuiSwing.graphics.AwtImage;
 
@@ -25,10 +25,10 @@ public class SvgBoard extends BoardBase {
 		try {
 			final RasterBoard result = createScaledRasterBoard(scale);
 			
-			final IVector boardSize = Vector2D.fromComponents(boardImage.getWidth(), boardImage.getHeight());
+			final IVectorRead boardSize = Vector2D.fromComponents(boardImage.getWidth(), boardImage.getHeight());
 			result.setBoardImage (new AwtImage(Utils.renderScaledSvg(boardImage, boardSize, scale)));
 			
-			final IVector markSize = Vector2D.fromComponents(markImage.getWidth(), markImage.getHeight());
+			final IVectorRead markSize = Vector2D.fromComponents(markImage.getWidth(), markImage.getHeight());
 			result.setMarkImage (new AwtImage(Utils.renderScaledSvg(markImage, markSize, scale)));
 			
 			for (int orientation = Color.FIRST; orientation < Color.LAST; orientation++) {

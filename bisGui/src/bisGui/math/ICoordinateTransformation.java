@@ -1,6 +1,6 @@
 package bisGui.math;
 
-import math.IVector;
+import math.IVectorRead;
 
 public interface ICoordinateTransformation {
 	/**
@@ -8,12 +8,12 @@ public interface ICoordinateTransformation {
 	 * @param point original point
 	 * @return transformed point
 	 */
-	public IVector transformPointForward (final IVector point);
+	public IVectorRead transformPointForward (final IVectorRead point);
 	
 	/**
 	 * Inverse transforms point by this transformation
 	 * @param point transformed point
 	 * @return original point
 	 */
-	public IVector transformPointBackward (final IVector point);
+	public IVectorRead transformPointBackward (final IVectorRead point);
 }

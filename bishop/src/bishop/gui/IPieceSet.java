@@ -1,6 +1,6 @@
 package bishop.gui;
 
-import math.IVector;
+import math.IVectorRead;
 
 public interface IPieceSet {
 	/**
@@ -13,13 +13,13 @@ public interface IPieceSet {
 	 * Returns center point of the pieces.
 	 * @return center point of the pieces
 	 */
-	public IVector getCenterPoint();
+	public IVectorRead getCenterPoint();
 
 	/**
 	 * Returns size of pieces.
 	 * @return size of piece images
 	 */
-	public IVector getPieceSize();
+	public IVectorRead getPieceSize();
 	
 	/**
 	 * Returns piece set scaled by given ratio.

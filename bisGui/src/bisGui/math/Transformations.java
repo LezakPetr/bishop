@@ -1,7 +1,7 @@
 package bisGui.math;
 
-import math.IMatrix;
-import math.IVector;
+import math.IMatrixRead;
+import math.IVectorRead;
 import math.Matrices;
 import math.Vectors;
 
@@ -12,9 +12,9 @@ public class Transformations {
 	 * @param vector translation vector
 	 * @return translation transformation
 	 */
-	public static ILinearCoordinateTransformation getTranslation (final IVector vector) {
+	public static ILinearCoordinateTransformation getTranslation (final IVectorRead vector) {
 		final int dimension = vector.getDimension();
-		final IMatrix identityMatrix = Matrices.getIdentityMatrix(dimension);
+		final IMatrixRead identityMatrix = Matrices.getIdentityMatrix(dimension);
 		
 		return new LinearCoordinateTransformationImpl(vector, identityMatrix, identityMatrix);
 	}
@@ -25,10 +25,10 @@ public class Transformations {
 	 * @param vector scaling vector
 	 * @return scaling transformation
 	 */
-	public static ILinearCoordinateTransformation getScaling (final IVector vector) {
+	public static ILinearCoordinateTransformation getScaling (final IVectorRead vector) {
 		final int dimension = vector.getDimension();
-		final IVector origin = Vectors.getZeroVector(dimension);
-		final IMatrix matrix = Matrices.getDiagonalMatrix(vector);
+		final IVectorRead origin = Vectors.getZeroVector(dimension);
+		final IMatrixRead matrix = Matrices.getDiagonalMatrix(vector);
 		
 		return new LinearCoordinateTransformationImpl(origin, matrix, matrix);
 	}
@@ -42,8 +42,8 @@ public class Transformations {
 	public static ILinearCoordinateTransformation composeLinearTransformations (final ILinearCoordinateTransformation[] transformations) {
 		final int lastIndex = transformations.length - 1;
 		
-		IVector origin = transformations[lastIndex].getOrigin();
-		IMatrix forwardMatrix = transformations[lastIndex].getForwardMatrix();
+		IVectorRead origin = transformations[lastIndex].getOrigin();
+		IMatrixRead forwardMatrix = transformations[lastIndex].getForwardMatrix();
 		
 		for (int i = lastIndex-1; i >= 0; i--) {
 			origin = transformations[i].transformPointForward(origin);
