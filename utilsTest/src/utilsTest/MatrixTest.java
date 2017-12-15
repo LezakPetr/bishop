@@ -9,7 +9,10 @@ import org.junit.Test;
 import math.Density;
 import math.IMatrix;
 import math.IMatrixRead;
+import math.IVector;
+import math.IVectorRead;
 import math.Matrices;
+import math.Vectors;
 
 public class MatrixTest {
 
@@ -42,15 +45,16 @@ public class MatrixTest {
 	public void inverseTest() {
 		for (Density density: Density.values()) {
 			initMatrices(density);
-			
+			 
 			checkInversion(matrixA, matrixInvA);
 			checkInversion(matrixInvA, matrixA);
 		}
 	}
 	
+	// Matrix x Matrix multiplication test
 	// A * (B + C - D) = A*B + A*C - A*D
 	@Test
-	public void testCalculation() {
+	public void testCalculation1() {
 		for (int i = 0; i < 16; i++) {
 			final IMatrix a = createRandomMatrix(getRandomDensity(), 2, 3);
 			final IMatrix b = createRandomMatrix(getRandomDensity(), 3, 4);
@@ -63,7 +67,39 @@ public class MatrixTest {
 			Assert.assertEquals(left, right);
 		}
 	}
+
+	// Matrix x Vector multiplication test
+	// (A * B) * V = A * (B * V) 
+	@Test
+	public void testCalculation2() {
+		for (int i = 0; i < 16; i++) {
+			final IMatrix a = createRandomMatrix(getRandomDensity(), 2, 3);
+			final IMatrix b = createRandomMatrix(getRandomDensity(), 3, 4);
+			final IVectorRead v = createRandomVector(getRandomDensity(), 4);
+			
+			final IVectorRead left = Matrices.multiply(Matrices.multiply(a, b), v);
+			final IVectorRead right = Matrices.multiply(a, Matrices.multiply(b, v));
+			
+			Assert.assertEquals(left, right);
+		}
+	}
 	
+	// Vector x Matrix multiplication test
+	// V * (A * B) = (V * A) * B 
+	@Test
+	public void testCalculation3() {
+		for (int i = 0; i < 16; i++) {
+			final IVectorRead v = createRandomVector(getRandomDensity(), 5);
+			final IMatrix a = createRandomMatrix(getRandomDensity(), 5, 3);
+			final IMatrix b = createRandomMatrix(getRandomDensity(), 3, 4);
+			
+			final IVectorRead left = Matrices.multiply(v, Matrices.multiply(a, b));
+			final IVectorRead right = Matrices.multiply(Matrices.multiply(v, a), b);
+			
+			Assert.assertEquals(left, right);
+		}
+	}
+
 	@Test
 	public void testAssociativity() {
 		testAssociativityOfOperator(Matrices::plus);
@@ -88,13 +124,26 @@ public class MatrixTest {
 		
 		for (int i = 0; i < rowCount; i++) {
 			for (int j = 0; j < columnCount; j++) {
-				result.setElement(i, j, rng.nextInt(100) - 50);
+				result.setElement(i, j, getRandomElement());
 			}
 		}
 		
 		return result;
 	}
-	
+
+	private IVector createRandomVector(final Density density, final int dimension) {
+		final IVector result = Vectors.vectorWithDensity(density, dimension);
+		
+		for (int i = 0; i < dimension; i++)
+			result.setElement(i, getRandomElement());
+		
+		return result;
+	}
+
+	private int getRandomElement() {
+		return rng.nextInt(100) - 50;
+	}
+
 	private Density getRandomDensity() {
 		return (rng.nextBoolean()) ? Density.SPARSE : Density.DENSE;
 	}
