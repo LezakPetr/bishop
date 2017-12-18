@@ -18,7 +18,7 @@ public class Matrices {
 		final IVectorRead[] result = new IVectorRead[rowCount];
 		
 		for (int row = 0; row < rowCount; row++)
-			result[row] = Vectors.processElementsBinaryOneNonzero(a.getRowVector(row), b.getRowVector(row), operator, new VectorSetter()).getVector();
+			result[row] = BinaryVectorAlgorithmOneNonzero.getInstance().processElements(a.getRowVector(row), b.getRowVector(row), operator, new VectorSetter()).getVector();
 		
 		return new MatrixImpl(rowCount, columnCount, result);
 	}

@@ -25,7 +25,9 @@ abstract public class AbstractVector implements IVector {
 		if (this.getDimension() != that.getDimension())
 			return false;
 		
-		return Vectors.processElementsBinaryOneNonzero(this, that, (x, y) -> x - y, new ZeroVectorTester()).isZero();
+		return BinaryVectorAlgorithmOneNonzero.getInstance()
+				.processElements(this, that, (x, y) -> x - y, new ZeroVectorTester())
+				.isZero();
 	}
 	
 	@Override

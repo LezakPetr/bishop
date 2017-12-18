@@ -1,10 +1,6 @@
 package utilsTest;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.IntFunction;
 
 import org.junit.Assert;
@@ -97,71 +93,6 @@ public class VectorTest {
 		}
 		
 		Assert.assertArrayEquals(values, givenValues, 0.0);
-	}
-	
-	@Test
-	public void testBinaryFunctionEquality() {
-		testOneBinaryFunctionEquality(Vectors::plus);
-		testOneBinaryFunctionEquality(Vectors::minus);
-		testOneBinaryFunctionEquality(Vectors::elementMultiply);
-	}
-	
-	private void testOneBinaryFunctionEquality(final BiFunction<IVectorRead, IVectorRead, ? extends IVectorRead> function) {
-		for (int size: SIZES) {
-			final List<IVectorRead> listA = createRandomVectorList(size);
-			final List<IVectorRead> listB = createRandomVectorList(size);
-			 
-			IVectorRead lastResult = null;
-			 
-			for (IVectorRead a: listA) {
-				for (IVectorRead b: listB) {
-					final IVectorRead result = function.apply(a, b);
-					 
-					if (lastResult != null)
-						Assert.assertEquals(lastResult, result);
-				 
-					lastResult = result;
-				}
-			}
-		}
-	}
-
-	@Test
-	public void testUnaryFunctionEquality() {
-		testOneUnaryFunctionEquality(v -> Vectors.multiply(2.0, v));
-	}
-	
-	private void testOneUnaryFunctionEquality(final Function<IVectorRead, ? extends IVectorRead> function) {
-		for (int size: SIZES) {
-			final List<IVectorRead> list = createRandomVectorList(size);
-			 
-			IVectorRead lastResult = null;
-			 
-			for (IVectorRead v: list) {
-				final IVectorRead result = function.apply(v);
-				 
-				if (lastResult != null)
-					Assert.assertEquals(lastResult, result);
-			 
-				lastResult = result;
-			}
-		}
-	}
-
-	private List<IVectorRead> createRandomVectorList(final int size) {
-		final List<IVector> vectorList = new ArrayList<>();
-		vectorList.add(Vectors.dense(size));
-		vectorList.add(Vectors.sparse(size));
-		
-		for (int i = 0; i < size / 3; i++) {
-			final double value = 100 * rng.nextDouble() - 50;
-			final int index = rng.nextInt (size);
-			
-			for (IVector vector: vectorList)
-				vector.setElement(index, value);
-		}
-		
-		return new ArrayList<>(vectorList);
 	}
 	
 	@Test
