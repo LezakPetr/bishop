@@ -8,6 +8,7 @@ import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
 import utils.Logger;
+import utilsTest.ImmutableOrdinalMapTest;
 import utilsTest.ImmutableProbabilisticSetTest;
 import utilsTest.MatrixTest;
 import utilsTest.MixerTest;
@@ -15,6 +16,7 @@ import utilsTest.NumberArrayTest;
 import utilsTest.ParallelTaskRunnerTest;
 import utilsTest.RangeTest;
 import utilsTest.SimpleLinearModelTest;
+import utilsTest.VectorAlgorithmsTest;
 import utilsTest.VectorTest;
 import bishop.base.GlobalSettings;
 
@@ -27,6 +29,7 @@ import bishop.base.GlobalSettings;
 public class AllTests {
 	
 	private static final Class<?>[] classArray = {
+		ImmutableOrdinalMapTest.class,
 		MixerTest.class,
 		ParallelTaskRunnerTest.class,
 		BetweenTableTest.class,
@@ -41,6 +44,7 @@ public class AllTests {
 		AttackCalculatorTest.class,
 		ReverseMoveGeneratorTest.class,
 		VectorTest.class,
+		VectorAlgorithmsTest.class,
 		MatrixTest.class,
 		PieceMoveTablesTest.class,
 		PositionTest.class,
