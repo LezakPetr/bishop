@@ -228,7 +228,7 @@ public class TableCalculator {
 				
 				for (int i = 0; i < processorList.size(); i++) {
 					final CalculationTaskProcessor processor = processorList.get(i);
-					processor.initialize(firstIteration, oppositeTableDefinition, prevPositionsToCheck, nextPositionsToCheck, ownTable);
+					processor.initialize(firstIteration, oppositeTableDefinition, prevPositionsToCheck, nextPositionsToCheck, ownTable, oppositeTable);
 				}
 				
 				// Execute

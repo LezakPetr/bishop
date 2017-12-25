@@ -40,12 +40,13 @@ public class CalculationTaskProcessor implements Callable<Throwable> {
 		this.reverseMoveGenerator.setPosition(position);
 	}
 	
-	public void initialize(final boolean firstIteration, final TableDefinition oppositeTableDefinition, final BitArray prevPositionsToCheck, final BitArray nextPositionsToCheck, final IStagedTable ownTable) {
+	public void initialize(final boolean firstIteration, final TableDefinition oppositeTableDefinition, final BitArray prevPositionsToCheck, final BitArray nextPositionsToCheck, final IStagedTable ownTable, final ITableRead nextTable) {
 		this.firstIteration = firstIteration;
 		this.prevPositionsToCheck = prevPositionsToCheck;
 		this.ownTable = ownTable;
 		
 		this.reverseMoveWalker.setNextPositionsToCheck (nextPositionsToCheck);
+		this.reverseMoveWalker.setNextTable (nextTable);
 		this.changeCount = 0;
 		
 		this.reverseMoveWalker.setTableDefinition(oppositeTableDefinition);
@@ -70,7 +71,6 @@ public class CalculationTaskProcessor implements Callable<Throwable> {
 				try (
 					final IClosableTableIterator iterator = ownTable.getOutputPage()
 				) {
-					
 					if (iterator == null)
 						break;
 					
@@ -90,6 +90,7 @@ public class CalculationTaskProcessor implements Callable<Throwable> {
 									changeCount++;
 									
 									iterator.setResult (result);
+									reverseMoveWalker.setNextResult(TableResult.getOpposite(result));
 									reverseMoveGenerator.generateMoves();
 								}
 							}

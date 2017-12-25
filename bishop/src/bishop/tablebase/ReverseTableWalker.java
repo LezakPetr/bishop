@@ -9,7 +9,9 @@ public class ReverseTableWalker  implements IMoveWalker {
 	private long[] indexGroup = new long[TableDefinition.MAX_GROUP_SIZE];
 	private Position position;
 	private BitArray nextPositionsToCheck;
+	private ITableRead nextTable;
 	private TableDefinition tableDefinition;
+	private int nextResult;
 	
 	public void setPosition (final Position position) {
 		this.position = position;
@@ -23,16 +25,15 @@ public class ReverseTableWalker  implements IMoveWalker {
 	public boolean processMove(final Move move) {
 		position.undoMove(move);
 		
-//		final MemoryTable table = bothTables.getBaseSource(onTurn);
-//		final int count = table.getDefinition().calculateIndexGroup(position, indexGroup);
-		
 		final int count = tableDefinition.calculateIndexGroup(position, indexGroup);
 		
 		for (int i = 0; i < count; i++) {
 			final long index = indexGroup[i];
 			
-			if (index >= 0)
-				nextPositionsToCheck.setAt(index, true);
+			if (index >= 0) {
+				if (TableResult.isLose(nextResult) || nextResult > nextTable.getResult(index))
+					nextPositionsToCheck.setAt(index, true);
+			}
 		}
 		
 		position.makeMove(move);
@@ -42,6 +43,14 @@ public class ReverseTableWalker  implements IMoveWalker {
 
 	public void setNextPositionsToCheck(final BitArray nextPositionsToCheck) {
 		this.nextPositionsToCheck = nextPositionsToCheck;
+	}
+
+	public void setNextTable(final ITableRead nextTable) {
+		this.nextTable = nextTable;
+	}
+	
+	public void setNextResult (final int nextResult) {
+		this.nextResult = nextResult;
 	}
 	
 }
