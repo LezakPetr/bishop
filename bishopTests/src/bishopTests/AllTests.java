@@ -12,6 +12,7 @@ import utilsTest.ImmutableOrdinalMapTest;
 import utilsTest.ImmutableProbabilisticSetTest;
 import utilsTest.MatrixTest;
 import utilsTest.MixerTest;
+import utilsTest.NeuralTest;
 import utilsTest.NumberArrayTest;
 import utilsTest.ParallelTaskRunnerTest;
 import utilsTest.RangeTest;
@@ -64,7 +65,8 @@ public class AllTests {
 		HashTableTest.class,
 		PawnStructureEvaluatorTest.class,
 		PositionIoTest.class,
-		SimpleLinearModelTest.class
+		SimpleLinearModelTest.class,
+		NeuralTest.class
 	};
 	
 	public static final void main (final String[] args) {
