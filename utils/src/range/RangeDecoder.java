@@ -48,19 +48,20 @@ public final class RangeDecoder extends RangeBase {
 	 */
 	public int decodeSymbol (final IProbabilityModel probabilityModel) throws IOException {
 		final long range = high - low;
+		final long origLow = low;
 		final int cdf = (int) (((number - low) << MAX_SYMBOL_BITS) / range);
 
 		// Get symbol and try next ones until we have bigger CDF than number.
 		int symbol = probabilityModel.getSymbolForCdf(cdf);
 		
 		long updatedLow;
-		long updatedHigh = getSymbolLowerBound(probabilityModel, symbol);
+		long updatedHigh = getSymbolLowerBound(probabilityModel, origLow, range, symbol);
 		
 		do {
 			symbol++;
 			
 			updatedLow = updatedHigh;
-			updatedHigh = getSymbolLowerBound(probabilityModel, symbol);
+			updatedHigh = getSymbolLowerBound(probabilityModel, origLow, range, symbol);
 		} while (updatedHigh <= number);
 		
 		low = updatedLow;

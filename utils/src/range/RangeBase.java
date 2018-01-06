@@ -79,11 +79,11 @@ public abstract class RangeBase {
 	 * @throws IOException
 	 */
 	protected void updateRange(final IProbabilityModel probabilityModel, final int symbol) throws IOException {
-		final long updatedLow = getSymbolLowerBound(probabilityModel, symbol);
-		final long updatedHigh = getSymbolLowerBound(probabilityModel, symbol + 1);
+		final long range = high - low;
+		final long origLow = low;
 		
-		low = updatedLow;
-		high = updatedHigh;
+		low = getSymbolLowerBound(probabilityModel, origLow, range, symbol);
+		high = getSymbolLowerBound(probabilityModel, origLow, range, symbol + 1);
 		
 		normalize();
 	}
@@ -94,9 +94,7 @@ public abstract class RangeBase {
 	 * @param symbol symbol
 	 * @return lower bound of subrange corresponding to given symbol
 	 */
-	protected long getSymbolLowerBound(final IProbabilityModel probabilityModel, final int symbol) {
-		final long range = high - low;
-		
+	protected static long getSymbolLowerBound(final IProbabilityModel probabilityModel, final long low, final long range, final int symbol) {
 		return ((probabilityModel.getCdfLowerBound(symbol) * range) >> MAX_SYMBOL_BITS) + low;
 	}
 	
