@@ -19,7 +19,7 @@ public class RangeTest {
 	private static final int MIN_PROBABILITY = 1;
 	private static final int MAX_PROBABILITY = 255;
 	private static final int SEQUENCE_LENGTH = 10000000;
-	private static final int PREWARM_COUNT = 10;
+	private static final int PREWARM_COUNT = 20;
 
 	
 	private int[] getRandomArray (final Random rnd, final int count, final int minVal, final int maxVal) {
@@ -113,7 +113,7 @@ public class RangeTest {
 		
 		final long encodeTime = endEncodeTime - beginEncodeTime;
 		
-		System.out.println("Encode time " + encodeTime + "ms, " + (1000L * SEQUENCE_LENGTH / encodeTime) + " symbols/s");
+		System.out.println("Encode time " + encodeTime + "ms, " + (1e-3 * SEQUENCE_LENGTH / encodeTime) + " Msymbols/s");
 		
 		// Decode
 		final RangeDecoder decoder = new RangeDecoder();
@@ -131,7 +131,7 @@ public class RangeTest {
 		
 		final long decodeTime = endDecodeTime - beginDecodeTime;
 		
-		System.out.println("Decode time " + decodeTime + "ms, " + (1000L * SEQUENCE_LENGTH / decodeTime) + " symbols/s");		
+		System.out.println("Decode time " + decodeTime + "ms, " + (1e-3 * SEQUENCE_LENGTH / decodeTime) + " Msymbols/s");		
 	}
 
 	private void encodeSequence(final RangeEncoder encoder, final IProbabilityModel model, final int[] sequence, final ByteArrayOutputStream outputStream) throws IOException {
