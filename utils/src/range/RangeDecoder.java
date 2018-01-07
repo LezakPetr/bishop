@@ -28,7 +28,7 @@ public final class RangeDecoder extends RangeBase {
 		for (int i = 0; i < MAX_RANGE_BYTES; i++)
 			addByte();
 	}
-	
+
 	protected void addByte() throws IOException {
 		popHighByte();
 		
@@ -70,7 +70,6 @@ public final class RangeDecoder extends RangeBase {
 		normalize();
 		
 		final int decodedSymbol = symbol - 1;
-		sendSymbolToConsumers(decodedSymbol);
 		
 		return decodedSymbol;
 	}

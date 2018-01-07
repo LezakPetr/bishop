@@ -41,7 +41,6 @@ public class RangeEncoder extends RangeBase {
 	 */
 	public void encodeSymbol (final IProbabilityModel probabilityModel, final int symbol) throws IOException {
 		updateRange(probabilityModel, symbol);
-		sendSymbolToConsumers(symbol);
 	}
 	
 	/**
