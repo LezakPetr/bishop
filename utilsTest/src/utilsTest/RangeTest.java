@@ -18,8 +18,8 @@ public class RangeTest {
 	private static final int SYMBOL_COUNT = 256;
 	private static final int MIN_PROBABILITY = 1;
 	private static final int MAX_PROBABILITY = 255;
-	private static final int SEQUENCE_LENGTH = 10000000;
-	private static final int PREWARM_COUNT = 20;
+	private static final int SEQUENCE_LENGTH = 20000000;
+	private static final int PREWARM_COUNT = 10;
 
 	
 	private int[] getRandomArray (final Random rnd, final int count, final int minVal, final int maxVal) {
