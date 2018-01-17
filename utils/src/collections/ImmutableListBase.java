@@ -200,4 +200,16 @@ abstract public class ImmutableListBase<E> implements List<E> {
 		throw new RuntimeException("Method not implemented");
 	}
 	
+	@Override
+	public String toString() {
+		final StringBuilder result = new StringBuilder();
+		result.append("[");
+		
+		for (int i = 0; i < size(); i++)
+			result.append(get(i).toString());
+		
+		result.append("]");
+		
+		return result.toString();
+	}
 }

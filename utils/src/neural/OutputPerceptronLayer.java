@@ -16,11 +16,6 @@ public class OutputPerceptronLayer implements IPerceptronLayer {
 	}
 
 	@Override
-	public int getOutputNodeCount() {
-		return 0;
-	}
-
-	@Override
 	public void initialize() {
 		Arrays.fill(input, 0.0f);
 	}

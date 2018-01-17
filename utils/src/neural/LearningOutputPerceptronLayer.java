@@ -1,6 +1,6 @@
 package neural;
 
-public class LearningOutputPerceptronLayer extends OutputPerceptronLayer implements ILearningPerceptronLayer{
+public class LearningOutputPerceptronLayer extends OutputPerceptronLayer implements ILearningPerceptronLayer {
 
 	private final float[] expectedInput;
 	
@@ -27,4 +27,14 @@ public class LearningOutputPerceptronLayer extends OutputPerceptronLayer impleme
 		expectedInput[inputIndex] = value;
 	}
 
+	public double getTotalInputError() {
+		double error = 0.0;
+		
+		for (int i = 0; i < expectedInput.length; i++) {
+			final double diff = expectedInput[i] - input[i];
+			error += diff * diff;
+		}
+		
+		return error;
+	}
 }
