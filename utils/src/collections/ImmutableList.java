@@ -1,7 +1,9 @@
 package collections;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 public final class ImmutableList<E> extends ImmutableListBase<E> {
 	
@@ -49,6 +51,17 @@ public final class ImmutableList<E> extends ImmutableListBase<E> {
 			return this;
 		}
 
+		public Builder<E> addAll(final Collection<? extends E> orig) {
+			Objects.requireNonNull(orig);
+			
+			checkNotClosed();
+			ensureCapacity (size + orig.size());
+			
+			for (E element: orig)
+				add (element);
+			
+			return this;
+		}
 
 		private void ensureCapacity(final int capacity) {
 			if (data.length < capacity) {
@@ -134,6 +147,13 @@ public final class ImmutableList<E> extends ImmutableListBase<E> {
 	
 	public static <E> Builder<E> builder() {
 		return new Builder<>();
+	}
+
+	public static <E> List<E> copyOf(final List<E> orig) {
+		if (orig instanceof ImmutableList<?>)
+			return (ImmutableList<E>) orig;
+		else
+			return ImmutableList.<E>builder().addAll (orig).build();
 	}
 	
 }

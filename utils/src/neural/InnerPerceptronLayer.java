@@ -1,5 +1,6 @@
 package neural;
 
+import java.util.Arrays;
 
 public class InnerPerceptronLayer<N extends IPerceptronLayer> implements IPerceptronLayer {
 
@@ -25,8 +26,7 @@ public class InnerPerceptronLayer<N extends IPerceptronLayer> implements IPercep
 		return weights.length;
 	}
 
-	@Override
-	public int getOutputNodeCount() {
+	protected int getOutputNodeCount() {
 		return stimuli.length;
 	}
 
@@ -48,5 +48,17 @@ public class InnerPerceptronLayer<N extends IPerceptronLayer> implements IPercep
 		for (int i = 0; i < stimuli.length; i++)
 			nextLayer.addInput(i, activationFunction.apply(stimuli[i]));
 	}
+	
+	@Override
+	public String toString() {
+		final StringBuilder result = new StringBuilder();
+		
+		result.append("Stimuli = " + Arrays.toString(stimuli));
+		result.append(", biases = " + Arrays.toString(biases));
+		result.append(", weights = " + Arrays.toString(weights));
+		
+		return result.toString();
+	}
+
 
 }
