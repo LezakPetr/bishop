@@ -6,13 +6,17 @@ import java.util.function.DoubleUnaryOperator;
 import org.junit.Assert;
 import org.junit.Test;
 
-import neural.BalanceActivationFunction;
+import neural.TanhActivationFunction;
+import neural.FastSigmoidActivationFunction;
+import neural.IActivationFunction;
 import neural.ILearningPerceptronLayer;
 import neural.LearningInnerPerceptronLayer;
 import neural.LearningOutputPerceptronLayer;
 import neural.LearningPerceptronNetwork;
 import neural.Optimizer;
+import neural.PerceptronLayerSettings;
 import neural.PerceptronNetwork;
+import neural.PerceptronNetworkSettings;
 import neural.Sample;
 
 public class NeuralTest {
@@ -37,19 +41,32 @@ public class NeuralTest {
 	
 	@Test
 	public void testBalanceActivationFunctionDerivation() {
-		final BalanceActivationFunction activationFunction = BalanceActivationFunction.getInstance();
+		final IActivationFunction[] activationFunctions = {
+				TanhActivationFunction.getInstance(),
+				FastSigmoidActivationFunction.getInstance()
+		};
 		
-		checkDerivationForMoreInputs(
-			x -> activationFunction.apply((float) x),
-			x -> activationFunction.derivate((float) x)
-		);
+		for (IActivationFunction func: activationFunctions) {
+			checkDerivationForMoreInputs(
+				x -> func.apply((float) x),
+				x -> func.derivate((float) x)
+			);
+		}
 	}
 	
 	@Test
 	public void testLayerDerivation() {
-		final BalanceActivationFunction activationFunction = BalanceActivationFunction.getInstance();
+		final TanhActivationFunction activationFunction = TanhActivationFunction.getInstance();
 		final LearningOutputPerceptronLayer outputLayer = new LearningOutputPerceptronLayer(3);
-		final ILearningPerceptronLayer layer = new LearningInnerPerceptronLayer(activationFunction, 2, outputLayer);
+		
+		final ILearningPerceptronLayer layer = new LearningInnerPerceptronLayer(
+				new PerceptronLayerSettings(
+						activationFunction,
+						2,
+						outputLayer.getInputNodeCount()
+					),
+				outputLayer
+		);
 		
 		final int inputIndex = 1;
 		final int outputIndex = 2;
@@ -88,7 +105,7 @@ public class NeuralTest {
 	public void testLearning() {
 		final Random rng = new Random(1654677316576L);
 		final int[] layerSizes = {2, 3, 1};
-		final LearningPerceptronNetwork network = LearningPerceptronNetwork.create(BalanceActivationFunction.getInstance(), layerSizes);
+		final LearningPerceptronNetwork network = LearningPerceptronNetwork.create((i, s) -> TanhActivationFunction.getInstance(), layerSizes);
 		final Optimizer optimizer = new Optimizer();
 		optimizer.setNetwork(network);
 		
@@ -97,7 +114,7 @@ public class NeuralTest {
 			final float y = 10 * rng.nextFloat() - 5;
 			final float val = testFunction(x, y);
 			
-			optimizer.addSample(new Sample(new float[] {x,  y}, new float[] {val}, 1.0f));
+			optimizer.addSample(new Sample(new int[] {0, 1}, new float[] {x, y}, new float[] {val}, 1.0f));
 		}
 		
 		optimizer.learn();
@@ -124,7 +141,8 @@ public class NeuralTest {
 	@Test
 	public void speedTest() {
 		final int[] layerSizes = {SPEED_INPUT_LAYER_SIZE, 200, 10, 1};
-		final PerceptronNetwork network = PerceptronNetwork.create(BalanceActivationFunction.getInstance(), layerSizes);
+		final PerceptronNetworkSettings networkSettings = PerceptronNetworkSettings.createEmpty((i, s) -> FastSigmoidActivationFunction.getInstance(), layerSizes);
+		final PerceptronNetwork network = PerceptronNetwork.create(networkSettings);
 		singleSpeedTest(network);
 		
 		final long t1 = System.currentTimeMillis();

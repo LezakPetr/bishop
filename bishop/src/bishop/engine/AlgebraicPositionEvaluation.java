@@ -21,15 +21,10 @@ public class AlgebraicPositionEvaluation implements IPositionEvaluation {
 	}
 
 	@Override
-	public void clear() {
+	public void clear(final int onTurn) {
 		evaluation = 0;
 	}
 	
-	@Override
-	public void addEvaluation (final int evaluation) {
-		this.evaluation += evaluation;
-	}
-
 	@Override
 	public void addCoeffWithCount(final int index, final int count) {
 		this.evaluation += count * coeffs.getEvaluationCoeff(index);
@@ -38,11 +33,6 @@ public class AlgebraicPositionEvaluation implements IPositionEvaluation {
 	@Override
 	public void shiftRight (final int shift) {
 		this.evaluation >>= shift;
-	}
-	
-	@Override
-	public void addSubEvaluation (final IPositionEvaluation subEvaluation) {
-		this.evaluation += subEvaluation.getEvaluation();
 	}
 	
 	@Override

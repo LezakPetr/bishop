@@ -42,8 +42,24 @@ public class PerceptronNetworkBase<L extends IPerceptronLayer, I extends L, O ex
 
 	@Override
 	public void addInput(final int index, final float value) {
-		for (L layer: allLayers)
-			layer.initialize();
+		if (value == 1)
+			addPositiveUnityInput(index);
+		
+		if (value == -1)
+			addNegativeUnityInput(index);
+
+		if (value != 0)
+			getInputLayer().addInput(index, value);
+	}
+	
+	@Override
+	public void addPositiveUnityInput(final int index) {
+		getInputLayer().addPositiveUnityInput(index);
+	}
+	
+	@Override
+	public void addNegativeUnityInput(final int index) {
+		getInputLayer().addNegativeUnityInput(index);
 	}
 
 	@Override

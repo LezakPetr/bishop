@@ -238,24 +238,20 @@ public class PawnStructureEvaluatorTest {
 		final PawnStructureCache cache = new PawnStructureCache();
 		final Supplier<IPositionEvaluation> evaluationFactory = () -> new CoeffCountPositionEvaluation(positionEvaluationCoeffs);
 		final GeneralEvaluatorSettings settings = new GeneralEvaluatorSettings();
-		final GeneralPositionEvaluator evaluator = new GeneralPositionEvaluator(settings, cache, evaluationFactory);
+		final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
+		final GeneralPositionEvaluator evaluator = new GeneralPositionEvaluator(settings, cache, evaluation);
 		final AttackCalculator attackCalculator = new AttackCalculator();
 		final Fen fen = new Fen();
-		final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
 		
 		for (TestCase testCase: testCases) {
 			fen.readFenFromString(testCase.position);
 			
 			final Position position = fen.getPosition();
 			attackCalculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
+		
+			evaluation.clear(position.getOnTurn());
 			
-			evaluation.clear();
-			
-			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, attackCalculator);
-			evaluation.addSubEvaluation(tacticalEvaluation);
-			
-			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional(attackCalculator);
-			evaluation.addSubEvaluation(positionalEvaluation);
+			evaluator.evaluate(position, attackCalculator);
 						
 			final Map<Integer, Integer> givenCoeffMap = new HashMap<>();
 			

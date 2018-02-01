@@ -1,6 +1,5 @@
 package bishop.engine;
 
-import java.util.function.Supplier;
 
 import bishop.base.BitLoop;
 import bishop.base.Color;
@@ -12,14 +11,12 @@ public final class TablePositionEvaluator {
 	private final TablePositionCoeffs coeffs;
 	private final IPositionEvaluation evaluation;
 	
-	public TablePositionEvaluator(final TablePositionCoeffs coeffs, final Supplier<IPositionEvaluation> evaluationFactory) {
-		this.evaluation = evaluationFactory.get();
+	public TablePositionEvaluator(final TablePositionCoeffs coeffs, final IPositionEvaluation evaluation) {
+		this.evaluation = evaluation;
 		this.coeffs = coeffs;
 	}
 
-	public IPositionEvaluation evaluatePosition (final Position position) {
-		evaluation.clear();
-		
+	public void evaluatePosition (final Position position) {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
 				final long board = position.getPiecesMask(color, pieceType);
@@ -32,8 +29,6 @@ public final class TablePositionEvaluator {
 				}
 			}
 		}
-
-		return evaluation;
 	}
 
 }

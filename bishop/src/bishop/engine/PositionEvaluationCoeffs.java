@@ -14,8 +14,10 @@ public class PositionEvaluationCoeffs {
 	public static final double GAME_STAGE_LINK_WEIGHT = 65536;
 	
 	public static final int FIRST = 0;
-	private static final CoeffRegistry registry = new CoeffRegistry();
 	
+	private static final CoeffRegistry registry = new CoeffRegistry();
+
+	public static final int EVALUATION_COEFF = registry.add("evaluation");
 	public static final int RULE_OF_SQUARE_BONUS = registry.add("rule_of_square");
 
 	public static final List<GameStageCoeffs> GAME_STAGE_COEFFS = createGameStageCoeffs();
@@ -29,10 +31,9 @@ public class PositionEvaluationCoeffs {
 	
 	private static List<GameStageCoeffs> createGameStageCoeffs() {
 		final ImmutableList.Builder<GameStageCoeffs> builder = ImmutableList.<GameStageCoeffs>builder().withCapacity(GameStage.LAST);
-		builder.addTimes(null, GameStage.FIRST);
 		
-		for (int i = GameStage.FIRST; i < GameStage.LAST; i++)
-			builder.add(new GameStageCoeffs(registry, i));
+		builder.add(new GameStageCoeffs(registry, GameStage.PAWNS_ONLY));
+		builder.addTimes(new GameStageCoeffs(registry, GameStage.WITH_FIGURES_FIRST), GameStage.WITH_FIGURES_LAST - GameStage.WITH_FIGURES_FIRST);
 		
 		List<GameStageCoeffs> coeffList = builder.build();
 		

@@ -451,4 +451,16 @@ public class IoUtils {
 		
 		return expected;
 	}
+	
+	public static void writeFloatBinary(final OutputStream stream, final float num) throws IOException {
+		final int data = Float.floatToRawIntBits(num);
+		
+		writeNumberBinary(stream, data, INT_BYTES);
+	}
+
+	public static float readFloatBinary(final InputStream stream) throws IOException {
+		final int data = (int) readNumberBinary(stream, INT_BYTES);
+		
+		return Float.intBitsToFloat(data);
+	}
 }

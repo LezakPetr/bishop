@@ -14,7 +14,7 @@ public class Optimizer {
 	private int testSampleCount = 1000;
 	private float initialAlpha = 1.0f;
 	private float alphaDropdown = 10.0f;
-	private long epochSize = 300000;
+	private long epochSize = 3000;
 	private long epochCount = 20;
 	
 	// Operational values
@@ -77,9 +77,21 @@ public class Optimizer {
 		trainingSamples.clear();
 		trainingSamples.addAll(shuffledSamples.subList(testSampleCount, shuffledSamples.size()));
 	}
+	
+	public LearningPerceptronNetwork getNetwork() {
+		return network;
+	}
 
 	public void setNetwork(final LearningPerceptronNetwork network) {
 		this.network = network;
+	}
+	
+	public void setInitialAlpha (final float initialAlpha) {
+		this.initialAlpha = initialAlpha;
+	}
+
+	public void setAlphaDropdown (final float dropdown) {
+		this.alphaDropdown = dropdown;
 	}
 	
 	public float getTestAccuracy() {
@@ -89,5 +101,4 @@ public class Optimizer {
 	public float getTrainAccuracy() {
 		return trainAccuracy;
 	}
-
 }

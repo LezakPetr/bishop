@@ -7,18 +7,22 @@ import java.util.function.Supplier;
 
 import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.IMaterialEvaluator;
-import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.BookReader;
 import bishop.engine.HashTableImpl;
 import bishop.engine.IPositionEvaluation;
 import bishop.engine.ISearchManager;
-import bishop.engine.PositionEvaluationCoeffs;
+import bishop.engine.NeuralPositionEvaluation;
 import bishop.engine.PositionEvaluatorSwitchFactory;
 import bishop.engine.PositionEvaluatorSwitchSettings;
 import bishop.engine.SearchManagerImpl;
 import bishop.engine.SerialSearchEngineFactory;
 import bishop.engine.TableMaterialEvaluator;
 import bishop.engine.TablebasePositionEvaluator;
+import neural.FastSigmoidActivationFunction;
+import neural.IActivationFunction;
+import neural.IdentityActivationFunction;
+import neural.PerceptronNetwork;
+import neural.PerceptronNetworkSettings;
 
 public class SearchResources {
 	
@@ -47,7 +51,7 @@ public class SearchResources {
 		
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 		final IMaterialEvaluator materialEvaluator = createMaterialEvaluator();
-		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, getEvaluationFactory());
+		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings);
 		
 		searchEngineFactory.setMaterialEvaluator(materialEvaluator);
 		searchEngineFactory.setPositionEvaluatorFactory(evaluatorFactory);
@@ -71,9 +75,9 @@ public class SearchResources {
 	}
 
 	public static Supplier<IPositionEvaluation> createEvaluationFactory(final URL rootUrl) {
-		final PositionEvaluationCoeffs evaluationCoeffs = createEvaluationCoeffs(rootUrl);
+		final PerceptronNetworkSettings evaluationNetworkSettings = createEvaluationNetworkSettings(rootUrl);;
 		
-		return () -> new AlgebraicPositionEvaluation(evaluationCoeffs);
+		return () -> new NeuralPositionEvaluation(PerceptronNetwork.create(evaluationNetworkSettings));
 	}
 	
 	private void setBookToManager() {
@@ -108,16 +112,23 @@ public class SearchResources {
 	private IMaterialEvaluator createMaterialEvaluator() {
 		return createMaterialEvaluator(application.getRootUrl());
 	}
+	
+	private static IActivationFunction activationFunctionSupplier (final Integer layerIndex, final Integer layerCount) {
+		if ((int) layerIndex == layerCount - 1)
+			return IdentityActivationFunction.getInstance();
+		else
+			return FastSigmoidActivationFunction.getInstance();
+	}
 
-	private static PositionEvaluationCoeffs createEvaluationCoeffs(final URL rootUrl) {
+	private static PerceptronNetworkSettings createEvaluationNetworkSettings(final URL rootUrl) {
 		try {
 			final URL url = new URL(rootUrl, EVALUATION_COEFFS_PATH);
 			
 			try (final InputStream stream = url.openStream()) {
-				final PositionEvaluationCoeffs evaluationCoeffs = new PositionEvaluationCoeffs();
-				evaluationCoeffs.read(stream);
+				final PerceptronNetworkSettings settings = new PerceptronNetworkSettings();
+				settings.read(stream, SearchResources::activationFunctionSupplier);
 
-				return evaluationCoeffs;
+				return settings;
 			}
 		}
 		catch (IOException ex) {

@@ -23,27 +23,22 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 	}
 
 	@Override
-	public void clear() {
-		super.clear();
+	public void clear(final int onTurn) {
+		super.clear(onTurn);
 		
 		constantEvaluation = 0;
 		coeffCounts.clear();
 	}
 	
 	@Override
-	public void addEvaluation (final int evaluation) {
-		super.addEvaluation(evaluation);
-		
-		this.constantEvaluation += evaluation;
-	}
-
-	@Override
 	public void addCoeffWithCount(final int index, final int count) {
-		super.addCoeffWithCount(index, count);
-		
-		final int shiftedCount = count << COEFF_COUNT_SHIFT;
-		
-		coeffCounts.merge(index, shiftedCount, Integer::sum);
+		if (count != 0) {
+			super.addCoeffWithCount(index, count);
+			
+			final int shiftedCount = count << COEFF_COUNT_SHIFT;
+			
+			coeffCounts.merge(index, shiftedCount, Integer::sum);
+		}
 	}
 	
 	@Override
@@ -53,23 +48,6 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 		constantEvaluation >>= shift;
 		
 		coeffCounts.replaceAll((k, v) -> k >> shift);
-	}
-	
-	@Override
-	public void addSubEvaluation (final IPositionEvaluation subEvaluation) {
-		super.addSubEvaluation(subEvaluation);
-		
-		if (subEvaluation instanceof CoeffCountPositionEvaluation) {
-			final CoeffCountPositionEvaluation subCoeffEvaluation = (CoeffCountPositionEvaluation) subEvaluation;
-			
-			this.constantEvaluation += subCoeffEvaluation.constantEvaluation;
-			
-			subCoeffEvaluation.coeffCounts.forEach(
-				(k, v) -> this.coeffCounts.merge(k, v, Integer::sum)	
-			);
-		}
-		else
-			this.constantEvaluation += subEvaluation.getEvaluation();
 	}
 	
 	public int getConstantEvaluation() {

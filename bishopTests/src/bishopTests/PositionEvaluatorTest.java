@@ -16,32 +16,22 @@ import bishop.engine.PositionEvaluatorSwitchSettings;
 
 public class PositionEvaluatorTest {
 	
-	private void testPositionEvaluatorSpeed (final Position position, final IPositionEvaluator evaluator, final boolean withPositionalEvaluation) {
+	private void testPositionEvaluatorSpeed (final Position position, final IPositionEvaluator evaluator) {
 		final int iterationCount = 2000000;
 		final long t1 = System.currentTimeMillis();
 		final AttackCalculator attackCalculator = new AttackCalculator();
 
 		for (int i = 0; i < iterationCount; i++) {
-			evaluator.evaluateTactical(position, attackCalculator);
-			
-			if (withPositionalEvaluation)
-				evaluator.evaluatePositional(attackCalculator);
+			evaluator.getEvaluation().clear(position.getOnTurn());
+			evaluator.evaluate(position, attackCalculator);
 		}
 
 		final long t2 = System.currentTimeMillis();
 		final double iterPerSec = (double) iterationCount * 1000 / (t2 - t1);
 
-		System.out.println(evaluator.getClass().getSimpleName() + " with positional = " + withPositionalEvaluation + ": iterations per second: " + iterPerSec);
+		System.out.println(evaluator.getClass().getSimpleName() + ": iterations per second: " + iterPerSec);
 	}
 	
-	private void testPositionEvaluatorSpeed (final Position position, final IPositionEvaluator evaluator) {
-		final boolean[] withPositionalValues = { false, true };
-		
-		for (boolean withPositionalEvaluation: withPositionalValues) {
-			testPositionEvaluatorSpeed(position, evaluator, withPositionalEvaluation);
-		}
-	}
-
 	@Test
 	public void speedTest() {
 		final Position position = new Position();
@@ -52,7 +42,7 @@ public class PositionEvaluatorTest {
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
 		final PawnStructureCache pawnStructureCache = new PawnStructureCache();
 		
-		testPositionEvaluatorSpeed (position, new GeneralPositionEvaluator(settings.getGeneralEvaluatorSettings(), pawnStructureCache, evaluationFactory));
-		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings, evaluationFactory));
+		testPositionEvaluatorSpeed (position, new GeneralPositionEvaluator(settings.getGeneralEvaluatorSettings(), pawnStructureCache, evaluationFactory.get()));
+		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings, evaluationFactory.get()));
 	}
 }
