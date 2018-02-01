@@ -1,7 +1,6 @@
 package bishop.engine;
 
 import java.util.function.IntUnaryOperator;
-import java.util.function.Supplier;
 
 import bishop.base.BitBoard;
 import bishop.base.CastlingType;
@@ -24,18 +23,14 @@ public class KingSafetyEvaluator {
 	private final GameStageCoeffs coeffs;
 	private final IPositionEvaluation evaluation;
 	
-	public KingSafetyEvaluator (final GameStageCoeffs coeffs, final Supplier<IPositionEvaluation> evaluationFactory) {
+	public KingSafetyEvaluator (final GameStageCoeffs coeffs, final IPositionEvaluation evaluation) {
 		this.coeffs = coeffs;
-		this.evaluation = evaluationFactory.get();
+		this.evaluation = evaluation;
 	}
 	
-	public IPositionEvaluation evaluate(final Position position, final AttackCalculator attackCalculator) {
-		evaluation.clear();
-		
+	public void evaluate(final Position position, final AttackCalculator attackCalculator) {
 		evaluateKingFiles(position);
 		evaluateAttack(position, attackCalculator);
-		
-		return evaluation;
 	}
 	
 	private void evaluateAttack(final Position position, final AttackCalculator attackCalculator) {

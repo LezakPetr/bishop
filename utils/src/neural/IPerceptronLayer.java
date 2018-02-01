@@ -6,5 +6,7 @@ public interface IPerceptronLayer {
 	
 	public void initialize();
 	public void addInput (final int index, final float value);
+	public void addPositiveUnityInput (final int index);
+	public void addNegativeUnityInput (final int index);
 	public void propagate();
 }

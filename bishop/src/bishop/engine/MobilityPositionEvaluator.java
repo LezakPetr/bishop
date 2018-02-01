@@ -1,6 +1,5 @@
 package bishop.engine;
 
-import java.util.function.Supplier;
 
 import bishop.base.Color;
 import bishop.base.PieceType;
@@ -12,13 +11,11 @@ public class MobilityPositionEvaluator {
 	
 	private final IPositionEvaluation mobilityEvaluation;
 
-	public MobilityPositionEvaluator (final Supplier<IPositionEvaluation> evaluationFactory) {
-		this.mobilityEvaluation = evaluationFactory.get();
+	public MobilityPositionEvaluator (final IPositionEvaluation evaluation) {
+		this.mobilityEvaluation = evaluation;
 	}
 	
-	public IPositionEvaluation evaluatePosition(final Position position, final AttackCalculator attackCalculator) {
-		mobilityEvaluation.clear();
-				
+	public void evaluatePosition(final Position position, final AttackCalculator attackCalculator) {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
 				final int mobility = attackCalculator.getMobility(color, pieceType);
@@ -26,8 +23,6 @@ public class MobilityPositionEvaluator {
 				mobilityEvaluation.addCoeff(coeff, color, mobility);
 			}
 		}
-		
-		return mobilityEvaluation;
 	}
 
 	private static int getCoeffForPieceType(int pieceType) {

@@ -1,7 +1,6 @@
 package bishop.engine;
 
 import java.io.PrintWriter;
-import java.util.function.Supplier;
 
 import bishop.base.Color;
 import bishop.base.Position;
@@ -10,26 +9,16 @@ import bishop.tables.MatingKingEvaluationTable;
 
 public final class MatingPositionEvaluator implements IPositionEvaluator {
 	
-	private final IPositionEvaluation positionalEvaluation;
-	private final IPositionEvaluation tacticalEvaluation;
-	private Position position;
+	private final IPositionEvaluation evaluation;
 	
-	public MatingPositionEvaluator (final Supplier<IPositionEvaluation> evaluationFactory) {
-		this.tacticalEvaluation = evaluationFactory.get();
-		this.positionalEvaluation = evaluationFactory.get();
+	public MatingPositionEvaluator (final IPositionEvaluation evaluation) {
+		this.evaluation = evaluation;
 	}
 	
 	@Override
-	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
-		this.position = position;
-		
+	public void evaluate (final Position position, final AttackCalculator attackCalculator) {
 		attackCalculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
 		
-		return tacticalEvaluation;		
-	}
-
-	@Override
-	public IPositionEvaluation evaluatePositional (final AttackCalculator attackCalculator) {
 		final int matingColor = position.getSideWithMorePieces();
 		final int matedColor = Color.getOppositeColor(matingColor);
 		final int matedKingSquare = position.getKingPosition(matedColor);
@@ -39,13 +28,15 @@ public final class MatingPositionEvaluator implements IPositionEvaluator {
 		final int matingKingEvaluation = MatingKingEvaluationTable.getItem(matedKingSquare, matingKingSquare);
 		final int matingSideEvaluation = matedKingEvaluation + matingKingEvaluation;
 		
-		positionalEvaluation.clear();
-		positionalEvaluation.addEvaluation(Evaluation.getAbsolute(matingSideEvaluation, matingColor));
-		
-		return positionalEvaluation;
+		evaluation.addCoeffWithCount(PositionEvaluationCoeffs.EVALUATION_COEFF, Evaluation.getAbsolute(matingSideEvaluation, matingColor));
 	}
 	
 	public void writeLog (final PrintWriter writer) {
+	}
+
+	@Override
+	public IPositionEvaluation getEvaluation() {
+		return evaluation;
 	}
 
 }

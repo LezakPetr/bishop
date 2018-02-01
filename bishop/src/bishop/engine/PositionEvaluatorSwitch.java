@@ -1,7 +1,6 @@
 package bishop.engine;
 
 import java.io.PrintWriter;
-import java.util.function.Supplier;
 
 import bishop.base.Color;
 import bishop.base.IMaterialHashRead;
@@ -20,16 +19,17 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 	private final boolean[] hasMatingMaterial;
 	
 	private IPositionEvaluator currentEvaluator;
-	private IPositionEvaluation tacticalEvaluation;
-	private IPositionEvaluation positionalEvaluation;
+	private IPositionEvaluation evaluation;
 
 	
-	public PositionEvaluatorSwitch(final PositionEvaluatorSwitchSettings settings, final Supplier<IPositionEvaluation> evaluationFactory) {
+	public PositionEvaluatorSwitch(final PositionEvaluatorSwitchSettings settings, final IPositionEvaluation evaluation) {
+		this.evaluation = evaluation;
+		
 		pawnStructureCache = new PawnStructureCache();
 		
-		generalPositionEvaluator = new GeneralPositionEvaluator(settings.getGeneralEvaluatorSettings(), pawnStructureCache, evaluationFactory);
-		generalMatingEvaluator = new MatingPositionEvaluator(evaluationFactory);
-		drawEvaluator = new DrawPositionEvaluator(evaluationFactory);
+		generalPositionEvaluator = new GeneralPositionEvaluator(settings.getGeneralEvaluatorSettings(), pawnStructureCache, evaluation);
+		generalMatingEvaluator = new MatingPositionEvaluator(evaluation);
+		drawEvaluator = new DrawPositionEvaluator(evaluation);
 		
 		hasMatingMaterial = new boolean[Color.LAST];
 	}
@@ -63,22 +63,13 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 	}
 	
 	@Override
-	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
+	public void evaluate (final Position position, final AttackCalculator attackCalculator) {
 		this.materialHash = position.getMaterialHash();
 		
 		calculateHasMatingMaterial();
 		selectCurrentEvaluator();
 		
-		tacticalEvaluation = currentEvaluator.evaluateTactical(position, attackCalculator);
-		
-		return tacticalEvaluation;
-	}
-
-	@Override
-	public IPositionEvaluation evaluatePositional (final AttackCalculator attackCalculator) {
-		positionalEvaluation = currentEvaluator.evaluatePositional(attackCalculator);
-		
-		return positionalEvaluation;
+		currentEvaluator.evaluate(position, attackCalculator);
 	}
 	
 	@Override
@@ -94,6 +85,11 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 		
 	public void writeLog (final PrintWriter writer) {
 		currentEvaluator.writeLog(writer);
+	}
+
+	@Override
+	public IPositionEvaluation getEvaluation() {
+		return evaluation;
 	}
 
 }

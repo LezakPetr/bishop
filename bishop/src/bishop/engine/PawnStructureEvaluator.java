@@ -1,6 +1,5 @@
 package bishop.engine;
 
-import java.util.function.Supplier;
 
 import bishop.base.BitBoard;
 import bishop.base.BitLoop;
@@ -18,23 +17,19 @@ public class PawnStructureEvaluator {
 	private final PawnStructureCache structureCache;
 	private final PawnStructureData structureData;
 	
-	public PawnStructureEvaluator(final PawnStructureCoeffs coeffs, final PawnStructureCache structureCache, final Supplier<IPositionEvaluation> evaluationFactory) {
-		this.evaluation = evaluationFactory.get();
+	public PawnStructureEvaluator(final PawnStructureCoeffs coeffs, final PawnStructureCache structureCache, final IPositionEvaluation evaluation) {
+		this.evaluation = evaluation;
 		this.coeffs = coeffs;
 		this.structureCache = structureCache;
 		this.structureData = new PawnStructureData();
 	}
 
-	public IPositionEvaluation evaluate(final Position position, final AttackCalculator attackCalculator) {
-		evaluation.clear();
-		
+	public void evaluate(final Position position, final AttackCalculator attackCalculator) {
 		final PawnStructure structure = position.getPawnStructure();
 		structureCache.getData(structure, structureData);
 		
 		evaluatePawnStructure(position, attackCalculator);
 		evaluateUnprotectedOpenFilePawns(position, attackCalculator);
-		
-		return evaluation;		
 	}
 		
 	private void evaluatePawnStructure(final Position position, final AttackCalculator attackCalculator) {

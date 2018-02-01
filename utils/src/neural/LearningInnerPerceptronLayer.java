@@ -7,9 +7,10 @@ public class LearningInnerPerceptronLayer extends InnerPerceptronLayer<ILearning
 	private final float[] inputs;
 	private final float[] stimuliErrors;
 			
-	public LearningInnerPerceptronLayer (final IActivationFunction activationFunction, final int inputNodeCount, final ILearningPerceptronLayer nextLayer) {
-		super (activationFunction, inputNodeCount, nextLayer);
+	public LearningInnerPerceptronLayer (final PerceptronLayerSettings settings, final ILearningPerceptronLayer nextLayer) {
+		super (settings, nextLayer);
 		
+		final int inputNodeCount = settings.getInputNodeCount();
 		inputs = new float[inputNodeCount];
 		
 		final int outputNodeCount = nextLayer.getInputNodeCount();
@@ -18,12 +19,12 @@ public class LearningInnerPerceptronLayer extends InnerPerceptronLayer<ILearning
 	
 	public void backPropagateError() {
 		for (int i = 0; i < stimuliErrors.length; i++)
-			stimuliErrors[i] = activationFunction.derivate(stimuli[i]) * nextLayer.getInputError(i);
+			stimuliErrors[i] = settings.activationFunction.derivate(stimuli[i]) * nextLayer.getInputError(i);
 	}
 	
 	@Override
 	public float getInputError(final int inputIndex) {
-		final float[] weightsRow = weights[inputIndex];
+		final float[] weightsRow = settings.weights[inputIndex];
 		float error = 0.0f;
 		
 		for (int i = 0; i < stimuliErrors.length; i++)
@@ -55,22 +56,27 @@ public class LearningInnerPerceptronLayer extends InnerPerceptronLayer<ILearning
 	
 	@Override
 	public void updateWeight(final int inputIndex, final int outputIndex, final float step) {
-		weights[inputIndex][outputIndex] -= step * stimuliErrors[outputIndex] * inputs[inputIndex];
+		settings.weights[inputIndex][outputIndex] -= step * stimuliErrors[outputIndex] * inputs[inputIndex];
 	}
 
 	@Override
 	public void updateBias(final int outputIndex, final float step) {
-		biases[outputIndex] -= step * stimuliErrors[outputIndex];
+		settings.biases[outputIndex] -= step * stimuliErrors[outputIndex];
 	}
 	
 	@Override
 	public void setWeight(final int inputIndex, final int outputIndex, final float value) {
-		weights[inputIndex][outputIndex] = value;
+		settings.weights[inputIndex][outputIndex] = value;
 	}
 	
 	@Override
 	public void setBias(final int outputIndex, final float value) {
-		biases[outputIndex] = value;
+		settings.biases[outputIndex] = value;
+	}
+	
+	@Override
+	public PerceptronLayerSettings getSettings() {
+		return settings;
 	}
 
 }
