@@ -5,9 +5,7 @@ import java.util.Arrays;
 import bishop.base.BitLoop;
 import bishop.base.BoardConstants;
 import bishop.base.Color;
-import bishop.base.File;
 import bishop.base.PieceType;
-import bishop.base.Rank;
 import bishop.base.Square;
 import math.EquationSystemSolver;
 
@@ -48,33 +46,9 @@ public class TablePositionCoeffs {
 				final int blackndex = getIndex(Color.BLACK, pieceType, blackSquare);
 				coeffIndices[blackndex] = coeff;
 			}
-			
-			for (BitLoop loop = new BitLoop(board); loop.hasNextSquare(); ) {
-				final int square = loop.getNextSquare();
-				final int file = Square.getFile(square);
-				final int rank = Square.getRank(square);
-				
-				addLink (registry, pieceType, square, file + 1, rank);
-				addLink (registry, pieceType, square, file, rank + 1);
-				
-				if (file <= File.FD)
-					addLink (registry, pieceType, square, File.getOppositeFile (file), rank);
-			}
 		}
 		
 		registry.leaveCategory();
-	}
-
-	private void addLink(final CoeffRegistry registry, final int pieceType, final int square, final int file, int rank) {
-		if (File.isValid(file) && Rank.isValid(rank)) {
-			final int secondSquare = Square.onFileRank(file, rank);
-			final int firstCoeff = getCoeff(Color.WHITE, pieceType, square);
-			final int secondCoeff = getCoeff(Color.WHITE, pieceType, secondSquare);
-			
-			if (firstCoeff >= 0 && secondCoeff >= 0) {
-				registry.addLink(new CoeffLink(firstCoeff, secondCoeff, PositionEvaluationCoeffs.LINK_WEIGHT));
-			}
-		}
 	}
 
 	public int getCoeff(final int color, final int pieceType, final int square) {

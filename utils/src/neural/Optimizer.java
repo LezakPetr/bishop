@@ -27,6 +27,9 @@ public class Optimizer {
 	
 	public void addSample(final Sample sample) {
 		sampleList.add(sample);
+		
+		if ((sampleList.size() & 0xFFFF) == 0)
+			System.out.println(sampleList.size());
 	}
 	
 	public void learn() {

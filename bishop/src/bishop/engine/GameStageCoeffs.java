@@ -14,7 +14,6 @@ public class GameStageCoeffs {
 	public final int figureOnSecureSquareBonus;
 	public final int queenMoveBonus;
 	public final int kingAttackBonus;
-	public final int onTurnBonus;
 	
 	private final int lastCoeff;
 	
@@ -35,8 +34,6 @@ public class GameStageCoeffs {
 		kingMainProtectionPawnBonus = (withFigures) ? registry.add("king_main_protection_pawn") : -1;
 		kingSecondProtectionPawnBonus = (withFigures) ? registry.add("king_second_protection_pawn") : -1;
 		kingAttackBonus = (withFigures) ? registry.add("king_attack") : -1;
-		
-		onTurnBonus = registry.add("onTurn");
 		
 		lastCoeff = registry.leaveCategory();
 	}

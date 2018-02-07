@@ -1,7 +1,6 @@
 package bishop.engine;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,7 +8,6 @@ public class CoeffRegistry {
 	
 	private final List<String> coeffNames = new ArrayList<>();
 	private final List<String> nameStack = new ArrayList<>();
-	private final List<CoeffLink> coeffLinks = new ArrayList<>();
 	private boolean frozen;
 	
 	public short add (final String name) {
@@ -25,12 +23,6 @@ public class CoeffRegistry {
 		nameStack.remove(nameStack.size() - 1);
 		
 		return (short) coeff;
-	}
-	
-	public void addLink(final CoeffLink link) {
-		checkNotFrozen();
-		
-		coeffLinks.add(link);
 	}
 	
 	public short enterCategory(final String name) {
@@ -67,9 +59,5 @@ public class CoeffRegistry {
 	private void checkNotFrozen() {
 		if (frozen)
 			throw new RuntimeException("Coeff registry is frozen");
-	}
-	
-	public List<CoeffLink> getCoeffLinks() {
-		return Collections.unmodifiableList(coeffLinks);
 	}
 }

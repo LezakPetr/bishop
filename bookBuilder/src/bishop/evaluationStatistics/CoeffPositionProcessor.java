@@ -87,19 +87,16 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 			evaluation.clear(position.getOnTurn());
 			evaluator.evaluate(position, attackCalculator);
 	
-			final Set<Integer> nonZeroCoeffs = evaluation.getNonZeroCoeffs();
-			final int coeffCount = nonZeroCoeffs.size();
+			final int coeffCount = evaluation.genNonZeroCoeffCount();
 			
 			final int[] inputIndices = new int[coeffCount];
 			final float[] inputValues = new float[coeffCount];
 			final float colorCoeff = (position.getOnTurn() == Color.WHITE) ? 1 : -1;
 			
-			int index = 0;
-			
-			for (Integer coeff: nonZeroCoeffs) {
-				inputIndices[index] = coeff;
-				inputValues[index] = (float) evaluation.getCoeffCount(coeff) * colorCoeff;
-				index++;
+			for (int i = 0; i < coeffCount; i++) {
+				final int coeff = evaluation.getNonZeroCoeffAt(i);
+				inputIndices[i] = coeff;
+				inputValues[i] = (float) evaluation.getCoeffCount(coeff) * colorCoeff;
 			}
 			
 			final float[] output = new float[] {NORMALIZED_OUTPUTS.get(result) * colorCoeff};
