@@ -37,26 +37,6 @@ public class PositionEvaluationCoeffs {
 		
 		List<GameStageCoeffs> coeffList = builder.build();
 		
-		for (int stage = GameStage.WITH_FIGURES_FIRST + 1; stage < GameStage.WITH_FIGURES_LAST - 1; stage++) {
-			final GameStageCoeffs prev = coeffList.get(stage - 1);
-			final GameStageCoeffs current = coeffList.get(stage);
-			final GameStageCoeffs next = coeffList.get(stage + 1);
-			
-			for (int prevCoeff = prev.getFirstCoeff(); prevCoeff < prev.getLastCoeff(); prevCoeff++) {
-				final int coeffOffset = prevCoeff - prev.getFirstCoeff();
-				final int currentCoeff = current.getFirstCoeff() + coeffOffset;
-				final int nextCoeff = next.getFirstCoeff() + coeffOffset;
-				
-				// Link - second derivation is 0
-				final CoeffLink link = new CoeffLink(GAME_STAGE_LINK_WEIGHT);
-				link.addNode(prevCoeff, 1.0);
-				link.addNode(currentCoeff, -2.0);
-				link.addNode(nextCoeff, 1.0);
-				
-				registry.addLink(link);
-			}
-		}
-		
 		return coeffList;
 	}
 	

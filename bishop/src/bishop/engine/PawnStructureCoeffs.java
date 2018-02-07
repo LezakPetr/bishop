@@ -72,10 +72,6 @@ public class PawnStructureCoeffs {
 			coeffs[Color.BLACK][Rank.getOppositeRank(rank)] = coeffIndex;
 		}
 		
-		for (int rank = from; rank < to; rank++) {
-			registry.addLink(new CoeffLink(coeffs[Color.WHITE][rank], coeffs[Color.WHITE][rank+1], PositionEvaluationCoeffs.LINK_WEIGHT));
-		}
-		
 		registry.leaveCategory();
 		
 		return coeffs;
@@ -88,9 +84,6 @@ public class PawnStructureCoeffs {
 		
 		for (int i = 0; i < PAWN_COUNT; i++)
 			coeffs[i] = registry.add(Integer.toString(i));
-		
-		for (int i = 1; i < PAWN_COUNT; i++)
-			registry.addLink(new CoeffLink(coeffs[i - 1], coeffs[i], PositionEvaluationCoeffs.LINK_WEIGHT));
 		
 		Arrays.fill(coeffs, PAWN_COUNT, Square.COUNT, coeffs[PAWN_COUNT - 1]);
 		
@@ -110,11 +103,6 @@ public class PawnStructureCoeffs {
 			
 			coeffs[distance] = coeffIndex;
 		}
-		
-		for (int distance = 1; distance < maxDistance; distance++)
-			registry.addLink(new CoeffLink(coeffs[distance - 1], coeffs[distance], PositionEvaluationCoeffs.LINK_WEIGHT));
-		
-		registry.addLink(new CoeffLink(PositionEvaluationCoeffs.LINK_WEIGHT).addNode(coeffs[0], 1.0));
 		
 		registry.leaveCategory();
 		

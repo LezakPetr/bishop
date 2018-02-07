@@ -109,8 +109,6 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		
 		final MobilityPositionEvaluator mobilityEvaluator = mobilityEvaluators[gameStage];
 		mobilityEvaluator.evaluatePosition(position, attackCalculator);
-		
-		evaluation.addCoeff(gameStageCoeffs.onTurnBonus, position.getOnTurn());
 	}
 	
 	private void selectGameStage() {
