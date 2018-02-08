@@ -31,11 +31,6 @@ public class AlgebraicPositionEvaluation implements IPositionEvaluation {
 	}
 	
 	@Override
-	public void shiftRight (final int shift) {
-		this.evaluation >>= shift;
-	}
-	
-	@Override
 	public void addCoeff(final int index, final int color, final int count) {
 		final int signedCount = (color == Color.WHITE) ? +count : -count;
 		

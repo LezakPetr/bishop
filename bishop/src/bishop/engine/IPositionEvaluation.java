@@ -7,5 +7,4 @@ public interface IPositionEvaluation {
 	public void addCoeffWithCount (final int index, final int count);
 	public void addCoeff (final int index, final int color);
 	public void addCoeff(final int index, final int color, final int count);
-	public void shiftRight (final int shift);
 }

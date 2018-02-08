@@ -9,7 +9,6 @@ public class NeuralPositionEvaluation implements IPositionEvaluation {
 	private final PerceptronNetwork network;
 	private int onTurn;
 	private int colorCoeff;
-	private int evaluationShift;
 	
 	public NeuralPositionEvaluation (final PerceptronNetwork network) {
 		this.network = network;
@@ -19,10 +18,9 @@ public class NeuralPositionEvaluation implements IPositionEvaluation {
 	public int getEvaluation() {
 		network.propagate();
 		
-		final float evaluation = network.getOutput (0);
-		final float shiftedEvaluation = Math.scalb(evaluation, -evaluationShift);
+		final int evaluation = (int) network.getOutput (0);
 		
-		return (int) shiftedEvaluation * colorCoeff;
+		return evaluation * colorCoeff;
 	}
 
 	@Override
@@ -30,7 +28,6 @@ public class NeuralPositionEvaluation implements IPositionEvaluation {
 		this.onTurn = onTurn;
 		
 		network.initialize();
-		evaluationShift = 0;
 		colorCoeff = (onTurn == Color.WHITE) ? 1 : -1;
 	}
 	
@@ -38,12 +35,7 @@ public class NeuralPositionEvaluation implements IPositionEvaluation {
 	public void addCoeffWithCount(final int index, final int count) {
 		network.addInput(index, count * colorCoeff);
 	}
-	
-	@Override
-	public void shiftRight (final int shift) {
-		evaluationShift += shift;
-	}
-	
+		
 	@Override
 	public void addCoeff(final int index, final int color, final int count) {
 		final int signedCount = (color == onTurn) ? +count : -count;
