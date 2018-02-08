@@ -8,10 +8,10 @@ import bishop.base.Position;
 
 public final class TablePositionEvaluator {
 	
-	private final TablePositionCoeffs coeffs;
+	private final TablePositionFeatures coeffs;
 	private final IPositionEvaluation evaluation;
 	
-	public TablePositionEvaluator(final TablePositionCoeffs coeffs, final IPositionEvaluation evaluation) {
+	public TablePositionEvaluator(final TablePositionFeatures coeffs, final IPositionEvaluation evaluation) {
 		this.evaluation = evaluation;
 		this.coeffs = coeffs;
 	}

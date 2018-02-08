@@ -55,7 +55,7 @@ public class PawnRaceEvaluator {
 			else
 				evaluation = (someWhiteUnstoppablePawn) ? +1 : -1;
 			
-			positionEvaluation.addCoeff(PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, Color.WHITE, evaluation);
+			positionEvaluation.addCoeff(PositionEvaluationFeatures.RULE_OF_SQUARE_BONUS, Color.WHITE, evaluation);
 		}
 	}
 	

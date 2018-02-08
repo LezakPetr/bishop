@@ -28,7 +28,7 @@ public final class MatingPositionEvaluator implements IPositionEvaluator {
 		final int matingKingEvaluation = MatingKingEvaluationTable.getItem(matedKingSquare, matingKingSquare);
 		final int matingSideEvaluation = matedKingEvaluation + matingKingEvaluation;
 		
-		evaluation.addCoeffWithCount(PositionEvaluationCoeffs.EVALUATION_COEFF, Evaluation.getAbsolute(matingSideEvaluation, matingColor));
+		evaluation.addCoeffWithCount(PositionEvaluationFeatures.EVALUATION_FEATURE, Evaluation.getAbsolute(matingSideEvaluation, matingColor));
 	}
 	
 	public void writeLog (final PrintWriter writer) {
