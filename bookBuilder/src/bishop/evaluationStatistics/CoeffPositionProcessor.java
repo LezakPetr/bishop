@@ -99,8 +99,8 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 				inputValues[i] = (float) evaluation.getCoeffCount(coeff) * colorCoeff;
 			}
 			
-			final float[] output = new float[] {NORMALIZED_OUTPUTS.get(result) * colorCoeff};
-			optimizer.addSample(new Sample(inputIndices, inputValues, output, 1.0f));
+			final float output = NORMALIZED_OUTPUTS.get(result) * colorCoeff;
+			optimizer.addSample(new EvaluationSample(evaluation, colorCoeff, output));
 		}
 	}
 

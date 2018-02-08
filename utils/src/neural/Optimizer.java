@@ -9,7 +9,7 @@ public class Optimizer {
 	private LearningPerceptronNetwork network;
 	
 	// Setting
-	private final List<Sample> sampleList = new ArrayList<>();
+	private final List<ISample> sampleList = new ArrayList<>();
 	private long rngSeed = 4616981167149669634L;
 	private int testSampleCount = 1000;
 	private float initialAlpha = 1.0f;
@@ -18,14 +18,14 @@ public class Optimizer {
 	private long epochCount = 20;
 	
 	// Operational values
-	private final List<Sample> trainingSamples = new ArrayList<>();
-	private final List<Sample> testSamples = new ArrayList<>();
+	private final List<ISample> trainingSamples = new ArrayList<>();
+	private final List<ISample> testSamples = new ArrayList<>();
 	private float trainAccuracy;
 	private float testAccuracy;
 	
 	private final Random rng = new Random();
 	
-	public void addSample(final Sample sample) {
+	public void addSample(final ISample sample) {
 		sampleList.add(sample);
 		
 		if ((sampleList.size() & 0xFFFF) == 0)
@@ -44,7 +44,7 @@ public class Optimizer {
 			
 			for (int i = 0; i < epochSize; i++) {
 				final int sampleIndex = rng.nextInt(sampleList.size());
-				final Sample sample = sampleList.get(sampleIndex);
+				final ISample sample = sampleList.get(sampleIndex);
 				
 				network.learnFromSample(sample, (float) alpha);
 			}
@@ -56,10 +56,10 @@ public class Optimizer {
 		}
 	}
 
-	private float evaluateAccuracy(final List<Sample> samples) {
+	private float evaluateAccuracy(final List<ISample> samples) {
 		double error = 0.0;
 		
-		for (Sample sample: samples) {
+		for (ISample sample: samples) {
 			network.propagateSampleAndCalculateError(sample);
 			error += network.getOutputError();
 		}
@@ -71,7 +71,7 @@ public class Optimizer {
 		if (sampleList.size() < 2 * testSampleCount)
 			throw new RuntimeException("Not enough samples: " + sampleList.size());
 		
-		final List<Sample> shuffledSamples = new ArrayList<>(sampleList);
+		final List<ISample> shuffledSamples = new ArrayList<>(sampleList);
 		Collections.shuffle(shuffledSamples, rng);
 		
 		testSamples.clear();

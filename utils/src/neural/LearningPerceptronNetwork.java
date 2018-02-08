@@ -56,25 +56,25 @@ public class LearningPerceptronNetwork extends PerceptronNetworkBase<ILearningPe
 		}
 	}
 
-	public void learnFromSample (final Sample sample, final float alpha) {
+	public void learnFromSample (final ISample sample, final float alpha) {
 		propagateSampleAndCalculateError(sample);
 		backPropagateError();
 		updateWeights(sample.getWeight() * alpha);
 	}
 	
-	public void propagateSampleAndCalculateError (final Sample sample) {
+	public void propagateSampleAndCalculateError (final ISample sample) {
 		initialize();
 		setSampleInput(sample);
 		propagate();
 		setSampleExpectedOutput(sample);
 	}
 
-	private void setSampleInput(final Sample sample) {
+	private void setSampleInput(final ISample sample) {
 		for (int i = 0; i < sample.getNonZeroInputCount(); i++)
 			getInputLayer().addInput(sample.getInputIndex(i), sample.getInputValue(i));
 	}
 	
-	private void setSampleExpectedOutput(final Sample sample) {
+	private void setSampleExpectedOutput(final ISample sample) {
 		for (int i = 0; i < getOutputNodeCount(); i++)
 			outputLayer.setExpectedInput(i, sample.getOutput (i));
 	}

@@ -2,7 +2,7 @@ package neural;
 
 import java.util.Arrays;
 
-public class Sample {
+public class Sample implements ISample{
 	private final int[] inputIndices;
 	private final float[] inputValues;
 	private final float[] output;
@@ -18,22 +18,27 @@ public class Sample {
 		this.weight = weight;
 	}
 
+	@Override
 	public int getInputIndex(final int nonZeroIndex) {
 		return inputIndices[nonZeroIndex];
 	}
 
+	@Override
 	public float getInputValue(final int nonZeroIndex) {
 		return inputValues[nonZeroIndex];
 	}
 	
+	@Override
 	public int getNonZeroInputCount() {
 		return inputIndices.length;
 	}
 
+	@Override
 	public float getOutput(final int index) {
 		return output[index];
 	}
 
+	@Override
 	public float getWeight() {
 		return weight;
 	}
