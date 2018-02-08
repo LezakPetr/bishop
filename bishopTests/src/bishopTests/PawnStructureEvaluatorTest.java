@@ -16,19 +16,19 @@ import bishop.base.Position;
 import bishop.base.Rank;
 import bishop.engine.AttackCalculator;
 import bishop.engine.AttackEvaluationTableGroup;
-import bishop.engine.CoeffCountPositionEvaluation;
+import bishop.engine.FeatureCountPositionEvaluation;
 import bishop.engine.GameStage;
 import bishop.engine.GeneralEvaluatorSettings;
 import bishop.engine.GeneralPositionEvaluator;
 import bishop.engine.IPositionEvaluation;
 import bishop.engine.PawnStructureCache;
-import bishop.engine.PawnStructureCoeffs;
-import bishop.engine.PositionEvaluationCoeffs;
+import bishop.engine.PawnStructureFeatures;
+import bishop.engine.PositionEvaluationFeatures;
 import math.Utils;
 
 public class PawnStructureEvaluatorTest {
 	
-	private static final PawnStructureCoeffs COEFFS = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(GameStage.PAWNS_ONLY).pawnStructureCoeffs;
+	private static final PawnStructureFeatures COEFFS = PositionEvaluationFeatures.GAME_STAGE_FEATURES.get(GameStage.PAWNS_ONLY).pawnStructureFeatures;
 	
 	private static class TestCase {
 		public final String position;
@@ -47,124 +47,124 @@ public class PawnStructureEvaluatorTest {
 		new TestCase(
 			"5k2/8/6P1/5P2/1p6/1P6/P1P5/5K2 w - - 0 1",
 			new int[] {
-				COEFFS.getProtectedNotPassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
-				COEFFS.getSinglePassedPawnBonusCoeff(Color.WHITE, Rank.R5), 1,
-				COEFFS.getProtectedPassedPawnBonusCoeff(Color.WHITE, Rank.R6), 1,
-				COEFFS.getBlockedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
-				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R2), 2,
-				COEFFS.getBlockedPawnBonusCoeff(Color.BLACK, Rank.R4), -1,
-				COEFFS.getPawnMajorityCoeff(0), 1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(4), 1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(5), 1,
+				COEFFS.getProtectedNotPassedPawnBonusFeature(Color.WHITE, Rank.R3), 1,
+				COEFFS.getSinglePassedPawnBonusFeature(Color.WHITE, Rank.R5), 1,
+				COEFFS.getProtectedPassedPawnBonusFeature(Color.WHITE, Rank.R6), 1,
+				COEFFS.getBlockedPawnBonusFeature(Color.WHITE, Rank.R3), 1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusFeature(Color.WHITE, Rank.R2), 2,
+				COEFFS.getBlockedPawnBonusFeature(Color.BLACK, Rank.R4), -1,
+				COEFFS.getPawnMajorityFeature(0), 1,
+				COEFFS.getOutsidePassedPawnBonusFeature(4), 1,
+				COEFFS.getOutsidePassedPawnBonusFeature(5), 1,
 			}
 		),
 		new TestCase(
 			"5k2/p1p5/1p6/1P6/5p2/6p1/8/5K2 w - - 0 1",
 			new int[] {
-				COEFFS.getProtectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
-				COEFFS.getSinglePassedPawnBonusCoeff(Color.BLACK, Rank.R4), -1,
-				COEFFS.getProtectedPassedPawnBonusCoeff(Color.BLACK, Rank.R3), -1,
-				COEFFS.getBlockedPawnBonusCoeff(Color.WHITE, Rank.R5), 1,
-				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R7), -2,
-				COEFFS.getBlockedPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
-				COEFFS.getPawnMajorityCoeff(0), -1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(4), -1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(5), -1,
+				COEFFS.getProtectedNotPassedPawnBonusFeature(Color.BLACK, Rank.R6), -1,
+				COEFFS.getSinglePassedPawnBonusFeature(Color.BLACK, Rank.R4), -1,
+				COEFFS.getProtectedPassedPawnBonusFeature(Color.BLACK, Rank.R3), -1,
+				COEFFS.getBlockedPawnBonusFeature(Color.WHITE, Rank.R5), 1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusFeature(Color.BLACK, Rank.R7), -2,
+				COEFFS.getBlockedPawnBonusFeature(Color.BLACK, Rank.R6), -1,
+				COEFFS.getPawnMajorityFeature(0), -1,
+				COEFFS.getOutsidePassedPawnBonusFeature(4), -1,
+				COEFFS.getOutsidePassedPawnBonusFeature(5), -1,
 			}
 		),
 		new TestCase(
 			"3k4/8/2p5/8/8/PP6/6PP/3K4 w - - 0 1",
 			new int[] {
-				COEFFS.getConnectedPassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
-				COEFFS.getConnectedPassedPawnBonusCoeff(Color.WHITE, Rank.R2), 2,
-				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
-				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
-				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
-				COEFFS.getPawnMajorityCoeff(0), 1,
-				COEFFS.getPawnMajorityCoeff(1), 1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(2), 1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(4), 1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(5), 1,
+				COEFFS.getConnectedPassedPawnBonusFeature(Color.WHITE, Rank.R3), 1,
+				COEFFS.getConnectedPassedPawnBonusFeature(Color.WHITE, Rank.R2), 2,
+				COEFFS.getConnectedNotPassedPawnBonusFeature(Color.WHITE, Rank.R3), 1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusFeature(Color.WHITE, Rank.R3), 1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusFeature(Color.BLACK, Rank.R6), -1,
+				COEFFS.getPawnMajorityFeature(0), 1,
+				COEFFS.getPawnMajorityFeature(1), 1,
+				COEFFS.getOutsidePassedPawnBonusFeature(2), 1,
+				COEFFS.getOutsidePassedPawnBonusFeature(4), 1,
+				COEFFS.getOutsidePassedPawnBonusFeature(5), 1,
 			}
 		),
 		new TestCase(
 			"3k4/6pp/pp6/8/8/2P5/8/3K4 w - - 0 1",
 			new int[] {
-				COEFFS.getConnectedPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
-				COEFFS.getConnectedPassedPawnBonusCoeff(Color.BLACK, Rank.R7), -2,
-				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
-				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
-				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
-				COEFFS.getPawnMajorityCoeff(0), -1,
-				COEFFS.getPawnMajorityCoeff(1), -1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(2), -1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(4), -1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(5), -1,
+				COEFFS.getConnectedPassedPawnBonusFeature(Color.BLACK, Rank.R6), -1,
+				COEFFS.getConnectedPassedPawnBonusFeature(Color.BLACK, Rank.R7), -2,
+				COEFFS.getConnectedNotPassedPawnBonusFeature(Color.BLACK, Rank.R6), -1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusFeature(Color.BLACK, Rank.R6), -1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusFeature(Color.WHITE, Rank.R3), 1,
+				COEFFS.getPawnMajorityFeature(0), -1,
+				COEFFS.getPawnMajorityFeature(1), -1,
+				COEFFS.getOutsidePassedPawnBonusFeature(2), -1,
+				COEFFS.getOutsidePassedPawnBonusFeature(4), -1,
+				COEFFS.getOutsidePassedPawnBonusFeature(5), -1,
 			}
 		),
 		new TestCase(
 			"3k4/8/8/3p4/2p1p3/2P1P3/8/3K4 w - - 0 1",
 			new int[] {
-				COEFFS.getProtectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R4), -2,
-				COEFFS.getDoubleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R5), -1,
-				COEFFS.getBlockedPawnBonusCoeff(Color.WHITE, Rank.R3), 2,
-				COEFFS.getBlockedPawnBonusCoeff(Color.BLACK, Rank.R4), -2,
+				COEFFS.getProtectedNotPassedPawnBonusFeature(Color.BLACK, Rank.R4), -2,
+				COEFFS.getDoubleDisadvantageAttackPawnBonusFeature(Color.BLACK, Rank.R5), -1,
+				COEFFS.getBlockedPawnBonusFeature(Color.WHITE, Rank.R3), 2,
+				COEFFS.getBlockedPawnBonusFeature(Color.BLACK, Rank.R4), -2,
 			}
 		),
 		new TestCase(
 			"3k4/2p5/1ppppp2/8/1P3P2/8/8/3K4 w - - 0 1",
 			new int[] {
-				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -4,
-				COEFFS.getConnectedPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -1,
-				COEFFS.getDoublePawnBonusCoeff(Color.BLACK, Rank.R7), -1,
-				COEFFS.getBlockedPawnBonusCoeff(Color.BLACK, Rank.R6), -2,
-				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R4), 2,
-				COEFFS.getPawnMajorityCoeff(2), -1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(2), -1,
+				COEFFS.getConnectedNotPassedPawnBonusFeature(Color.BLACK, Rank.R6), -4,
+				COEFFS.getConnectedPassedPawnBonusFeature(Color.BLACK, Rank.R6), -1,
+				COEFFS.getDoublePawnBonusFeature(Color.BLACK, Rank.R7), -1,
+				COEFFS.getBlockedPawnBonusFeature(Color.BLACK, Rank.R6), -2,
+				COEFFS.getSingleDisadvantageAttackPawnBonusFeature(Color.WHITE, Rank.R4), 2,
+				COEFFS.getPawnMajorityFeature(2), -1,
+				COEFFS.getOutsidePassedPawnBonusFeature(2), -1,
 			}
 		),
 		new TestCase(
 			"3k4/8/4pp1p/8/4PPP1/P7/8/3K4 w - - 0 1",
 			new int[] {
-				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.WHITE, Rank.R4), 3,
-				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R4), 1,
-				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -2,
-				COEFFS.getSinglePassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
-				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R6), -2,
-				COEFFS.getPawnMajorityCoeff(0), 1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(4), 1,
+				COEFFS.getConnectedNotPassedPawnBonusFeature(Color.WHITE, Rank.R4), 3,
+				COEFFS.getSingleDisadvantageAttackPawnBonusFeature(Color.WHITE, Rank.R4), 1,
+				COEFFS.getConnectedNotPassedPawnBonusFeature(Color.BLACK, Rank.R6), -2,
+				COEFFS.getSinglePassedPawnBonusFeature(Color.WHITE, Rank.R3), 1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusFeature(Color.BLACK, Rank.R6), -2,
+				COEFFS.getPawnMajorityFeature(0), 1,
+				COEFFS.getOutsidePassedPawnBonusFeature(4), 1,
 			}
 		),
 		new TestCase(
 			"3k4/8/4ppp1/8/4PPP1/P7/8/3K4 w - - 0 1",
 			new int[] {
-				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.WHITE, Rank.R4), 3,
-				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -3,
-				COEFFS.getSinglePassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
-				COEFFS.getPawnMajorityCoeff(0), 1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(5), 1,
+				COEFFS.getConnectedNotPassedPawnBonusFeature(Color.WHITE, Rank.R4), 3,
+				COEFFS.getConnectedNotPassedPawnBonusFeature(Color.BLACK, Rank.R6), -3,
+				COEFFS.getSinglePassedPawnBonusFeature(Color.WHITE, Rank.R3), 1,
+				COEFFS.getPawnMajorityFeature(0), 1,
+				COEFFS.getOutsidePassedPawnBonusFeature(5), 1,
 			}
 		),
 		new TestCase(
 			"4k3/8/p1pp4/8/1PPP4/7P/8/4K3 w - - 0 1",
 			new int[] {
-				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.WHITE, Rank.R4), 3,
-				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.WHITE, Rank.R4), 1,
-				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -2,
-				COEFFS.getSinglePassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
-				COEFFS.getSingleDisadvantageAttackPawnBonusCoeff(Color.BLACK, Rank.R6), -2,
-				COEFFS.getPawnMajorityCoeff(0), 1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(4), 1,
+				COEFFS.getConnectedNotPassedPawnBonusFeature(Color.WHITE, Rank.R4), 3,
+				COEFFS.getSingleDisadvantageAttackPawnBonusFeature(Color.WHITE, Rank.R4), 1,
+				COEFFS.getConnectedNotPassedPawnBonusFeature(Color.BLACK, Rank.R6), -2,
+				COEFFS.getSinglePassedPawnBonusFeature(Color.WHITE, Rank.R3), 1,
+				COEFFS.getSingleDisadvantageAttackPawnBonusFeature(Color.BLACK, Rank.R6), -2,
+				COEFFS.getPawnMajorityFeature(0), 1,
+				COEFFS.getOutsidePassedPawnBonusFeature(4), 1,
 			}
 		),
 		new TestCase(
 			"4k3/8/1ppp4/8/1PPP4/7P/8/4K3 w - - 0 1",
 			new int[] {
-				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.WHITE, Rank.R4), 3,
-				COEFFS.getConnectedNotPassedPawnBonusCoeff(Color.BLACK, Rank.R6), -3,
-				COEFFS.getSinglePassedPawnBonusCoeff(Color.WHITE, Rank.R3), 1,
-				COEFFS.getPawnMajorityCoeff(0), 1,
-				COEFFS.getOutsidePassedPawnBonusCoeff(5), 1,
+				COEFFS.getConnectedNotPassedPawnBonusFeature(Color.WHITE, Rank.R4), 3,
+				COEFFS.getConnectedNotPassedPawnBonusFeature(Color.BLACK, Rank.R6), -3,
+				COEFFS.getSinglePassedPawnBonusFeature(Color.WHITE, Rank.R3), 1,
+				COEFFS.getPawnMajorityFeature(0), 1,
+				COEFFS.getOutsidePassedPawnBonusFeature(5), 1,
 			}
 		)
 
@@ -174,7 +174,7 @@ public class PawnStructureEvaluatorTest {
 		new TestCase(
 			"8/8/8/8/2P4k/8/8/K7 w - - 0 1",
 			new int[] {
-				PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, 1
+				PositionEvaluationFeatures.RULE_OF_SQUARE_BONUS, 1
 			}
 		),
 		new TestCase(
@@ -185,7 +185,7 @@ public class PawnStructureEvaluatorTest {
 		new TestCase(
 			"7k/p4K2/8/8/8/8/8/8 b - - 0 1",
 			new int[] {
-				PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, -1
+				PositionEvaluationFeatures.RULE_OF_SQUARE_BONUS, -1
 			}
 		),
 		new TestCase(
@@ -206,7 +206,7 @@ public class PawnStructureEvaluatorTest {
 		new TestCase(
 			"1k6/5K2/7P/8/p7/8/8/8 w - - 0 1",
 			new int[] {
-				PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, 1
+				PositionEvaluationFeatures.RULE_OF_SQUARE_BONUS, 1
 			}
 		),
 		new TestCase(
@@ -217,28 +217,28 @@ public class PawnStructureEvaluatorTest {
 		new TestCase(
 			"8/5K2/6P1/8/2k5/8/1p6/8 b - - 0 1",
 			new int[] {
-				PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, -1
+				PositionEvaluationFeatures.RULE_OF_SQUARE_BONUS, -1
 			}
 		)
 	};
 	
 	@Test
 	public void testPawnClassification() throws IOException {
-		doTest(CLASSIFICATION_TEST_CASES, COEFFS.getFirstCoeff(), COEFFS.getLastCoeff());
+		doTest(CLASSIFICATION_TEST_CASES, COEFFS.getFirstFeature(), COEFFS.getLastFeature());
 	}
 	
 	@Test
 	public void testRuleOfSquare() throws IOException {
-		doTest(RULE_OF_SQUARE_TEST_CASES, PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS + 1);
+		doTest(RULE_OF_SQUARE_TEST_CASES, PositionEvaluationFeatures.RULE_OF_SQUARE_BONUS, PositionEvaluationFeatures.RULE_OF_SQUARE_BONUS + 1);
 	}
 
 	private void doTest(final TestCase[] testCases, final int firstCoeff, final int lastCoeff) throws IOException {
-		final PositionEvaluationCoeffs positionEvaluationCoeffs = new PositionEvaluationCoeffs();
+		final PositionEvaluationFeatures positionEvaluationCoeffs = new PositionEvaluationFeatures();
 		
 		final PawnStructureCache cache = new PawnStructureCache();
-		final Supplier<IPositionEvaluation> evaluationFactory = () -> new CoeffCountPositionEvaluation(positionEvaluationCoeffs);
+		final Supplier<IPositionEvaluation> evaluationFactory = () -> new FeatureCountPositionEvaluation(positionEvaluationCoeffs);
 		final GeneralEvaluatorSettings settings = new GeneralEvaluatorSettings();
-		final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
+		final FeatureCountPositionEvaluation evaluation = (FeatureCountPositionEvaluation) evaluationFactory.get();
 		final GeneralPositionEvaluator evaluator = new GeneralPositionEvaluator(settings, cache, evaluation);
 		final AttackCalculator attackCalculator = new AttackCalculator();
 		final Fen fen = new Fen();
@@ -256,7 +256,7 @@ public class PawnStructureEvaluatorTest {
 			final Map<Integer, Integer> givenCoeffMap = new HashMap<>();
 			
 			for (int coeff = firstCoeff; coeff < lastCoeff; coeff++) {
-				final int count = Utils.roundToInt(evaluation.getCoeffCount(coeff));
+				final int count = Utils.roundToInt(evaluation.getFeatureCount(coeff));
 				
 				if (count != 0)
 					givenCoeffMap.put(coeff, count);
@@ -277,6 +277,6 @@ public class PawnStructureEvaluatorTest {
 	}
 	
 	private static String coeffToName(final int coeff) {
-		return coeff + " " + PositionEvaluationCoeffs.getCoeffRegistry().getName(coeff);
+		return coeff + " " + PositionEvaluationFeatures.getFeatureRegistry().getName(coeff);
 	}
 }

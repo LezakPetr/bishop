@@ -21,7 +21,7 @@ public class Calculator {
 		final File coeffFile = new File (argList.get(1));
 		
 		final MaterialStatisticsPositionProcessor materialProcessor = new MaterialStatisticsPositionProcessor(tableEvaluatorFile);
-		final CoeffPositionProcessor coeffProcessor = new CoeffPositionProcessor(coeffFile);
+		final FeaturePositionProcessor coeffProcessor = new FeaturePositionProcessor(coeffFile);
 		
 		final IPositionProcessor[] processors = { materialProcessor, coeffProcessor };
 		

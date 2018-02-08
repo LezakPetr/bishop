@@ -27,7 +27,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	private final GeneralEvaluatorSettings settings;
 	
 	private int gameStage;
-	private GameStageCoeffs gameStageCoeffs;
+	private GameStageFeatures gameStageCoeffs;
 
 
 	public GeneralPositionEvaluator(final GeneralEvaluatorSettings settings, final PawnStructureCache structureCache, final IPositionEvaluation evaluation) {
@@ -41,12 +41,12 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		this.pawnRaceEvaluator = new PawnRaceEvaluator(evaluation);
 		
 		for (int gameStage = GameStage.FIRST; gameStage < GameStage.LAST; gameStage++) {
-			final GameStageCoeffs coeffs = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(gameStage);
+			final GameStageFeatures coeffs = PositionEvaluationFeatures.GAME_STAGE_FEATURES.get(gameStage);
 			
-			tablePositionEvaluators[gameStage] = new TablePositionEvaluator(coeffs.tableEvaluatorCoeffs, evaluation);
+			tablePositionEvaluators[gameStage] = new TablePositionEvaluator(coeffs.tableEvaluatorFeatures, evaluation);
 			bishopColorPositionEvaluators[gameStage] = new BishopColorPositionEvaluator(coeffs, evaluation);
 			mobilityEvaluators[gameStage] = new MobilityPositionEvaluator(evaluation);
-			pawnStructureEvaluators[gameStage] = new PawnStructureEvaluator(coeffs.pawnStructureCoeffs, structureCache, evaluation);
+			pawnStructureEvaluators[gameStage] = new PawnStructureEvaluator(coeffs.pawnStructureFeatures, structureCache, evaluation);
 			
 			if (gameStage != GameStage.PAWNS_ONLY)
 				kingSafetyEvaluators[gameStage] = new KingSafetyEvaluator(coeffs, evaluation);
@@ -114,7 +114,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	private void selectGameStage() {
 		gameStage = GameStage.fromMaterial (position.getMaterialHash());
 		
-		gameStageCoeffs = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(gameStage);
+		gameStageCoeffs = PositionEvaluationFeatures.GAME_STAGE_FEATURES.get(gameStage);
 		pawnStructureEvaluator = pawnStructureEvaluators[gameStage];
 	}
 	

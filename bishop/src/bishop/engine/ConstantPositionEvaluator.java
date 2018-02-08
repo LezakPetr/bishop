@@ -18,7 +18,7 @@ public class ConstantPositionEvaluator implements IPositionEvaluator {
 	public void evaluate (final Position position, final AttackCalculator attackCalculator) {
 		attackCalculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
 		
-		this.evaluation.addCoeffWithCount(PositionEvaluationCoeffs.EVALUATION_COEFF, constantEvaluation);
+		this.evaluation.addCoeffWithCount(PositionEvaluationFeatures.EVALUATION_FEATURE, constantEvaluation);
 	}
 
 	/**

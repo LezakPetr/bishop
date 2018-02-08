@@ -26,10 +26,10 @@ public class MobilityPositionEvaluator {
 	}
 
 	private static int getCoeffForPieceType(int pieceType) {
-		return PositionEvaluationCoeffs.MOBILITY_OFFSET + pieceType - PieceType.PROMOTION_FIGURE_FIRST;
+		return PositionEvaluationFeatures.MOBILITY_OFFSET + pieceType - PieceType.PROMOTION_FIGURE_FIRST;
 	}
 	
-	public static int registerCoeffs(final CoeffRegistry registry) {
+	public static int registerFeatures(final FeatureRegistry registry) {
 		final int offset = registry.enterCategory("mobility");
 		
 		for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {

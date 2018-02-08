@@ -11,11 +11,11 @@ import bishop.base.SquareColor;
 
 public final class BishopColorPositionEvaluator {
 		
-	private final GameStageCoeffs coeffs;
+	private final GameStageFeatures coeffs;
 	private final IPositionEvaluation evaluation;
 	
 	
-	public BishopColorPositionEvaluator(final GameStageCoeffs coeffs, final IPositionEvaluation evaluation) {
+	public BishopColorPositionEvaluator(final GameStageFeatures coeffs, final IPositionEvaluation evaluation) {
 		this.coeffs = coeffs;
 		this.evaluation = evaluation;		
 	}
