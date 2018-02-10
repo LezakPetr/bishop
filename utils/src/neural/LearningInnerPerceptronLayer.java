@@ -3,7 +3,7 @@ package neural;
 import java.util.Arrays;
 
 public class LearningInnerPerceptronLayer extends InnerPerceptronLayer<ILearningPerceptronLayer> implements ILearningInnerPerceptronLayer {
-
+	
 	private final float[] inputs;
 	private final float[] stimuliErrors;
 			
@@ -31,6 +31,11 @@ public class LearningInnerPerceptronLayer extends InnerPerceptronLayer<ILearning
 			error += weightsRow[i] * stimuliErrors[i];
 		
 		return error;
+	}
+	
+	@Override
+	public float getInput(final int inputIndex) {
+		return inputs[inputIndex];
 	}
 	
 	@Override

@@ -10,4 +10,6 @@ public interface ILearningInnerPerceptronLayer extends ILearningPerceptronLayer 
 	public void setWeight(final int inputIndex, final int outputIndex, final float value);
 	public void setBias(final int outputIndex, final float value);
 	public PerceptronLayerSettings getSettings();
+
+	public float getInput(final int inputIndex);
 }
