@@ -10,9 +10,6 @@ import utils.IoUtils;
 
 public class PositionEvaluationFeatures {
 	
-	public static final double LINK_WEIGHT = 1024;
-	public static final double GAME_STAGE_LINK_WEIGHT = 65536;
-	
 	public static final int FIRST = 0;
 	
 	private static final FeatureRegistry registry = new FeatureRegistry();
@@ -33,7 +30,9 @@ public class PositionEvaluationFeatures {
 		final ImmutableList.Builder<GameStageFeatures> builder = ImmutableList.<GameStageFeatures>builder().withCapacity(GameStage.LAST);
 		
 		builder.add(new GameStageFeatures(registry, GameStage.PAWNS_ONLY));
-		builder.addTimes(new GameStageFeatures(registry, GameStage.WITH_FIGURES_FIRST), GameStage.WITH_FIGURES_LAST - GameStage.WITH_FIGURES_FIRST);
+		
+		for (int gameStage = GameStage.WITH_FIGURES_FIRST; gameStage < GameStage.WITH_FIGURES_LAST; gameStage++)
+			builder.add(new GameStageFeatures(registry, gameStage));
 		
 		List<GameStageFeatures> featureList = builder.build();
 		

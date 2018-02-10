@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Supplier;
 
 import bishop.base.Color;
@@ -28,10 +27,14 @@ import neural.LearningPerceptronNetwork;
 import neural.Optimizer;
 import neural.PerceptronLayerSettings;
 import neural.PerceptronNetworkSettings;
-import neural.Sample;
 import neural.TanhActivationFunction;
 
 public class FeaturePositionProcessor implements IPositionProcessor {
+	
+	private static final long EPOCH_SIZE = 100000;
+	private static final long EPOCH_COUNT = 1000;
+	private static final float ALPHA_DROPDOWN = 7.0f;
+	private static final float INITIAL_ALPHA = 1e-3f;
 	
 	private final Optimizer optimizer;
 	
@@ -49,13 +52,15 @@ public class FeaturePositionProcessor implements IPositionProcessor {
 	public FeaturePositionProcessor(final File featureFile) {
 		this.featureFile = featureFile;
 		
-		final int[] layerSizes = { PositionEvaluationFeatures.LAST, 20, 10, 1 };
+		final int[] layerSizes = { PositionEvaluationFeatures.LAST, 16, 8, 1 };
 
 		final LearningPerceptronNetwork network = LearningPerceptronNetwork.create(FeaturePositionProcessor::activationFunctionSupplier, layerSizes);
 		optimizer = new Optimizer();
 		optimizer.setNetwork(network);
-		optimizer.setInitialAlpha(0.01f);
-		optimizer.setAlphaDropdown(5.0f);
+		optimizer.setInitialAlpha(INITIAL_ALPHA);
+		optimizer.setAlphaDropdown(ALPHA_DROPDOWN);
+		optimizer.setEpochSize(EPOCH_SIZE);
+		optimizer.setEpochCount(EPOCH_COUNT);
 	}
 	
 	private static IActivationFunction activationFunctionSupplier (final Integer layerIndex, final Integer layerCount) {

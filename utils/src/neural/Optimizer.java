@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Random;
 
 public class Optimizer {
+	private static final int SHIFT_MEGA = 20;
+	private static final int MASK_MEGA = (1 << SHIFT_MEGA) - 1;
+	
 	private LearningPerceptronNetwork network;
 	
 	// Setting
@@ -28,8 +31,8 @@ public class Optimizer {
 	public void addSample(final ISample sample) {
 		sampleList.add(sample);
 		
-		if ((sampleList.size() & 0xFFFF) == 0)
-			System.out.println(sampleList.size());
+		if ((sampleList.size() & MASK_MEGA) == 0)
+			System.out.println("Sample cont " + (sampleList.size() >> SHIFT_MEGA) + "M");
 	}
 	
 	public void learn() {
@@ -95,6 +98,14 @@ public class Optimizer {
 
 	public void setAlphaDropdown (final float dropdown) {
 		this.alphaDropdown = dropdown;
+	}
+	
+	public void setEpochSize (final long epochSize) {
+		this.epochSize = epochSize;
+	}
+
+	public void setEpochCount (final long epochCount) {
+		this.epochCount = epochCount;
 	}
 	
 	public float getTestAccuracy() {

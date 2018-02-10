@@ -81,12 +81,15 @@ public class LearningPerceptronNetwork extends PerceptronNetworkBase<ILearningPe
 	
 	private void updateWeights(final float step) {
 		for (ILearningInnerPerceptronLayer layer: innerLayers) {
-			for (int i = 0; i < layer.getOutputNodeCount(); i++) {
-				for (int j = 0; j < layer.getInputNodeCount(); j++)
-					layer.updateWeight (j, i, step);
-				
-				layer.updateBias (i, step);
+			for (int i = 0; i < layer.getInputNodeCount(); i++) {
+				if (layer.getInput(i) != 0) {
+					for (int j = 0; j < layer.getOutputNodeCount(); j++)
+						layer.updateWeight (i, j, step);
+				}
 			}
+			
+			for (int i = 0; i < layer.getOutputNodeCount(); i++)
+				layer.updateBias (i, step);
 		}
 	}
 
