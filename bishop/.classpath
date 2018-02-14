@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="res"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/bisGui"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/bisGuiSwing"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/utils"/>
+	<classpathentry kind="lib" path="/home/petr/workspace/bishop/libs/svgSalamander.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

@@ -1,5 +1,6 @@
 package bishop.engine;
 
+import java.util.function.Supplier;
 
 import bishop.base.Color;
 import bishop.base.PieceType;
@@ -11,11 +12,13 @@ public class MobilityPositionEvaluator {
 	
 	private final IPositionEvaluation mobilityEvaluation;
 
-	public MobilityPositionEvaluator (final IPositionEvaluation evaluation) {
-		this.mobilityEvaluation = evaluation;
+	public MobilityPositionEvaluator (final Supplier<IPositionEvaluation> evaluationFactory) {
+		this.mobilityEvaluation = evaluationFactory.get();
 	}
 	
-	public void evaluatePosition(final Position position, final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluatePosition(final Position position, final AttackCalculator attackCalculator) {
+		mobilityEvaluation.clear();
+				
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
 				final int mobility = attackCalculator.getMobility(color, pieceType);
@@ -23,13 +26,15 @@ public class MobilityPositionEvaluator {
 				mobilityEvaluation.addCoeff(coeff, color, mobility);
 			}
 		}
+		
+		return mobilityEvaluation;
 	}
 
 	private static int getCoeffForPieceType(int pieceType) {
-		return PositionEvaluationFeatures.MOBILITY_OFFSET + pieceType - PieceType.PROMOTION_FIGURE_FIRST;
+		return PositionEvaluationCoeffs.MOBILITY_OFFSET + pieceType - PieceType.PROMOTION_FIGURE_FIRST;
 	}
 	
-	public static int registerFeatures(final FeatureRegistry registry) {
+	public static int registerCoeffs(final CoeffRegistry registry) {
 		final int offset = registry.enterCategory("mobility");
 		
 		for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {

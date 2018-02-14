@@ -1,6 +1,7 @@
 package bishop.engine;
 
 import java.io.PrintWriter;
+import java.util.function.Supplier;
 
 import bishop.base.Color;
 import bishop.base.Position;
@@ -9,16 +10,26 @@ import bishop.tables.MatingKingEvaluationTable;
 
 public final class MatingPositionEvaluator implements IPositionEvaluator {
 	
-	private final IPositionEvaluation evaluation;
+	private final IPositionEvaluation positionalEvaluation;
+	private final IPositionEvaluation tacticalEvaluation;
+	private Position position;
 	
-	public MatingPositionEvaluator (final IPositionEvaluation evaluation) {
-		this.evaluation = evaluation;
+	public MatingPositionEvaluator (final Supplier<IPositionEvaluation> evaluationFactory) {
+		this.tacticalEvaluation = evaluationFactory.get();
+		this.positionalEvaluation = evaluationFactory.get();
 	}
 	
 	@Override
-	public void evaluate (final Position position, final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
+		this.position = position;
+		
 		attackCalculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
 		
+		return tacticalEvaluation;		
+	}
+
+	@Override
+	public IPositionEvaluation evaluatePositional (final AttackCalculator attackCalculator) {
 		final int matingColor = position.getSideWithMorePieces();
 		final int matedColor = Color.getOppositeColor(matingColor);
 		final int matedKingSquare = position.getKingPosition(matedColor);
@@ -28,15 +39,13 @@ public final class MatingPositionEvaluator implements IPositionEvaluator {
 		final int matingKingEvaluation = MatingKingEvaluationTable.getItem(matedKingSquare, matingKingSquare);
 		final int matingSideEvaluation = matedKingEvaluation + matingKingEvaluation;
 		
-		evaluation.addCoeffWithCount(PositionEvaluationFeatures.EVALUATION_FEATURE, Evaluation.getAbsolute(matingSideEvaluation, matingColor));
+		positionalEvaluation.clear();
+		positionalEvaluation.addEvaluation(Evaluation.getAbsolute(matingSideEvaluation, matingColor));
+		
+		return positionalEvaluation;
 	}
 	
 	public void writeLog (final PrintWriter writer) {
-	}
-
-	@Override
-	public IPositionEvaluation getEvaluation() {
-		return evaluation;
 	}
 
 }

@@ -120,7 +120,7 @@ public class SearchManagerTest {
 		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
 		
-		engineFactory.setPositionEvaluatorFactory(new MaterialPositionEvaluatorFactory());
+		engineFactory.setPositionEvaluatorFactory(new MaterialPositionEvaluatorFactory(evaluationFactory));
 		engineFactory.setMaximalDepth(25);
 		engineFactory.setEvaluationFactory(evaluationFactory);
 		engineFactory.setMaterialEvaluator(DefaultAdditiveMaterialEvaluator.getInstance());

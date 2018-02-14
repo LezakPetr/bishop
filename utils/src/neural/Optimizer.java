@@ -6,33 +6,27 @@ import java.util.List;
 import java.util.Random;
 
 public class Optimizer {
-	private static final int SHIFT_MEGA = 20;
-	private static final int MASK_MEGA = (1 << SHIFT_MEGA) - 1;
-	
 	private LearningPerceptronNetwork network;
 	
 	// Setting
-	private final List<ISample> sampleList = new ArrayList<>();
+	private final List<Sample> sampleList = new ArrayList<>();
 	private long rngSeed = 4616981167149669634L;
 	private int testSampleCount = 1000;
 	private float initialAlpha = 1.0f;
 	private float alphaDropdown = 10.0f;
-	private long epochSize = 3000;
+	private long epochSize = 300000;
 	private long epochCount = 20;
 	
 	// Operational values
-	private final List<ISample> trainingSamples = new ArrayList<>();
-	private final List<ISample> testSamples = new ArrayList<>();
+	private final List<Sample> trainingSamples = new ArrayList<>();
+	private final List<Sample> testSamples = new ArrayList<>();
 	private float trainAccuracy;
 	private float testAccuracy;
 	
 	private final Random rng = new Random();
 	
-	public void addSample(final ISample sample) {
+	public void addSample(final Sample sample) {
 		sampleList.add(sample);
-		
-		if ((sampleList.size() & MASK_MEGA) == 0)
-			System.out.println("Sample cont " + (sampleList.size() >> SHIFT_MEGA) + "M");
 	}
 	
 	public void learn() {
@@ -47,7 +41,7 @@ public class Optimizer {
 			
 			for (int i = 0; i < epochSize; i++) {
 				final int sampleIndex = rng.nextInt(sampleList.size());
-				final ISample sample = sampleList.get(sampleIndex);
+				final Sample sample = sampleList.get(sampleIndex);
 				
 				network.learnFromSample(sample, (float) alpha);
 			}
@@ -59,10 +53,10 @@ public class Optimizer {
 		}
 	}
 
-	private float evaluateAccuracy(final List<ISample> samples) {
+	private float evaluateAccuracy(final List<Sample> samples) {
 		double error = 0.0;
 		
-		for (ISample sample: samples) {
+		for (Sample sample: samples) {
 			network.propagateSampleAndCalculateError(sample);
 			error += network.getOutputError();
 		}
@@ -74,7 +68,7 @@ public class Optimizer {
 		if (sampleList.size() < 2 * testSampleCount)
 			throw new RuntimeException("Not enough samples: " + sampleList.size());
 		
-		final List<ISample> shuffledSamples = new ArrayList<>(sampleList);
+		final List<Sample> shuffledSamples = new ArrayList<>(sampleList);
 		Collections.shuffle(shuffledSamples, rng);
 		
 		testSamples.clear();
@@ -83,29 +77,9 @@ public class Optimizer {
 		trainingSamples.clear();
 		trainingSamples.addAll(shuffledSamples.subList(testSampleCount, shuffledSamples.size()));
 	}
-	
-	public LearningPerceptronNetwork getNetwork() {
-		return network;
-	}
 
 	public void setNetwork(final LearningPerceptronNetwork network) {
 		this.network = network;
-	}
-	
-	public void setInitialAlpha (final float initialAlpha) {
-		this.initialAlpha = initialAlpha;
-	}
-
-	public void setAlphaDropdown (final float dropdown) {
-		this.alphaDropdown = dropdown;
-	}
-	
-	public void setEpochSize (final long epochSize) {
-		this.epochSize = epochSize;
-	}
-
-	public void setEpochCount (final long epochCount) {
-		this.epochCount = epochCount;
 	}
 	
 	public float getTestAccuracy() {
@@ -115,4 +89,5 @@ public class Optimizer {
 	public float getTrainAccuracy() {
 		return trainAccuracy;
 	}
+
 }

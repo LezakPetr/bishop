@@ -6,12 +6,12 @@ import bishop.base.Color;
 
 public class AlgebraicPositionEvaluation implements IPositionEvaluation {
 
-	private static final Supplier<IPositionEvaluation> TESTING_FACTORY = () -> new AlgebraicPositionEvaluation(new PositionEvaluationFeatures());
+	private static final Supplier<IPositionEvaluation> TESTING_FACTORY = () -> new AlgebraicPositionEvaluation(new PositionEvaluationCoeffs());
 	
-	private final PositionEvaluationFeatures coeffs;
+	private final PositionEvaluationCoeffs coeffs;
 	private int evaluation;
 	
-	public AlgebraicPositionEvaluation (final PositionEvaluationFeatures coeffs) {
+	public AlgebraicPositionEvaluation (final PositionEvaluationCoeffs coeffs) {
 		this.coeffs = coeffs;
 	}
 	
@@ -21,13 +21,28 @@ public class AlgebraicPositionEvaluation implements IPositionEvaluation {
 	}
 
 	@Override
-	public void clear(final int onTurn) {
+	public void clear() {
 		evaluation = 0;
 	}
 	
 	@Override
+	public void addEvaluation (final int evaluation) {
+		this.evaluation += evaluation;
+	}
+
+	@Override
 	public void addCoeffWithCount(final int index, final int count) {
-		this.evaluation += count * coeffs.getEvaluationFeature(index);
+		this.evaluation += count * coeffs.getEvaluationCoeff(index);
+	}
+	
+	@Override
+	public void shiftRight (final int shift) {
+		this.evaluation >>= shift;
+	}
+	
+	@Override
+	public void addSubEvaluation (final IPositionEvaluation subEvaluation) {
+		this.evaluation += subEvaluation.getEvaluation();
 	}
 	
 	@Override

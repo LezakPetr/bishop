@@ -59,8 +59,9 @@ public class SearchPerformanceTest {
 		}
 		
 		final IMaterialEvaluator materialEvaluator = SearchResources.createMaterialEvaluator(rootUrl);
+		final Supplier<IPositionEvaluation> positionEvaluationFactory = SearchResources.createEvaluationFactory(rootUrl);
 		
-		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings);
+		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, positionEvaluationFactory);
 
 		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
 		final int threadCount = Runtime.getRuntime().availableProcessors();

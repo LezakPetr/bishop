@@ -24,23 +24,9 @@ public class OutputPerceptronLayer implements IPerceptronLayer {
 	public void addInput(final int inputIndex, final float value) {
 		input[inputIndex] += value;
 	}
-	
-	@Override
-	public void addPositiveUnityInput(final int index) {
-		input[index]++;
-	}
-
-	@Override
-	public void addNegativeUnityInput(final int index) {
-		input[index]--;
-	}
 
 	@Override
 	public void propagate() {
-	}
-
-	public float getInput(final int index) {
-		return input[index];
 	}
 
 }

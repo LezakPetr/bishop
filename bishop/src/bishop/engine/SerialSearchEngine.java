@@ -84,6 +84,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private IMaterialEvaluator materialEvaluator;
 	private IPositionEvaluator positionEvaluator;
 	private final HandlerRegistrarImpl<ISearchEngineHandler> handlerRegistrar;
+	private int lastPositionalEvaluation;
 	private final MateFinder mateFinder;
 	
 	
@@ -239,8 +240,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		currentRecord.isQuiescenceSearch = isQuiescenceSearch;
 		
 		final boolean isFirstQuiescence = isQuiescenceSearch && currentDepth > 0 && !nodeStack[currentDepth - 1].isQuiescenceSearch;
-		positionEvaluator.getEvaluation().clear(currentPosition.getOnTurn());
-		positionEvaluator.evaluate(currentPosition, currentRecord.attackCalculator);
+		final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, currentRecord.attackCalculator).getEvaluation();
 		
 		if (isFirstQuiescence) {
 			mateFinder.setPosition(currentPosition);
@@ -295,12 +295,20 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		try {
 			// Evaluate position
-			int whitePositionEvaluation = positionEvaluator.getEvaluation().getEvaluation();
+			int whitePositionEvaluation = tacticalEvaluation;
 			
 			final int materialEvaluation = materialEvaluator.evaluateMaterial(currentPosition.getMaterialHash());
 			final int materialEvaluationShift = positionEvaluator.getMaterialEvaluationShift();
 			
 			whitePositionEvaluation += materialEvaluation >> materialEvaluationShift;
+			
+			if (!isQuiescenceSearch || isFirstQuiescence) {
+				// Calculate positional evaluation in normal search and first depth of quiescence search.
+				// So it will remain cached for the quiescence search, 
+				lastPositionalEvaluation = positionEvaluator.evaluatePositional(currentRecord.attackCalculator).getEvaluation();;
+			}
+			
+			whitePositionEvaluation += lastPositionalEvaluation;
 			
 			final int positionEvaluation = Evaluation.getRelative(fixDrawByRepetitionEvaluation(whitePositionEvaluation), onTurn);
 			final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();

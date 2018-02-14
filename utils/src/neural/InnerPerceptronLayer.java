@@ -4,22 +4,26 @@ import java.util.Arrays;
 
 public class InnerPerceptronLayer<N extends IPerceptronLayer> implements IPerceptronLayer {
 
+	protected final IActivationFunction activationFunction;
 	protected final float[] stimuli;
-	protected final PerceptronLayerSettings settings;
+	protected final float[][] weights;
+	protected final float[] biases;
 	protected final N nextLayer;
 	
-	public InnerPerceptronLayer (final PerceptronLayerSettings settings, final N nextLayer) {
+	public InnerPerceptronLayer (final IActivationFunction activationFunction, final int inputNodeCount, final N nextLayer) {
 		final int outputNodeCount = nextLayer.getInputNodeCount();
 		
+		this.activationFunction = activationFunction;
 		this.stimuli = new float[outputNodeCount];
-		this.settings = settings;
+		this.weights = new float[inputNodeCount][outputNodeCount];
+		this.biases = new float[outputNodeCount];
 		this.nextLayer = nextLayer;
 	}
 	
 	
 	@Override
 	public int getInputNodeCount() {
-		return settings.weights.length;
+		return weights.length;
 	}
 
 	protected int getOutputNodeCount() {
@@ -28,37 +32,21 @@ public class InnerPerceptronLayer<N extends IPerceptronLayer> implements IPercep
 
 	@Override
 	public void initialize() {
-		System.arraycopy(settings.biases, 0, stimuli, 0, settings.biases.length);
+		System.arraycopy(biases, 0, stimuli, 0, biases.length);
 	}
 
 	@Override
 	public void addInput(final int index, final float value) {
-		final float[] weightsRow = settings.weights[index];
+		final float[] weightsRow = weights[index];
 		
 		for (int i = 0; i < stimuli.length; i++)
 			stimuli[i] += value * weightsRow[i];
-	}
-
-	@Override
-	public void addPositiveUnityInput(final int index) {
-		final float[] weightsRow = settings.weights[index];
-		
-		for (int i = 0; i < stimuli.length; i++)
-			stimuli[i] += weightsRow[i];
-	}
-
-	@Override
-	public void addNegativeUnityInput(final int index) {
-		final float[] weightsRow = settings.weights[index];
-		
-		for (int i = 0; i < stimuli.length; i++)
-			stimuli[i] -= weightsRow[i];
 	}
 	
 	@Override
 	public void propagate() {
 		for (int i = 0; i < stimuli.length; i++)
-			nextLayer.addInput(i, settings.activationFunction.apply(stimuli[i]));
+			nextLayer.addInput(i, activationFunction.apply(stimuli[i]));
 	}
 	
 	@Override
@@ -66,10 +54,11 @@ public class InnerPerceptronLayer<N extends IPerceptronLayer> implements IPercep
 		final StringBuilder result = new StringBuilder();
 		
 		result.append("Stimuli = " + Arrays.toString(stimuli));
-		result.append(", biases = " + Arrays.toString(settings.biases));
-		result.append(", weights = " + Arrays.toString(settings.weights));
+		result.append(", biases = " + Arrays.toString(biases));
+		result.append(", weights = " + Arrays.toString(weights));
 		
 		return result.toString();
 	}
+
 
 }

@@ -1,6 +1,7 @@
 package bishop.engine;
 
 import java.io.PrintWriter;
+import java.util.function.Supplier;
 
 import bishop.base.BitBoard;
 import bishop.base.BoardConstants;
@@ -11,19 +12,23 @@ import bishop.base.SquareColor;
 
 public final class BishopColorPositionEvaluator {
 		
-	private final GameStageFeatures coeffs;
+	private final GameStageCoeffs coeffs;
 	private final IPositionEvaluation evaluation;
 	
 	
-	public BishopColorPositionEvaluator(final GameStageFeatures coeffs, final IPositionEvaluation evaluation) {
+	public BishopColorPositionEvaluator(final GameStageCoeffs coeffs, final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.coeffs = coeffs;
-		this.evaluation = evaluation;		
+		this.evaluation = evaluationFactory.get();		
 	}
 
-	public void evaluatePosition(final Position position) {
+	public IPositionEvaluation evaluatePosition(final Position position) {
+		evaluation.clear();
+		
 		for (int pieceColor = Color.FIRST; pieceColor < Color.LAST; pieceColor++) {
 			evaluatePositionForColor(position, pieceColor);
 		}
+		
+		return evaluation;
 	}
 	
 	private void evaluatePositionForColor(final Position position, final int pieceColor) {

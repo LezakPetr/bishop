@@ -9,25 +9,17 @@ public class PerceptronNetwork extends PerceptronNetworkBase<IPerceptronLayer, I
 		super(innerLayers, outputLayer);
 	}
 	
-	public static PerceptronNetwork create (final PerceptronNetworkSettings networkSettings) {
-		final int innerLayerCount = networkSettings.getInnerLayerCount();
-		final PerceptronLayerSettings lastInnerLayerSettings = networkSettings.getInnerLayerAt(innerLayerCount - 1);
-		final OutputPerceptronLayer outputLayer = new OutputPerceptronLayer(lastInnerLayerSettings.getOutputNodeCount());
+	public static PerceptronNetwork create (final IActivationFunction activationFunction, final int[] sizes) {
+		final OutputPerceptronLayer outputLayer = new OutputPerceptronLayer(sizes[sizes.length - 1]);
 		final List<IPerceptronLayer> innerLayers = new ArrayList<>();
-		IPerceptronLayer previousLayer = outputLayer;
+		IPerceptronLayer lastLayer = outputLayer;
 		
-		for (int i = innerLayerCount - 1; i >= 0; i--) {
-			final PerceptronLayerSettings layerSettings = networkSettings.getInnerLayerAt(i);
-			final IPerceptronLayer layer = new InnerPerceptronLayer<IPerceptronLayer>(layerSettings, previousLayer);
+		for (int i = sizes.length - 2; i >= 0; i--) {
+			final IPerceptronLayer layer = new InnerPerceptronLayer<IPerceptronLayer>(activationFunction, sizes[i], lastLayer);
 			innerLayers.add(0, layer);
-			previousLayer = layer;
+			lastLayer = layer;
 		}
 		
 		return new PerceptronNetwork(innerLayers, outputLayer);
 	}
-
-	public float getOutput(final int index) {
-		return outputLayer.getInput (index);
-	}
-
 }

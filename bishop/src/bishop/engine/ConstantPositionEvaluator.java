@@ -6,19 +6,24 @@ import bishop.base.Position;
 
 public class ConstantPositionEvaluator implements IPositionEvaluator {
 	
-	private final int constantEvaluation;
-	private final IPositionEvaluation evaluation;
+	private final IPositionEvaluation tacticalEvaluation;
+	private final IPositionEvaluation positionalEvaluation;
 	
-	public ConstantPositionEvaluator (final IPositionEvaluation evaluation, final int constantEvaluation) {
-		this.evaluation = evaluation;
-		this.constantEvaluation = constantEvaluation;
+	public ConstantPositionEvaluator (final IPositionEvaluation tacticalEvaluation, final IPositionEvaluation positionalEvaluation) {
+		this.tacticalEvaluation = tacticalEvaluation;
+		this.positionalEvaluation = positionalEvaluation;
 	}
 	
 	@Override
-	public void evaluate (final Position position, final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
 		attackCalculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
 		
-		this.evaluation.addCoeffWithCount(PositionEvaluationFeatures.EVALUATION_FEATURE, constantEvaluation);
+		return tacticalEvaluation;		
+	}
+
+	@Override
+	public IPositionEvaluation evaluatePositional (final AttackCalculator attackCalculator) {
+		return positionalEvaluation;
 	}
 
 	/**
@@ -26,11 +31,6 @@ public class ConstantPositionEvaluator implements IPositionEvaluator {
 	 * @param writer target writer
 	 */
 	public void writeLog (final PrintWriter writer) {
-	}
-
-	@Override
-	public IPositionEvaluation getEvaluation() {
-		return evaluation;
 	}
 
 }

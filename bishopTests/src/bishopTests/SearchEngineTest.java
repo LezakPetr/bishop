@@ -91,7 +91,7 @@ public class SearchEngineTest {
 
 	public void configureEngine(final SerialSearchEngine engine) {
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
-		final MaterialPositionEvaluator evaluator = new MaterialPositionEvaluator(evaluationFactory.get());
+		final MaterialPositionEvaluator evaluator = new MaterialPositionEvaluator(evaluationFactory);
 		
 		engine.setPositionEvaluator(evaluator);
 		engine.setMaximalDepth(20);

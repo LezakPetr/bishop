@@ -46,7 +46,7 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 	 * @return position evaluator
 	 */
 	public IPositionEvaluator createPositionEvaluator() {
-		return positionEvaluatorFactory.createEvaluator(evaluationFactory.get());
+		return positionEvaluatorFactory.createEvaluator();
 	}
 	
 	/**

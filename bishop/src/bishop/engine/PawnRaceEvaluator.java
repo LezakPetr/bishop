@@ -1,5 +1,6 @@
 package bishop.engine;
 
+import java.util.function.Supplier;
 
 import bishop.base.BitBoard;
 import bishop.base.BitLoop;
@@ -24,11 +25,12 @@ public class PawnRaceEvaluator {
 	private int onTurn;
 	private int notOnTurn;
 	
-	public PawnRaceEvaluator (final IPositionEvaluation evaluation) {
-		this.positionEvaluation = evaluation;
+	public PawnRaceEvaluator (final Supplier<IPositionEvaluation> evaluationFactory) {
+		this.positionEvaluation = evaluationFactory.get();
 	}
 
-	public void evaluate (final Position position) {
+	public IPositionEvaluation evaluate (final Position position) {
+		positionEvaluation.clear();
 		occupancy = BitBoard.EMPTY;
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
@@ -55,8 +57,10 @@ public class PawnRaceEvaluator {
 			else
 				evaluation = (someWhiteUnstoppablePawn) ? +1 : -1;
 			
-			positionEvaluation.addCoeff(PositionEvaluationFeatures.RULE_OF_SQUARE_BONUS, Color.WHITE, evaluation);
+			positionEvaluation.addCoeff(PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, Color.WHITE, evaluation);
 		}
+		
+		return positionEvaluation;
 	}
 	
 	private long determineUnstoppablePawns (final int color) {
