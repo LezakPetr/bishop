@@ -19,6 +19,8 @@ public class NodeRecord implements ISearchResult {
 	public int maxExtension;
 	public final AttackCalculator attackCalculator;
 	public boolean isQuiescenceSearch;
+	public int legalMoveCount;
+	public int bestLegalMoveIndex;
 
 	public NodeRecord(final int maxPrincipalDepth, final Supplier<IPositionEvaluation> evaluationFactory) {
 		currentMove = new Move();
@@ -37,6 +39,8 @@ public class NodeRecord implements ISearchResult {
 		this.evaluation.setBeta(beta);
 		this.firstLegalMove.clear();
 		this.allMovesGenerated = false;
+		this.legalMoveCount = 0;
+		this.bestLegalMoveIndex = -1;
 	}
 	
 	public NodeEvaluation getNodeEvaluation() {

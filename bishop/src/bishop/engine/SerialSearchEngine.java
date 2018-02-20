@@ -87,6 +87,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private int lastPositionalEvaluation;
 	private final MateFinder mateFinder;
 	
+	private static final long[] bestMovePerIndexCounts = new long[PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION];
 	
 	private static final int MAX_ATTACK = AttackCalculator.MAX_REASONABLE_ATTACK_EVALUATION;
 	
@@ -243,54 +244,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, currentRecord.attackCalculator).getEvaluation();
 		
 		if (isFirstQuiescence) {
-			mateFinder.setPosition(currentPosition);
-			mateFinder.setDepthAdvance(currentDepth);
-			
-			// Win
-			final int winAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(onTurn);
-			final int winExtension = MATE_EXTENSION_CALCULATOR.applyAsInt(winAttackEvaluation);
-			
-			final int winEvaluation = mateFinder.findWin(winExtension);
-			
-			if (winEvaluation >= Evaluation.MATE_MIN) {
-				currentRecord.evaluation.setEvaluation(winEvaluation);				
-				currentRecord.evaluation.setAlpha(Evaluation.MIN);
-				currentRecord.evaluation.setBeta(Evaluation.MAX);
-				currentRecord.principalVariation.clear();
-				
-				if (GlobalSettings.isDebug())
-					mateSearchSuccessRatio[Math.min(winAttackEvaluation, MAX_ATTACK)].addInvocation(true);
-				
+			if (mateSearch(currentRecord, onTurn, oppositeColor))
 				return;
-			}
-			else {
-				if (GlobalSettings.isDebug())
-					mateSearchSuccessRatio[Math.min(winAttackEvaluation, MAX_ATTACK)].addInvocation(false);
-			}
-			
-			// Lose
-			if (currentRecord.attackCalculator.isKingAttacked(onTurn)) {
-				final int loseAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(oppositeColor);
-				final int loseExtension = MATE_EXTENSION_CALCULATOR.applyAsInt(loseAttackEvaluation);
-				
-				final int loseEvaluation = mateFinder.findLose(loseExtension);
-				
-				if (loseEvaluation <= -Evaluation.MATE_MIN) {
-					currentRecord.evaluation.setEvaluation(loseEvaluation);				
-					currentRecord.evaluation.setAlpha(Evaluation.MIN);
-					currentRecord.evaluation.setBeta(Evaluation.MAX);
-					currentRecord.principalVariation.clear();
-					
-					if (GlobalSettings.isDebug())
-						mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(true);
-					
-					return;
-				}	
-				else {
-					if (GlobalSettings.isDebug())
-						mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(false);
-				}
-			}
 		}
 		
 		try {
@@ -406,12 +361,14 @@ public final class SerialSearchEngine implements ISearchEngine {
 						moveStack.getMove(currentRecord.moveListEnd - 1, move);
 						
 						if (!move.equals(precalculatedMove)) {
-							if (currentRecord.firstLegalMove.getMoveType() != MoveType.INVALID && beta - alpha != 1) {
-								evaluateMove(move, horizon, positionExtension, alpha, alpha + 1);
+							final int reducedHorizon = calculateReducedHorizon(horizon, move, isCheck, currentRecord);
+									
+							if (currentRecord.firstLegalMove.getMoveType() != MoveType.INVALID && (beta - alpha != 1 || reducedHorizon != horizon)) {
+								evaluateMove(move, reducedHorizon, positionExtension, alpha, alpha + 1);
 								
 								final int childEvaluation = -nextRecord.evaluation.getEvaluation();
 								
-								if (childEvaluation > alpha && beta - alpha != 1)
+								if (childEvaluation > alpha)
 									evaluateMove(move, horizon, positionExtension, alpha, beta);
 							}
 							else {
@@ -433,7 +390,80 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 		finally {
 			updateHashRecord(currentRecord, horizon);
+			updateBestMovePerIndexCounts(currentRecord);
 		}
+	}
+
+	private int calculateReducedHorizon(final int horizon, final Move move, final boolean isCheck, final NodeRecord currentRecord) {
+		if (isCheck || horizon < 3 * HORIZON_GRANULARITY || currentRecord.legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getMoveType() == MoveType.PROMOTION)
+			return horizon;
+		
+		if (currentRecord.legalMoveCount < 7)
+			return horizon - HORIZON_GRANULARITY;
+		else
+			return horizon - 2 * HORIZON_GRANULARITY;
+	}
+
+	private void updateBestMovePerIndexCounts(final NodeRecord currentRecord) {
+		if (GlobalSettings.isDebug()) {
+			final int index = currentRecord.bestLegalMoveIndex;
+			
+			if (index >= 0)
+				bestMovePerIndexCounts[index]++;
+		}
+	}
+
+	private boolean mateSearch(final NodeRecord currentRecord, final int onTurn, final int oppositeColor) {
+		mateFinder.setPosition(currentPosition);
+		mateFinder.setDepthAdvance(currentDepth);
+		
+		// Win
+		final int winAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(onTurn);
+		final int winExtension = MATE_EXTENSION_CALCULATOR.applyAsInt(winAttackEvaluation);
+		
+		final int winEvaluation = mateFinder.findWin(winExtension);
+		
+		if (winEvaluation >= Evaluation.MATE_MIN) {
+			currentRecord.evaluation.setEvaluation(winEvaluation);				
+			currentRecord.evaluation.setAlpha(Evaluation.MIN);
+			currentRecord.evaluation.setBeta(Evaluation.MAX);
+			currentRecord.principalVariation.clear();
+			
+			if (GlobalSettings.isDebug())
+				mateSearchSuccessRatio[Math.min(winAttackEvaluation, MAX_ATTACK)].addInvocation(true);
+			
+			return true;
+		}
+		else {
+			if (GlobalSettings.isDebug())
+				mateSearchSuccessRatio[Math.min(winAttackEvaluation, MAX_ATTACK)].addInvocation(false);
+		}
+		
+		// Lose
+		if (currentRecord.attackCalculator.isKingAttacked(onTurn)) {
+			final int loseAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(oppositeColor);
+			final int loseExtension = MATE_EXTENSION_CALCULATOR.applyAsInt(loseAttackEvaluation);
+			
+			final int loseEvaluation = mateFinder.findLose(loseExtension);
+			
+			if (loseEvaluation <= -Evaluation.MATE_MIN) {
+				currentRecord.evaluation.setEvaluation(loseEvaluation);				
+				currentRecord.evaluation.setAlpha(Evaluation.MIN);
+				currentRecord.evaluation.setBeta(Evaluation.MAX);
+				currentRecord.principalVariation.clear();
+				
+				if (GlobalSettings.isDebug())
+					mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(true);
+				
+				return true;
+			}	
+			else {
+				if (GlobalSettings.isDebug())
+					mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(false);
+			}
+		}
+		
+		return false;
 	}
 	
 	private int fixDrawByRepetitionEvaluation(final int evaluation) {
@@ -619,8 +649,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		repeatedPositionRegister.pushPosition (currentPosition, move);
 		currentRecord.currentMove.assign(move);
 		
-		final ISearchResult result;
-		
 		moveStackTop = currentRecord.moveListEnd;
 
 		final NodeRecord nextRecord = nodeStack[currentDepth + 1];
@@ -631,7 +659,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		alphaBeta(subHorizon);
 		currentDepth--;
 		
-		result = nextRecord;
+		final ISearchResult result = nextRecord;
 		
 		moveStackTop = currentRecord.moveListEnd;
 		
@@ -690,6 +718,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 				betaCutoff = true;
 			}
+			
+			currentRecord.bestLegalMoveIndex = currentRecord.legalMoveCount;
+			currentRecord.legalMoveCount++;
 		}
 		
 		// Send result and update root move list if depth = 0
@@ -915,6 +946,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 		// collissionsNotDetectedRate is rate of undetected collisions against hash fails (detected fails and collisions)
 		final double collissionsNotDetectedRate = (hitRatio * primaryColissionRate) / (primaryColissionRate * hitRatio * primaryColissionRate - hitRatio + 1);
 		Logger.logMessage("Collision not detected rate = " + collissionsNotDetectedRate + ", should be " + HashTableImpl.PRIMARY_COLLISION_RATE);
+		
+		System.out.println("Best move perindex counts: ");
+		
+		for (int i = 0; i < bestMovePerIndexCounts.length; i++) {
+			if (bestMovePerIndexCounts[i] > 0)
+				System.out.println(i + " " + bestMovePerIndexCounts[i]);
+		}
 	}
 
 	/**
