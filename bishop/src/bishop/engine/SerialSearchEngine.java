@@ -225,6 +225,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final int oppositeColor = Color.getOppositeColor(onTurn);
 		final int initialAlpha = currentRecord.evaluation.getAlpha();
 		final int initialBeta = currentRecord.evaluation.getBeta();
+		final boolean pvNode = initialBeta - initialAlpha > 1;
 		
 		if (checkFiniteEvaluation(horizon, currentRecord, initialAlpha, initialBeta))
 			return;
@@ -361,7 +362,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 						moveStack.getMove(currentRecord.moveListEnd - 1, move);
 						
 						if (!move.equals(precalculatedMove)) {
-							final int reducedHorizon = calculateReducedHorizon(horizon, move, isCheck, currentRecord);
+							final int reducedHorizon = calculateReducedHorizon(horizon, move, isCheck, pvNode, currentRecord);
 									
 							if (currentRecord.firstLegalMove.getMoveType() != MoveType.INVALID && (beta - alpha != 1 || reducedHorizon != horizon)) {
 								evaluateMove(move, reducedHorizon, positionExtension, alpha, alpha + 1);
@@ -394,8 +395,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 	}
 
-	private int calculateReducedHorizon(final int horizon, final Move move, final boolean isCheck, final NodeRecord currentRecord) {
-		if (isCheck || horizon < 3 * HORIZON_GRANULARITY || currentRecord.legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getMoveType() == MoveType.PROMOTION)
+	private int calculateReducedHorizon(final int horizon, final Move move, final boolean isCheck, final boolean pvNode, final NodeRecord currentRecord) {
+		if (isCheck || pvNode || horizon < 3 * HORIZON_GRANULARITY || currentRecord.legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getPromotionPieceType() == PieceType.QUEEN)
 			return horizon;
 		
 		if (currentRecord.legalMoveCount < 7)
