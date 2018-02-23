@@ -362,19 +362,24 @@ public final class SerialSearchEngine implements ISearchEngine {
 						moveStack.getMove(currentRecord.moveListEnd - 1, move);
 						
 						if (!move.equals(precalculatedMove)) {
+							final int beginMaterialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(currentPosition.getMaterialHash());
+							currentPosition.makeMove(move);
+							
 							final int reducedHorizon = calculateReducedHorizon(horizon, move, isCheck, pvNode, currentRecord);
 									
 							if (currentRecord.firstLegalMove.getMoveType() != MoveType.INVALID && (beta - alpha != 1 || reducedHorizon != horizon)) {
-								evaluateMove(move, reducedHorizon, positionExtension, alpha, alpha + 1);
+								evaluateMadeMove (move, reducedHorizon, positionExtension, alpha, alpha + 1, currentRecord, beginMaterialEvaluation);
 								
 								final int childEvaluation = -nextRecord.evaluation.getEvaluation();
 								
 								if (childEvaluation > alpha)
-									evaluateMove(move, horizon, positionExtension, alpha, beta);
+									evaluateMadeMove(move, horizon, positionExtension, alpha, beta, currentRecord, beginMaterialEvaluation);
 							}
 							else {
-								evaluateMove(move, horizon, positionExtension, alpha, beta);
+								evaluateMadeMove(move, horizon, positionExtension, alpha, beta, currentRecord, beginMaterialEvaluation);
 							}
+							
+							currentPosition.undoMove(move);
 	
 							if (updateCurrentRecordAfterEvaluation(move, horizon, currentRecord, nextRecord))
 								break;
@@ -397,6 +402,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 	private int calculateReducedHorizon(final int horizon, final Move move, final boolean isCheck, final boolean pvNode, final NodeRecord currentRecord) {
 		if (isCheck || pvNode || horizon < 3 * HORIZON_GRANULARITY || currentRecord.legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getPromotionPieceType() == PieceType.QUEEN)
+			return horizon;
+		
+		if (currentPosition.isCheck())
 			return horizon;
 		
 		if (currentRecord.legalMoveCount < 7)
@@ -634,6 +642,14 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		currentPosition.makeMove(move);
 		
+		final ISearchResult result = evaluateMadeMove(move, horizon, positionExtension, alpha, beta, currentRecord, beginMaterialEvaluation);
+		currentPosition.undoMove(move);
+		
+		return result;
+	}
+
+	private ISearchResult evaluateMadeMove(final Move move, final int horizon, final int positionExtension,
+			final int alpha, final int beta, final NodeRecord currentRecord, final int beginMaterialEvaluation) {
 		final int moveExtension;
 		
 		if (horizon >= searchSettings.getMinExtensionHorizon())
@@ -666,8 +682,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		currentRecord.currentMove.clear();
 		repeatedPositionRegister.popPosition();
-		currentPosition.undoMove(move);
-		
 		return result;
 	}
 
