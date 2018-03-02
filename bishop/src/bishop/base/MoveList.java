@@ -95,6 +95,13 @@ public class MoveList implements Iterable<Move> {
 
 		return move;
 	}
+	
+	public void set (final int index, final Move move) {
+		if (index < 0 || index >= size)
+			throw new ArrayIndexOutOfBoundsException(index);
+		
+		data[index] = move.getData();
+	}
 
 	public MoveList copy() {
 		final MoveList list = new MoveList();
@@ -107,7 +114,7 @@ public class MoveList implements Iterable<Move> {
 		this.clear();
 		this.addAll(orig);
 	}
-
+	
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
 		final Move move = new Move();

@@ -91,13 +91,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 	
 	private static final int MAX_ATTACK = AttackCalculator.MAX_REASONABLE_ATTACK_EVALUATION;
 	
-	private static final int MIN_MATE_EXTENSION = 1;
-	private static final int MAX_MATE_EXTENSION = 5;
+	private static final int MIN_MATE_DEPTH = 1;
+	private static final int MAX_MATE_DEPTH = 5;
+	private static final int MAX_MATE_EXTENSION = 2;
+	
 	private static final int MIN_MATE_ATTACK_EVALUATION = 100;
 	private static final int MAX_MATE_ATTACK_EVALUATION = 200;
 	
-	private static final SampledIntFunction MATE_EXTENSION_CALCULATOR = new SampledIntFunction(
-		new Sigmoid(MIN_MATE_ATTACK_EVALUATION, MAX_MATE_ATTACK_EVALUATION, MIN_MATE_EXTENSION, MAX_MATE_EXTENSION),
+	private static final SampledIntFunction MATE_DEPTH_CALCULATOR = new SampledIntFunction(
+		new Sigmoid(MIN_MATE_ATTACK_EVALUATION, MAX_MATE_ATTACK_EVALUATION, MIN_MATE_DEPTH, MAX_MATE_DEPTH),
 		AttackCalculator.MIN_ATTACK_EVALUATION, AttackCalculator.MAX_REASONABLE_ATTACK_EVALUATION
 	);
 	
@@ -244,8 +246,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final boolean isFirstQuiescence = isQuiescenceSearch && currentDepth > 0 && !nodeStack[currentDepth - 1].isQuiescenceSearch;
 		final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, currentRecord.attackCalculator).getEvaluation();
 		
-		if (isFirstQuiescence) {
-			if (mateSearch(currentRecord, onTurn, oppositeColor))
+		if (currentDepth > 0 && (!isQuiescenceSearch || isFirstQuiescence)) {
+			if (mateSearch(currentRecord, onTurn, oppositeColor, horizon, initialAlpha, initialBeta))
 				return;
 		}
 		
@@ -422,15 +424,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 	}
 
-	private boolean mateSearch(final NodeRecord currentRecord, final int onTurn, final int oppositeColor) {
+	private boolean mateSearch(final NodeRecord currentRecord, final int onTurn, final int oppositeColor, final int horizon, final int alpha, final int beta) {
 		mateFinder.setPosition(currentPosition);
 		mateFinder.setDepthAdvance(currentDepth);
 		
 		// Win
 		final int winAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(onTurn);
-		final int winExtension = MATE_EXTENSION_CALCULATOR.applyAsInt(winAttackEvaluation);
+		final int winDepth = MATE_DEPTH_CALCULATOR.applyAsInt(winAttackEvaluation);
 		
-		final int winEvaluation = mateFinder.findWin(winExtension);
+		final int winEvaluation = mateFinder.findWin(winDepth);
 		
 		if (winEvaluation >= Evaluation.MATE_MIN) {
 			currentRecord.evaluation.setEvaluation(winEvaluation);				
@@ -451,9 +453,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 		// Lose
 		if (currentRecord.attackCalculator.isKingAttacked(onTurn)) {
 			final int loseAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(oppositeColor);
-			final int loseExtension = MATE_EXTENSION_CALCULATOR.applyAsInt(loseAttackEvaluation);
+			final int loseDepth = MATE_DEPTH_CALCULATOR.applyAsInt(loseAttackEvaluation);
 			
-			final int loseEvaluation = mateFinder.findLose(loseExtension);
+			final int loseEvaluation = mateFinder.findLose(loseDepth);
 			
 			if (loseEvaluation <= -Evaluation.MATE_MIN) {
 				currentRecord.evaluation.setEvaluation(loseEvaluation);				
@@ -469,6 +471,18 @@ public final class SerialSearchEngine implements ISearchEngine {
 			else {
 				if (GlobalSettings.isDebug())
 					mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(false);
+				
+				if (mateFinder.getNonLosingMoveCount() == 1) {
+					currentRecord.moveListBegin = moveStackTop;
+					currentRecord.moveListEnd = moveStackTop;
+					currentRecord.evaluation.update(mateFinder.getLosingMovesEvaluation());
+					
+					final Move nonLosingMove = mateFinder.getNonLosingMove();
+					evaluateMove(nonLosingMove, horizon, ISearchEngine.HORIZON_GRANULARITY, alpha, beta);
+					
+					updateCurrentRecordAfterEvaluation(nonLosingMove, horizon, currentRecord, nodeStack[currentDepth + 1]);
+					return true;
+				}
 			}
 		}
 		
@@ -648,8 +662,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		return result;
 	}
 
-	private ISearchResult evaluateMadeMove(final Move move, final int horizon, final int positionExtension,
-			final int alpha, final int beta, final NodeRecord currentRecord, final int beginMaterialEvaluation) {
+	private ISearchResult evaluateMadeMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta, final NodeRecord currentRecord, final int beginMaterialEvaluation) {
 		final int moveExtension;
 		
 		if (horizon >= searchSettings.getMinExtensionHorizon())
@@ -842,7 +855,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			for (int i = 0; i < nodeStack.length; i++)
 				this.nodeStack[i] = new NodeRecord(maxTotalDepth - i - 1, evaluationFactory);
 			
-			mateFinder.setMaxDepth (MAX_MATE_EXTENSION, maxTotalDepth);
+			mateFinder.setMaxDepth (MAX_MATE_DEPTH, maxTotalDepth, MAX_MATE_EXTENSION);
 		}
 	}
 

@@ -165,7 +165,15 @@ public class PseudoLegalMoveGeneratorTest extends MoveGeneratorTestBase {
 					"h1g1, h1g2, h1h2, c2c3, c2c4, f3f4, f3e4",
 					"h1g1, h1g2, h1h2, c2c3, c2c4, f3f4, f3e4",
 					"c2c4, f3e4"
+				),
+				new PositionWithMoves(   // Reduction of moves in check
+					"2R3k1/3q1ppp/B7/8/8/8/5PPP/6K1 b - - 0 1",
+					true,
+					"d7c8, d7d8, d7e8",
+					"d7c8, d7d8, d7e8, d7a7, d7b7, d7c7, d7e7, d7a4, d7b5, d7c6, d7d1, d7d2, d7d3, d7d4, d7d5, d7d6, d7h3, d7g4, d7f5, d7e6, g8f8, g8h8, h7h5, h7h6, g7g5, g7g6, f7f5, f7f6",
+					"d7d1"
 				)
+				
 		};
 	}
 	

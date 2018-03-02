@@ -77,6 +77,10 @@ public final class NodeEvaluation {
 	public boolean update (final NodeEvaluation updateNodeEvaluation) {
 		final int updateEvaluation = updateNodeEvaluation.getEvaluation();
 		
+		return update(updateEvaluation);
+	}
+
+	public boolean update(final int updateEvaluation) {
 		if (updateEvaluation > evaluation) {
 			evaluation = updateEvaluation;
 			alpha = Math.max(alpha, updateEvaluation);
