@@ -61,8 +61,8 @@ public class MateFinder {
 		return position.isCheck() && !legalMoveFinder.existsLegalMove(position);
 	}
 	
-	private int calculateEffectiveAlpha (final int depth, final int originalAlpha, final int updatedAlpha, final boolean isAttacker) {
-		if (isAttacker || nonLosingMoveCounts[depth] > 1)
+	private int calculateEffectiveAlpha (final int depth, final int originalAlpha, final int updatedAlpha, final boolean isAttacker, final boolean singularExtensionPossible) {
+		if (isAttacker || nonLosingMoveCounts[depth] > 1 || (depth > 0 && !singularExtensionPossible))
 			return updatedAlpha;
 		else
 			return Math.max(losingMovesEvaluations[depth], originalAlpha);
@@ -89,6 +89,8 @@ public class MateFinder {
 		int effectiveAlpha = alpha;
 		int evaluation = Evaluation.MIN;
 		
+		final boolean singularExtensionPossible = extension + 2 <= maxExtension;
+		
 		if (killerMove.uncompressMove(killerMoves[depth + depthAdvance], position)) {
 			final int subEvaluation = evaluateMove(depth, horizon, extension, effectiveAlpha, beta, killerMove);
 			
@@ -96,7 +98,7 @@ public class MateFinder {
 			updatedAlpha = Math.max(updatedAlpha, subEvaluation);
 			evaluation = Math.max(evaluation, subEvaluation);
 			
-			effectiveAlpha = calculateEffectiveAlpha(depth, alpha, updatedAlpha, isAttacker);
+			effectiveAlpha = calculateEffectiveAlpha(depth, alpha, updatedAlpha, isAttacker, singularExtensionPossible);
 			
 			if (effectiveAlpha > beta)
 				return subEvaluation;
@@ -121,7 +123,7 @@ public class MateFinder {
 				existLegalMove |= (subEvaluation > Evaluation.MIN);
 				updatedAlpha = Math.max(updatedAlpha, subEvaluation);
 			
-				effectiveAlpha = calculateEffectiveAlpha(depth, alpha, updatedAlpha, isAttacker);
+				effectiveAlpha = calculateEffectiveAlpha(depth, alpha, updatedAlpha, isAttacker, singularExtensionPossible);
 				
 				if (effectiveAlpha > beta) {
 					killerMoves[depth + depthAdvance] = move.getCompressedMove();
@@ -135,7 +137,7 @@ public class MateFinder {
 		moveStackTop = moveStackBegin;
 		
 		if (existLegalMove) {
-			if (!isAttacker && nonLosingMoveCounts[depth] == 1 && extension + 2 <= maxExtension)
+			if (!isAttacker && nonLosingMoveCounts[depth] == 1 && singularExtensionPossible)
 				evaluation = evaluateMove(depth, horizon + 2, extension + 2, losingMovesEvaluations[depth], beta, nonLosingMoves.get(depth));
 			
 			return evaluation;
