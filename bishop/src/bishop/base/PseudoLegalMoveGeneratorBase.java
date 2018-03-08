@@ -1,11 +1,18 @@
 package bishop.base;
 
+import java.util.Arrays;
+
 public abstract class PseudoLegalMoveGeneratorBase implements IMoveGenerator {
 	
 	protected Position position;
 	protected IMoveWalker walker;
 	protected final Move move = new Move();
+	private final boolean[] pieceTypesToGenerate = new boolean[PieceType.LAST];
 	
+	
+	public PseudoLegalMoveGeneratorBase() {
+		Arrays.fill(pieceTypesToGenerate, true);
+	}
 
 	public MoveGeneratorType getGeneratorType() {
 		return MoveGeneratorType.DIRECT;
@@ -59,5 +66,20 @@ public abstract class PseudoLegalMoveGeneratorBase implements IMoveGenerator {
     public void setWalker (final IMoveWalker walker) {
     	this.walker = walker;
     }
+    
+	/**
+	 * Instructs the generator to (not) generate moves of given piece.
+	 * This is optional, the generator can generate moves of all pieces.
+	 * @param pieceType piece type
+	 * @param generate generate or not
+	 */
+    @Override
+	public void setGenerateMovesOfPiece (final int pieceType, final boolean generate) {
+		this.pieceTypesToGenerate[pieceType] = generate;
+	}
+	
+	public boolean getGenerateMovesOfPiece (final int pieceType) {
+		return pieceTypesToGenerate[pieceType];
+	}
 
 }

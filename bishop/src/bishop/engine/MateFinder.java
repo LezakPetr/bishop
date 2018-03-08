@@ -5,6 +5,7 @@ import java.util.Arrays;
 import bishop.base.Color;
 import bishop.base.IMoveWalker;
 import bishop.base.LegalMoveFinder;
+import bishop.base.MateChecker;
 import bishop.base.Move;
 import bishop.base.MoveList;
 import bishop.base.MoveStack;
@@ -41,7 +42,7 @@ public class MateFinder {
 	};
 	
 	private final PseudoLegalMoveGenerator moveGenerator;
-	private final LegalMoveFinder legalMoveFinder = new LegalMoveFinder(true);
+	private final MateChecker mateChecker = new MateChecker();
 	
 	private Position position;
 	
@@ -58,7 +59,7 @@ public class MateFinder {
 	}
 	
 	public boolean isMate() {
-		return position.isCheck() && !legalMoveFinder.existsLegalMove(position);
+		return mateChecker.isMate(position);
 	}
 	
 	private int calculateEffectiveAlpha (final int depth, final int originalAlpha, final int updatedAlpha, final boolean isAttacker, final boolean singularExtensionPossible) {

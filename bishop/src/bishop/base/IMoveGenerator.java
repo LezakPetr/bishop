@@ -28,6 +28,14 @@ public interface IMoveGenerator {
 	public MoveGeneratorType getGeneratorType();
 	
 	/**
+	 * Instructs the generator to (not) generate moves of given piece.
+	 * This is optional, the generator can generate moves of all pieces.
+	 * @param pieceType piece type
+	 * @param generate generate or not
+	 */
+	public void setGenerateMovesOfPiece (final int pieceType, final boolean generate);
+	
+	/**
 	 * Generates all moves into given move list.
 	 * Resets move walker.
 	 * @param moveList target move list

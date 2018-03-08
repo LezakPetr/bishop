@@ -2,6 +2,7 @@ package bishopTests;
 
 import bishop.base.IMoveGenerator;
 import bishop.base.LegalMoveFinder;
+import bishop.base.MateChecker;
 import bishop.base.Move;
 import bishop.base.MoveList;
 import bishop.base.MoveType;
@@ -64,7 +65,7 @@ public class PerftCalculator {
 	private int moveStackTop;
 	private int maxDepth;
 	private final Position currentPosition = new Position();
-	private final LegalMoveFinder legalMoveFinder = new LegalMoveFinder(true);
+	private final MateChecker mateChecker = new MateChecker();
 	
 	public PerftCalculator() {
 		for (int i = 0; i < MOVE_STACK_CAPACITY; i++)
@@ -143,7 +144,7 @@ public class PerftCalculator {
 		if (currentPosition.isCheck()) {
 			statistics.checkCount++;
 			
-			if (!legalMoveFinder.existsLegalMove(currentPosition))
+			if (mateChecker.isMateInCheck(currentPosition))
 				statistics.mateCount++;
 		}
 	}

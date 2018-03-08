@@ -259,4 +259,15 @@ public class ReverseMoveGenerator implements IMoveGenerator {
 	public void setWalker(final IMoveWalker walker) {
 		this.walker = walker;
 	}
+	
+	/**
+	 * Instructs the generator to (not) generate moves of given piece.
+	 * @param pieceType piece type
+	 * @param generate generate or not
+	 */
+	@Override
+	public void setGenerateMovesOfPiece (final int pieceType, final boolean generate) {
+		
+	}
+	
 }
