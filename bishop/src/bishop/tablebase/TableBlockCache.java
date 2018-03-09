@@ -10,7 +10,7 @@ public class TableBlockCache {
 	
 	private static class BlockRecord {
 		private ITable block;
-		private ISimpleIterator<BlockKey> historyIter;
+		private BlockKey blockKey;
 		
 		public ITable getBlock() {
 			return block;
@@ -20,60 +20,51 @@ public class TableBlockCache {
 			this.block = block;
 		}
 		
-		public ISimpleIterator<BlockKey> getHistoryIter() {
-			return historyIter;
+		public BlockKey getBlockKey() {
+			return blockKey;
 		}
 		
-		public void setHistoryIter(final ISimpleIterator<BlockKey> iter) {
-			this.historyIter = iter;
+		public void setBlockKey(final BlockKey blockKey) {
+			this.blockKey = blockKey;
 		}
 	}
 	
-	private final int cacheSize;
-	private final DoubleLinkedList<BlockKey> historyList;
-	private final Map<BlockKey, BlockRecord> blockCache;
+	private final int cacheMask;
+	private final BlockRecord[] blockCache;
 	
-	public TableBlockCache(final int cacheSize) {
-		this.cacheSize = cacheSize;
-		this.historyList = new DoubleLinkedList<BlockKey>();
-		this.blockCache = new HashMap<BlockKey, TableBlockCache.BlockRecord>();
+	public TableBlockCache(final int cacheBits) {
+		final int cacheSize = 1 << cacheBits;
+		this.blockCache = new BlockRecord[cacheSize];
+		
+		for (int i = 0; i < cacheSize; i++)
+			this.blockCache[i] = new BlockRecord();
+		
+		this.cacheMask = cacheSize - 1;
 	}
 	
-	public synchronized ITable getBlock (final BlockKey key) {
-		final BlockRecord record = blockCache.get(key);
-		
-		if (record == null)
-			return null;
-	
-		historyList.removeItem(record.getHistoryIter());
-		
-		final ISimpleIterator<BlockKey> newIter = historyList.addItemToEnd();
-		newIter.setData(key);
-		
-		record.setHistoryIter(newIter);
-		
-		return record.getBlock();
+	private int getRecordIndex (final BlockKey blockKey) {
+		return blockKey.hashCode() & cacheMask;
 	}
 	
-	public synchronized void addBlock (final BlockKey key, final ITable block) {
-		if (blockCache.containsKey(key))
-			return;
-
-		final ISimpleIterator<BlockKey> newIter = historyList.addItemToEnd();
-		newIter.setData(key);
-
-		final BlockRecord record = new BlockRecord();
-		record.setBlock(block);
-		record.setHistoryIter(newIter);
+	public ITable getBlock (final BlockKey key) {
+		final int index = getRecordIndex(key);
+		final BlockRecord record = blockCache[index];
 		
-		blockCache.put(key, record);
+		synchronized (record) {
+			if (record.blockKey == null || !record.blockKey.equals(key))
+				return null;
+				
+			return record.getBlock();
+		}
+	}
+	
+	public void addBlock (final BlockKey key, final ITable block) {
+		final int index = getRecordIndex(key);
+		final BlockRecord record = blockCache[index];
 		
-		if (blockCache.size() > cacheSize) {
-			final ISimpleIterator<BlockKey> lastIter = historyList.getFirstItem();
-			final BlockKey lastKey = lastIter.getData();
-			
-			historyList.removeItem(lastIter);
-			blockCache.remove(lastKey);
+		synchronized (record) {
+			record.setBlock(block);
+			record.setBlockKey(key);
 		}
 	}
 }

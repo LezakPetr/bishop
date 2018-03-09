@@ -1,6 +1,7 @@
 package bishop.tablebase;
 
 import bishop.base.MaterialHash;
+import utils.Mixer;
 
 public class BlockKey {
 	private final MaterialHash materialHash;
@@ -21,7 +22,7 @@ public class BlockKey {
 	
 	@Override
 	public int hashCode() {
-		return materialHash.hashCode() ^ (int) blockIndex;
+		return Mixer.mixLongToInt(materialHash.getHash() + 31 * blockIndex);
 	}
 	
 	@Override

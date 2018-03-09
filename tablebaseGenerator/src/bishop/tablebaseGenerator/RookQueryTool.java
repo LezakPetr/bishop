@@ -19,13 +19,13 @@ import bishop.tablebase.TableResult;
 public class RookQueryTool {
 
 	private static final long PAWN_MASK = ~BoardConstants.RANK_18_MASK & ~BoardConstants.FILE_A_MASK & ~BoardConstants.FILE_B_MASK;
-	private static final int CACHE_SIZE = 20000;
+	private static final int CACHE_BITS = 16;
 	
 	public static void main(final String[] args) {
 		final String directory = args[0];
 		final int onTurn = Color.WHITE;
 		final MaterialHash materialHash = new MaterialHash("01001-01000", onTurn);
-		final TableBlockCache blockCache = new TableBlockCache(CACHE_SIZE);
+		final TableBlockCache blockCache = new TableBlockCache(CACHE_BITS);
 		final File file = new File(FileNameCalculator.getAbsolutePath(directory, materialHash));
 		final FilePositionResultSource resultSource = new FilePositionResultSource(file, blockCache);
 		

@@ -20,7 +20,7 @@ import bishop.tablebase.VariationIterator;
 
 
 public class QueryProcessor {
-	private static final int CACHE_SIZE = 20000;
+	private static final int CACHE_BITS = 16;
 	
 	private static class FixedPiece {
 		private final Piece piece;
@@ -112,7 +112,7 @@ public class QueryProcessor {
 	}
 
 	public void run() {
-		final TableBlockCache blockCache = new TableBlockCache(CACHE_SIZE);
+		final TableBlockCache blockCache = new TableBlockCache(CACHE_BITS);
 		final File file = new File(FileNameCalculator.getAbsolutePath(directory, materialHash));
 		resultSource = new FilePositionResultSource(file, blockCache);
 		

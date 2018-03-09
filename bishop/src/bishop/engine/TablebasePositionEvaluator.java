@@ -24,7 +24,7 @@ public class TablebasePositionEvaluator {
 	public TablebasePositionEvaluator(final File directory) {
 		this.directory = directory;
 		this.tableSwitch = new TableSwitch();
-		this.blockCache = new TableBlockCache(8192);
+		this.blockCache = new TableBlockCache(16);
 		
 		if (directory != null && directory.exists()) {
 			scanDirectory();

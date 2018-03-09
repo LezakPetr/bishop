@@ -27,7 +27,7 @@ import parallel.Parallel;
 
 public class GenerateTablebase {
 	
-	private static final int CACHE_SIZE = 20000;
+	private static final int CACHE_BITS = 16;
 	
 	private TableBlockCache blockCache;
 	private TableSwitch resultSource;
@@ -165,7 +165,7 @@ public class GenerateTablebase {
 
 		System.out.println (parallel.getThreadCount() + " threads");
 		
-		blockCache = new TableBlockCache(CACHE_SIZE);
+		blockCache = new TableBlockCache(CACHE_BITS);
 		readSubTables();
 		
 		if (action.contains("g")) {
