@@ -32,7 +32,7 @@ public class MateFinderTest {
 		
 		final Fen fen = new Fen();
 		final MateFinder finder = new MateFinder();
-		finder.setMaxDepth(maxDepth, 0);
+		finder.setMaxDepth(maxDepth, 0, 0);
 		
 		for (TestValue testValue: testValueArray) {
 			fen.readFenFromString(testValue.positionFen);
@@ -62,7 +62,8 @@ public class MateFinderTest {
 		
 		final Fen fen = new Fen();
 		final MateFinder finder = new MateFinder();
-		finder.setMaxDepth(maxDepth, 0);
+		
+		finder.setMaxDepth(maxDepth, 0, 0);
 		
 		for (TestValue testValue: testValueArray) {
 			fen.readFenFromString(testValue.positionFen);
@@ -76,5 +77,83 @@ public class MateFinderTest {
 			}
 		}
 	}
+	
+	@Test
+	public void testSingularWin() throws Exception {
+		final TestValue[] testValueArray = {
+			new TestValue("r6k/5ppp/3N4/8/2Q5/B7/5PPP/6K1 w - - 0 1", 4)
+		};
+		
+		final int maxDepth = 1;
+		
+		final Fen fen = new Fen();
+		final MateFinder finder = new MateFinder();
+		
+		for (TestValue testValue: testValueArray) {
+			fen.readFenFromString(testValue.positionFen);
+			finder.setPosition(fen.getPosition());
+			
+			for (int extension = 0; extension <= maxDepth; extension++) {
+				finder.setMaxDepth(maxDepth, 0, extension);
+				
+				final int evaluation = finder.findWin(maxDepth);
+				final int expectedEvaluation = (testValue.depth <= maxDepth + extension) ? Evaluation.getMateEvaluation(2 * testValue.depth - 1) : Evaluation.DRAW;
+				
+				Assert.assertEquals(testValue.positionFen, expectedEvaluation, evaluation);
+			}
+		}
+	}
 
+	@Test
+	public void testSingularLose() throws Exception {
+		final TestValue[] testValueArray = {
+			new TestValue("r6k/5Npp/8/8/2Q5/B7/5PPP/6K1 b - - 0 1", 4)
+		};
+		
+		final int maxDepth = 1;
+		
+		final Fen fen = new Fen();
+		final MateFinder finder = new MateFinder();
+		
+		for (TestValue testValue: testValueArray) {
+			fen.readFenFromString(testValue.positionFen);
+			finder.setPosition(fen.getPosition());
+			
+			for (int extension = 0; extension <= maxDepth; extension++) {
+				finder.setMaxDepth(maxDepth, 0, extension);
+				
+				final int evaluation = finder.findLose(maxDepth);
+				final int expectedEvaluation = (testValue.depth <= maxDepth + extension) ? Evaluation.getMateEvaluation(2 * testValue.depth - 1) : Evaluation.DRAW;
+				
+				Assert.assertEquals(testValue.positionFen, expectedEvaluation, evaluation);
+			}
+		}
+	}
+
+	@Test
+	public void testExternalSingularNonLose() throws Exception {
+		final TestValue[] testValueArray = {
+			new TestValue("2R3k1/3q1ppp/B7/8/8/8/5PPP/6K1 b - - 0 1", 2)
+		};
+		
+		final int maxDepth = 2;
+		
+		final Fen fen = new Fen();
+		final MateFinder finder = new MateFinder();
+		finder.setMaxDepth(maxDepth, 0, 0);
+		
+		for (TestValue testValue: testValueArray) {
+			fen.readFenFromString(testValue.positionFen);
+			finder.setPosition(fen.getPosition());
+			
+			final int evaluation = finder.findLose(testValue.depth);
+			Assert.assertEquals(testValue.positionFen, Evaluation.DRAW, evaluation);
+			
+			final int nonLosingMoveCount = finder.getNonLosingMoveCount();
+			Assert.assertEquals(testValue.positionFen, 1, nonLosingMoveCount);
+			
+			final int nonLosingMovesEvaluation = finder.getLosingMovesEvaluation();
+			Assert.assertEquals(testValue.positionFen, -Evaluation.getMateEvaluation(testValue.depth), nonLosingMovesEvaluation);
+		}
+	}
 }

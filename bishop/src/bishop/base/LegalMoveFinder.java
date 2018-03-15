@@ -2,7 +2,7 @@ package bishop.base;
 
 public class LegalMoveFinder {
 
-	private IMoveWalker walker = new IMoveWalker() {
+	private final IMoveWalker walker = new IMoveWalker() {
 		public boolean processMove (final Move move) {
 			legalMoveFound = true;
 			return false;

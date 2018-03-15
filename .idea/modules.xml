@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/bisGui/bisGui.iml" filepath="$PROJECT_DIR$/bisGui/bisGui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bisGuiSwing/bisGuiSwing.iml" filepath="$PROJECT_DIR$/bisGuiSwing/bisGuiSwing.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bishop/bishop.iml" filepath="$PROJECT_DIR$/bishop/bishop.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bishopTests/bishopTests.iml" filepath="$PROJECT_DIR$/bishopTests/bishopTests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bookBuilder/bookBuilder.iml" filepath="$PROJECT_DIR$/bookBuilder/bookBuilder.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libs/libs.iml" filepath="$PROJECT_DIR$/libs/libs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/magicCalculator/magicCalculator.iml" filepath="$PROJECT_DIR$/magicCalculator/magicCalculator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tablebaseGenerator/tablebaseGenerator.iml" filepath="$PROJECT_DIR$/tablebaseGenerator/tablebaseGenerator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/utils/utils.iml" filepath="$PROJECT_DIR$/utils/utils.iml" />
+      <module fileurl="file://$PROJECT_DIR$/utilsTest/utilsTest.iml" filepath="$PROJECT_DIR$/utilsTest/utilsTest.iml" />
+    </modules>
+  </component>
+</project>

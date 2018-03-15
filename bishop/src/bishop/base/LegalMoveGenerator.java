@@ -62,5 +62,14 @@ public class LegalMoveGenerator implements IMoveGenerator {
     public void setReduceMovesInCheck(final boolean reduce) {
     	backgroundGenerator.setReduceMovesInCheck(reduce);
     }
+    
+	/**
+	 * Instructs the generator to (not) generate moves of given piece.
+	 * @param pieceType piece type
+	 * @param generate generate or not
+	 */
+	public void setGenerateMovesOfPiece (final int pieceType, final boolean generate) {
+		backgroundGenerator.setGenerateMovesOfPiece(pieceType, generate);
+	}
 
 }

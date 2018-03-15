@@ -8,7 +8,7 @@ import java.util.Arrays;
  */
 public class LineIndexer {
 	
-	private static final long[] COEFFS = new long[] {
+	private static final long[] coeffTable = new long[] {
 		6377099826812796930L, 1513227208775221254L, 2449972206894077440L, 3602886299243520064L, 
 		3459046127318339592L, 7349901050412924963L, 8935175917664306192L, 7061652645847892108L, 
 		35888079931870244L, 4785219559325957L, 15199719093600769L, 16325643845254656L, 
@@ -61,42 +61,32 @@ public class LineIndexer {
 		5, 5, 5, 5, 5, 5, 5, 5, 
 		6, 5, 5, 5, 5, 5, 5, 6
 	};
-	
-	private static final class Cell {
-		public final long mask;
-		public final long coeff;
-		public final int shift;
-		public final int base;
 		
-		public Cell (final long mask, final long coeff, final int shift, final int base) {
-			this.mask = mask;
-			this.coeff = coeff;
-			this.shift = shift;
-			this.base = base;
-		}
-	};
-	
 	private static final FileRankOffset[][] directionOffsets = {
 		{ new FileRankOffset(+1, 0), new FileRankOffset(-1, 0), new FileRankOffset(0, +1), new FileRankOffset(0, -1) },   // ORTHOGONAL
 		{ new FileRankOffset(+1, +1), new FileRankOffset(-1, -1), new FileRankOffset(+1, -1), new FileRankOffset(-1, +1) }   // DIAGONAL
 	};
 	
-	private static final Cell[] table;
+	private static final long[] maskTable;
+	private static final byte[] shiftTable;
+	private static final int[] baseTable;
 	private static final int lastIndex;
 	
 	static {
-		table = new Cell[CrossDirection.LAST * Square.LAST];
+		maskTable = new long[CrossDirection.LAST * Square.LAST];
+		shiftTable = new byte[CrossDirection.LAST * Square.LAST];
+		baseTable = new int[CrossDirection.LAST * Square.LAST];
 		int base = 0;
 		
 		for (int direction = CrossDirection.FIRST; direction < CrossDirection.LAST; direction++) {
 			for (int square = Square.FIRST; square < Square.LAST; square++) {
 				final int tableIndex = getCellIndex(direction, square);
 				final long mask = calculateDirectionMask (direction, square);
-				final long coeff = COEFFS[tableIndex];
 				final int bits = DEPTHS[tableIndex];
 
-				final Cell cell = new Cell(mask, coeff, Square.LAST - bits, base);
-				table[tableIndex] = cell;
+				maskTable[tableIndex] = mask;
+				shiftTable[tableIndex] = (byte) (Square.LAST - bits);
+				baseTable[tableIndex] = base;
 				
 				base += 1 << bits;
 			}
@@ -141,9 +131,13 @@ public class LineIndexer {
 	 */
 	public static int getLineIndex (final int direction, final int square, final long occupancy) {
 		final int cellIndex = getCellIndex (direction, square);
-		final Cell cell = table[cellIndex];
+
+		final long mask = maskTable[cellIndex];
+		final long coeff = coeffTable[cellIndex];
+		final int shift = shiftTable[cellIndex];
+		final int base = baseTable[cellIndex];
 		
-		return cell.base + (int) (((occupancy & cell.mask) * cell.coeff) >>> cell.shift);
+		return base + (int) (((occupancy & mask) * coeff) >>> shift);
 	}
 	
 	public static int getLastIndex() {
@@ -153,7 +147,7 @@ public class LineIndexer {
 	public static long getDirectionMask(final int direction, final int square) {
 		final int cellIndex = getCellIndex (direction, square);
 		
-		return table[cellIndex].mask;
+		return maskTable[cellIndex];
 	}
 	
 	public static FileRankOffset[] getDirectionOffsets (final int direction) {
@@ -161,7 +155,7 @@ public class LineIndexer {
 	}
 
 	public static long[] getCoeffs() {
-		return Arrays.copyOf(COEFFS, COEFFS.length);
+		return Arrays.copyOf(coeffTable, coeffTable.length);
 	}
 	
 	public static int[] getDepths() {

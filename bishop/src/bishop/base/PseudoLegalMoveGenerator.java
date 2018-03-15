@@ -380,18 +380,16 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     }
     
     private void updateCheckingMasksOnlyChecks() {
-    	final int kingSquare = position.getKingPosition(oppositeColor);
-    	
     	// Direct check
-		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, kingSquare, position.getOccupancy());
+		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, oppositeKingSquare, position.getOccupancy());
 		diagonalCheckingMask = LineAttackTable.getAttackMask(diagonalIndex);
 
-		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, kingSquare, position.getOccupancy());
+		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, oppositeKingSquare, position.getOccupancy());
 		orthogonalCheckingMask = LineAttackTable.getAttackMask(orthogonalIndex);
 		
 		// Indirect check
-		final long orthogonalFullMask = FigureAttackTable.getItem(PieceType.ROOK, kingSquare);
-		final long diagonalFullMask = FigureAttackTable.getItem(PieceType.BISHOP, kingSquare);
+		final long orthogonalFullMask = FigureAttackTable.getItem(PieceType.ROOK, oppositeKingSquare);
+		final long diagonalFullMask = FigureAttackTable.getItem(PieceType.BISHOP, oppositeKingSquare);
 		
 		final long rookMask = position.getBothColorPiecesMask(PieceType.ROOK);
 		final long bishopMask = position.getBothColorPiecesMask(PieceType.BISHOP);
@@ -407,7 +405,7 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
 		
 		for (BitLoop loop = new BitLoop(potentialIndirectMask); loop.hasNextSquare(); ) {
 			final int square = loop.getNextSquare();
-			final long betweenMask = BetweenTable.getItem(kingSquare, square) & position.getOccupancy();
+			final long betweenMask = BetweenTable.getItem(oppositeKingSquare, square) & position.getOccupancy();
 			
 			if (BitBoard.getSquareCount(betweenMask) == 1)
 				blockers |= betweenMask;
@@ -442,30 +440,46 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     	else
     		updateCheckingMasksAllMoves();
 
-    	final long possibleTargetSquaresForReductionInCheck = calculatePossibleTargetSquaresForReductionInCheck();
-    	    	
     	// Generate figure moves, starting with king - this speeds up legal move checking
-    	if (!generateShortMovingFigureMoves(PieceType.KING, notOwnSquares))
-    		return;
-    	
-    	if (!generateShortMovingFigureMoves(PieceType.KNIGHT, possibleTargetSquaresForReductionInCheck))
-    		return;
-    	
-    	if (!generateQueenMoves(possibleTargetSquaresForReductionInCheck))
-    		return;
-    	
-    	if (!generateRookMoves(possibleTargetSquaresForReductionInCheck))
-    		return;
-    	
-    	if (!generateBishopMoves(possibleTargetSquaresForReductionInCheck))
-    		return;
-    	
-    	if (!generatePawnMoves(possibleTargetSquaresForReductionInCheck))
-    		return;
+    	if (getGenerateMovesOfPiece(PieceType.KING)) {
+	    	if (!generateShortMovingFigureMoves(PieceType.KING, notOwnSquares))
+	    		return;
+    	}
 
-    	if (!generateCastlingMoves())
-    		return;
+    	final long possibleTargetSquaresForReductionInCheck = calculatePossibleTargetSquaresForReductionInCheck();
+    	
+    	if (getGenerateMovesOfPiece(PieceType.KNIGHT)) {
+	    	if (!generateShortMovingFigureMoves(PieceType.KNIGHT, possibleTargetSquaresForReductionInCheck))
+	    		return;
+    	}
+    	
+    	if (getGenerateMovesOfPiece(PieceType.QUEEN)) {
+	    	if (!generateQueenMoves(possibleTargetSquaresForReductionInCheck))
+	    		return;
+    	}
+    	
+    	if (getGenerateMovesOfPiece(PieceType.ROOK)) {
+	    	if (!generateRookMoves(possibleTargetSquaresForReductionInCheck))
+	    		return;
+    	}
+    	
+    	if (getGenerateMovesOfPiece(PieceType.BISHOP)) {
+	    	if (!generateBishopMoves(possibleTargetSquaresForReductionInCheck))
+	    		return;
+    	}
+    	
+    	if (getGenerateMovesOfPiece(PieceType.PAWN)) {
+	    	if (!generatePawnMoves(possibleTargetSquaresForReductionInCheck))
+	    		return;
+    	}
 
-    	generateEnPassantMoves();
+    	if (getGenerateMovesOfPiece(PieceType.KING)) {
+	    	if (!generateCastlingMoves())
+	    		return;
+    	}
+
+    	if (getGenerateMovesOfPiece(PieceType.PAWN)) {
+    		generateEnPassantMoves();
+    	}
     }
 }
