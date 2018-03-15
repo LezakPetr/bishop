@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="bishop:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/bishop_jar</output-path>
+    <root id="archive" name="bishop.jar">
+      <element id="module-output" name="bishop" />
+      <element id="module-output" name="bisGui" />
+      <element id="module-output" name="utils" />
+      <element id="module-output" name="bisGuiSwing" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/svgSalamander.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
