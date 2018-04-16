@@ -2,6 +2,7 @@ package bishop.engine;
 
 import bishop.base.Color;
 import bishop.base.PieceTypeEvaluations;
+import bishop.tablebase.Classification;
 
 public class Evaluation {
 	
@@ -64,5 +65,21 @@ public class Evaluation {
 	
 	public static boolean isDrawByRepetition (final int evaluation) {
 		return evaluation == DRAW_BY_REPETITION || evaluation == -DRAW_BY_REPETITION;
+	}
+
+	public static int getClassification (final int result) {
+		if (result == DRAW)
+			return Classification.DRAW;
+
+		if (result == MAX)
+			return Classification.ILLEGAL;
+
+		if (result == UNKNOWN)
+			return Classification.UNKNOWN;
+
+		if (result > 0)
+			return Classification.WIN;
+		else
+			return Classification.LOSE;
 	}
 }

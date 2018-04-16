@@ -90,6 +90,22 @@ public class TableResult {
 		}
 	}
 
+	public static int getClassification (final int result) {
+		if (result == DRAW)
+			return Classification.DRAW;
+
+		if (result == ILLEGAL)
+			return Classification.ILLEGAL;
+
+		if (isWin (result))
+			return Classification.WIN;
+
+		if (isLose (result))
+			return Classification.LOSE;
+
+		throw new RuntimeException("Unknown result " + result);
+	}
+
 	public static String toString(final int result) {
 		if (result == DRAW)
 			return "draw";
