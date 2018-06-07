@@ -75,7 +75,7 @@ public class TableSwitch implements IPositionResultSource {
 		bothColorMaterialSet = new ImmutableProbabilisticSet<>(bothColorHashes);
 	}
 	
-	private boolean canProcessSource(final IMaterialHashRead materialHash) {
+	public boolean canProcessSource(final IMaterialHashRead materialHash) {
 		return bothColorMaterialSet.contains(materialHash);
 	}
 	

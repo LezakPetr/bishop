@@ -1,6 +1,8 @@
 package utils;
 
 import java.util.Arrays;
+import java.util.function.IntFunction;
+import java.util.function.IntUnaryOperator;
 
 public class IntArrayBuilder {
 	
@@ -18,7 +20,15 @@ public class IntArrayBuilder {
 		if (defaultValue != 0)
 			Arrays.fill(array, defaultValue);
 	}
-	
+
+	public IntArrayBuilder(final int size, final IntUnaryOperator valueProducer) {
+		array = new int[size];
+		filled = new boolean[size];
+
+		for (int i= 0; i < size; i++)
+			array[i] = valueProducer.applyAsInt(i);
+	}
+
 	public IntArrayBuilder put (final int index, final int value) {
 		if (filled[index])
 			throw new RuntimeException("Dupplicate index: " + value);

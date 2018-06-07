@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import bishop.base.IMaterialHashRead;
 import bishop.base.MaterialHash;
 import bishop.base.Position;
 import bishop.tablebase.FileNameCalculator;
@@ -86,5 +87,9 @@ public class TablebasePositionEvaluator {
 
 	public ITableRead getTable(final MaterialHash materialHash) {
 		return tableSwitch.getTable (materialHash);
+	}
+
+	public boolean canEvaluateMaterial(final IMaterialHashRead materialHash) {
+		return tableSwitch.canProcessSource(materialHash);
 	}
 }

@@ -26,4 +26,5 @@ public interface IMaterialHashRead extends IPieceCounts, ICopyable<MaterialHash>
 	public boolean isAloneKing(final int color);
 	public boolean hasQueenRookOrPawn();
 	public boolean hasQueenRookOrPawnOnSide(final int color);
+	public boolean hasFigure();
 }
