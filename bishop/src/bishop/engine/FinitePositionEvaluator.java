@@ -1,11 +1,16 @@
 package bishop.engine;
 
+import bishop.base.Color;
+import bishop.base.PieceType;
+import bishop.base.PieceTypeEvaluations;
 import bishop.base.Position;
+import bishop.tablebase.Classification;
 
 public final class FinitePositionEvaluator {
 	
 	private RepeatedPositionRegister repeatedPositionRegister;
 	private TablebasePositionEvaluator tablebaseEvaluator;
+	private PawnEndingTableRegister pawnEndingTableRegister = new PawnEndingTableRegister(null);
 	private int evaluation;
 	
 	
@@ -52,6 +57,36 @@ public final class FinitePositionEvaluator {
 				return true;
 			}
 		}
+
+		// Pawn ending
+		if (depth > 3 && horizon > 3 * ISearchEngine.HORIZON_GRANULARITY && !position.getMaterialHash().hasFigure()) {
+			final PawnEndingKey key = new PawnEndingKey(
+					position.getPiecesMask(Color.WHITE, PieceType.PAWN),
+					position.getPiecesMask(Color.BLACK, PieceType.PAWN)
+			);
+
+			if (key.estimateComplexity() < 300) {
+				final PawnEndingTable table = pawnEndingTableRegister.getTable(key);
+				final int onTurn = position.getOnTurn();
+				final int kingOnTurnSquare = position.getKingPosition(onTurn);
+				final int kingNotOnTurnSquare = position.getKingPosition(Color.getOppositeColor(onTurn));
+				final int classification = table.getClassification(kingOnTurnSquare, kingNotOnTurnSquare, onTurn);
+
+				switch (classification) {
+					case Classification.WIN:
+						evaluation = PieceTypeEvaluations.QUEEN_EVALUATION;
+						return true;
+
+					case Classification.LOSE:
+						evaluation = -PieceTypeEvaluations.QUEEN_EVALUATION;
+						return true;
+
+					case Classification.DRAW:
+						evaluation = Evaluation.DRAW;
+						return true;
+				}
+			}
+		}
 		
 		return false;
 	}
@@ -62,6 +97,8 @@ public final class FinitePositionEvaluator {
 	
 	public void setTablebaseEvaluator (final TablebasePositionEvaluator evaluator) {
 		this.tablebaseEvaluator = evaluator;
+
+		pawnEndingTableRegister = new PawnEndingTableRegister(tablebaseEvaluator);
 	}
 	
 	public int getEvaluation() {

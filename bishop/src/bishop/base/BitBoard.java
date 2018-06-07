@@ -36,6 +36,26 @@ public class BitBoard {
 		
 		return board;
 	}
+
+	public static long of() {
+		return BitBoard.EMPTY;
+	}
+
+	public static long of(final int square1) {
+		return BitBoard.getSquareMask(square1);
+	}
+
+	public static long of(final int square1, final int square2) {
+		return BitBoard.getSquareMask(square1) | BitBoard.getSquareMask(square2);
+	}
+
+	public static long of(final int square1, final int square2, final int square3) {
+		return BitBoard.getSquareMask(square1) | BitBoard.getSquareMask(square2) | BitBoard.getSquareMask(square3);
+	}
+
+	public static long of (final int ...squares) {
+		return fromSquareArray(squares);
+	}
 	
 	public static void write (final PrintWriter writer, final long board) {
 		boolean first = true;
@@ -164,6 +184,13 @@ public class BitBoard {
 		result |= result >>> (4 * File.LAST);
 		
 		return result;
+	}
+
+	public static long extendForwardByColor (final int color, final long mask) {
+		if (color == Color.WHITE)
+			return extendForward(mask);
+		else
+			return extendBackward(mask);
 	}
 
 	public static boolean containsSquare(final long mask, final int square) {

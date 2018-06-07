@@ -67,7 +67,9 @@ public class AllTests {
 		PawnStructureEvaluatorTest.class,
 		PositionIoTest.class,
 		SimpleLinearModelTest.class,
-		NeuralTest.class
+		NeuralTest.class,
+		PawnEndingFileTableTest.class,
+		PawnEndingEvaluatorTest.class
 	};
 	
 	public static final void main (final String[] args) {

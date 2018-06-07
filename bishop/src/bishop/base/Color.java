@@ -3,6 +3,8 @@ package bishop.base;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.util.function.IntToLongFunction;
+import java.util.stream.IntStream;
 
 import utils.IoUtils;
 
@@ -89,5 +91,18 @@ public class Color {
 		}
 
 		return false;
+	}
+
+	public static IntStream stream() {
+		return IntStream.range(FIRST, LAST);
+	}
+
+	public static long[] mapToBitBoardArray(final IntToLongFunction mapper) {
+		final long[] table = new long[Color.LAST];
+
+		for (int color = Color.FIRST; color < Color.LAST; color++)
+			table[color] = mapper.applyAsLong(color);
+
+		return table;
 	}
 }

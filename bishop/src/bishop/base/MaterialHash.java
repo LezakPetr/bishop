@@ -267,4 +267,9 @@ public final class MaterialHash implements IMaterialHashRead {
 	public boolean hasQueenRookOrPawnOnSide(final int color) {
 		return (hash & MaterialHashConstants.getQueenRookOrPawnOnSide(color)) != 0;
 	}
+
+	@Override
+	public boolean hasFigure() {
+		return (hash & MaterialHashConstants.FIGURE_BOTH_COLOR_MASK) != 0;
+	}
 }

@@ -1,5 +1,7 @@
 package bishop.base;
 
+import java.util.stream.IntStream;
+
 public class MaterialHashConstants {
 	public static final long HASH_ALONE_KINGS = 0;
 	
@@ -16,6 +18,7 @@ public class MaterialHashConstants {
 	private static final long[][] PIECE_INCREMENT = new long[Color.LAST][PieceType.LAST];
 	private static final long[] COLOR_MASKS = new long[Color.LAST];
 	private static final long[] QUEEN_ROOK_OR_PAWN_MASKS = new long[Color.LAST];
+	private static final long[] FIGURE_MASKS = new long[Color.LAST];
 	
 	static {
 		int offset = 0;
@@ -29,10 +32,13 @@ public class MaterialHashConstants {
 				offset += BITS_PER_ITEM;
 			}
 		}
+
+		final int[] figures = IntStream.range(PieceType.PROMOTION_FIGURE_FIRST, PieceType.PROMOTION_FIGURE_LAST).toArray();
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			COLOR_MASKS[color] = combineMasks(PIECE_MASKS[color]);
 			QUEEN_ROOK_OR_PAWN_MASKS[color] = calculateMaskForPieces(color, PieceType.QUEEN, PieceType.ROOK, PieceType.PAWN);
+			FIGURE_MASKS[color] = calculateMaskForPieces(color, figures);
 		}
 	}
 
@@ -40,6 +46,7 @@ public class MaterialHashConstants {
 	public static final long BLACK_COLOR_MASK = getColorMask(Color.BLACK);
 
 	public static final long QUEEN_ROOK_OR_PAWN_BOTH_COLOR_MASK = combineMasks(QUEEN_ROOK_OR_PAWN_MASKS);
+	public static final long FIGURE_BOTH_COLOR_MASK = combineMasks(FIGURE_MASKS);
 	
 	/**
 	 * Returns offset of the count of given pieces. 

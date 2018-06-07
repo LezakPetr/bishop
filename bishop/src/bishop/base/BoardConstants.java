@@ -1,5 +1,6 @@
 package bishop.base;
 
+import bishop.tables.FigureAttackTable;
 import utils.IntBiPredicate;
 
 /**
@@ -417,6 +418,10 @@ public class BoardConstants {
 		return (color == Color.WHITE) ? 1 : -1;
 	}
 
+	public static int getPawnSquareOffset(final int color) {
+		return (color == Color.WHITE) ? File.COUNT : -File.COUNT;
+	}
+
 	/**
 	 * Returns mask of squares in front of given square on same and neighbour
 	 * files.
@@ -687,6 +692,15 @@ public class BoardConstants {
 		final int index = (fileMask << File.BIT_COUNT) | file;
 
 		return index;
+	}
+
+	/**
+	 * Returns mask of squares attacked by king on given square plus given square.
+	 * @param square king position
+	 * @return mask of squares with king distance <= 1 from given square
+	 */
+	public static long getKingNearSquares (final int square) {
+		return FigureAttackTable.getItem(PieceType.KING, square) | BitBoard.getSquareMask(square);
 	}
 
 }

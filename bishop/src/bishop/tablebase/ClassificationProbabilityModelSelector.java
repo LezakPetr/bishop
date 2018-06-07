@@ -11,12 +11,7 @@ import bishop.base.Position;
 public class ClassificationProbabilityModelSelector implements IProbabilityModelSelector {
 	
 	public static final int DEFAULT_CLASSIFICATION_HISTORY_LENGTH = 2;
-	
-	private static final int CLASSIFICATION_INDEX_DRAW = 0;
-	private static final int CLASSIFICATION_INDEX_WIN = 1;
-	private static final int CLASSIFICATION_INDEX_LOSE = 2;
-	private static final int CLASSIFICATION_INDEX_COUNT = 3;
-	
+
 	private final int symbolCount;
 	private final int classificationHistoryLength;
 	private final int[] previousSymbols;
@@ -34,9 +29,9 @@ public class ClassificationProbabilityModelSelector implements IProbabilityModel
 		this.previousSymbols = new int[positionIndexCount];
 		this.classificationHistory = new int[positionIndexCount];
 		
-		this.previousSymbolClassification = (previousWin) ? CLASSIFICATION_INDEX_WIN : CLASSIFICATION_INDEX_LOSE;
+		this.previousSymbolClassification = (previousWin) ? Classification.WIN : Classification.LOSE;
 		this.symbolClassificationIndices = createSymbolClassificationIndices (symbolToResultMap);;
-		this.classificationModulus = Utils.intPower (CLASSIFICATION_INDEX_COUNT, classificationHistoryLength);
+		this.classificationModulus = Utils.intPower (Classification.COUNT_LEGAL, classificationHistoryLength);
 		
 		resetSymbols();
 	}
@@ -98,13 +93,13 @@ public class ClassificationProbabilityModelSelector implements IProbabilityModel
 		if (classificationIndex == previousSymbolClassification)
 			previousSymbols[positionIndex] = symbol;
 		
-		classificationHistory[positionIndex] = (CLASSIFICATION_INDEX_COUNT * classificationHistory[positionIndex] + classificationIndex) % classificationModulus;
+		classificationHistory[positionIndex] = (Classification.COUNT_LEGAL * classificationHistory[positionIndex] + classificationIndex) % classificationModulus;
 	}
 	
 	@Override
 	public void resetSymbols() {
 		Arrays.fill(previousSymbols, symbolCount);
-		Arrays.fill(classificationHistory, CLASSIFICATION_INDEX_DRAW);
+		Arrays.fill(classificationHistory, Classification.DRAW);
 	}
 	
 	@Override
@@ -121,13 +116,13 @@ public class ClassificationProbabilityModelSelector implements IProbabilityModel
 			final byte classificationIndex;
 			
 			if (TableResult.isWin(result))
-				classificationIndex = CLASSIFICATION_INDEX_WIN;
+				classificationIndex = Classification.WIN;
 			else {
 				if (TableResult.isLose(result))
-					classificationIndex = CLASSIFICATION_INDEX_LOSE;
+					classificationIndex = Classification.LOSE;
 				else {
 					if (result == TableResult.DRAW)
-						classificationIndex = CLASSIFICATION_INDEX_DRAW;
+						classificationIndex = Classification.DRAW;
 					else
 						throw new RuntimeException("Unknown result");
 				}
@@ -144,7 +139,7 @@ public class ClassificationProbabilityModelSelector implements IProbabilityModel
 	}
 
 	public boolean isPreviousWin() {
-		return previousSymbolClassification == CLASSIFICATION_INDEX_WIN;
+		return previousSymbolClassification == Classification.WIN;
 	}
 
 }
