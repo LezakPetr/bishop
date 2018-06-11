@@ -13,11 +13,15 @@ public class PawnEndingKey {
 
     private final int hash;
 
-    public PawnEndingKey (final long... pawnMasks) {
-        this.whitePawns = pawnMasks[Color.WHITE];
-        this.blackPawns = pawnMasks[Color.BLACK];
+    public PawnEndingKey (final long whitePawns, final long blackPawns) {
+        this.whitePawns = whitePawns;
+        this.blackPawns = blackPawns;
 
         this.hash = Mixer.mixLongToInt(31 * whitePawns + blackPawns);
+    }
+
+    public PawnEndingKey (final long... pawnMasks) {
+        this(pawnMasks[Color.WHITE], pawnMasks[Color.BLACK]);
     }
 
     public long getWhitePawns() {
@@ -64,8 +68,15 @@ public class PawnEndingKey {
         return "white pawns = " + BitBoard.toString(whitePawns) + ", black pawns = " + BitBoard.toString(blackPawns);
     }
 
-    public boolean hasPromotedPawn() {
-        return (getPawnOccupancy() & BoardConstants.RANK_18_MASK) != 0;
+    public int getPromotedPawnColor() {
+        final long occupancy = getPawnOccupancy();
+
+        for (int color = Color.FIRST; color < Color.LAST; color++) {
+            if ((occupancy & BoardConstants.getRankMask(BoardConstants.getPawnPromotionRank(color))) != 0)
+                return color;
+        }
+
+        return Color.NONE;
     }
 
     public PawnEndingKey removePawn(final int square) {

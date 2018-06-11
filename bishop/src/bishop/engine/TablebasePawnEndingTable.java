@@ -5,6 +5,9 @@ import bishop.tablebase.Classification;
 
 import java.util.Arrays;
 
+/**
+ * Table that queries tablebaseEvaluator and caches the results.
+ */
 public class TablebasePawnEndingTable extends PawnEndingTable {
 
     private final PawnEndingKey key;
@@ -19,6 +22,8 @@ public class TablebasePawnEndingTable extends PawnEndingTable {
         this.tablebaseEvaluator = tablebaseEvaluator;
     }
 
+    // Return initial table - table filled with UNKNOWN classification.
+    // This forces the query to tablebaseEvaluator at first query to the table cells.
     private static long[][] getInitialTable() {
         final long[][] table = new long[Color.LAST][Square.LAST];
 
