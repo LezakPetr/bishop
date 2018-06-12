@@ -52,5 +52,9 @@ public class ColumnVector implements IVector {
 	public IVectorIterator getNonZeroElementIterator() {
 		return new DenseNonZeroElementIterator(this);
 	}
-	
+
+	@Override
+	public boolean isImmutable() {
+		return baseMatrix.isImmutable();
+	}
 }

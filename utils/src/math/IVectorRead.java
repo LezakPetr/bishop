@@ -20,4 +20,10 @@ public interface IVectorRead {
 	public Density density();
 	
 	public IVectorIterator getNonZeroElementIterator();
+
+	/**
+	 * Returns true if it is guaranteed that the vector will not change value.
+	 * @return if vector is immutable
+	 */
+	public boolean isImmutable();
 }

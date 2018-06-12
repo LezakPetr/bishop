@@ -1,5 +1,7 @@
 package neural;
 
+import regression.Sample;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

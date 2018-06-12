@@ -1,5 +1,7 @@
 package neural;
 
+import regression.Sample;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -50,7 +52,7 @@ public class LearningPerceptronNetwork extends PerceptronNetworkBase<ILearningPe
 	public void learnFromSample (final Sample sample, final float alpha) {
 		propagateSampleAndCalculateError(sample);
 		backPropagateError();
-		updateWeights(sample.getWeight() * alpha);
+		updateWeights((float) sample.getWeight() * alpha);
 	}
 	
 	public void propagateSampleAndCalculateError (final Sample sample) {
@@ -62,12 +64,12 @@ public class LearningPerceptronNetwork extends PerceptronNetworkBase<ILearningPe
 
 	private void setSampleInput(final Sample sample) {
 		for (int i = 0; i < getInputNodeCount(); i++)
-			getInputLayer().addInput(i, sample.getInput (i));
+			getInputLayer().addInput(i, (float) sample.getInput().getElement(i));
 	}
 	
 	private void setSampleExpectedOutput(final Sample sample) {
 		for (int i = 0; i < getOutputNodeCount(); i++)
-			outputLayer.setExpectedInput(i, sample.getOutput (i));
+			outputLayer.setExpectedInput(i, (float) sample.getOutput().getElement(i));
 	}
 	
 	private void updateWeights(final float step) {

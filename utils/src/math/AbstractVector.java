@@ -43,5 +43,10 @@ abstract public class AbstractVector implements IVector {
 		
 		return hash;
 	}
+
+	@Override
+	public boolean isImmutable() {
+		return frozen;
+	}
 	
 }

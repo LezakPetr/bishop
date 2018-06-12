@@ -49,4 +49,9 @@ public class SubVector implements IVector {
 	public IVectorIterator getNonZeroElementIterator() {
 		return new SubVectorIterator(baseVector.getNonZeroElementIterator(), offset, offset + dimension);
 	}
+
+	@Override
+	public boolean isImmutable() {
+		return baseVector.isImmutable();
+	}
 }

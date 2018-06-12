@@ -57,8 +57,19 @@ public interface IMatrixRead {
 			public IVectorIterator getNonZeroElementIterator() {
 				return new DenseNonZeroElementIterator(this);
 			}
+
+			@Override
+			public boolean isImmutable() {
+				return IMatrixRead.this.isImmutable();
+			}
 		};
 	}
 
 	public Density density();
+
+	/**
+	 * Returns true if it is guaranteed that the matrix will not change value.
+	 * @return if matrix is immutable
+	 */
+	public boolean isImmutable();
 }

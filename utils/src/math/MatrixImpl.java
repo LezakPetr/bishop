@@ -191,4 +191,10 @@ public class MatrixImpl implements IMatrix {
 		
 		return result.toString();
 	}
+
+	@Override
+	public boolean isImmutable() {
+		return frozen;
+	}
+
 }

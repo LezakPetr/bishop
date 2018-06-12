@@ -13,7 +13,7 @@ import neural.LearningOutputPerceptronLayer;
 import neural.LearningPerceptronNetwork;
 import neural.Optimizer;
 import neural.PerceptronNetwork;
-import neural.Sample;
+import regression.Sample;
 
 public class NeuralTest {
 	

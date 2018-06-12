@@ -41,7 +41,35 @@ public class Vectors {
 	public static IVectorRead getZeroVector (final int dimension) {
 		return sparse(dimension).freeze();
 	}
-	
+
+	/**
+	 * Returns dense vector with given elements.
+	 * @param elements elements
+	 * @return vector
+	 */
+	public static IVectorRead of (final double... elements) {
+		final IVector v = dense(elements.length);
+
+		for (int i = 0; i < elements.length; i++)
+			v.setElement(i, elements[i]);
+
+		return v.freeze();
+	}
+
+	/**
+	 * Returns dense vector with given elements.
+	 * @param elements elements
+	 * @return vector
+	 */
+	public static IVectorRead of (final float... elements) {
+		final IVector v = dense(elements.length);
+
+		for (int i = 0; i < elements.length; i++)
+			v.setElement(i, elements[i]);
+
+		return v.freeze();
+	}
+
 	/**
 	 * Adds two vectors.
 	 * @param a vector
@@ -164,5 +192,15 @@ public class Vectors {
 	public static IVector copy(final IVectorRead orig) {
 		return UnaryVectorAlgorithm.getInstance().processElements(orig, DoubleUnaryOperator.identity(), new VectorSetter()).getMutableVector();
 	}
-		
+
+	/**
+	 * Returns imutable copy of given vector.
+	 */
+	public static IVectorRead immutableCopy(final IVectorRead orig) {
+		if (orig.isImmutable())
+			return orig;
+		else
+			return copy(orig).freeze();
+	}
+
 }
