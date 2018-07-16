@@ -1,9 +1,8 @@
 package collections;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public final class ImmutableList<E> extends ImmutableListBase<E> {
 	
@@ -63,6 +62,19 @@ public final class ImmutableList<E> extends ImmutableListBase<E> {
 			return this;
 		}
 
+		@SuppressWarnings("unchecked")
+		private Builder<E> addAll(final Builder<? extends E> that) {
+			Objects.requireNonNull(that);
+
+			checkNotClosed();
+			ensureCapacity (this.size + that.size);
+
+			for (int i = 0; i < that.size; i++)
+				add ((E) that.data[i]);
+
+			return this;
+		}
+
 		private void ensureCapacity(final int capacity) {
 			if (data.length < capacity) {
 				final int newCapacity = Math.max((int) Math.min(2L * data.length, Integer.MAX_VALUE), capacity);
@@ -75,7 +87,7 @@ public final class ImmutableList<E> extends ImmutableListBase<E> {
 				throw new RuntimeException("Builder already closed");
 		}
 		
-		public List<E> build() {
+		public ImmutableList<E> build() {
 			checkNotClosed();
 			
 			if (data.length != size)
@@ -149,11 +161,20 @@ public final class ImmutableList<E> extends ImmutableListBase<E> {
 		return new Builder<>();
 	}
 
-	public static <E> List<E> copyOf(final List<E> orig) {
+	public static <E> ImmutableList<E> copyOf(final List<E> orig) {
 		if (orig instanceof ImmutableList<?>)
 			return (ImmutableList<E>) orig;
 		else
 			return ImmutableList.<E>builder().addAll (orig).build();
 	}
-	
+
+	public static <E> Collector<E, Builder<E>, ImmutableList<E>> collector() {
+		return Collector.of(
+				Builder::new,
+				Builder::add,
+				Builder::addAll,
+				Builder::build,
+				new Collector.Characteristics[] {}
+		);
+	}
 }

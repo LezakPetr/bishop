@@ -8,17 +8,7 @@ import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
 import utils.Logger;
-import utilsTest.ImmutableOrdinalMapTest;
-import utilsTest.ImmutableProbabilisticSetTest;
-import utilsTest.MatrixTest;
-import utilsTest.MixerTest;
-import utilsTest.NeuralTest;
-import utilsTest.NumberArrayTest;
-import utilsTest.ParallelTaskRunnerTest;
-import utilsTest.RangeTest;
-import utilsTest.SimpleLinearModelTest;
-import utilsTest.VectorAlgorithmsTest;
-import utilsTest.VectorTest;
+import utilsTest.*;
 import bishop.base.GlobalSettings;
 
 
@@ -69,7 +59,10 @@ public class AllTests {
 		SimpleLinearModelTest.class,
 		NeuralTest.class,
 		PawnEndingFileTableTest.class,
-		PawnEndingEvaluatorTest.class
+		PawnEndingEvaluatorTest.class,
+		GradientOptimizerTest.class,
+		ScalarFieldTest.class,
+		LogisticRegressionTest.class
 	};
 	
 	public static final void main (final String[] args) {

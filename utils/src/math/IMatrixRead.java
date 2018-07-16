@@ -31,7 +31,7 @@ public interface IMatrixRead {
 	public IVectorRead getRowVector(final int index);
 	
 	public default IVectorRead getColumnVector(final int column) {
-		return new IVectorRead() {
+		return new AbstractVectorRead() {
 			@Override
 			public IVectorRead subVector(final int begin, final int end) {
 				// TODO Auto-generated method stub

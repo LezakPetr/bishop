@@ -1,7 +1,7 @@
 package math;
 
 
-public class SubVector implements IVector {
+public class SubVector extends AbstractVectorRead implements IVector {
 	
 	private final IVector baseVector;
 	private final int offset;

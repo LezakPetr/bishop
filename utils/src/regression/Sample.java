@@ -1,6 +1,5 @@
 package regression;
 
-import math.IVector;
 import math.IVectorRead;
 import math.Vectors;
 

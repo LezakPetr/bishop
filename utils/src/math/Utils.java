@@ -113,5 +113,14 @@ public class Utils {
 	public static int roundToPercents(final double value) {
 		return roundToInt(100.0 * value);
 	}
+
+	/**
+	 * Returns square of given number.
+	 * @param x number
+	 * @return x^2
+	 */
+	public static double sqr (final double x) {
+		return x * x;
+	}
 	
 }

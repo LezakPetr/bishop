@@ -1,6 +1,6 @@
 package math;
 
-public class ColumnVector implements IVector {
+public class ColumnVector extends AbstractVectorRead implements IVector {
 
 	private final IMatrix baseMatrix;
 	private final int rowOffset;

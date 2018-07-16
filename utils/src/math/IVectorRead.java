@@ -1,6 +1,6 @@
 package math;
 
-public interface IVectorRead {
+public interface IVectorRead extends Comparable<IVectorRead> {
 	/**
 	 * Returns dimension of this vector.
 	 * @return number of elements of this vector

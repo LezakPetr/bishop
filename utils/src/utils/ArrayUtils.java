@@ -25,6 +25,18 @@ public class ArrayUtils {
 		return result;
 	}
 
+	public static int compare (final int[] a, final int[] b) {
+		if (a.length != b.length)
+			return Integer.compare(a.length, b.length);
+
+		for (int i = 0; i < a.length; i++) {
+			if (a[i] != b[i])
+				return Integer.compare(a[i], b[i]);
+		}
+
+		return 0;
+	}
+
 	public static <T> int findSameObject(final T[] array, final T item) {
 		for (int i = 0; i < array.length; i++) {
 			if (array[i] == item)

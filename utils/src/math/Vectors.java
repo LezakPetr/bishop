@@ -1,5 +1,6 @@
 package math;
 
+import java.util.Random;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.IntFunction;
 
@@ -41,6 +42,19 @@ public class Vectors {
 	public static IVectorRead getZeroVector (final int dimension) {
 		return sparse(dimension).freeze();
 	}
+
+    /**
+     * Returns immutable unit vector with given dimension.
+     * @param index index of element with value 1
+     * @param dimension dimension of vector
+     * @return unit vector
+     */
+    public static IVectorRead getUnitVector (final int index, final int dimension) {
+        final IVector result = sparse(dimension);
+        result.setElement(index, 1);
+
+        return result.freeze();
+    }
 
 	/**
 	 * Returns dense vector with given elements.
@@ -194,13 +208,28 @@ public class Vectors {
 	}
 
 	/**
-	 * Returns imutable copy of given vector.
+	 * Returns immutable copy of given vector.
 	 */
 	public static IVectorRead immutableCopy(final IVectorRead orig) {
 		if (orig.isImmutable())
 			return orig;
 		else
 			return copy(orig).freeze();
+	}
+
+	/**
+	 * Returns frozen random vector with elements in range <-1; +1>.
+	 * @param rng random number generator
+	 * @param dimension dimension of the vector
+	 * @return random vector
+	 */
+	public static IVectorRead getRandomVector (final Random rng, final int dimension) {
+		final IVector v = Vectors.dense(dimension);
+
+		for (int i = 0; i < dimension; i++)
+			v.setElement(i, 2 * rng.nextDouble() - 1);
+
+		return v.freeze();
 	}
 
 }
