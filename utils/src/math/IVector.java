@@ -7,6 +7,13 @@ public interface IVector extends IVectorRead {
 	 * @value value of element
 	 */
 	public IVector setElement (final int index, final double value);
+
+	public default IVector addElement (final int index, final double value) {
+		final double oldValue = getElement(index);
+		setElement(index, value + oldValue);
+
+		return this;
+	}
 	
 	public IVectorRead freeze();
 

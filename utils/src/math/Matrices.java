@@ -184,6 +184,26 @@ public class Matrices {
 		
 		return result.freeze();
 	}
+
+	/**
+	 * Multiplies matrix withconstant.
+	 * @param c constant
+	 * @param m matrix
+	 * @return matrix c * m
+	 */
+	public static IMatrixRead multiply (final double c, final IMatrixRead m) {
+		final int rowCount = m.getRowCount();
+		final int columnCount = m.getColumnCount();
+
+		final IMatrix result = createMutableMatrix(m.density(), rowCount, columnCount);
+
+		for (int row = 0; row < rowCount; row++) {
+			for (IVectorIterator it = m.getRowVector(row).getNonZeroElementIterator(); it.isValid(); it.next())
+				result.setElement(row, it.getIndex(), c * it.getElement());
+		}
+
+		return result.freeze();
+	}
 	
 	private static Density minDensity (final Density a, final Density b) {
 		return (a == Density.SPARSE && b == Density.SPARSE) ? Density.SPARSE : Density.DENSE;
@@ -239,7 +259,7 @@ public class Matrices {
 		return result.freeze();
 	}
 
-	
+
 	/**
 	 * Returns maximal absolute element in the matrix.
 	 * @param matrix matrix

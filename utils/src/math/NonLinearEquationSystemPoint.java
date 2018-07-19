@@ -22,4 +22,5 @@ public class NonLinearEquationSystemPoint {
     public IMatrixRead getJacobian() {
         return jacobian;
     }
+
 }

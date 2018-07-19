@@ -23,8 +23,8 @@ public class LogisticRegressionTest {
     private static final double C5 = -0.5;
 
 
-    private static final long SAMPLE_COUNT = 20000;
-    private static final double EPSILON = 0.5;
+    private static final long SAMPLE_COUNT = 100000;
+    private static final double EPSILON = 0.2;
 
     private ISample getRandomSample() {
         final double x0 = random(-2, 2.5);
@@ -60,8 +60,12 @@ public class LogisticRegressionTest {
         regression.addFeature(PolynomialScalarField.parse(2, "x0*x1"));
 
         regression.initialize();
-        regression.setMaxIterations(1000);
-        regression.setAlpha (1e-1);
+
+        for (int i = 1; i < 6; i++)
+            regression.addRegularization(i);
+
+        regression.setMaxIterations(100);
+        regression.setLambda (1e-3);
 
         final List<ISample> randomSamples = getRandomSamples(SAMPLE_COUNT);
         regression.addSamples (randomSamples);
