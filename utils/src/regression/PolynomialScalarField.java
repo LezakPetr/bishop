@@ -1,9 +1,8 @@
 package regression;
 
+import collections.ImmutableEnumSet;
 import collections.ImmutableList;
-import math.IVector;
-import math.IVectorRead;
-import math.Vectors;
+import math.*;
 import utils.SynchronizedLazy;
 
 import java.util.Collection;
@@ -110,19 +109,71 @@ public class PolynomialScalarField implements IScalarField {
      * Returns value and gradient at given point.
      */
     @Override
-    public ScalarWithGradient calculateValueAndGradient(final IVectorRead x, final Void parameters) {
-        final double value = this.apply(x);
-        final IVector gradient = Vectors.dense(inputDimension);
-        final ImmutableList<PolynomialScalarField> derivations = this.derivations.get();
+    public ScalarPointCharacteristics calculate(final IVectorRead x, final Void parameters, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
+        // Value
+        final double value = (characteristics.contains(ScalarFieldCharacteristic.VALUE)) ? this.apply(x) : Double.NaN;
 
-        for (int i = 0; i < inputDimension; i++)
-            gradient.setElement(i, derivations.get(i).apply(x));
+        // Gradient
+        final IVector gradient;
 
-        return new ScalarWithGradient(
-            value,
-            gradient.freeze()
+        if (characteristics.contains(ScalarFieldCharacteristic.GRADIENT)) {
+            final ImmutableList<PolynomialScalarField> derivations = this.derivations.get();
+            gradient = Vectors.dense(inputDimension);
+
+            for (int i = 0; i < inputDimension; i++)
+                gradient.setElement(i, derivations.get(i).apply(x));
+        }
+        else
+            gradient = null;
+
+        // Hessian
+        final IMatrix hessian;
+
+        if (characteristics.contains(ScalarFieldCharacteristic.HESSIAN)) {
+            final ImmutableList<PolynomialScalarField> derivations = this.derivations.get();
+            hessian = Matrices.createMutableMatrix(Density.DENSE, inputDimension, inputDimension);
+
+            for (int row = 0; row < inputDimension; row++) {
+                final ImmutableList<PolynomialScalarField> rowDerivations = derivations.get(row).derivations.get();
+
+                for (int column = 0; column < inputDimension; column++)
+                    hessian.setElement(row, column, rowDerivations.get(column).apply(x));
+            }
+        }
+        else
+            hessian = null;
+
+        return new ScalarPointCharacteristics(
+                () -> value,
+                () -> gradient.freeze(),
+                () -> hessian.freeze(),
+                characteristics
         );
     }
 
+    public PolynomialScalarField add (final PolynomialScalarField that) {
+        final SortedMap<PolynomialTermKey, PolynomialTerm> termMap = new TreeMap<>();
+
+        for (PolynomialTerm term: this.termMap.values())
+            termMap.merge(term.getKey(), term, PolynomialTerm::add);
+
+        for (PolynomialTerm term: that.termMap.values())
+            termMap.merge(term.getKey(), term, PolynomialTerm::add);
+
+        return new PolynomialScalarField(inputDimension, termMap);
+    }
+
+    public PolynomialScalarField multiply (final PolynomialScalarField that) {
+        final SortedMap<PolynomialTermKey, PolynomialTerm> termMap = new TreeMap<>();
+
+        for (PolynomialTerm thisTerm: this.termMap.values()) {
+            for (PolynomialTerm thatTerm: that.termMap.values()) {
+                final PolynomialTerm product = thisTerm.multiply(thatTerm);
+                termMap.merge(product.getKey(), product, PolynomialTerm::add);
+            }
+        }
+
+        return new PolynomialScalarField(inputDimension, termMap);
+    }
 
 }

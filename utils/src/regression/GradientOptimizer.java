@@ -19,7 +19,7 @@ public class GradientOptimizer<P> {
     private long maxIterations = 30000;
     private double alpha = 1e-2;
     private IVectorRead optimumInput;
-    private ScalarWithGradient optimumOutput;
+    private ScalarPointCharacteristics optimumOutput;
     private double maxTerminationGradientLength;
 
     /**
@@ -54,7 +54,7 @@ public class GradientOptimizer<P> {
     public void optimize(final P parameter) {
         double currentAlpha = alpha;
         IVectorRead previousInput = optimumInput;
-        ScalarWithGradient previousOutput = field.calculateValueAndGradient(previousInput, parameter);
+        ScalarPointCharacteristics previousOutput = field.calculate(previousInput, parameter, ScalarFieldCharacteristic.SET_VALUE_GRADIENT);
         optimumOutput = previousOutput;
 
         for (long i = 0; i < maxIterations; i++) {
@@ -68,9 +68,9 @@ public class GradientOptimizer<P> {
                     Vectors.multiply(currentAlpha, previousGradient)
             );
 
-            final ScalarWithGradient nextOutput = field.calculateValueAndGradient(nextInput, parameter);
+            final ScalarPointCharacteristics nextOutput = field.calculate(nextInput, parameter, ScalarFieldCharacteristic.SET_VALUE_GRADIENT);
 
-            if (nextOutput.getScalar() <= optimumOutput.getScalar()) {
+            if (nextOutput.getValue() <= optimumOutput.getValue()) {
                 optimumInput = nextInput;
                 optimumOutput = nextOutput;
             }
@@ -86,7 +86,7 @@ public class GradientOptimizer<P> {
             currentAlpha = Math.max(Math.min(currentAlpha, MAX_ALPHA), MIN_ALPHA);
 
             if (i % 100 == 0)
-                System.out.println("val = " + optimumOutput.getScalar() + "; alpha = " + currentAlpha);
+                System.out.println("val = " + optimumOutput.getValue() + "; alpha = " + currentAlpha);
         }
     }
 
@@ -103,7 +103,7 @@ public class GradientOptimizer<P> {
      * @return optimum output
      */
     public double getOptimumOutput() {
-        return optimumOutput.getScalar();
+        return optimumOutput.getValue();
     }
 
     public void setMaxIterations (final long count) {

@@ -1,7 +1,7 @@
 package regression;
 
+import collections.ImmutableEnumSet;
 import math.IVectorRead;
-import math.Vectors;
 
 import java.util.function.Function;
 
@@ -20,8 +20,8 @@ public class ParameterMappingScalarField<P, S> implements IParametricScalarField
     }
 
     @Override
-    public ScalarWithGradient calculateValueAndGradient(final IVectorRead x, final P parameter) {
-        return baseField.calculateValueAndGradient(x, parameterMapper.apply(parameter));
+    public ScalarPointCharacteristics calculate(final IVectorRead x, final P parameter, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
+        return baseField.calculate(x, parameterMapper.apply(parameter), characteristics);
     }
 
     @Override

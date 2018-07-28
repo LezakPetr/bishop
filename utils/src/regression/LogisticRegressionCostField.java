@@ -9,6 +9,7 @@ public class LogisticRegressionCostField extends SampleCostFieldImpl {
             valueField,
             LogisticRegressionCostField::errorCostFunction,
             LogisticRegressionCostField::derivation,
+            LogisticRegressionCostField::secondDerivation,
             outputIndex
         );
     }
@@ -32,6 +33,12 @@ public class LogisticRegressionCostField extends SampleCostFieldImpl {
         final double value = sigmoid(z);
 
         return value - y;
+    }
+
+    public static double secondDerivation (final double z, final double y) {
+        final double value = sigmoid(z);
+
+        return value * (1 - value);
     }
 
 }

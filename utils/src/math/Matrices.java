@@ -2,6 +2,7 @@ package math;
 
 import java.util.Objects;
 import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleUnaryOperator;
 
 public class Matrices {
 	
@@ -70,7 +71,11 @@ public class Matrices {
 		
 		return new MatrixImpl(rowCount, columnCount, rows);
 	}
-	
+
+	public static IMatrixRead getZeroMatrix (final int rowCount, final int columnCount) {
+		return createMutableMatrix(Density.SPARSE, rowCount, columnCount);
+	}
+
 	public static IMatrixRead getDiagonalMatrix (final IVectorRead diagonalVector) {
 		final int dimension = diagonalVector.getDimension();
 		final IMatrix result = createMutableMatrix(Density.SPARSE, dimension, dimension);
@@ -308,6 +313,17 @@ public class Matrices {
 		}
 		
 		return new MatrixImpl(rowCount, columnCount, result).freeze();
-	} 
-	
+	}
+
+	/**
+	 * Returns immutable copy of given matrix.
+	 */
+	public static IMatrixRead immutableCopy(final IMatrixRead orig) {
+		if (orig.isImmutable())
+			return orig;
+		else
+			return orig.copy().freeze();
+	}
+
+
 }

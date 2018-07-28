@@ -42,7 +42,7 @@ public class PolynomialTermKey implements Comparable<PolynomialTermKey> {
      * @return this * that
      */
     public PolynomialTermKey multiply(final PolynomialTermKey that) {
-        final IVectorRead resultExponents = Vectors.elementMultiply(this.exponents, that.exponents);
+        final IVectorRead resultExponents = Vectors.plus(this.exponents, that.exponents);
 
         return new PolynomialTermKey(resultExponents);
     }

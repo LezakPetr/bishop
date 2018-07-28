@@ -1,5 +1,6 @@
 package regression;
 
+import collections.ImmutableEnumSet;
 import math.IVectorRead;
 
 public class ScalarFieldWithStoredParameter<P> implements IScalarField {
@@ -25,18 +26,9 @@ public class ScalarFieldWithStoredParameter<P> implements IScalarField {
     }
 
     @Override
-    public ScalarWithGradient calculateValueAndGradient(final IVectorRead x, final Void parameter) {
-        return baseField.calculateValueAndGradient(x, this.parameter);
+    public ScalarPointCharacteristics calculate(final IVectorRead x, final Void parameter, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
+        return baseField.calculate(x, this.parameter, characteristics);
     }
 
-    @Override
-    public double calculateValue(final IVectorRead x, final Void parameter) {
-        return baseField.calculateValue(x, this.parameter);
-    }
-
-    @Override
-    public IVectorRead calculateGradient(final IVectorRead x, final Void parameter) {
-        return baseField.calculateGradient(x, this.parameter);
-    }
 
 }

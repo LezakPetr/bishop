@@ -11,6 +11,7 @@ public class LinearRegressionCostField extends SampleCostFieldImpl {
             valueField,
             (c, e) -> Utils.sqr(c - e),
             (c, e) -> 2 * (c - e),
+            (c, e) -> 2,
             outputIndex
         );
     }

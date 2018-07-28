@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import regression.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -50,19 +51,21 @@ public class LogisticRegressionTest {
 
     @Test
     public void testRegression() {
-        final LogisticRegression regression = new LogisticRegression(2, 0);
+        final List<IScalarField> featureList = new ArrayList<>();
+        featureList.add(PolynomialScalarField.parse(2, "1"));
+        featureList.add(PolynomialScalarField.parse(2, "x0"));
+        featureList.add(PolynomialScalarField.parse(2, "x1"));
+        featureList.add(PolynomialScalarField.parse(2, "x0^2"));
+        featureList.add(PolynomialScalarField.parse(2, "x1^2"));
+        featureList.add(PolynomialScalarField.parse(2, "x0*x1"));
 
-        regression.addFeature(PolynomialScalarField.parse(2, "1"));
-        regression.addFeature(PolynomialScalarField.parse(2, "x0"));
-        regression.addFeature(PolynomialScalarField.parse(2, "x1"));
-        regression.addFeature(PolynomialScalarField.parse(2, "x0^2"));
-        regression.addFeature(PolynomialScalarField.parse(2, "x1^2"));
-        regression.addFeature(PolynomialScalarField.parse(2, "x0*x1"));
-
-        regression.initialize();
+        final List<Integer> regularizedFeatures = new ArrayList<>();
 
         for (int i = 1; i < 6; i++)
-            regression.addRegularization(i);
+            regularizedFeatures.add(i);
+
+
+        final LogisticRegression regression = new LogisticRegression(2, 0, featureList, regularizedFeatures);
 
         regression.setMaxIterations(100);
         regression.setLambda (1e-3);

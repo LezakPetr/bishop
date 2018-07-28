@@ -232,4 +232,23 @@ public class Vectors {
 		return v.freeze();
 	}
 
+	private static Density maxDensity (final Density a, final Density b) {
+		return (a == Density.SPARSE || b == Density.SPARSE) ? Density.SPARSE : Density.DENSE;
+	}
+
+	public static IMatrixRead cartesianProduct (final IVectorRead a, final IVectorRead b) {
+		final int rowCount = a.getDimension();
+		final int columnCount = b.getDimension();
+
+		final IMatrix result = Matrices.createMutableMatrix(maxDensity(a.density(), b.density()), rowCount, columnCount);
+
+		for (IVectorIterator itA = a.getNonZeroElementIterator(); itA.isValid(); itA.next()) {
+			for (IVectorIterator itB = a.getNonZeroElementIterator(); itB.isValid(); itB.next()) {
+				result.setElement(itA.getIndex(), itB.getIndex(), itA.getElement() * itB.getElement());
+			}
+		}
+
+		return result;
+	}
+
 }

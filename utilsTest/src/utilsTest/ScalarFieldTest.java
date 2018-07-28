@@ -72,14 +72,33 @@ public class ScalarFieldTest {
     private void testSingleFieldGradient(final IScalarField field) {
         for (int i = 0; i < COUNT; i++) {
             final IVectorRead point = Vectors.getRandomVector(rng, field.getInputDimension());
-            final ScalarWithGradient scalarWithGradient = field.calculateValueAndGradient(point, null);
+            final ScalarPointCharacteristics scalarPointCharacteristics = field.calculate(point, null, ScalarFieldCharacteristic.SET_GRADIENT);
 
             for (int j = 0; j < field.getInputDimension(); j++) {
                 final IVectorRead dPoint = Vectors.multiply(EPSILON, Vectors.getUnitVector(j, field.getInputDimension()));
                 final double d1 = field.calculateValue(Vectors.minus(point, dPoint));
                 final double d2 = field.calculateValue(Vectors.plus(point, dPoint));
                 final double expectedDerivation = (d2 - d1) / (2 * EPSILON);
-                Assert.assertEquals(expectedDerivation, scalarWithGradient.getGradient().getElement(j), MAX_DERIVATION_DIFF);
+                Assert.assertEquals(expectedDerivation, scalarPointCharacteristics.getGradient().getElement(j), MAX_DERIVATION_DIFF);
+            }
+        }
+    }
+
+    private void testSingleFieldHessian(final IScalarField field) {
+        for (int i = 0; i < COUNT; i++) {
+            final IVectorRead point = Vectors.getRandomVector(rng, field.getInputDimension());
+            final ScalarPointCharacteristics scalarPointCharacteristics = field.calculate(point, null, ScalarFieldCharacteristic.SET_HESSIAN);
+
+            for (int j = 0; j < field.getInputDimension(); j++) {
+                final IVectorRead dPoint = Vectors.multiply(EPSILON, Vectors.getUnitVector(j, field.getInputDimension()));
+                final IVectorRead d1 = field.calculateGradient(Vectors.minus(point, dPoint));
+                final IVectorRead d2 = field.calculateGradient(Vectors.plus(point, dPoint));
+                final IVectorRead expectedDerivation = Vectors.multiply(1.0 / (2 * EPSILON), Vectors.minus(d2, d1));
+                Assert.assertEquals(
+                        0.0,
+                        Vectors.getLength(Vectors.minus(expectedDerivation, scalarPointCharacteristics.getHessian().getRowVector(j))),
+                        MAX_DERIVATION_DIFF
+                );
             }
         }
     }
@@ -87,7 +106,7 @@ public class ScalarFieldTest {
     private void testSingleFieldEqualFunctions(final IScalarField field) {
         for (int i = 0; i < COUNT; i++) {
             final IVectorRead point = Vectors.getRandomVector(rng, field.getInputDimension());
-            final ScalarWithGradient scalarWithGradient = field.calculateValueAndGradient(point, null);
+            final ScalarPointCharacteristics scalarPointCharacteristics = field.calculate(point, null, ScalarFieldCharacteristic.SET_ALL);
 
             final double valueFromNonParametricFunction = field.calculateValue(point);
             final double valueFromParametricFunction = field.calculateValue(point, null);
@@ -96,10 +115,10 @@ public class ScalarFieldTest {
             final IVectorRead gradientFromParametricFunction = field.calculateGradient(point, null);
 
             Assert.assertEquals(valueFromNonParametricFunction, valueFromParametricFunction, MAX_VALUE_DIFF);
-            Assert.assertEquals(scalarWithGradient.getScalar(), valueFromParametricFunction, MAX_VALUE_DIFF);
+            Assert.assertEquals(scalarPointCharacteristics.getValue(), valueFromParametricFunction, MAX_VALUE_DIFF);
 
             Assert.assertEquals(0.0, Vectors.getLength(Vectors.minus(gradientFromNonParametricFunction, gradientFromParametricFunction)), MAX_VALUE_DIFF);
-            Assert.assertEquals(0.0, Vectors.getLength(Vectors.minus(gradientFromNonParametricFunction, scalarWithGradient.getGradient())), MAX_VALUE_DIFF);
+            Assert.assertEquals(0.0, Vectors.getLength(Vectors.minus(gradientFromNonParametricFunction, scalarPointCharacteristics.getGradient())), MAX_VALUE_DIFF);
         }
     }
 
@@ -109,6 +128,14 @@ public class ScalarFieldTest {
 
         for (IScalarField field: fields)
             testSingleFieldGradient(field);
+    }
+
+    @Test
+    public void testFieldHessians() {
+        final List<IScalarField> fields = getFieldsToTest();
+
+        for (IScalarField field: fields)
+            testSingleFieldHessian(field);
     }
 
     @Test

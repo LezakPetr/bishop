@@ -1,19 +1,52 @@
 package regression;
 
+import collections.ImmutableEnumSet;
+import collections.ImmutableOrdinalMap;
 import math.IVectorRead;
+import math.Matrices;
 import math.Vectors;
 
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.DoubleUnaryOperator;
 
 public class ValueMappingScalarField<P> implements IParametricScalarField<P> {
     private final IParametricScalarField<P> baseField;
     private final DoubleUnaryOperator function;
-    private final DoubleUnaryOperator derivation;
+    private final DoubleUnaryOperator firstDerivation;
+    private final DoubleUnaryOperator secondDerivation;
 
-    public ValueMappingScalarField(final IParametricScalarField<P> baseField, final DoubleUnaryOperator function, final DoubleUnaryOperator derivation) {
+    private static final ImmutableOrdinalMap<ScalarFieldCharacteristic, ImmutableEnumSet<ScalarFieldCharacteristic>> BASE_REQUIREMENTS = ImmutableOrdinalMap.<ScalarFieldCharacteristic, ImmutableEnumSet<ScalarFieldCharacteristic>>forEnum(ScalarFieldCharacteristic.class)
+            .put(
+                    ScalarFieldCharacteristic.VALUE,
+                    ImmutableEnumSet.of(ScalarFieldCharacteristic.TOKEN, ScalarFieldCharacteristic.VALUE)
+            )
+            .put(
+                    ScalarFieldCharacteristic.GRADIENT,
+                    ImmutableEnumSet.of(ScalarFieldCharacteristic.TOKEN, ScalarFieldCharacteristic.VALUE, ScalarFieldCharacteristic.GRADIENT)
+            )
+            .put(
+                    ScalarFieldCharacteristic.HESSIAN,
+                    ImmutableEnumSet.of(ScalarFieldCharacteristic.TOKEN, ScalarFieldCharacteristic.VALUE, ScalarFieldCharacteristic.GRADIENT, ScalarFieldCharacteristic.HESSIAN)
+            )
+            .build();
+
+    public ValueMappingScalarField(final IParametricScalarField<P> baseField, final DoubleUnaryOperator function, final DoubleUnaryOperator firstDerivation, final DoubleUnaryOperator secondDerivation) {
         this.baseField = baseField;
         this.function = function;
-        this.derivation = derivation;
+        this.firstDerivation = firstDerivation;
+        this.secondDerivation = secondDerivation;
+    }
+
+    private ImmutableEnumSet<ScalarFieldCharacteristic> getBaseCharacteristics(final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
+        ImmutableEnumSet baseCharacteristics = ImmutableEnumSet.noneOf (ScalarFieldCharacteristic.TOKEN);
+
+        for (ScalarFieldCharacteristic ch: characteristics) {
+            baseCharacteristics = ImmutableEnumSet.union (baseCharacteristics, BASE_REQUIREMENTS.get(ch));
+        }
+
+        return baseCharacteristics;
     }
 
     @Override
@@ -22,31 +55,33 @@ public class ValueMappingScalarField<P> implements IParametricScalarField<P> {
     }
 
     @Override
-    public ScalarWithGradient calculateValueAndGradient(final IVectorRead x, final P parameter) {
-        final ScalarWithGradient baseValueAndGradient = baseField.calculateValueAndGradient(x, parameter);
+    public ScalarPointCharacteristics calculate(final IVectorRead x, final P parameter, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
+        final ScalarPointCharacteristics basePointCharacteristics = baseField.calculate(x, parameter, getBaseCharacteristics(characteristics));
 
-        return new ScalarWithGradient(
-                function.applyAsDouble(baseValueAndGradient.getScalar()),
-                Vectors.multiply(
-                        derivation.applyAsDouble(baseValueAndGradient.getScalar()),
-                        baseValueAndGradient.getGradient()
-                )
+        final double firstDerivationValue = (characteristics.containsAny(ScalarFieldCharacteristic.SET_GRADIENT_HESSIAN)) ?
+                firstDerivation.applyAsDouble(basePointCharacteristics.getValue()) : Double.NaN;
+        final double secondDerivationValue = characteristics.contains(ScalarFieldCharacteristic.HESSIAN) ?
+                secondDerivation.applyAsDouble(basePointCharacteristics.getValue()) : Double.NaN;
+
+        final IVectorRead gradient = basePointCharacteristics.getGradient();
+
+        return new ScalarPointCharacteristics(
+                () -> function.applyAsDouble(basePointCharacteristics.getValue()),
+                () -> Vectors.multiply(
+                        firstDerivationValue,
+                        gradient
+                ),
+                () -> Matrices.plus(
+                        Matrices.multiply(secondDerivationValue, Vectors.cartesianProduct(gradient, gradient)),
+                        Matrices.multiply(firstDerivationValue, basePointCharacteristics.getHessian())
+                ),
+                characteristics
         );
     }
 
     @Override
     public double calculateValue(final IVectorRead x, final P parameter) {
         return function.applyAsDouble(baseField.calculateValue(x, parameter));
-    }
-
-    @Override
-    public IVectorRead calculateGradient(final IVectorRead x, final P parameter) {
-        final ScalarWithGradient baseValueAndGradient = baseField.calculateValueAndGradient(x, parameter);
-
-        return Vectors.multiply(
-                derivation.applyAsDouble(baseValueAndGradient.getScalar()),
-                baseValueAndGradient.getGradient()
-        );
     }
 
 }

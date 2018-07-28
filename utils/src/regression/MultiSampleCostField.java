@@ -1,6 +1,9 @@
 package regression;
 
+import collections.ImmutableEnumSet;
+import math.IMatrixRead;
 import math.IVectorRead;
+import math.Matrices;
 import math.Vectors;
 
 import java.util.ArrayList;
@@ -34,16 +37,17 @@ public class MultiSampleCostField implements IScalarField {
         return sampleCostField.getInputDimension();
     }
 
-    private CostStatistics calculateStatisticsForSample (final IVectorRead x, final ISample sample) {
-        final ScalarWithGradient sampleCostWithGradient = sampleCostField.calculateValueAndGradient(x, sample);
+    private CostStatistics calculateStatisticsForSample (final IVectorRead x, final ISample sample, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
+        final ScalarPointCharacteristics costCharacteristics = sampleCostField.calculate(x, sample, characteristics);
 
-        final double sampleCost = sampleCostWithGradient.getScalar();
+        final double sampleCost = costCharacteristics.getValue();
         final double weight = sample.getWeight();
 
         return new CostStatistics(
                 sampleCost * weight,
                 weight,
-                sampleCostWithGradient.getGradient()
+                costCharacteristics.getGradient(),
+                costCharacteristics.getHessian()
         );
     }
 
@@ -51,21 +55,34 @@ public class MultiSampleCostField implements IScalarField {
      * Returns value and gradient at given point.
      */
     @Override
-    public ScalarWithGradient calculateValueAndGradient(final IVectorRead x, final Void parameters) {
+    public ScalarPointCharacteristics calculate(final IVectorRead x, final Void parameters, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
         final int inputDimension = sampleCostField.getInputDimension();
         final List<ISample> batch = getSampleBatch();
 
         final CostStatistics statistics = batch.parallelStream()
-                .map(s -> calculateStatisticsForSample(x, s))
+                .map(s -> calculateStatisticsForSample(x, s, characteristics))
                 .collect(CostStatistics.collector(inputDimension));
 
-        final ScalarWithGradient regularizationTerm = regularization.calculateValueAndGradient(x, (long) sampleList.size());
+        final ScalarPointCharacteristics regularizationTerm = regularization.calculate(x, (long) sampleList.size(), characteristics);
 
         final double weightSum = statistics.getWeightSum();
-        final double cost = statistics.getCostSum() / weightSum + regularizationTerm.getScalar();
-        final IVectorRead gradient = Vectors.plus(Vectors.multiply(1.0 / weightSum, statistics.getTotalGradient()), regularizationTerm.getGradient());
+        final double cost = statistics.getCostSum() / weightSum + regularizationTerm.getValue();
 
-        return new ScalarWithGradient(cost, gradient);
+        final IVectorRead gradient;
+
+        if (characteristics.contains(ScalarFieldCharacteristic.GRADIENT))
+            gradient = Vectors.plus(Vectors.multiply(1.0 / weightSum, statistics.getTotalGradient()), regularizationTerm.getGradient());
+        else
+            gradient = null;
+
+        final IMatrixRead hessian;
+
+        if (characteristics.contains(ScalarFieldCharacteristic.HESSIAN))
+            hessian = Matrices.plus(Matrices.multiply(1.0 / weightSum, statistics.getTotalHessian()), regularizationTerm.getHessian());
+        else
+            hessian = null;
+
+        return new ScalarPointCharacteristics(cost, gradient, hessian);
     }
 
     /**

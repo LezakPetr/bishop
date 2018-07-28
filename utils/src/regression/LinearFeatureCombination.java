@@ -1,7 +1,9 @@
 package regression;
 
+import collections.ImmutableEnumSet;
 import math.IVector;
 import math.IVectorRead;
+import math.Matrices;
 import math.Vectors;
 
 import java.util.ArrayList;
@@ -21,9 +23,10 @@ public class LinearFeatureCombination implements ISampleCostField {
     }
 
     @Override
-    public ScalarWithGradient calculateValueAndGradient(final IVectorRead x, final ISample sample) {
+    public ScalarPointCharacteristics calculate(final IVectorRead x, final ISample sample, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
+        final int featureCount = featureList.size();
         double value = 0;
-        IVector gradient = Vectors.dense(featureList.size());
+        final IVector gradient = Vectors.dense(featureCount);
 
         for (int i = 0; i < featureList.size(); i++) {
             final double featureValue = featureList.get(i).calculateValue(sample.getInput());
@@ -33,7 +36,14 @@ public class LinearFeatureCombination implements ISampleCostField {
             gradient.setElement(i, featureValue);
         }
 
-        return new ScalarWithGradient(value, gradient);
+        final double totalValue = value;
+
+        return new ScalarPointCharacteristics(
+                () -> totalValue,
+                () -> gradient,
+                () -> Matrices.getZeroMatrix(featureCount, featureCount),
+                characteristics
+        );
     }
 
 

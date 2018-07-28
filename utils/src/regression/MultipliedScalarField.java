@@ -1,7 +1,11 @@
 package regression;
 
+import collections.ImmutableEnumSet;
 import math.IVectorRead;
+import math.Matrices;
 import math.Vectors;
+
+import java.util.Set;
 
 public class MultipliedScalarField<P> implements IParametricScalarField<P> {
     private final IParametricScalarField<P> baseField;
@@ -18,23 +22,15 @@ public class MultipliedScalarField<P> implements IParametricScalarField<P> {
     }
 
     @Override
-    public ScalarWithGradient calculateValueAndGradient(final IVectorRead x, final P parameter) {
-        final ScalarWithGradient scalarWithGradient = baseField.calculateValueAndGradient(x, parameter);
+    public ScalarPointCharacteristics calculate(final IVectorRead x, final P parameter, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
+        final ScalarPointCharacteristics basePointCharacteristics = baseField.calculate(x, parameter, characteristics);
 
-        return new ScalarWithGradient(
-                coeff * scalarWithGradient.getScalar(),
-                Vectors.multiply(coeff, scalarWithGradient.getGradient())
+        return new ScalarPointCharacteristics(
+                () -> coeff * basePointCharacteristics.getValue(),
+                () -> Vectors.multiply(coeff, basePointCharacteristics.getGradient()),
+                () -> Matrices.multiply(coeff, basePointCharacteristics.getHessian()),
+                characteristics
         );
-    }
-
-    @Override
-    public double calculateValue(final IVectorRead x, final P parameter) {
-        return coeff * baseField.calculateValue(x, parameter);
-    }
-
-    @Override
-    public IVectorRead calculateGradient(final IVectorRead x, final P parameter) {
-        return Vectors.multiply(coeff, baseField.calculateGradient(x, parameter));
     }
 
     public static <P> IParametricScalarField<P> of (final double coeff, final IParametricScalarField<P> baseField) {

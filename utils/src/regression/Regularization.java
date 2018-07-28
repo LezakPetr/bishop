@@ -1,11 +1,10 @@
 package regression;
 
-import math.IVector;
-import math.IVectorRead;
-import math.Utils;
-import math.Vectors;
+import collections.ImmutableEnumSet;
+import math.*;
 
 import java.util.BitSet;
+import java.util.Collection;
 
 public class Regularization implements IParametricScalarField<Long> {
     private final int inputDimension;
@@ -17,13 +16,18 @@ public class Regularization implements IParametricScalarField<Long> {
         this.featureSet = new BitSet(inputDimension);
     }
 
+    public void addFeatures(final Collection<Integer> features) {
+        for (int feature: features)
+            featureSet.set(feature);
+    }
+
     @Override
     public int getInputDimension() {
         return inputDimension;
     }
 
     @Override
-    public ScalarWithGradient calculateValueAndGradient(final IVectorRead x, final Long sampleCount) {
+    public ScalarPointCharacteristics calculate(final IVectorRead x, final Long sampleCount, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
         double valueSum = 0.0;
         IVector gradientSum = Vectors.dense(inputDimension);
 
@@ -31,15 +35,18 @@ public class Regularization implements IParametricScalarField<Long> {
             if (featureSet.get(i)) {
                 final double xi = x.getElement(i);
                 valueSum += Utils.sqr(xi);
-                gradientSum.setElement(i, 2 * xi);
+                gradientSum.setElement(i, xi);
             }
         }
 
         final double coeff = lambda / sampleCount;
+        final double value = valueSum * coeff;
 
-        return new ScalarWithGradient(
-                coeff * valueSum,
-                Vectors.multiply(coeff, gradientSum)
+        return new ScalarPointCharacteristics(
+                () -> value,
+                () -> Vectors.multiply(2 * coeff, gradientSum),
+                () -> Matrices.multiply(2, Vectors.cartesianProduct(gradientSum, gradientSum)),
+                characteristics
         );
     }
 
