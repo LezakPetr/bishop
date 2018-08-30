@@ -24,6 +24,7 @@ public class AllTests {
 		ImmutableOrdinalMapTest.class,
 		MixerTest.class,
 		ParallelTaskRunnerTest.class,
+		BitBoardTest.class,
 		BetweenTableTest.class,
 		CombinatorialNumberSystemTest.class,
 		TableMaterialEvaluatorTest.class,
@@ -63,6 +64,7 @@ public class AllTests {
 		PawnEndingEvaluatorTest.class,
 		GradientOptimizerTest.class,
 		ScalarFieldTest.class,
+		NewtonSolverTest.class,
 		LogisticRegressionTest.class,
 		CholeskySolverTest.class
 	};
