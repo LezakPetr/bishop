@@ -7,25 +7,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1a7b7d13-6356-439f-b418-e923eb642030" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishopTests/src/bishopTests/AllTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishopTests/src/bishopTests/AllTests.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/BalanceActivationFunction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/FastSigmoidActivationFunction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/IActivationFunction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/ILearningInnerPerceptronLayer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/ILearningPerceptronLayer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/IPerceptronLayer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/IdentityActivationFunction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/InnerPerceptronLayer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/LearningInnerPerceptronLayer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/LearningOutputPerceptronLayer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/LearningPerceptronNetwork.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/Optimizer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/OutputPerceptronLayer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/PerceptronNetwork.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/PerceptronNetworkBase.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/neural/TanhActivationFunction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utilsTest/src/utilsTest/NeuralTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bishop/res/coeffs.tbl" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/res/coeffs.tbl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/base/PieceTypeEvaluations.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/base/PieceTypeEvaluations.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/controller/SearchResources.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/controller/SearchResources.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/PositionEvaluationCoeffs.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/PositionEvaluationCoeffs.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/Calculator.java" beforeDir="false" afterPath="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/Calculator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/CoeffPositionProcessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/CoeffPositionProcessor.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/bisGui/bin/" />
     <ignored path="$PROJECT_DIR$/bisGuiSwing/bin/" />
@@ -51,51 +38,23 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="SearchManagerTest.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/SearchManagerTest.java">
+      <file leaf-file-name="PieceTypeEvaluations.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bishop/src/bishop/base/PieceTypeEvaluations.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="144">
-              <caret line="30" column="34" lean-forward="true" selection-start-line="30" selection-start-column="34" selection-end-line="30" selection-end-column="34" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="SerialSearchEngineFactory.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/SerialSearchEngineFactory.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="252">
-              <caret line="79" column="65" selection-start-line="79" selection-start-column="65" selection-end-line="79" selection-end-column="65" />
+            <state relative-caret-position="473">
+              <caret line="91" column="38" selection-start-line="91" selection-start-column="38" selection-end-line="91" selection-end-column="38" />
               <folding>
-                <element signature="e#773#774#0" expanded="true" />
-                <element signature="e#814#815#0" expanded="true" />
+                <element signature="imports" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ISearchEngineFactory.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/ISearchEngineFactory.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="36">
-              <caret line="2" column="17" selection-start-line="2" selection-start-column="17" selection-end-line="2" selection-end-column="17" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="SearchSettingOptimizer.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/SearchSettingOptimizer.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1908">
-              <caret line="123" column="9" selection-start-line="123" selection-start-column="9" selection-end-line="123" selection-end-column="9" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="AllTests.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="AllTests.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/AllTests.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="124">
-              <caret line="61" column="8" selection-start-line="61" selection-start-column="8" selection-end-line="61" selection-end-column="8" />
+            <state relative-caret-position="214">
+              <caret line="66" column="37" lean-forward="true" selection-start-line="66" selection-start-column="37" selection-end-line="66" selection-end-column="37" />
               <folding>
                 <element signature="e#1902#1912#0" expanded="true" />
               </folding>
@@ -103,38 +62,77 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="NewtonSolverTest.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/utilsTest/src/utilsTest/NewtonSolverTest.java">
+      <file leaf-file-name="CoeffCountPositionEvaluation.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/CoeffCountPositionEvaluation.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="72">
-              <caret line="13" column="17" lean-forward="true" selection-start-line="13" selection-start-column="17" selection-end-line="13" selection-end-column="17" />
+            <state relative-caret-position="90">
+              <caret line="7" column="13" selection-start-line="7" selection-start-column="13" selection-end-line="7" selection-end-column="13" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="BitBoardTest.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/BitBoardTest.java">
+      <file leaf-file-name="CoeffPositionProcessor.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/CoeffPositionProcessor.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="72">
-              <caret line="9" column="18" selection-start-line="9" selection-start-column="18" selection-end-line="9" selection-end-column="18" />
+            <state relative-caret-position="42">
+              <caret line="111" column="9" lean-forward="true" selection-start-line="111" selection-start-column="9" selection-end-line="111" selection-end-column="9" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SearchManagerImpl.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/SearchManagerImpl.java">
+      <file leaf-file-name="Calculator.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/Calculator.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="90">
+              <caret line="20" lean-forward="true" selection-start-line="20" selection-end-line="20" />
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Position.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bishop/src/bishop/base/Position.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="130">
-              <caret line="362" selection-start-line="362" selection-end-line="362" />
+              <caret line="1192" column="51" selection-start-line="1192" selection-start-column="31" selection-end-line="1192" selection-end-column="51" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SearchPerformanceTest.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/SearchPerformanceTest.java">
+      <file leaf-file-name="MoveExtensionEvaluator.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/MoveExtensionEvaluator.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="354">
-              <caret line="63" column="41" selection-start-line="63" selection-start-column="41" selection-end-line="63" selection-end-column="41" />
+            <state relative-caret-position="126">
+              <caret line="49" selection-start-line="49" selection-end-line="49" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="SerialSearchEngine.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/SerialSearchEngine.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="246">
+              <caret line="859" column="9" lean-forward="true" selection-start-line="859" selection-start-column="9" selection-end-line="859" selection-end-column="9" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PositionEvaluationCoeffs.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/PositionEvaluationCoeffs.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="527">
+              <caret line="66" lean-forward="true" selection-start-line="66" selection-end-line="66" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="SearchResources.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/bishop/src/bishop/controller/SearchResources.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="156">
+              <caret line="58" column="74" selection-start-line="58" selection-start-column="74" selection-end-line="58" selection-end-column="74" />
             </state>
           </provider>
         </entry>
@@ -151,11 +149,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>LAST</find>
-      <find>FEATURE_CO</find>
-      <find>elementM</find>
-      <find>inver</find>
-      <find>equationMatrixColumnIndices</find>
       <find>getColumn</find>
       <find>getCo</find>
       <find>getColumnVe</find>
@@ -181,6 +174,11 @@
       <find>SearchPerformanceTest</find>
       <find>NewtonSolverTest</find>
       <find>SimpleLinearModelTest.</find>
+      <find>mater</find>
+      <find>material</find>
+      <find>set</find>
+      <find>moveExtensionEvaluator</find>
+      <find>searchManager</find>
     </findStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$/bishop</dir>
@@ -192,7 +190,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/utils/src/math/GaussJordanElimination.java" />
         <option value="$PROJECT_DIR$/utilsTest/src/utilsTest/ScalarFieldTest.java" />
         <option value="$PROJECT_DIR$/utilsTest/src/utilsTest/MatrixTest.java" />
         <option value="$PROJECT_DIR$/utils/src/math/CholeskySolver.java" />
@@ -232,17 +229,18 @@
         <option value="$PROJECT_DIR$/bishop/src/bishop/engine/MoveExtensionEvaluator.java" />
         <option value="$PROJECT_DIR$/bishop/src/bishop/engine/SerialSearchEngine.java" />
         <option value="$PROJECT_DIR$/bishop/src/bishop/engine/ISearchEngine.java" />
-        <option value="$PROJECT_DIR$/bishop/src/bishop/engine/PositionEvaluationCoeffs.java" />
-        <option value="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/CoeffPositionProcessor.java" />
-        <option value="$PROJECT_DIR$/bishop/src/bishop/base/PieceTypeEvaluations.java" />
         <option value="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchEngineTest.java" />
-        <option value="$PROJECT_DIR$/bishop/src/bishop/controller/SearchResources.java" />
         <option value="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchPerformanceTest.java" />
         <option value="$PROJECT_DIR$/bishopTests/src/bishopTests/PositionTest.java" />
         <option value="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchSettingOptimizer.java" />
         <option value="$PROJECT_DIR$/bishop/src/bishop/engine/SerialSearchEngineFactory.java" />
         <option value="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchManagerTest.java" />
         <option value="$PROJECT_DIR$/bishopTests/src/bishopTests/AllTests.java" />
+        <option value="$PROJECT_DIR$/bishop/src/bishop/engine/PositionEvaluationCoeffs.java" />
+        <option value="$PROJECT_DIR$/bishop/src/bishop/base/PieceTypeEvaluations.java" />
+        <option value="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/CoeffPositionProcessor.java" />
+        <option value="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/Calculator.java" />
+        <option value="$PROJECT_DIR$/bishop/src/bishop/controller/SearchResources.java" />
       </list>
     </option>
   </component>
@@ -406,7 +404,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="JUnit.NewtonSolverTest">
+  <component name="RunManager" selected="Application.Bishop">
     <configuration default="true" type="Applet" factoryName="Applet">
       <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
     </configuration>
@@ -429,7 +427,7 @@
     <configuration name="Calculator" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="bishop.evaluationStatistics.Calculator" />
       <module name="bookBuilder" />
-      <option name="PROGRAM_PARAMETERS" value="$USER_HOME$/KingBase/coeffs.tbl $USER_HOME$/KingBase/material.tbl $USER_HOME$/KingBase/KingBase2016-01-A80-A99.pgn" />
+      <option name="PROGRAM_PARAMETERS" value="$USER_HOME$/KingBase/coeffs.tbl $USER_HOME$/KingBase/KingBase2016-01-A80-A99.pgn" />
       <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
       <extension name="coverage">
         <pattern>
@@ -571,11 +569,11 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.Calculator" />
         <item itemvalue="JUnit.NewtonSolverTest" />
         <item itemvalue="JUnit.BitBoardTest" />
         <item itemvalue="Application.AllTests" />
         <item itemvalue="JUnit.SearchManagerTest" />
-        <item itemvalue="Application.Calculator" />
       </list>
     </recent_temporary>
   </component>
@@ -627,7 +625,7 @@
     <layout>
       <window_info anchor="right" id="Palette" order="3" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info active="true" anchor="bottom" id="Messages" order="7" visible="true" weight="0.328594" />
+      <window_info anchor="bottom" id="Messages" order="7" weight="0.328594" />
       <window_info anchor="right" id="Palette&#9;" order="3" />
       <window_info id="Image Layers" order="2" />
       <window_info anchor="right" id="Capture Analysis" order="3" />
@@ -854,13 +852,6 @@
     </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/utils/src/math/BinaryVectorAlgorithmOneNonzero.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="774">
-          <caret line="46" column="24" selection-start-line="46" selection-start-column="24" selection-end-line="46" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/utils/src/math/VectorElementSum.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="126">
@@ -964,13 +955,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/Calculator.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="72">
-          <caret line="14" column="13" selection-start-line="14" selection-start-column="13" selection-end-line="14" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/bishop/src/bishop/base/IMaterialEvaluator.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="54">
@@ -1013,13 +997,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/base/Position.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="20934">
-          <caret line="1205" selection-start-line="1205" selection-end-line="1205" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/ISearchManager.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="283">
@@ -1041,20 +1018,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/MoveExtensionEvaluator.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="72">
-          <caret line="5" column="21" selection-start-line="5" selection-start-column="21" selection-end-line="5" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/SerialSearchEngine.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="72">
-          <caret line="13" column="52" selection-start-line="13" selection-start-column="52" selection-end-line="13" selection-end-column="52" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/ISearchEngine.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="792">
@@ -1062,34 +1025,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/PositionEvaluationCoeffs.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="990">
-          <caret line="71" column="12" selection-start-line="71" selection-start-column="12" selection-end-line="71" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/CoeffPositionProcessor.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="124">
-          <caret line="70" column="75" lean-forward="true" selection-start-line="70" selection-start-column="75" selection-end-line="70" selection-end-column="75" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/utils/src/utils/IntUtils.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="36">
           <caret line="2" column="13" selection-start-line="2" selection-start-column="13" selection-end-line="2" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/base/PieceTypeEvaluations.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="324">
-          <caret line="24" column="6" selection-start-line="24" selection-start-column="6" selection-end-line="24" selection-end-column="6" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1104,13 +1043,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="90">
           <caret line="23" column="4" selection-start-line="23" selection-start-column="4" selection-end-line="23" selection-end-column="81" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/controller/SearchResources.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1332">
-          <caret line="93" column="42" selection-start-line="93" selection-start-column="18" selection-end-line="93" selection-end-column="42" />
         </state>
       </provider>
     </entry>
@@ -1204,11 +1136,80 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/AllTests.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="124">
-          <caret line="61" column="8" selection-start-line="61" selection-start-column="8" selection-end-line="61" selection-end-column="8" />
+        <state relative-caret-position="214">
+          <caret line="66" column="37" lean-forward="true" selection-start-line="66" selection-start-column="37" selection-end-line="66" selection-end-column="37" />
           <folding>
             <element signature="e#1902#1912#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/CoeffCountPositionEvaluation.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="7" column="13" selection-start-line="7" selection-start-column="13" selection-end-line="7" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/PositionEvaluationCoeffs.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="527">
+          <caret line="66" lean-forward="true" selection-start-line="66" selection-end-line="66" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/base/PieceTypeEvaluations.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="473">
+          <caret line="91" column="38" selection-start-line="91" selection-start-column="38" selection-end-line="91" selection-end-column="38" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/CoeffPositionProcessor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="42">
+          <caret line="111" column="9" lean-forward="true" selection-start-line="111" selection-start-column="9" selection-end-line="111" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/Calculator.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="20" lean-forward="true" selection-start-line="20" selection-end-line="20" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/base/Position.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="130">
+          <caret line="1192" column="51" selection-start-line="1192" selection-start-column="31" selection-end-line="1192" selection-end-column="51" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/MoveExtensionEvaluator.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="126">
+          <caret line="49" selection-start-line="49" selection-end-line="49" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/engine/SerialSearchEngine.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="246">
+          <caret line="859" column="9" lean-forward="true" selection-start-line="859" selection-start-column="9" selection-end-line="859" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bishop/src/bishop/controller/SearchResources.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="156">
+          <caret line="58" column="74" selection-start-line="58" selection-start-column="74" selection-end-line="58" selection-end-column="74" />
         </state>
       </provider>
     </entry>

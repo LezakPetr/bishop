@@ -61,6 +61,10 @@ public class PositionEvaluationCoeffs {
 		return pieceTypeEvaluations;
 	}
 
+	public void setPieceTypeEvaluations(final PieceTypeEvaluations pieceTypeEvaluations) {
+		this.pieceTypeEvaluations = pieceTypeEvaluations;
+	}
+
 	public void read(final InputStream stream) throws IOException {
 		for (int i = 0; i < LAST; i++)
 			coeffs[i] = (short) IoUtils.readSignedNumberBinary(stream, IoUtils.SHORT_BYTES);

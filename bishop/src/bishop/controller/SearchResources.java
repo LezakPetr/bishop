@@ -26,7 +26,6 @@ public class SearchResources {
 	private static final int MAX_TOTAL_DEPTH = 256;
 	
 	private static final String BOOK_PATH = "book.dat";
-	private static final String MATERIAL_PATH = "material.tbl";
 	private static final String EVALUATION_COEFFS_PATH = "coeffs.tbl";
 
 	private final IApplication application;
@@ -57,6 +56,7 @@ public class SearchResources {
 		searchEngineFactory.setPositionEvaluatorFactory(evaluatorFactory);
 		searchEngineFactory.setEvaluationFactory(evaluationFactory);
 		searchEngineFactory.setMaximalDepth(MAX_TOTAL_DEPTH);
+		searchEngineFactory.setPieceTypeEvaluations(pieceTypeEvaluations);
 		
 		hashTable = new HashTableImpl(10);
 		

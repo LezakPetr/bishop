@@ -7,6 +7,7 @@ import utils.IoUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 public final class PieceTypeEvaluations {
 
@@ -73,14 +74,25 @@ public final class PieceTypeEvaluations {
 		for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++)
 			pieceTypeEvaluations[pieceType] = (int) IoUtils.readSignedNumberBinary(stream, IoUtils.SHORT_BYTES);
 
-		pieceTypeEvaluations[PieceType.KING] = KING_EVALUATION;
-		pieceTypeEvaluations[PieceType.PAWN] = PAWN_EVALUATION;
+		setFixedEvaluations(pieceTypeEvaluations);
 
 		return new PieceTypeEvaluations(pieceTypeEvaluations);
+	}
+
+	private static void setFixedEvaluations(final int[] pieceTypeEvaluations) {
+		pieceTypeEvaluations[PieceType.KING] = KING_EVALUATION;
+		pieceTypeEvaluations[PieceType.PAWN] = PAWN_EVALUATION;
 	}
 
 	public void write(final OutputStream stream) throws IOException {
 		for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++)
 			IoUtils.writeNumberBinary(stream, pieceTypeEvaluations[pieceType], IoUtils.SHORT_BYTES);
+	}
+
+	public static PieceTypeEvaluations of (final int[] pieceTypeEvaluations) {
+		final int[] copy = Arrays.copyOf(pieceTypeEvaluations, PieceType.LAST);
+		setFixedEvaluations(copy);
+
+		return new PieceTypeEvaluations(copy);
 	}
 }

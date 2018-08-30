@@ -17,8 +17,7 @@ public class Calculator {
 	public static void main (final String[] args) throws IOException, InterruptedException, ExecutionException {
 		final Parallel parallel = new Parallel();
 		final List<String> argList = Arrays.asList(args);
-		final File tableEvaluatorFile = new File (argList.get(0));
-		final File coeffFile = new File (argList.get(1));
+		final File coeffFile = new File (argList.get(0));
 
 		final CoeffPositionProcessor coeffProcessor = new CoeffPositionProcessor(coeffFile);
 		
@@ -42,7 +41,7 @@ public class Calculator {
 		
 		final PgnListProcessor pgnProcessor = new PgnListProcessor(parallel);
 		
-		pgnProcessor.addPgnList(argList.subList(2, argList.size()));
+		pgnProcessor.addPgnList(argList.subList(1, argList.size()));
 		pgnProcessor.setGameWalker(walker);
 		
 		System.out.println("Processing");

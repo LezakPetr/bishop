@@ -31,7 +31,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);
 	private final AttackCalculator attackCalculator = new AttackCalculator();
 	private final Random rng = new Random();
-	private final double positionTakeProbability = 1;
+	private final double positionTakeProbability = 1e-2;
 	private int sampleCount;
 	private long memoryConsumption;
 	private GameResult result;
@@ -145,11 +145,17 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 			System.out.println(PositionEvaluationCoeffs.getCoeffRegistry().getName(i) + " " + bestCoeffs[i]);			
 		}
 
+		final int[] pieceTypeEvaluations = Arrays.stream(materialEvaluations)
+				.mapToInt(Utils::roundToInt)
+				.toArray();
+
 		for (int pieceType = PieceType.VARIABLE_FIRST; pieceType < PieceType.VARIABLE_LAST; pieceType++)
 			System.out.println(PieceType.getName(pieceType) + " = " + materialEvaluations[pieceType]);
 	
 		for (int i = 0; i < PositionEvaluationCoeffs.LAST; i++)
 			coeffs.setEvaluationCoeff(i, Utils.roundToInt(bestCoeffs[i]));
+
+		coeffs.setPieceTypeEvaluations(PieceTypeEvaluations.of(pieceTypeEvaluations));
 		
 		try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(coeffFile))) {
 			coeffs.write(stream);
