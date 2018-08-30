@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Random;
 
 import bishop.base.Game;
+import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import bishop.engine.ISearchEngine;
 import bishop.engine.SearchSettings;
@@ -109,7 +110,7 @@ public class SearchSettingOptimizer {
 					break;
 
 				case 12:
-					searchSettings.setRecaptureBeginMaxTreshold(getRandom(searchSettings.getRecaptureBeginMinTreshold() + 1, PieceTypeEvaluations.QUEEN_EVALUATION, random));
+					searchSettings.setRecaptureBeginMaxTreshold(getRandom(searchSettings.getRecaptureBeginMinTreshold() + 1, PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(PieceType.QUEEN), random));
 					break;
 
 				case 13:
@@ -117,7 +118,7 @@ public class SearchSettingOptimizer {
 					break;
 
 				case 14:
-					searchSettings.setRecaptureTargetTreshold(getRandom(0, PieceTypeEvaluations.QUEEN_EVALUATION, random));
+					searchSettings.setRecaptureTargetTreshold(getRandom(0, PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(PieceType.QUEEN), random));
 					break;
 			}
 		}

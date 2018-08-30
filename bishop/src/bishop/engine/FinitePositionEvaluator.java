@@ -1,9 +1,6 @@
 package bishop.engine;
 
-import bishop.base.Color;
-import bishop.base.PieceType;
-import bishop.base.PieceTypeEvaluations;
-import bishop.base.Position;
+import bishop.base.*;
 import bishop.tablebase.Classification;
 
 public final class FinitePositionEvaluator {
@@ -11,6 +8,7 @@ public final class FinitePositionEvaluator {
 	private RepeatedPositionRegister repeatedPositionRegister;
 	private TablebasePositionEvaluator tablebaseEvaluator;
 	private PawnEndingTableRegister pawnEndingTableRegister = new PawnEndingTableRegister(null);
+	private PieceTypeEvaluations pieceTypeEvaluations;
 	private int evaluation;
 	
 	
@@ -74,11 +72,11 @@ public final class FinitePositionEvaluator {
 
 				switch (classification) {
 					case Classification.WIN:
-						evaluation = PieceTypeEvaluations.QUEEN_EVALUATION;
+						evaluation = pieceTypeEvaluations.getPieceTypeEvaluation(PieceType.QUEEN);
 						return true;
 
 					case Classification.LOSE:
-						evaluation = -PieceTypeEvaluations.QUEEN_EVALUATION;
+						evaluation = -pieceTypeEvaluations.getPieceTypeEvaluation(PieceType.QUEEN);
 						return true;
 
 					case Classification.DRAW:
@@ -100,7 +98,11 @@ public final class FinitePositionEvaluator {
 
 		pawnEndingTableRegister = new PawnEndingTableRegister(tablebaseEvaluator);
 	}
-	
+
+	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations) {
+		this.pieceTypeEvaluations = pieceTypeEvaluations;
+	}
+
 	public int getEvaluation() {
 		return evaluation;
 	}

@@ -16,6 +16,7 @@ public class GameStage {
 	
 	public static final int WITH_FIGURES_FIRST = PAWNS_ONLY + 1;
 	public static final int WITH_FIGURES_LAST = LAST;
+	public static final int WITH_FIGURES_COUNT = WITH_FIGURES_LAST - WITH_FIGURES_FIRST;
 	
 	private static final int[] PIECE_TYPE_SHIFTS = new IntArrayBuilder(LAST)
 			.put(PieceType.KNIGHT, 0)

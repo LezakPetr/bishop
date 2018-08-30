@@ -1,18 +1,13 @@
 package bishop.engine;
 
-import bishop.base.DefaultAdditiveMaterialEvaluator;
-import bishop.base.BitBoard;
-import bishop.base.Color;
-import bishop.base.Move;
-import bishop.base.PieceType;
-import bishop.base.Position;
-import bishop.base.Rank;
-import bishop.base.Square;
+import bishop.base.*;
 import bishop.tables.PawnAttackTable;
 
 public class MoveExtensionEvaluator {
 			
 	private SearchSettings settings;
+	private IMaterialEvaluator materialEvaluator;
+	private PieceTypeEvaluations pieceTypeEvaluations;
 		
 	public int getExtension (final Position targetPosition, final Move move, final int rootMaterialEvaluation, final int beginMaterialEvaluation, final AttackCalculator attackCalculator) {
 		final int movingPieceType = move.getMovingPieceType();
@@ -49,10 +44,10 @@ public class MoveExtensionEvaluator {
 			boolean isRecapture = false;
 			
 			if (move.getCapturedPieceType() != PieceType.NONE) {
-				final int materialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(targetPosition.getMaterialHash());
+				final int materialEvaluation = materialEvaluator.evaluateMaterial(targetPosition.getMaterialHash());
 				final int relativeTargetEvaluation = Evaluation.getRelative(materialEvaluation, oppositeColor);
 				final int targetSquare = move.getTargetSquare();
-				final int sse = targetPosition.getStaticExchangeEvaluation(onTurn, targetSquare);
+				final int sse = targetPosition.getStaticExchangeEvaluation(onTurn, targetSquare, pieceTypeEvaluations);
 				
 				if (relativeTargetEvaluation - sse - relativeRootEvaluation >= -settings.getRecaptureTargetTreshold()) {
 					isRecapture = true;
@@ -87,4 +82,21 @@ public class MoveExtensionEvaluator {
 	public void setSettings(final SearchSettings settings) {
 		this.settings = settings;
 	}
+
+	public IMaterialEvaluator getMaterialEvaluator() {
+		return materialEvaluator;
+	}
+
+	public void setMaterialEvaluator(IMaterialEvaluator materialEvaluator) {
+		this.materialEvaluator = materialEvaluator;
+	}
+
+	public PieceTypeEvaluations getPieceTypeEvaluations() {
+		return pieceTypeEvaluations;
+	}
+
+	public void setPieceTypeEvaluations(PieceTypeEvaluations pieceTypeEvaluations) {
+		this.pieceTypeEvaluations = pieceTypeEvaluations;
+	}
+
 }

@@ -5,23 +5,7 @@ import java.io.StringWriter;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-import bishop.base.DefaultAdditiveMaterialEvaluator;
-import bishop.base.GlobalSettings;
-import bishop.base.BitBoard;
-import bishop.base.Color;
-import bishop.base.HandlerRegistrarImpl;
-import bishop.base.IHandlerRegistrar;
-import bishop.base.IMaterialEvaluator;
-import bishop.base.IMoveWalker;
-import bishop.base.LegalMoveFinder;
-import bishop.base.Move;
-import bishop.base.MoveList;
-import bishop.base.MoveStack;
-import bishop.base.MoveType;
-import bishop.base.PieceType;
-import bishop.base.Position;
-import bishop.base.PseudoLegalMoveGenerator;
-import bishop.base.QuiescencePseudoLegalMoveGenerator;
+import bishop.base.*;
 import math.SampledIntFunction;
 import math.Sigmoid;
 import utils.Logger;
@@ -81,6 +65,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final SearchExtensionCalculator extensionCalculator;
 	private final MoveExtensionEvaluator moveExtensionEvaluator;
 	private SearchTask task;
+	private PieceTypeEvaluations pieceTypeEvaluations;
 	private IMaterialEvaluator materialEvaluator;
 	private IPositionEvaluator positionEvaluator;
 	private final HandlerRegistrarImpl<ISearchEngineHandler> handlerRegistrar;
@@ -131,6 +116,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		finiteEvaluator = new FinitePositionEvaluator();
 		finiteEvaluator.setRepeatedPositionRegister(repeatedPositionRegister);
+		finiteEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
 		
 		extensionCalculator = new SearchExtensionCalculator();
 		moveExtensionEvaluator = new MoveExtensionEvaluator();
@@ -364,7 +350,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 						moveStack.getMove(currentRecord.moveListEnd - 1, move);
 						
 						if (!move.equals(precalculatedMove)) {
-							final int beginMaterialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(currentPosition.getMaterialHash());
+							final int beginMaterialEvaluation = materialEvaluator.evaluateMaterial(currentPosition.getMaterialHash());
 							currentPosition.makeMove(move);
 							
 							final int reducedHorizon = calculateReducedHorizon(horizon, move, isCheck, pvNode, currentRecord);
@@ -652,7 +638,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 */
 	private ISearchResult evaluateMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta) {
 		final NodeRecord currentRecord = nodeStack[currentDepth];
-		final int beginMaterialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(currentPosition.getMaterialHash());
+		final int beginMaterialEvaluation = materialEvaluator.evaluateMaterial(currentPosition.getMaterialHash());
 		
 		currentPosition.makeMove(move);
 		
@@ -870,6 +856,21 @@ public final class SerialSearchEngine implements ISearchEngine {
 			checkEngineState(EngineState.STOPPED);
 
 			this.materialEvaluator = evaluator;
+			moveExtensionEvaluator.setMaterialEvaluator(materialEvaluator);
+		}
+	}
+
+	/**
+	 * Sets piece type evaluations.
+	 * Engine must be in STOPPED state.
+	 */
+	@Override
+	public void setPieceTypeEvaluations(final PieceTypeEvaluations pieceTypeEvaluations) {
+		synchronized (monitor) {
+			checkEngineState(EngineState.STOPPED);
+
+			this.pieceTypeEvaluations = pieceTypeEvaluations;
+			moveExtensionEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
 		}
 	}
 

@@ -17,13 +17,11 @@ public class Calculator {
 	public static void main (final String[] args) throws IOException, InterruptedException, ExecutionException {
 		final Parallel parallel = new Parallel();
 		final List<String> argList = Arrays.asList(args);
-		final File tableEvaluatorFile = new File (argList.get(0));
-		final File coeffFile = new File (argList.get(1));
-		
-		final MaterialStatisticsPositionProcessor materialProcessor = new MaterialStatisticsPositionProcessor(tableEvaluatorFile);
+		final File coeffFile = new File (argList.get(0));
+
 		final CoeffPositionProcessor coeffProcessor = new CoeffPositionProcessor(coeffFile);
 		
-		final IPositionProcessor[] processors = { materialProcessor, coeffProcessor };
+		final IPositionProcessor[] processors = { coeffProcessor };
 		
 		final IPositionWalker positionWalker = (position, move, result) -> {
 			for (IPositionProcessor processor: processors)
@@ -43,15 +41,14 @@ public class Calculator {
 		
 		final PgnListProcessor pgnProcessor = new PgnListProcessor(parallel);
 		
-		pgnProcessor.addPgnList(argList.subList(2, argList.size()));
+		pgnProcessor.addPgnList(argList.subList(1, argList.size()));
 		pgnProcessor.setGameWalker(walker);
 		
 		System.out.println("Processing");
 		pgnProcessor.processGames();
 		
 		System.out.println("Calculating");
-		materialProcessor.calculate();
-		coeffProcessor.calculate(materialProcessor);
+		coeffProcessor.calculate();
 
 		parallel.shutdown();
 		

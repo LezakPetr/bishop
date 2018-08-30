@@ -3,22 +3,13 @@ package bishopTests;
 import java.util.LinkedList;
 import java.util.List;
 
+import math.CholeskySolver;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
 import utils.Logger;
-import utilsTest.ImmutableOrdinalMapTest;
-import utilsTest.ImmutableProbabilisticSetTest;
-import utilsTest.MatrixTest;
-import utilsTest.MixerTest;
-import utilsTest.NeuralTest;
-import utilsTest.NumberArrayTest;
-import utilsTest.ParallelTaskRunnerTest;
-import utilsTest.RangeTest;
-import utilsTest.SimpleLinearModelTest;
-import utilsTest.VectorAlgorithmsTest;
-import utilsTest.VectorTest;
+import utilsTest.*;
 import bishop.base.GlobalSettings;
 
 
@@ -33,6 +24,7 @@ public class AllTests {
 		ImmutableOrdinalMapTest.class,
 		MixerTest.class,
 		ParallelTaskRunnerTest.class,
+		BitBoardTest.class,
 		BetweenTableTest.class,
 		CombinatorialNumberSystemTest.class,
 		TableMaterialEvaluatorTest.class,
@@ -67,9 +59,13 @@ public class AllTests {
 		PawnStructureEvaluatorTest.class,
 		PositionIoTest.class,
 		SimpleLinearModelTest.class,
-		NeuralTest.class,
 		PawnEndingFileTableTest.class,
-		PawnEndingEvaluatorTest.class
+		PawnEndingEvaluatorTest.class,
+		GradientOptimizerTest.class,
+		ScalarFieldTest.class,
+		NewtonSolverTest.class,
+		LogisticRegressionTest.class,
+		CholeskySolverTest.class
 	};
 	
 	public static final void main (final String[] args) {

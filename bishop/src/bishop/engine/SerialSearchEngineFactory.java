@@ -3,10 +3,12 @@ package bishop.engine;
 import java.util.function.Supplier;
 
 import bishop.base.IMaterialEvaluator;
+import bishop.base.PieceTypeEvaluations;
 
 public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 	
 	private IMaterialEvaluator materialEvaluator;
+	private PieceTypeEvaluations pieceTypeEvaluations;
 	private IPositionEvaluatorFactory positionEvaluatorFactory;
 	private Supplier<IPositionEvaluation> evaluationFactory;
 	private int maximalDepth;
@@ -25,6 +27,10 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 	 */
 	public void setMaterialEvaluator(final IMaterialEvaluator evaluator) {
 		this.materialEvaluator = evaluator;
+	}
+
+	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations) {
+		this.pieceTypeEvaluations = pieceTypeEvaluations;
 	}
 
 	public void setPositionEvaluatorFactory(final IPositionEvaluatorFactory positionEvaluatorFactory) {
@@ -71,6 +77,7 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 		searchEngine.setEvaluationFactory(evaluationFactory);
 		searchEngine.setPositionEvaluator(evaluator);
 		searchEngine.setMaterialEvaluator(materialEvaluator);
+		searchEngine.setPieceTypeEvaluations(pieceTypeEvaluations);
 		searchEngine.setMaximalDepth(maximalDepth);
 		
 		return searchEngine;

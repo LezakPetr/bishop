@@ -52,7 +52,7 @@ public class VectorTest {
 					getSubArray (getSubArray (values, size / 4, 3 * size / 4),          size / 3, size / 2)
 			);
 			
-			testVectorValues (Vectors.copy(vector), values);
+			testVectorValues (vector.copy(), values);
 		}
 	}
 

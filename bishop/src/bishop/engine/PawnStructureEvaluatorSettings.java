@@ -15,6 +15,7 @@ public class PawnStructureEvaluatorSettings {
 	private final int[] unprotectedOpenFilePawnBonus;
 	private final int[] doublePawnBonus;
 	private final int[][] rookPawnBonus;
+
 	
 	private static final double UNPROTECTED_OPEN_FILE_PAWN_BONUS = -0.2;
 	private static final double DOUBLE_PAWN_BONUS = -0.3;
@@ -46,7 +47,7 @@ public class PawnStructureEvaluatorSettings {
 	
 	private void calculateBonusTables() {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int pawnEvaluation = PieceTypeEvaluations.getPieceEvaluation(color, PieceType.PAWN);
+			final int pawnEvaluation = PieceTypeEvaluations.getPawnEvaluation(color);
 			
 			unprotectedOpenFilePawnBonus[color] = (int) Math.round (pawnEvaluation * UNPROTECTED_OPEN_FILE_PAWN_BONUS);
 			doublePawnBonus[color] = (int) Math.round (pawnEvaluation * DOUBLE_PAWN_BONUS);
@@ -55,7 +56,7 @@ public class PawnStructureEvaluatorSettings {
 	
 	private void setDefaultPawnTables() {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int pawnEvaluation = PieceTypeEvaluations.getPieceEvaluation(color, PieceType.PAWN);
+			final int pawnEvaluation = PieceTypeEvaluations.getPawnEvaluation(color);
 			
 			for (int square = Square.FIRST; square < Square.LAST; square++) {
 				final int promotionDistance = BoardConstants.getPawnPromotionDistance(color, square);

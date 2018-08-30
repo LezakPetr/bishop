@@ -57,7 +57,9 @@ public class PawnEndingEvaluator {
                 final boolean isCheck = (PawnAttackTable.getItem(onTurn, kingOnTurnSquare) & oppositePawns) != 0;
 
                 for (int kingNotOnTurnSquare = Square.FIRST; kingNotOnTurnSquare < Square.LAST; kingNotOnTurnSquare++) {
+                    // All possible king moves must be blocked by king not on turn
                     if ((possibleKingMoves & ~FigureAttackTable.getItem(PieceType.KING, kingNotOnTurnSquare)) == 0) {
+                        // Verify that there is either check or all pawns are blocked
                         final long squaresBlockedForPawns = pawnOccupancy | BitBoard.of(kingNotOnTurnSquare, kingOnTurnSquare);
 
                         if (isCheck || (BoardConstants.getPawnSingleMoveSquares(onTurn, key.getPawnMask(onTurn)) & ~squaresBlockedForPawns) == 0)
@@ -77,14 +79,20 @@ public class PawnEndingEvaluator {
         }
     }
 
+    /**
+     * Calculate possible pawn captures by king. They are stored in main table as king on pawn squares.
+     */
     private void processPawnCapturesByKing() {
         for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
+            // King not on turn has captured pawn on turn so he must be on some square with pawn on turn not attacked by another pawn on turn
             final long possibleNotOnTurnKingSquares = key.getPawnMask(onTurn) & ~BoardConstants.getPawnsAttackedSquares(onTurn, key.getPawnMask(onTurn));
 
             for (BitLoop kingNotOnTurnLoop = new BitLoop(possibleNotOnTurnKingSquares); kingNotOnTurnLoop.hasNextSquare(); ) {
                 final int kingNotOnTurnSquare = kingNotOnTurnLoop.getNextSquare();
                 final PawnEndingKey subKey = key.removePawn (kingNotOnTurnSquare);
                 final PawnEndingTable table = register.getTable(subKey);
+
+                // King on turn cannot be attacking king not on turn or occupy it's square not he can be on any square with pawn (that would imply double capture in one move)
                 final long possibleOnTurnKingSquares = ~BoardConstants.getKingNearSquares(kingNotOnTurnSquare) & ~key.getPawnOccupancy();
 
                 for (BitLoop kingOnTurnLoop = new BitLoop(possibleOnTurnKingSquares); kingOnTurnLoop.hasNextSquare(); ) {
@@ -103,45 +111,56 @@ public class PawnEndingEvaluator {
         }
     }
 
+    /**
+     * Processes pawn moves. They are stored in the positions before the moves
+     */
     private void processPawnMoves() {
         final long pawnOccupancy = key.getPawnOccupancy();
 
         for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
             final int notOnTurn = Color.getOppositeColor(onTurn);
 
+            // Source squares - pawns on turn
             for (BitLoop sourceSquareLoop = new BitLoop(key.getPawnMask(onTurn)); sourceSquareLoop.hasNextSquare(); ) {
                 final int sourceSquare = sourceSquareLoop.getNextSquare();
 
-                // Moves
+                // Target squares - possible squares for pawn moves
                 final long possibleTargetSquares = PawnMoveTable.getItem(onTurn, sourceSquare) & ~pawnOccupancy;
 
                 for (BitLoop targetSquareLoop = new BitLoop(possibleTargetSquares); targetSquareLoop.hasNextSquare(); ) {
                     final int targetSquare = targetSquareLoop.getNextSquare();
-                    final long middleSquares = BetweenTable.getItem(sourceSquare, targetSquare);
-                    final long pawnChangeMask = BitBoard.of (sourceSquare, targetSquare);
-                    final PawnEndingKey subKey;
-
-                    if (onTurn == Color.WHITE)
-                        subKey = new PawnEndingKey(
-                            key.getWhitePawns() ^ pawnChangeMask,
-                                key.getBlackPawns()
-                        );
-                    else
-                        subKey = new PawnEndingKey(
-                                key.getWhitePawns(),
-                                key.getBlackPawns() ^ pawnChangeMask
-                        );
+                    final long middleSquares = BetweenTable.getItem(sourceSquare, targetSquare);   // Mask of square crossed by move by two squares (if any)
 
                     if ((middleSquares & pawnOccupancy) == 0) {
+                        final long pawnChangeMask = BitBoard.of (sourceSquare, targetSquare);
+                        final PawnEndingKey subKey;
+
+                        if (onTurn == Color.WHITE)
+                            subKey = new PawnEndingKey(
+                                    key.getWhitePawns() ^ pawnChangeMask,
+                                    key.getBlackPawns()
+                            );
+                        else
+                            subKey = new PawnEndingKey(
+                                    key.getWhitePawns(),
+                                    key.getBlackPawns() ^ pawnChangeMask
+                            );
+
                         final PawnEndingTable subTable = register.getTable(subKey);
+
+                        // Both kings are not allowed on squares with pawns, middle square, source nor target square
                         final long disallowedKingSquares = pawnOccupancy | middleSquares | pawnChangeMask;
-                        final long kingOnTurnMask = ~(BoardConstants.getPawnsAttackedSquares(notOnTurn, key.getPawnMask(notOnTurn)) | disallowedKingSquares);
 
-                        for (final BitLoop kingOnTurnLoop = new BitLoop(kingOnTurnMask); kingOnTurnLoop.hasNextSquare(); ) {
+                        // King on turn is also not allowed on squares attacked by pawns not on turn
+                        final long possibleKingOnTurnSquares = ~(BoardConstants.getPawnsAttackedSquares(notOnTurn, key.getPawnMask(notOnTurn)) | disallowedKingSquares);
+
+                        for (final BitLoop kingOnTurnLoop = new BitLoop(possibleKingOnTurnSquares); kingOnTurnLoop.hasNextSquare(); ) {
                             final int kingOnTurnSquare = kingOnTurnLoop.getNextSquare();
-                            final long kingNotOnTurnMask = ~(BoardConstants.getPawnsAttackedSquares(onTurn, key.getPawnMask(onTurn)) | BoardConstants.getKingNearSquares(kingOnTurnSquare) | disallowedKingSquares);
 
-                            for (final BitLoop kingNotOnTurnLoop = new BitLoop(kingNotOnTurnMask); kingNotOnTurnLoop.hasNextSquare(); ) {
+                            // King not on turn is also not allowed on squares attacked by pawns on turn or by king on turn or on square occupied by king on turn
+                            final long possibleKingNotOnTurnSquares = ~(BoardConstants.getPawnsAttackedSquares(onTurn, key.getPawnMask(onTurn)) | BoardConstants.getKingNearSquares(kingOnTurnSquare) | disallowedKingSquares);
+
+                            for (final BitLoop kingNotOnTurnLoop = new BitLoop(possibleKingNotOnTurnSquares); kingNotOnTurnLoop.hasNextSquare(); ) {
                                 final int kingNotOnTurnSquare = kingNotOnTurnLoop.getNextSquare();
                                 final int classification = subTable.getClassification(kingNotOnTurnSquare, kingOnTurnSquare, notOnTurn);
 
@@ -268,12 +287,13 @@ public class PawnEndingEvaluator {
     }
 
     public static PawnEndingTable calculateTable(final TablebasePositionEvaluator tablebaseEvaluator, final PawnEndingTableRegister register, final PawnEndingKey key) {
-        final boolean hasPromotedPawn = key.hasPromotedPawn();
+        final int promotedPawnColor = key.getPromotedPawnColor();
 
-        if (hasPromotedPawn) {
+        if (promotedPawnColor != Color.NONE) {
             final PawnEndingTerminalPositionEvaluator terminalPositionEvaluator = new PawnEndingTerminalPositionEvaluator(tablebaseEvaluator, register, key);
+            final int onTurn = Color.getOppositeColor(promotedPawnColor);
 
-            return terminalPositionEvaluator.calculateTable();
+            return terminalPositionEvaluator.calculateTable(onTurn);
         }
         else {
             final PawnEndingEvaluator evaluator = new PawnEndingEvaluator(register, key);

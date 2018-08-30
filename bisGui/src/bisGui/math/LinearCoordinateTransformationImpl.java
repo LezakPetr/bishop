@@ -1,9 +1,6 @@
 package bisGui.math;
 
-import math.IMatrixRead;
-import math.IVectorRead;
-import math.Matrices;
-import math.Vectors;
+import math.*;
 
 public class LinearCoordinateTransformationImpl implements ILinearCoordinateTransformation {
 	
@@ -21,7 +18,7 @@ public class LinearCoordinateTransformationImpl implements ILinearCoordinateTran
 	public LinearCoordinateTransformationImpl (final IVectorRead origin, final IMatrixRead forwardMatrix) {
 		this.origin = origin;
 		this.forwardMatrix = forwardMatrix;
-		this.backwardMatrix = Matrices.inverse(forwardMatrix);
+		this.backwardMatrix = GaussianElimination.matrixInversion(forwardMatrix).solve();
 	}
 	
 	/**

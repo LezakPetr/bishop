@@ -1,6 +1,6 @@
 package math;
 
-public class ColumnVector implements IVector {
+public class ColumnVector extends AbstractVectorRead implements IVector {
 
 	private final IMatrix baseMatrix;
 	private final int rowOffset;
@@ -52,5 +52,9 @@ public class ColumnVector implements IVector {
 	public IVectorIterator getNonZeroElementIterator() {
 		return new DenseNonZeroElementIterator(this);
 	}
-	
+
+	@Override
+	public boolean isImmutable() {
+		return baseMatrix.isImmutable();
+	}
 }

@@ -1,64 +1,27 @@
 package math;
 
-public class MatrixImpl implements IMatrix {
+import java.util.Collection;
 
-	private final int rowCount;
-	private final int columnCount;
-	private final IVector[] rows;
-	private boolean frozen;
+abstract public class MatrixImpl implements IMatrix {
+
+	protected final int rowCount;
+	protected final int columnCount;
+	protected boolean frozen;
 	
 	/**
 	 * Creates matrix from given array.
 	 * First index of array is row, second is column.
 	 * @param rowCount row count
 	 * @param columnCount column count
-	 * @param elements array of elements
 	 */
-	protected MatrixImpl (final int rowCount, final int columnCount, final IVector[] rows) {
-		checkSameDensityOfROws(rows);
-		
+	protected MatrixImpl (final int rowCount, final int columnCount) {
 		this.rowCount = rowCount;
 		this.columnCount = columnCount;
-		this.rows = rows;
-	}
-	
-	/**
-	 * Creates matrix from given array.
-	 * First index of array is row, second is column.
-	 * @param rowCount row count
-	 * @param columnCount column count
-	 * @param elements array of elements
-	 */
-	protected MatrixImpl (final int rowCount, final int columnCount, final IVectorRead[] rows) {
-		checkSameDensityOfROws(rows);
-		
-		this.rowCount = rowCount;
-		this.columnCount = columnCount;
-		this.rows = new IVector[rowCount];
-		
-		for (int i = 0; i < rowCount; i++) {
-			final IVectorRead origRow = rows[i];
-			
-			if (origRow instanceof IVector)
-				this.rows[i] = (IVector) origRow;
-			else
-				this.rows[i] = Vectors.copy(origRow);
-			
-			this.rows[i].freeze();
-		}
-		
-		this.frozen = true;
 	}
 
-
-	private void checkSameDensityOfROws(final IVectorRead[] rows) {
-		if (rows.length == 0)
-			return;
-		
-		final Density expectedDensity = rows[0].density();
-		
-		for (int i = 1; i < rows.length; i++) {
-			if (rows[i].density() != expectedDensity)
+	protected static void checkDensityOfROws(final Collection<? extends IVectorRead> rows, final Density expectedDensity) {
+		for (IVectorRead row: rows) {
+			if (row.density() != expectedDensity)
 				throw new RuntimeException("Matrix rows have different density");
 		}
 	}
@@ -89,7 +52,7 @@ public class MatrixImpl implements IMatrix {
 	 */
 	@Override
 	public double getElement (final int row, final int column) {
-		return rows[row].getElement(column);
+		return this.getRowVector(row).getElement(column);
 	}
 	
 	/**
@@ -102,46 +65,16 @@ public class MatrixImpl implements IMatrix {
 	public MatrixImpl setElement (final int row, final int column, final double value) {
 		checkNotFrozen();
 		
-		this.rows[row].setElement(column, value);
+		this.getRowVector(row).setElement(column, value);
 		
 		return this;
 	}
 
-	private void checkNotFrozen() {
+	protected void checkNotFrozen() {
 		if (frozen)
 			throw new RuntimeException("Matrix is frozen");
 	}
-	
-	@Override
-	public IMatrixRead freeze() {
-		this.frozen = true;
-		
-		for (IVector row: rows)
-			row.freeze();
-		
-		return this;
-	}
 
-	@Override
-	public IMatrix copy() {
-		final IVector[] copyRows = new IVector[rowCount];
-		
-		for (int i = 0; i < rowCount; i++)
-			copyRows[i] = Vectors.copy(rows[i]);
-		
-		return new MatrixImpl(rowCount, columnCount, copyRows);
-	}
-
-	@Override
-	public IVector getRowVector(final int index) {
-		return rows[index];
-	}
-
-	@Override
-	public Density density() {
-		return (rowCount > 0) ? rows[0].density() : Density.SPARSE;
-	}
-	
 	@Override
 	public boolean equals (final Object obj) {
 		if (!(obj instanceof IMatrix))
@@ -164,8 +97,8 @@ public class MatrixImpl implements IMatrix {
 	public int hashCode() {
 		int hash = 0;
 		
-		for (IVectorRead row: rows)
-			hash += 31 * row.hashCode();
+		for (int i = 0; i < rowCount; i++)
+			hash += 31 * getRowVector(i).hashCode();
 		
 		return hash;
 	}
@@ -191,4 +124,10 @@ public class MatrixImpl implements IMatrix {
 		
 		return result.toString();
 	}
+
+	@Override
+	public boolean isImmutable() {
+		return frozen;
+	}
+
 }

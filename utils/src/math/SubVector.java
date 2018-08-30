@@ -1,7 +1,7 @@
 package math;
 
 
-public class SubVector implements IVector {
+public class SubVector extends AbstractVectorRead implements IVector {
 	
 	private final IVector baseVector;
 	private final int offset;
@@ -48,5 +48,10 @@ public class SubVector implements IVector {
 	@Override
 	public IVectorIterator getNonZeroElementIterator() {
 		return new SubVectorIterator(baseVector.getNonZeroElementIterator(), offset, offset + dimension);
+	}
+
+	@Override
+	public boolean isImmutable() {
+		return baseVector.isImmutable();
 	}
 }

@@ -877,20 +877,6 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	private void updateHash() {
 		caching.refreshCache(this);
 	}
-	
-	public int calculateMaterialEvaluation() {
-		int materialEvaluation = 0;
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			for (int pieceType = PieceType.VARIABLE_FIRST; pieceType < PieceType.VARIABLE_LAST; pieceType++) {
-				final long piecesMask = getPiecesMask(color, pieceType);
-				
-				materialEvaluation += BitBoard.getSquareCount (piecesMask) * PieceTypeEvaluations.getPieceEvaluation (color, pieceType);
-			}
-		}
-		
-		return materialEvaluation;
-	}
 
 	/**
 	 * Assigns given original position into this.
@@ -1170,7 +1156,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		return Square.NONE;
 	}
 
-	public int getStaticExchangeEvaluation (final int color, final int square) {
+	public int getStaticExchangeEvaluation (final int color, final int square, final PieceTypeEvaluations pieceTypeEvaluations) {
 		final int attackerSquare = getCheapestAttacker (color, square);
 		
 		if (attackerSquare != Square.NONE) {
@@ -1201,13 +1187,26 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 			}
 			
 			makeMove(move);	
-			final int childEvaluation = getStaticExchangeEvaluation (Color.getOppositeColor(color), square);
+			final int childEvaluation = getStaticExchangeEvaluation (Color.getOppositeColor(color), square, pieceTypeEvaluations);
 			undoMove(move);
 
-			return Math.max(0, PieceTypeEvaluations.getPieceTypeEvaluation(capturedPieceType) - childEvaluation);
+			return Math.max(0, pieceTypeEvaluations.getPieceTypeEvaluation(capturedPieceType) - childEvaluation);
 		}
 		else
 			return 0;
+	}
+
+	public int getStaticExchangeEvaluationOnTurn(final PieceTypeEvaluations pieceTypeEvaluations) {
+		final int notOnTurn = Color.getOppositeColor(onTurn);
+		int evaluation = 0;
+
+		for (BitLoop loop = new BitLoop(getColorOccupancy(notOnTurn)); loop.hasNextSquare(); ) {
+			final int square = loop.getNextSquare();
+
+			evaluation = Math.max(evaluation, getStaticExchangeEvaluation(onTurn, square, pieceTypeEvaluations));
+		}
+
+		return evaluation;
 	}
 
 	@Override

@@ -127,10 +127,9 @@ public class PawnEndingEvaluatorTest {
             final PawnEndingTerminalPositionEvaluator evaluator = new PawnEndingTerminalPositionEvaluator(tablebaseEvaluator, register, key);
             evaluator.setUseTablebase(false);
 
-            final PawnEndingTable table = evaluator.calculateTable();
+            final int onTurn = Color.getOppositeColor(key.getPromotedPawnColor());
+            final PawnEndingTable table = evaluator.calculateTable(onTurn);
             final long pawnOccupancy = testCase.pawnMasks[Color.WHITE] | testCase.pawnMasks[Color.BLACK];
-
-            final int[] allowedOnTurns = getAllowedOnTurns(testCase);
 
             final TablebasePawnEndingTable tablebaseTable = new TablebasePawnEndingTable(key, tablebaseEvaluator);
 
@@ -140,9 +139,7 @@ public class PawnEndingEvaluatorTest {
                 for (BitLoop blackKingLoop = new BitLoop(~pawnOccupancy); blackKingLoop.hasNextSquare(); ) {
                     final int blackKingSquare = blackKingLoop.getNextSquare();
 
-                    for (int onTurn: allowedOnTurns) {
-                        verifyPosition(errors, tablebaseTable, table, whiteKingSquare, blackKingSquare, onTurn);
-                    }
+                    verifyPosition(errors, tablebaseTable, table, whiteKingSquare, blackKingSquare, onTurn);
                 }
             }
 

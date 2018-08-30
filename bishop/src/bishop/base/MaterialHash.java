@@ -14,6 +14,10 @@ public final class MaterialHash implements IMaterialHashRead {
 		clear();
 	}
 
+	public MaterialHash(final long hash) {
+		this.hash = hash;
+	}
+
 	public MaterialHash(final IPieceCounts pieceCounts, final int onTurn) {
 		clear();
 		

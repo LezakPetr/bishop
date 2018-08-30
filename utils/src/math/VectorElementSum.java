@@ -10,7 +10,7 @@ public class VectorElementSum implements IVectorElementProcessor {
 	private double sum;
 	
 	@Override
-	public void init(final Density density, final int dimension) {
+	public void init(final Density density, final int dimension, final int expectedNonZeroElementCount) {
 		sum = 0.0;
 	}
 

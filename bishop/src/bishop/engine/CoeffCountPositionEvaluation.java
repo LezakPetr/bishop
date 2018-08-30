@@ -1,17 +1,14 @@
 package bishop.engine;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import utils.IoUtils;
 
 
 public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 	
-	private static final int COEFF_COUNT_SHIFT = 10;
-	private static final int COEFF_MULTIPLICATOR = 1 << COEFF_COUNT_SHIFT;
+	private static final int COEFF_COUNT_SHIFT = 8;
+	public static final int COEFF_MULTIPLICATOR = 1 << COEFF_COUNT_SHIFT;
 	
 	private int constantEvaluation;
 	private final Map<Integer, Integer> coeffCounts;
@@ -19,7 +16,7 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 	public CoeffCountPositionEvaluation(final PositionEvaluationCoeffs coeffs) {
 		super (coeffs);
 		
-		this.coeffCounts = new HashMap<>();
+		this.coeffCounts = new TreeMap<>();
 	}
 
 	@Override
@@ -77,9 +74,13 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 	}
 	
 	public double getCoeffCount (final int index) {
-		return (double) coeffCounts.getOrDefault(index, 0) / (double) COEFF_MULTIPLICATOR;
+		return (double) getCoeffCountRaw(index) / (double) COEFF_MULTIPLICATOR;
 	}
-	
+
+	public int getCoeffCountRaw (final int index) {
+		return coeffCounts.getOrDefault(index, 0);
+	}
+
 	@Override
 	public String toString() {
 		final CoeffRegistry registry = PositionEvaluationCoeffs.getCoeffRegistry();

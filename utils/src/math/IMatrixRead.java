@@ -27,11 +27,16 @@ public interface IMatrixRead {
 	 * @return copy
 	 */
 	public IMatrix copy();
-	
+
+	/**
+	 * Returns row vector with given index.
+	 * @param index row index
+	 * @return row vector
+	 */
 	public IVectorRead getRowVector(final int index);
 	
 	public default IVectorRead getColumnVector(final int column) {
-		return new IVectorRead() {
+		return new AbstractVectorRead() {
 			@Override
 			public IVectorRead subVector(final int begin, final int end) {
 				// TODO Auto-generated method stub
@@ -57,8 +62,22 @@ public interface IMatrixRead {
 			public IVectorIterator getNonZeroElementIterator() {
 				return new DenseNonZeroElementIterator(this);
 			}
+
+			@Override
+			public boolean isImmutable() {
+				return IMatrixRead.this.isImmutable();
+			}
 		};
 	}
 
 	public Density density();
+
+	/**
+	 * Returns true if it is guaranteed that the matrix will not change value.
+	 * @return if matrix is immutable
+	 */
+	public boolean isImmutable();
+
+
+	public IMatrixRowIterator getNonZeroRowIterator();
 }

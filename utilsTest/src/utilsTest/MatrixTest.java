@@ -3,16 +3,9 @@ package utilsTest;
 import java.util.Random;
 import java.util.function.BinaryOperator;
 
+import math.*;
 import org.junit.Assert;
 import org.junit.Test;
-
-import math.Density;
-import math.IMatrix;
-import math.IMatrixRead;
-import math.IVector;
-import math.IVectorRead;
-import math.Matrices;
-import math.Vectors;
 
 public class MatrixTest {
 
@@ -35,7 +28,7 @@ public class MatrixTest {
 	}
 	
 	private void checkInversion (final IMatrixRead matrix, final IMatrixRead expected) {
-		final IMatrixRead inv = Matrices.inverse(matrix);
+		final IMatrixRead inv = GaussianElimination.matrixInversion(matrix).solve();
 		final IMatrixRead diff = Matrices.minus(inv, expected);
 		
 		Assert.assertTrue(Matrices.maxAbsElement (diff) <= 1e-6);
@@ -50,7 +43,31 @@ public class MatrixTest {
 			checkInversion(matrixInvA, matrixA);
 		}
 	}
-	
+
+	@Test
+	public void equationSystemTestGaussianElimination() {
+		for (Density density: Density.values()) {
+			initMatrices(density);
+
+			final IVectorRead r = Vectors.of (1.0, 2.0, -3.0);
+
+			final IVectorRead s = GaussianElimination.equationSolver(matrixA, r).solve();
+			Assert.assertEquals(0.0, Vectors.getLength(Vectors.minus(Matrices.multiply(matrixA, s), r)), 1e-9);
+		}
+	}
+
+	@Test
+	public void equationSystemTestGaussJordanElimination() {
+		for (Density density: Density.values()) {
+			initMatrices(density);
+
+			final IVectorRead r = Vectors.of (1.0, 2.0, -3.0);
+
+			final IVectorRead s = GaussJordanElimination.equationSolver(matrixA, r).solve();
+			Assert.assertEquals(0.0, Vectors.getLength(Vectors.minus(Matrices.multiply(matrixA, s), r)), 1e-9);
+		}
+	}
+
 	// Matrix x Matrix multiplication test
 	// A * (B + C - D) = A*B + A*C - A*D
 	@Test

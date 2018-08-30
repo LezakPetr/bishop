@@ -1,6 +1,7 @@
 package bishop.engine;
 
 import bishop.base.IHandlerRegistrar;
+import bishop.base.IMaterialEvaluator;
 import bishop.base.Position;
 
 public interface ISearchManager {
@@ -79,6 +80,13 @@ public interface ISearchManager {
 	 * @param factory search engine factory
 	 */
 	public void setEngineFactory (final ISearchEngineFactory factory);
+
+	/**
+	 * Sets material evaluator.
+	 * Manager must be in STOPPED state.
+	 * @param evaluator material evaluator
+	 */
+	public void setMaterialEvaluator (final IMaterialEvaluator evaluator);
 	
 	/**
 	 * Returns hash table.
