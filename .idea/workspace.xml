@@ -7,87 +7,25 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1a7b7d13-6356-439f-b418-e923eb642030" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/EvaluationSample.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/SampleListGenerator.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/SampleWriter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/collections/DoubleArray.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/collections/IntArray.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/math/CholeskySolver.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/math/DenseMatrix.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/math/GaussJordanElimination.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/math/GaussSeidelSolver.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/math/GaussianElimination.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/math/IMatrixRowIterator.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/math/SparseMatrix.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/regression/CostStatisticsAccumulator.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/regression/DirectFeatureCombination.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/regression/ICostStatistics.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/src/regression/LinearScalarField.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utilsTest/src/utilsTest/CholeskySolverTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bisGui/src/bisGui/math/LinearCoordinateTransformationImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/bisGui/src/bisGui/math/LinearCoordinateTransformationImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/base/DefaultAdditiveMaterialEvaluator.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/base/DefaultAdditiveMaterialEvaluator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/base/MaterialHash.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/base/MaterialHash.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/base/PieceTypeEvaluations.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/base/PieceTypeEvaluations.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/base/Position.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/base/Position.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/controller/SearchResources.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/controller/SearchResources.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/CoeffCountPositionEvaluation.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/CoeffCountPositionEvaluation.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/CoeffLink.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/CoeffRegistry.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/CoeffRegistry.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/FinitePositionEvaluator.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/FinitePositionEvaluator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/GameStage.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/GameStage.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/GameStageCoeffs.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/GameStageCoeffs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/ISearchEngine.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/ISearchEngine.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/ISearchManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/ISearchManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/MobilityEvaluatorSettings.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/MobilityEvaluatorSettings.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/MoveExtensionEvaluator.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/MoveExtensionEvaluator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/PawnStructureCoeffs.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/PawnStructureCoeffs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/PawnStructureEvaluatorSettings.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/PawnStructureEvaluatorSettings.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/PositionEvaluationCoeffs.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/PositionEvaluationCoeffs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/SearchManagerImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/SearchManagerImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/SerialSearchEngine.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/SerialSearchEngine.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/SerialSearchEngineFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/SerialSearchEngineFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishop/src/bishop/engine/TablePositionCoeffs.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishop/src/bishop/engine/TablePositionCoeffs.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bishopTests/src/bishopTests/AllTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishopTests/src/bishopTests/AllTests.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishopTests/src/bishopTests/PositionTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishopTests/src/bishopTests/PositionTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchEngineTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchEngineTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchManagerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchManagerTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchPerformanceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchPerformanceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchSettingOptimizer.java" beforeDir="false" afterPath="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchSettingOptimizer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/Calculator.java" beforeDir="false" afterPath="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/Calculator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/CoeffPositionProcessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/bookBuilder/src/bishop/evaluationStatistics/CoeffPositionProcessor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/BinaryVectorAlgorithmBothNonzero.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/BinaryVectorAlgorithmBothNonzero.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/BinaryVectorAlgorithmOneNonzero.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/BinaryVectorAlgorithmOneNonzero.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/DenseVector.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/DenseVector.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/IMatrix.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/IMatrix.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/IMatrixRead.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/IMatrixRead.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/IVectorElementProcessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/IVectorElementProcessor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/IVectorRead.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/IVectorRead.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/Matrices.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/Matrices.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/MatrixImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/MatrixImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/SparseVector.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/SparseVector.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/UnaryVectorAlgorithm.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/UnaryVectorAlgorithm.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/VectorElementSum.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/VectorElementSum.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/VectorSetter.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/VectorSetter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/VectorSummator.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/Vectors.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/Vectors.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/math/ZeroVectorTester.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/math/ZeroVectorTester.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/regression/CostStatistics.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/regression/CostStatistics.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/regression/GradientOptimizer.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/regression/GradientOptimizer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/regression/LinearFeatureCombination.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/regression/LinearFeatureCombination.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/regression/LogisticRegression.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/regression/LogisticRegression.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/regression/MultiSampleCostField.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/regression/MultiSampleCostField.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/regression/MultipliedScalarField.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/regression/MultipliedScalarField.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/regression/NewtonSolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/regression/NewtonSolver.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/regression/ParameterMappingScalarField.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/regression/ParameterMappingScalarField.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/regression/PolynomialScalarField.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/regression/PolynomialScalarField.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/regression/Regularization.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/regression/Regularization.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/regression/ScalarFieldSum.java" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/regression/ScalarFieldSum.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utilsTest/src/utilsTest/MatrixTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/utilsTest/src/utilsTest/MatrixTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utilsTest/src/utilsTest/NewtonSolverTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/utilsTest/src/utilsTest/NewtonSolverTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utilsTest/src/utilsTest/ScalarFieldTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/utilsTest/src/utilsTest/ScalarFieldTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utilsTest/src/utilsTest/VectorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/utilsTest/src/utilsTest/VectorTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/BalanceActivationFunction.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/FastSigmoidActivationFunction.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/IActivationFunction.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/ILearningInnerPerceptronLayer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/ILearningPerceptronLayer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/IPerceptronLayer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/IdentityActivationFunction.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/InnerPerceptronLayer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/LearningInnerPerceptronLayer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/LearningOutputPerceptronLayer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/LearningPerceptronNetwork.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/Optimizer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/OutputPerceptronLayer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/PerceptronNetwork.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/PerceptronNetworkBase.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/neural/TanhActivationFunction.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilsTest/src/utilsTest/NeuralTest.java" beforeDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/bisGui/bin/" />
     <ignored path="$PROJECT_DIR$/bisGuiSwing/bin/" />
@@ -113,11 +51,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="SearchManagerTest.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="SearchManagerTest.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/SearchManagerTest.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="72">
-              <caret line="26" column="24" lean-forward="true" selection-start-line="26" selection-start-column="24" selection-end-line="26" selection-end-column="24" />
+            <state relative-caret-position="144">
+              <caret line="30" column="34" lean-forward="true" selection-start-line="30" selection-start-column="34" selection-end-line="30" selection-end-column="34" />
             </state>
           </provider>
         </entry>
@@ -144,24 +82,6 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SearchEngineTest.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/SearchEngineTest.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="90">
-              <caret line="23" column="4" selection-start-line="23" selection-start-column="4" selection-end-line="23" selection-end-column="81" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="PositionTest.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/PositionTest.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3870">
-              <caret line="221" column="108" selection-start-line="221" selection-start-column="108" selection-end-line="221" selection-end-column="108" />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="SearchSettingOptimizer.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/SearchSettingOptimizer.java">
           <provider selected="true" editor-type-id="text-editor">
@@ -171,11 +91,32 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="AllTests.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="AllTests.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/AllTests.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-468">
-              <caret line="20" column="19" selection-start-line="20" selection-start-column="19" selection-end-line="20" selection-end-column="19" />
+            <state relative-caret-position="124">
+              <caret line="61" column="8" selection-start-line="61" selection-start-column="8" selection-end-line="61" selection-end-column="8" />
+              <folding>
+                <element signature="e#1902#1912#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="NewtonSolverTest.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/utilsTest/src/utilsTest/NewtonSolverTest.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="72">
+              <caret line="13" column="17" lean-forward="true" selection-start-line="13" selection-start-column="17" selection-end-line="13" selection-end-column="17" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="BitBoardTest.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/BitBoardTest.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="72">
+              <caret line="9" column="18" selection-start-line="9" selection-start-column="18" selection-end-line="9" selection-end-column="18" />
             </state>
           </provider>
         </entry>
@@ -192,17 +133,8 @@
       <file leaf-file-name="SearchPerformanceTest.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/SearchPerformanceTest.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="936">
+            <state relative-caret-position="354">
               <caret line="63" column="41" selection-start-line="63" selection-start-column="41" selection-end-line="63" selection-end-column="41" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="SearchResources.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bishop/src/bishop/controller/SearchResources.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1332">
-              <caret line="93" column="42" selection-start-line="93" selection-start-column="18" selection-end-line="93" selection-end-column="42" />
             </state>
           </provider>
         </entry>
@@ -219,11 +151,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>getZer</find>
-      <find>copy</find>
-      <find>solve</find>
-      <find>regression</find>
-      <find>COUNT</find>
       <find>LAST</find>
       <find>FEATURE_CO</find>
       <find>elementM</find>
@@ -249,6 +176,11 @@
       <find>INTmAP</find>
       <find>rootUrl</find>
       <find>create</find>
+      <find>BitBoardTest</find>
+      <find>PositionIoTest</find>
+      <find>SearchPerformanceTest</find>
+      <find>NewtonSolverTest</find>
+      <find>SimpleLinearModelTest.</find>
     </findStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$/bishop</dir>
@@ -308,9 +240,9 @@
         <option value="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchPerformanceTest.java" />
         <option value="$PROJECT_DIR$/bishopTests/src/bishopTests/PositionTest.java" />
         <option value="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchSettingOptimizer.java" />
-        <option value="$PROJECT_DIR$/bishopTests/src/bishopTests/AllTests.java" />
         <option value="$PROJECT_DIR$/bishop/src/bishop/engine/SerialSearchEngineFactory.java" />
         <option value="$PROJECT_DIR$/bishopTests/src/bishopTests/SearchManagerTest.java" />
+        <option value="$PROJECT_DIR$/bishopTests/src/bishopTests/AllTests.java" />
       </list>
     </option>
   </component>
@@ -359,6 +291,21 @@
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="bishop" type="462c0819:PsiDirectoryNode" />
               <item name="engine" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="bishop" type="b2602c69:ProjectViewProjectNode" />
+              <item name="bishopTests" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="bishop" type="b2602c69:ProjectViewProjectNode" />
+              <item name="bishopTests" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="bishop" type="b2602c69:ProjectViewProjectNode" />
+              <item name="bishopTests" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="bishopTests" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="bishop" type="b2602c69:ProjectViewProjectNode" />
@@ -459,7 +406,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Application.AllTests">
+  <component name="RunManager" selected="JUnit.NewtonSolverTest">
     <configuration default="true" type="Applet" factoryName="Applet">
       <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
     </configuration>
@@ -494,18 +441,18 @@
     <configuration default="true" type="Application" factoryName="Application">
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     </configuration>
-    <configuration name="MatrixTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="utilsTest" />
+    <configuration name="BitBoardTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="bishopTests" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="utilsTest.*" />
+          <option name="PATTERN" value="bishopTests.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
       <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="PACKAGE_NAME" value="utilsTest" />
-      <option name="MAIN_CLASS_NAME" value="utilsTest.MatrixTest" />
+      <option name="PACKAGE_NAME" value="bishopTests" />
+      <option name="MAIN_CLASS_NAME" value="bishopTests.BitBoardTest" />
       <option name="METHOD_NAME" />
       <option name="TEST_OBJECT" value="class" />
       <option name="VM_PARAMETERS" value="-ea" />
@@ -517,7 +464,7 @@
       </option>
       <patterns />
     </configuration>
-    <configuration name="ScalarFieldTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="NewtonSolverTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="utilsTest" />
       <extension name="coverage">
         <pattern>
@@ -528,7 +475,7 @@
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
       <option name="ALTERNATIVE_JRE_PATH" />
       <option name="PACKAGE_NAME" value="utilsTest" />
-      <option name="MAIN_CLASS_NAME" value="utilsTest.ScalarFieldTest" />
+      <option name="MAIN_CLASS_NAME" value="utilsTest.NewtonSolverTest" />
       <option name="METHOD_NAME" />
       <option name="TEST_OBJECT" value="class" />
       <option name="VM_PARAMETERS" value="-ea" />
@@ -617,18 +564,18 @@
     <list>
       <item itemvalue="Application.Bishop" />
       <item itemvalue="Application.Calculator" />
-      <item itemvalue="JUnit.MatrixTest" />
-      <item itemvalue="JUnit.ScalarFieldTest" />
       <item itemvalue="Application.AllTests" />
       <item itemvalue="JUnit.SearchManagerTest" />
+      <item itemvalue="JUnit.BitBoardTest" />
+      <item itemvalue="JUnit.NewtonSolverTest" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.NewtonSolverTest" />
+        <item itemvalue="JUnit.BitBoardTest" />
         <item itemvalue="Application.AllTests" />
         <item itemvalue="JUnit.SearchManagerTest" />
         <item itemvalue="Application.Calculator" />
-        <item itemvalue="JUnit.MatrixTest" />
-        <item itemvalue="JUnit.ScalarFieldTest" />
       </list>
     </recent_temporary>
   </component>
@@ -643,12 +590,6 @@
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="MatrixTest - 2018.08.26 at 17h 40m 46s.xml">
-      <configuration name="MatrixTest" configurationId="JUnit" />
-    </history-entry>
-    <history-entry file="MatrixTest - 2018.08.26 at 17h 44m 15s.xml">
-      <configuration name="MatrixTest" configurationId="JUnit" />
-    </history-entry>
     <history-entry file="MatrixTest - 2018.08.26 at 21h 31m 11s.xml">
       <configuration name="MatrixTest" configurationId="JUnit" />
     </history-entry>
@@ -673,6 +614,12 @@
     <history-entry file="SearchManagerTest - 2018.08.30 at 20h 00m 04s.xml">
       <configuration name="SearchManagerTest" configurationId="JUnit" />
     </history-entry>
+    <history-entry file="BitBoardTest - 2018.08.30 at 21h 14m 27s.xml">
+      <configuration name="BitBoardTest" configurationId="JUnit" />
+    </history-entry>
+    <history-entry file="NewtonSolverTest - 2018.08.30 at 21h 20m 14s.xml">
+      <configuration name="NewtonSolverTest" configurationId="JUnit" />
+    </history-entry>
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1299" height="743" extended-state="6" />
@@ -680,14 +627,14 @@
     <layout>
       <window_info anchor="right" id="Palette" order="3" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Messages" order="7" weight="0.328594" />
+      <window_info active="true" anchor="bottom" id="Messages" order="7" visible="true" weight="0.328594" />
       <window_info anchor="right" id="Palette&#9;" order="3" />
       <window_info id="Image Layers" order="2" />
       <window_info anchor="right" id="Capture Analysis" order="3" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
       <window_info anchor="right" id="Maven Projects" order="3" />
       <window_info anchor="bottom" id="Version Control" order="7" weight="0.328594" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.30173776" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.30173776" />
       <window_info anchor="bottom" id="Terminal" order="7" weight="0.328594" />
       <window_info id="Capture Tool" order="2" />
       <window_info id="Designer" order="2" />
@@ -907,41 +854,6 @@
     </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/utils/src/regression/ISampleCostField.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="5" column="17" selection-start-line="5" selection-start-column="17" selection-end-line="5" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/utils/src/regression/CostStatisticsAccumulator.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="648">
-          <caret line="47" column="31" selection-start-line="47" selection-start-column="31" selection-end-line="47" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/utils/src/regression/ValueMappingScalarField.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="335">
-          <caret line="80" selection-start-line="80" selection-end-line="80" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/utils/src/math/UnaryVectorAlgorithm.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="228">
-          <caret line="52" column="9" lean-forward="true" selection-start-line="52" selection-start-column="9" selection-end-line="52" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/utils/src/math/BinaryVectorAlgorithmBothNonzero.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="792">
-          <caret line="46" column="81" selection-start-line="46" selection-start-column="81" selection-end-line="46" selection-end-column="81" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/utils/src/math/BinaryVectorAlgorithmOneNonzero.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="774">
@@ -1202,13 +1114,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/SearchPerformanceTest.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="936">
-          <caret line="63" column="41" selection-start-line="63" selection-start-column="41" selection-end-line="63" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/PositionTest.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3870">
@@ -1220,13 +1125,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1908">
           <caret line="123" column="9" selection-start-line="123" selection-start-column="9" selection-end-line="123" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/AllTests.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-468">
-          <caret line="20" column="19" selection-start-line="20" selection-start-column="19" selection-end-line="20" selection-end-column="19" />
         </state>
       </provider>
     </entry>
@@ -1257,8 +1155,60 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/SearchManagerTest.java">
       <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="144">
+          <caret line="30" column="34" lean-forward="true" selection-start-line="30" selection-start-column="34" selection-end-line="30" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/BitBoardTest.java">
+      <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="72">
-          <caret line="26" column="24" lean-forward="true" selection-start-line="26" selection-start-column="24" selection-end-line="26" selection-end-column="24" />
+          <caret line="9" column="18" selection-start-line="9" selection-start-column="18" selection-end-line="9" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/Test.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="36">
+          <caret line="2" column="13" selection-start-line="2" selection-start-column="13" selection-end-line="2" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/SearchPerformanceTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="354">
+          <caret line="63" column="41" selection-start-line="63" selection-start-column="41" selection-end-line="63" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/utilsTest/src/utilsTest/NewtonSolverTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="72">
+          <caret line="13" column="17" lean-forward="true" selection-start-line="13" selection-start-column="17" selection-end-line="13" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/utils/src/neural/PerceptronNetwork.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="72">
+          <caret line="5" column="13" selection-start-line="5" selection-start-column="13" selection-end-line="5" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/utilsTest/src/utilsTest/NeuralTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="124">
+          <caret line="8" column="13" selection-start-line="8" selection-start-column="13" selection-end-line="8" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bishopTests/src/bishopTests/AllTests.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="124">
+          <caret line="61" column="8" selection-start-line="61" selection-start-column="8" selection-end-line="61" selection-end-column="8" />
+          <folding>
+            <element signature="e#1902#1912#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

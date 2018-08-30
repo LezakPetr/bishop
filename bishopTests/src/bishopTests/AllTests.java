@@ -59,7 +59,6 @@ public class AllTests {
 		PawnStructureEvaluatorTest.class,
 		PositionIoTest.class,
 		SimpleLinearModelTest.class,
-		NeuralTest.class,
 		PawnEndingFileTableTest.class,
 		PawnEndingEvaluatorTest.class,
 		GradientOptimizerTest.class,
