@@ -10,8 +10,13 @@ public class VectorSetter implements IVectorElementProcessor {
 	private IVector vector;
 	
 	@Override
-	public void init(final Density density, final int dimension) {
+	public void init(final Density density, final int dimension, final int expectedNonZeroElementCount) {
 		vector = Vectors.vectorWithDensity(density, dimension);
+
+		if (expectedNonZeroElementCount > 0 && vector instanceof SparseVector) {
+			final SparseVector sparseVector = (SparseVector) vector;
+			sparseVector.ensureCapacity(expectedNonZeroElementCount);
+		}
 	}
 
 	@Override

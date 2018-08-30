@@ -10,7 +10,7 @@ public class ZeroVectorTester implements IVectorElementProcessor {
 	private double firstNonZeroValue = 0.0;
 	
 	@Override
-	public void init(final Density density, final int dimension) {
+	public void init(final Density density, final int dimension, final int expectedNonZeroElementCount) {
 		firstNonZeroValue = 0.0;
 	}
 

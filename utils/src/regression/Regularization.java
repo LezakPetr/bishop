@@ -9,7 +9,7 @@ import java.util.Collection;
 public class Regularization implements IParametricScalarField<Long> {
     private final int inputDimension;
     private final BitSet featureSet;
-    private double lambda;
+    private double lambda = 1.0;
 
     public Regularization (final int inputDimension) {
         this.inputDimension = inputDimension;
@@ -28,24 +28,27 @@ public class Regularization implements IParametricScalarField<Long> {
 
     @Override
     public ScalarPointCharacteristics calculate(final IVectorRead x, final Long sampleCount, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
-        double valueSum = 0.0;
-        IVector gradientSum = Vectors.dense(inputDimension);
+        final double coeff = lambda / sampleCount;
+
+        double value = 0.0;
+        final IVector gradient = Vectors.dense(inputDimension);
+        final IMatrix hessian = Matrices.createMutableMatrix(Density.SPARSE, inputDimension, inputDimension);
 
         for (int i = 0; i < inputDimension; i++) {
             if (featureSet.get(i)) {
                 final double xi = x.getElement(i);
-                valueSum += Utils.sqr(xi);
-                gradientSum.setElement(i, xi);
+                value += coeff * Utils.sqr(xi);
+                gradient.setElement(i, 2 * coeff * xi);
+                hessian.setElement(i, i, 2 * coeff);
             }
         }
 
-        final double coeff = lambda / sampleCount;
-        final double value = valueSum * coeff;
+        final double finalValue = value;
 
         return new ScalarPointCharacteristics(
-                () -> value,
-                () -> Vectors.multiply(2 * coeff, gradientSum),
-                () -> Matrices.multiply(2, Vectors.cartesianProduct(gradientSum, gradientSum)),
+                () -> finalValue,
+                () -> gradient.freeze(),
+                () -> hessian.freeze(),
                 characteristics
         );
     }

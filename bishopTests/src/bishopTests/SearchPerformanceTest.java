@@ -9,27 +9,9 @@ import java.net.URL;
 import java.util.List;
 import java.util.function.Supplier;
 
-import bishop.base.Game;
-import bishop.base.IGameNode;
-import bishop.base.IMaterialEvaluator;
-import bishop.base.ITreeIterator;
-import bishop.base.Move;
-import bishop.base.MoveList;
-import bishop.base.PgnReader;
-import bishop.base.Position;
+import bishop.base.*;
 import bishop.controller.SearchResources;
-import bishop.engine.AlgebraicPositionEvaluation;
-import bishop.engine.Evaluation;
-import bishop.engine.HashTableImpl;
-import bishop.engine.IPositionEvaluation;
-import bishop.engine.ISearchManager;
-import bishop.engine.ISearchManagerHandler;
-import bishop.engine.PositionEvaluatorSwitchFactory;
-import bishop.engine.PositionEvaluatorSwitchSettings;
-import bishop.engine.SearchInfo;
-import bishop.engine.SearchManagerImpl;
-import bishop.engine.SerialSearchEngineFactory;
-import bishop.engine.TablebasePositionEvaluator;
+import bishop.engine.*;
 import utils.Holder;
 
 public class SearchPerformanceTest {
@@ -57,9 +39,9 @@ public class SearchPerformanceTest {
 		catch (IOException ex) {
 			throw new RuntimeException(ex);
 		}
-		
-		final IMaterialEvaluator materialEvaluator = SearchResources.createMaterialEvaluator(rootUrl);
-		final Supplier<IPositionEvaluation> positionEvaluationFactory = SearchResources.createEvaluationFactory(rootUrl);
+
+		final PositionEvaluationCoeffs positionEvaluationCoeffs = SearchResources.createEvaluationCoeffs(rootUrl);
+		final Supplier<IPositionEvaluation> positionEvaluationFactory = SearchResources.createEvaluationFactory(positionEvaluationCoeffs);
 		
 		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, positionEvaluationFactory);
 
@@ -70,7 +52,7 @@ public class SearchPerformanceTest {
 		engineFactory.setPositionEvaluatorFactory(evaluatorFactory);
 		engineFactory.setEvaluationFactory(evaluationFactory);
 		engineFactory.setMaximalDepth(MAX_DEPTH);
-		engineFactory.setMaterialEvaluator(materialEvaluator);
+		engineFactory.setMaterialEvaluator(new DefaultAdditiveMaterialEvaluator(positionEvaluationCoeffs.getPieceTypeEvaluations()));
 		
 		final HashTableImpl hashTable = new HashTableImpl(HASH_TABLE_EXPONENT);
 		

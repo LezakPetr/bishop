@@ -1,6 +1,7 @@
 package regression;
 
 import collections.ImmutableEnumSet;
+import math.IMatrixRead;
 import math.IVectorRead;
 
 import java.util.function.Function;
@@ -33,5 +34,10 @@ public class ParameterMappingScalarField<P, S> implements IParametricScalarField
     public IVectorRead calculateGradient(final IVectorRead x, final P parameter) {
         return baseField.calculateGradient(x, parameterMapper.apply(parameter));
     }
+
+	@Override
+	public IMatrixRead calculateHessian(final IVectorRead x, final P parameter) {
+		return baseField.calculateHessian(x, parameterMapper.apply(parameter));
+	}
 
 }

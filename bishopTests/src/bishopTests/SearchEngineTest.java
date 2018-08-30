@@ -5,13 +5,10 @@ import java.io.PushbackReader;
 import java.io.StringReader;
 import java.util.function.Supplier;
 
+import bishop.base.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-import bishop.base.DefaultAdditiveMaterialEvaluator;
-import bishop.base.Fen;
-import bishop.base.MoveList;
-import bishop.base.Position;
 import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.Evaluation;
 import bishop.engine.IPositionEvaluation;
@@ -24,6 +21,7 @@ import bishop.engine.SearchTask;
 import bishop.engine.SerialSearchEngine;
 
 public class SearchEngineTest {
+	private static final PieceTypeEvaluations pte = PieceTypeEvaluations.DEFAULT;
 	
 	private static class TestValue {
 		public String positionFen;
@@ -96,7 +94,8 @@ public class SearchEngineTest {
 		engine.setPositionEvaluator(evaluator);
 		engine.setMaximalDepth(20);
 		engine.setSearchSettings(new SearchSettings());
-		engine.setMaterialEvaluator(DefaultAdditiveMaterialEvaluator.getInstance());
+		engine.setMaterialEvaluator(new DefaultAdditiveMaterialEvaluator(pte));
+		engine.setPieceTypeEvaluations(pte);
 	}
 
 
@@ -118,8 +117,9 @@ public class SearchEngineTest {
 			
 			task.setRepeatedPositionRegister(register);
 			task.getPosition().assign(position);
-			
-			final int materialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(position.getMaterialHash());
+
+			final DefaultAdditiveMaterialEvaluator materialEvaluator = new DefaultAdditiveMaterialEvaluator(pte);
+			final int materialEvaluation = materialEvaluator.evaluateMaterial(position.getMaterialHash());
 			task.setRootMaterialEvaluation(materialEvaluation);
 			
 			final SearchResult result = engine.search(task);			

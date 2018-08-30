@@ -6,6 +6,7 @@ public class SparseVector extends AbstractVector {
 
 	private static final double[] EMPTY_ELEMENTS = {};
 	private static final int[] EMPTY_INDICES = {};
+
 	private static final double ZERO = 0.0;
 	
 	private double[] elements;
@@ -17,6 +18,11 @@ public class SparseVector extends AbstractVector {
 		this.elements = elements;
 		this.indices = indices;
 		this.dimension = dimension;
+
+		this.nonZeroElementCount = indices.length;
+
+		if (elements.length != nonZeroElementCount)
+			throw new RuntimeException("Different lengths of indices and elements");
 	}
 	
 	SparseVector(final int dimension) {
@@ -39,21 +45,16 @@ public class SparseVector extends AbstractVector {
 	}
 	
 	private int findSparseIndex(final int index) {
-		int i = 0;
-		
-		while (i < nonZeroElementCount && indices[i] < index)
-			i++;
-		
-		if (i < nonZeroElementCount && indices[i] == index)
-			return i;
-		else
-			return -i - 1;
+		if (nonZeroElementCount == 0 || index > indices[nonZeroElementCount - 1])
+			return -nonZeroElementCount - 1;   // Optimization for inserting element to the end
+
+		return Arrays.binarySearch(indices, 0, nonZeroElementCount, index);
 	}
 
 	@Override
 	public IVector setElement(final int index, final double value) {
 		checkNotFrozen();
-		
+
 		final int sparseIndex = findSparseIndex(index);
 		
 		if (sparseIndex >= 0) {
@@ -78,7 +79,7 @@ public class SparseVector extends AbstractVector {
 		nonZeroElementCount++;
 		
 		if (elements.length < nonZeroElementCount) {
-			final int newSize = Math.max(nonZeroElementCount, 2*elements.length);
+			final int newSize = Math.min(Math.max(nonZeroElementCount, 2*elements.length), dimension);
 			
 			elements = new double[newSize];
 			System.arraycopy(origElements, 0, elements, 0, sparseIndex);
@@ -110,7 +111,8 @@ public class SparseVector extends AbstractVector {
 	public IVectorIterator getNonZeroElementIterator() {
 		return new SparseNonZeroElementIterator(this);
 	}
-	
+
+	@Override
 	public int getNonZeroElementCount() {
 		return nonZeroElementCount;
 	}
@@ -157,4 +159,19 @@ public class SparseVector extends AbstractVector {
 		that.indices = tmpIndices;
 	}
 
+	@Override
+	public IVector copy() {
+		return new SparseVector(
+				dimension,
+				Arrays.copyOf(elements, nonZeroElementCount),
+				Arrays.copyOf(indices, nonZeroElementCount)
+		);
+	}
+
+	public void ensureCapacity (final int capacity) {
+		if (elements.length < capacity) {
+			indices = Arrays.copyOf(indices, capacity);
+			elements = Arrays.copyOf(elements, capacity);
+		}
+	}
 }

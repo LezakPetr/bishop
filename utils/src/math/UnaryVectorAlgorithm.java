@@ -13,7 +13,7 @@ public class UnaryVectorAlgorithm implements IUnaryVectorAlgorithm {
 	/**
 	 * Processes all elements of the vector.
 	 * @param v vector
-	 * @param f operator
+	 * @param operator operator
 	 * @param processor processor that processes the results of operator
 	 * @return processor
 	 */
@@ -43,7 +43,7 @@ public class UnaryVectorAlgorithm implements IUnaryVectorAlgorithm {
 	 */
 	private static class DenseAlgorithm implements IUnaryVectorAlgorithm {
 		public <P extends IVectorElementProcessor> P processElements(final IVectorRead v, final DoubleUnaryOperator operator, final P processor) {
-			final int dimension  = v.getDimension();
+			final int dimension = v.getDimension();
 			processor.init(Density.DENSE, dimension);
 			
 			for (int i = 0; i < dimension; i++)
@@ -60,7 +60,7 @@ public class UnaryVectorAlgorithm implements IUnaryVectorAlgorithm {
 	private static class SparseAlgorithm implements IUnaryVectorAlgorithm {
 		public <P extends IVectorElementProcessor> P processElements(final IVectorRead v, final DoubleUnaryOperator operator, final P processor) {
 			final int dimension  = v.getDimension();
-			processor.init(Density.DENSE, dimension);
+			processor.init(Density.SPARSE, dimension, v.getNonZeroElementCount());
 			
 			for (IVectorIterator it = v.getNonZeroElementIterator(); it.isValid(); it.next())
 				processor.processElement(it.getIndex(), operator.applyAsDouble(it.getElement()));

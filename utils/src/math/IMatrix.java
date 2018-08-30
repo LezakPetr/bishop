@@ -10,12 +10,17 @@ public interface IMatrix extends IMatrixRead {
 	public IMatrix setElement (final int row, final int column, final double value);
 
 	public default IMatrix addElement (final int row, final int column, final double value) {
-		final double oldValue = getElement(row, column);
-		setElement(row, column, value + oldValue);
+		final IVector rowVector = getRowVector(row);
+		final double oldValue = rowVector.getElement(column);
+		rowVector.setElement(column, value + oldValue);
 
 		return this;
 	}
-	
+
+	/**
+	 * Makes the matrix immutable,
+	 * @return this
+	 */
 	public IMatrixRead freeze();
 
 	@Override

@@ -8,15 +8,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import bishop.base.*;
 import utils.Holder;
 import utils.Logger;
-import bishop.base.DefaultAdditiveMaterialEvaluator;
-import bishop.base.HandlerRegistrarImpl;
-import bishop.base.IHandlerRegistrar;
-import bishop.base.IMoveWalker;
-import bishop.base.LegalMoveGenerator;
-import bishop.base.Move;
-import bishop.base.Position;
 import parallel.Parallel;
 
 public final class SearchManagerImpl implements ISearchManager {
@@ -30,6 +24,7 @@ public final class SearchManagerImpl implements ISearchManager {
 	private HandlerRegistrarImpl<ISearchManagerHandler> handlerRegistrar;
 	private int minHorizon = 3 * ISearchEngine.HORIZON_GRANULARITY;
 	private int threadCount = 1;
+	private IMaterialEvaluator materialEvaluator;
 	
 	private final List<ISearchEngine> searchEngineList = new ArrayList<>();
 	
@@ -109,6 +104,19 @@ public final class SearchManagerImpl implements ISearchManager {
 		synchronized (monitor) {
 			checkManagerState(ManagerState.STOPPED);
 			this.engineFactory = factory;
+		}
+	}
+
+	/**
+	 * Sets material evaluator.
+	 * Manager must be in STOPPED state.
+	 * @param evaluator material evaluator
+	 */
+	@Override
+	public void setMaterialEvaluator (final IMaterialEvaluator evaluator) {
+		synchronized (monitor) {
+			checkManagerState(ManagerState.STOPPED);
+			this.materialEvaluator = evaluator;
 		}
 	}
 	
@@ -352,7 +360,7 @@ public final class SearchManagerImpl implements ISearchManager {
 			task.setHorizon(horizon);
 			task.setInitialSearch(initialSearch);
 			
-			final int materialEvaluation = DefaultAdditiveMaterialEvaluator.getInstance().evaluateMaterial(rootPosition.getMaterialHash());
+			final int materialEvaluation = materialEvaluator.evaluateMaterial(rootPosition.getMaterialHash());
 			task.setRootMaterialEvaluation(materialEvaluation);
 			
 			final RepeatedPositionRegister repeatedPositionRegister = new RepeatedPositionRegister();

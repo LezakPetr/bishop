@@ -5,8 +5,6 @@ import math.IVectorRead;
 import math.Matrices;
 import math.Vectors;
 
-import java.util.Set;
-
 public class MultipliedScalarField<P> implements IParametricScalarField<P> {
     private final IParametricScalarField<P> baseField;
     private final double coeff;

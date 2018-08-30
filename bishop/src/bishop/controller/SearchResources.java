@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 
 import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.IMaterialEvaluator;
+import bishop.base.PieceTypeEvaluations;
 import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.BookReader;
 import bishop.engine.HashTableImpl;
@@ -43,10 +44,13 @@ public class SearchResources {
 		
 		final int threadCount = application.getSettings().getEngineSettings().getThreadCount();
 
-		evaluationFactory = createEvaluationFactory(application.getRootUrl());
+		final PositionEvaluationCoeffs evaluationCoeffs = createEvaluationCoeffs(application.getRootUrl());
+		evaluationFactory = createEvaluationFactory(evaluationCoeffs);
 		
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
-		final IMaterialEvaluator materialEvaluator = createMaterialEvaluator();
+
+		final PieceTypeEvaluations pieceTypeEvaluations = evaluationCoeffs.getPieceTypeEvaluations();
+		final IMaterialEvaluator materialEvaluator = new DefaultAdditiveMaterialEvaluator(pieceTypeEvaluations);
 		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, getEvaluationFactory());
 		
 		searchEngineFactory.setMaterialEvaluator(materialEvaluator);
@@ -65,14 +69,13 @@ public class SearchResources {
 		searchManager.setHashTable(hashTable);
 		searchManager.setTablebaseEvaluator (tablebasePositionEvaluator);
 		searchManager.setThreadCount(threadCount);
+		searchManager.setMaterialEvaluator (materialEvaluator);
 		
 		setBookToManager();
 		updateSettings();
 	}
 
-	public static Supplier<IPositionEvaluation> createEvaluationFactory(final URL rootUrl) {
-		final PositionEvaluationCoeffs evaluationCoeffs = createEvaluationCoeffs(rootUrl);
-		
+	public static Supplier<IPositionEvaluation> createEvaluationFactory(PositionEvaluationCoeffs evaluationCoeffs) {
 		return () -> new AlgebraicPositionEvaluation(evaluationCoeffs);
 	}
 	
@@ -87,29 +90,8 @@ public class SearchResources {
 			ex.printStackTrace();
 		}
 	}
-	
-	public static IMaterialEvaluator createMaterialEvaluator(final URL rootUrl) {
-		try {
-			final URL url = new URL(rootUrl, MATERIAL_PATH);
-			
-			try (final InputStream stream = url.openStream()) {
-				final IMaterialEvaluator baseEvaluator = DefaultAdditiveMaterialEvaluator.getInstance();
-				final TableMaterialEvaluator tableEvaluator = new TableMaterialEvaluator(baseEvaluator);
-				tableEvaluator.read(stream);
 
-				return tableEvaluator;
-			}
-		}
-		catch (IOException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
-	
-	private IMaterialEvaluator createMaterialEvaluator() {
-		return createMaterialEvaluator(application.getRootUrl());
-	}
-
-	private static PositionEvaluationCoeffs createEvaluationCoeffs(final URL rootUrl) {
+	public static PositionEvaluationCoeffs createEvaluationCoeffs(final URL rootUrl) {
 		try {
 			final URL url = new URL(rootUrl, EVALUATION_COEFFS_PATH);
 			

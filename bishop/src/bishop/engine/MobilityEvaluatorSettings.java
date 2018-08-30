@@ -21,7 +21,7 @@ public class MobilityEvaluatorSettings {
 		mobilityBonus[PieceType.QUEEN] = 0.01;
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int pawnEvaluation = PieceTypeEvaluations.getPieceEvaluation(color, PieceType.PAWN);
+			final int pawnEvaluation = PieceTypeEvaluations.getPawnEvaluation(color);
 			
 			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++)
 				mobilityTable[color][pieceType] = (int) Math.round (pawnEvaluation * mobilityBonus[pieceType]);

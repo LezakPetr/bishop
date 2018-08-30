@@ -1,34 +1,42 @@
 package bishop.base;
 
 import math.Utils;
+import utils.IntArrayBuilder;
+import utils.IoUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public final class PieceTypeEvaluations {
 
-	public static final int PAWN_EVALUATION   = 1000;
-	public static final int KNIGHT_EVALUATION = 3144;
-	public static final int BISHOP_EVALUATION = 3350;
-	public static final int ROOK_EVALUATION   = 4877;
-	public static final int QUEEN_EVALUATION  = 9595;
-	public static final int KING_EVALUATION   = 0;
-	
-	private static final int[] pieceTypeEvaluations = initializePieceTypeEvaluations();
-	private static final int[] pieceEvaluations = initializePieceEvaluations();
-	
-	
-	private static int[] initializePieceTypeEvaluations() {
-		final int[] evaluations = new int[PieceType.LAST];
-		
-		evaluations[PieceType.KING]   = KING_EVALUATION;
-		evaluations[PieceType.QUEEN]  = QUEEN_EVALUATION;
-		evaluations[PieceType.ROOK]   = ROOK_EVALUATION;
-		evaluations[PieceType.BISHOP] = BISHOP_EVALUATION;
-		evaluations[PieceType.KNIGHT] = KNIGHT_EVALUATION;
-		evaluations[PieceType.PAWN]   = PAWN_EVALUATION;
-		
-		return evaluations;
+	public static final int PAWN_EVALUATION = 1000;
+	public static final int KING_EVALUATION = 0;
+
+	public static final PieceTypeEvaluations DEFAULT = new PieceTypeEvaluations(
+			new IntArrayBuilder(PieceType.LAST)
+			.put(PieceType.PAWN, PAWN_EVALUATION)
+			.put(PieceType.KNIGHT, 3 * PAWN_EVALUATION)
+			.put(PieceType.BISHOP, 3 * PAWN_EVALUATION)
+			.put(PieceType.ROOK, 5 * PAWN_EVALUATION)
+			.put(PieceType.QUEEN, 9 * PAWN_EVALUATION)
+			.put(PieceType.KING, KING_EVALUATION)
+			.build()
+	);
+
+	private final int[] pieceTypeEvaluations;
+	private final int[] pieceEvaluations;
+
+	private PieceTypeEvaluations (final int[] pieceTypeEvaluations) {
+		this.pieceTypeEvaluations = pieceTypeEvaluations;
+		this.pieceEvaluations = initializePieceEvaluations();
 	}
-	
-	private static int[] initializePieceEvaluations() {
+
+	public static int getPawnEvaluation (final int color) {
+		return (color == Color.WHITE) ? PAWN_EVALUATION : -PAWN_EVALUATION;
+	}
+
+	private int[] initializePieceEvaluations() {
 		final int[] evaluations = new int[Color.LAST * PieceType.LAST];
 		
 		for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
@@ -41,7 +49,7 @@ public final class PieceTypeEvaluations {
 		return evaluations;
 	}
 	
-	public static int getPieceTypeEvaluation (final int pieceType) {
+	public int getPieceTypeEvaluation (final int pieceType) {
 		return pieceTypeEvaluations[pieceType];
 	}
 
@@ -49,7 +57,7 @@ public final class PieceTypeEvaluations {
 		return color + (pieceType << Color.BIT_COUNT);
 	}
 
-	public static int getPieceEvaluation(final int color, final int pieceType) {
+	public int getPieceEvaluation(final int color, final int pieceType) {
 		final int index = getPieceIndex (color, pieceType);
 		
 		return pieceEvaluations[index];
@@ -58,5 +66,21 @@ public final class PieceTypeEvaluations {
 	public static int getPawnMultiply (final double multiplier) {
 		return Utils.roundToInt (multiplier * PieceTypeEvaluations.PAWN_EVALUATION);
 	}
-	
+
+	public static PieceTypeEvaluations read (final InputStream stream) throws IOException {
+		final int[] pieceTypeEvaluations = new int[PieceType.LAST];
+
+		for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++)
+			pieceTypeEvaluations[pieceType] = (int) IoUtils.readSignedNumberBinary(stream, IoUtils.SHORT_BYTES);
+
+		pieceTypeEvaluations[PieceType.KING] = KING_EVALUATION;
+		pieceTypeEvaluations[PieceType.PAWN] = PAWN_EVALUATION;
+
+		return new PieceTypeEvaluations(pieceTypeEvaluations);
+	}
+
+	public void write(final OutputStream stream) throws IOException {
+		for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++)
+			IoUtils.writeNumberBinary(stream, pieceTypeEvaluations[pieceType], IoUtils.SHORT_BYTES);
+	}
 }

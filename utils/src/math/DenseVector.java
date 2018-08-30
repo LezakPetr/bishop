@@ -65,4 +65,11 @@ public class DenseVector extends AbstractVector {
 	public IVectorIterator getNonZeroElementIterator() {
 		return new DenseNonZeroElementIterator(this);
 	}
+
+	@Override
+	public IVector copy() {
+		return new DenseVector(
+				Arrays.copyOf(elements, elements.length)
+		);
+	}
 }

@@ -38,7 +38,7 @@ public class GradientOptimizer<P> {
         if (x.getDimension() != field.getInputDimension())
             throw new RuntimeException("Dimensions does not match - vector: " + x.getDimension() + ", field: " + field.getInputDimension());
 
-        this.optimumInput = Vectors.copy(x);
+        this.optimumInput = x.copy();
     }
 
     /**

@@ -44,7 +44,7 @@ public class BinaryVectorAlgorithmOneNonzero extends BinaryVectorAlgorithmBase {
 		@Override
 		public <P extends IVectorElementProcessor> P processElements(final IVectorRead a, final IVectorRead b, final DoubleBinaryOperator operator, final P processor) {
 			final int dimension = a.getDimension();		
-			processor.init (Density.SPARSE, dimension);
+			processor.init (Density.SPARSE, dimension, a.getNonZeroElementCount() + b.getNonZeroElementCount());
 			
 			final IVectorIterator itA = a.getNonZeroElementIterator();
 			final IVectorIterator itB = b.getNonZeroElementIterator();

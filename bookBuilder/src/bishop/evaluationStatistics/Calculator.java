@@ -19,11 +19,10 @@ public class Calculator {
 		final List<String> argList = Arrays.asList(args);
 		final File tableEvaluatorFile = new File (argList.get(0));
 		final File coeffFile = new File (argList.get(1));
-		
-		final MaterialStatisticsPositionProcessor materialProcessor = new MaterialStatisticsPositionProcessor(tableEvaluatorFile);
+
 		final CoeffPositionProcessor coeffProcessor = new CoeffPositionProcessor(coeffFile);
 		
-		final IPositionProcessor[] processors = { materialProcessor, coeffProcessor };
+		final IPositionProcessor[] processors = { coeffProcessor };
 		
 		final IPositionWalker positionWalker = (position, move, result) -> {
 			for (IPositionProcessor processor: processors)
@@ -50,8 +49,7 @@ public class Calculator {
 		pgnProcessor.processGames();
 		
 		System.out.println("Calculating");
-		materialProcessor.calculate();
-		coeffProcessor.calculate(materialProcessor);
+		coeffProcessor.calculate();
 
 		parallel.shutdown();
 		

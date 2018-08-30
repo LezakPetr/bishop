@@ -27,7 +27,12 @@ public interface IMatrixRead {
 	 * @return copy
 	 */
 	public IMatrix copy();
-	
+
+	/**
+	 * Returns row vector with given index.
+	 * @param index row index
+	 * @return row vector
+	 */
 	public IVectorRead getRowVector(final int index);
 	
 	public default IVectorRead getColumnVector(final int column) {
@@ -72,4 +77,7 @@ public interface IMatrixRead {
 	 * @return if matrix is immutable
 	 */
 	public boolean isImmutable();
+
+
+	public IMatrixRowIterator getNonZeroRowIterator();
 }

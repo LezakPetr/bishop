@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import bishop.base.IHandlerRegistrar;
 import bishop.base.IMaterialEvaluator;
+import bishop.base.PieceTypeEvaluations;
 
 public interface ISearchEngine {
 	public enum EngineState {
@@ -32,6 +33,12 @@ public interface ISearchEngine {
 	 * @param evaluator material evaluator
 	 */
 	public void setMaterialEvaluator(final IMaterialEvaluator evaluator);
+
+	/**
+	 * Sets piece type evaluations.
+	 * Engine must be in STOPPED state.
+	 */
+	public void setPieceTypeEvaluations(final PieceTypeEvaluations pieceTypeEvaluations);
 
 	/**
 	 * Sets position evaluator.

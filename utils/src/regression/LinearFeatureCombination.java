@@ -26,7 +26,7 @@ public class LinearFeatureCombination implements ISampleCostField {
     public ScalarPointCharacteristics calculate(final IVectorRead x, final ISample sample, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
         final int featureCount = featureList.size();
         double value = 0;
-        final IVector gradient = Vectors.dense(featureCount);
+        final IVector gradient = Vectors.sparse(featureCount);
 
         for (int i = 0; i < featureList.size(); i++) {
             final double featureValue = featureList.get(i).calculateValue(sample.getInput());

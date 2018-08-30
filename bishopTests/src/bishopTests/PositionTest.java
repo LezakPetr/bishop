@@ -4,23 +4,15 @@ package bishopTests;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.StringReader;
+
+import bishop.base.*;
 import org.junit.Assert;
 import org.junit.Test;
-import bishop.base.BitBoard;
-import bishop.base.Color;
-import bishop.base.Fen;
-import bishop.base.IMoveGenerator;
-import bishop.base.IMoveWalker;
-import bishop.base.LegalMoveGenerator;
-import bishop.base.Move;
-import bishop.base.MoveList;
-import bishop.base.PieceTypeEvaluations;
-import bishop.base.Position;
-import bishop.base.Square;
-import bishop.base.StandardAlgebraicNotationReader;
 
 
 public class PositionTest {
+
+	private static final PieceTypeEvaluations pte = PieceTypeEvaluations.DEFAULT;
 	
 	@Test
 	public void squareAttackTest() throws IOException {
@@ -212,11 +204,11 @@ public class PositionTest {
 	@Test
 	public void staticExchangeTest() throws IOException {
 		final StaticExchangeTestCase[] testCaseArray = {
-			new StaticExchangeTestCase("3r3k/6b1/8/8/3r4/8/2N2Q2/7K w - - 0 1", Color.WHITE, Square.D4, PieceTypeEvaluations.ROOK_EVALUATION - PieceTypeEvaluations.KNIGHT_EVALUATION),
-			new StaticExchangeTestCase("7k/2Q5/3B2n1/8/5n2/8/8/7K w - - 0 1", Color.WHITE, Square.F4, 2 * PieceTypeEvaluations.KNIGHT_EVALUATION - PieceTypeEvaluations.BISHOP_EVALUATION),
-			new StaticExchangeTestCase("5k2/8/2p5/1N6/2P5/8/8/4K3 b - - 0 1", Color.BLACK, Square.B5, PieceTypeEvaluations.KNIGHT_EVALUATION - PieceTypeEvaluations.PAWN_EVALUATION),
+			new StaticExchangeTestCase("3r3k/6b1/8/8/3r4/8/2N2Q2/7K w - - 0 1", Color.WHITE, Square.D4, pte.getPieceTypeEvaluation(PieceType.ROOK) - pte.getPieceTypeEvaluation(PieceType.KNIGHT)),
+			new StaticExchangeTestCase("7k/2Q5/3B2n1/8/5n2/8/8/7K w - - 0 1", Color.WHITE, Square.F4, 2 * pte.getPieceTypeEvaluation(PieceType.KNIGHT) - pte.getPieceTypeEvaluation(PieceType.BISHOP)),
+			new StaticExchangeTestCase("5k2/8/2p5/1N6/2P5/8/8/4K3 b - - 0 1", Color.BLACK, Square.B5, pte.getPieceTypeEvaluation(PieceType.KNIGHT) - pte.getPieceTypeEvaluation(PieceType.PAWN)),
 			new StaticExchangeTestCase("8/8/4k3/3N4/8/8/8/4K2B b - - 0 1", Color.BLACK, Square.D5, 0),
-			new StaticExchangeTestCase("8/8/4k3/3N4/8/5K2/8/7B b - - 0 1", Color.BLACK, Square.D5, PieceTypeEvaluations.KNIGHT_EVALUATION)
+			new StaticExchangeTestCase("8/8/4k3/3N4/8/5K2/8/7B b - - 0 1", Color.BLACK, Square.D5, pte.getPieceTypeEvaluation(PieceType.KNIGHT))
 		};
 		
 		final Fen fen = new Fen();
@@ -227,7 +219,7 @@ public class PositionTest {
 			final Position beginPosition = fen.getPosition();
 			final Position position = beginPosition.copy();
 			
-			final int evaluation = position.getStaticExchangeEvaluation(testCase.color, testCase.square);
+			final int evaluation = position.getStaticExchangeEvaluation(testCase.color, testCase.square, pte);
 			
 			Assert.assertEquals(testCase.position, testCase.evaluation, evaluation);
 			Assert.assertEquals(testCase.position, beginPosition, position);

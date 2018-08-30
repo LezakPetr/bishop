@@ -2,10 +2,7 @@ package regression;
 
 import collections.ImmutableEnumSet;
 import collections.ImmutableList;
-import math.IMatrixRead;
-import math.IVectorRead;
-import math.Matrices;
-import math.Vectors;
+import math.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,8 +36,8 @@ public class ScalarFieldSum<P> implements IParametricScalarField<P> {
     @Override
     public ScalarPointCharacteristics calculate(final IVectorRead x, final P parameter, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
         double value = (characteristics.contains(ScalarFieldCharacteristic.VALUE)) ? 0.0 : Double.NaN;
-        IVectorRead gradient = (characteristics.contains(ScalarFieldCharacteristic.GRADIENT)) ? Vectors.getZeroVector(inputDimension) : null;
-        IMatrixRead hessian = (characteristics.contains(ScalarFieldCharacteristic.HESSIAN)) ? Matrices.getZeroMatrix(inputDimension, inputDimension) : null;
+        IVector gradient = (characteristics.contains(ScalarFieldCharacteristic.GRADIENT)) ? Vectors.vectorWithDensity(Density.SPARSE, inputDimension) : null;
+        IMatrix hessian = (characteristics.contains(ScalarFieldCharacteristic.HESSIAN)) ? Matrices.createMutableMatrix(Density.SPARSE, inputDimension, inputDimension) : null;
 
         for (IParametricScalarField<? super P> operand: operandList) {
             final ScalarPointCharacteristics scalarPointCharacteristics = operand.calculate(x, parameter, characteristics);
@@ -49,32 +46,13 @@ public class ScalarFieldSum<P> implements IParametricScalarField<P> {
                 value += scalarPointCharacteristics.getValue();
 
             if (characteristics.contains(ScalarFieldCharacteristic.GRADIENT))
-                gradient = Vectors.plus(gradient, scalarPointCharacteristics.getGradient());
+                Vectors.addInPlace(gradient, scalarPointCharacteristics.getGradient());
 
             if (characteristics.contains(ScalarFieldCharacteristic.HESSIAN))
-                hessian = Matrices.plus(hessian, scalarPointCharacteristics.getHessian());
+                Matrices.addInPlace(hessian, scalarPointCharacteristics.getHessian());
         }
 
-        return new ScalarPointCharacteristics(value, gradient, hessian);
+        return new ScalarPointCharacteristics(value, gradient.freeze(), hessian.freeze());
     }
 
-    @Override
-    public double calculateValue(final IVectorRead x, final P parameter) {
-        double value = 0.0;
-
-        for (IParametricScalarField<? super P> operand: operandList)
-            value += operand.calculateValue(x, parameter);
-
-        return value;
-    }
-
-    @Override
-    public IVectorRead calculateGradient(final IVectorRead x, final P parameter) {
-        IVectorRead gradient = Vectors.getZeroVector(inputDimension);
-
-        for (IParametricScalarField<? super P> operand: operandList)
-            gradient = Vectors.plus(gradient, operand.calculateGradient(x, parameter));
-
-        return gradient;
-    }
 }

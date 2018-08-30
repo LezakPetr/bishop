@@ -5,6 +5,7 @@ import collections.ImmutableList;
 import math.*;
 import utils.SynchronizedLazy;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -61,6 +62,16 @@ public class PolynomialScalarField implements IScalarField {
         }
 
         return new PolynomialScalarField(inputDimension, newTermMap);
+    }
+
+    /**
+     * Creates field from given collection of terms.
+     * @param inputDimension input dimension
+     * @param terms array of terms
+     * @return field
+     */
+    public static PolynomialScalarField of (final int inputDimension, final PolynomialTerm ...terms) {
+        return of (inputDimension, Arrays.asList(terms));
     }
 
     /**

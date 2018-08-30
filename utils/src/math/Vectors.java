@@ -97,6 +97,25 @@ public class Vectors {
 	}
 
 	/**
+	 * Adds second vector to the first vector. Vectors cannot be modified by the operation,
+	 * so calling addTo on same vectors or subvectors of same vector is not legal.
+	 * @param a target vector
+	 * @param b source vector
+	 */
+	public static void addInPlace (final IVector a, final IVectorRead b) {
+		assert a != b;
+
+		for (IVectorIterator it = b.getNonZeroElementIterator(); it.isValid(); it.next()) {
+			final int index = it.getIndex();
+
+			a.setElement(
+				index,
+				a.getElement(index) + it.getElement()
+			);
+		}
+	}
+
+	/**
 	 * Subtracts two vectors.
 	 * @param a vector
 	 * @param b vector
@@ -128,6 +147,28 @@ public class Vectors {
 		return BinaryVectorAlgorithmBothNonzero.getInstance()
 				.processElements(a, b, (x, y) -> x * y, new VectorSetter())
 				.getVector();
+	}
+
+	/**
+	 * Divides two vectors element by element.
+	 * @param a vector
+	 * @param b vector
+	 * @return a / b
+	 */
+	public static IVectorRead elementDivide (final IVectorRead a, final IVectorRead b) {
+		final int dimension = a.getDimension();
+
+		if (b.getDimension() != dimension)
+			throw new RuntimeException("Different dimensions");
+
+		final IVector result = vectorWithDensity(a.density(), dimension);
+
+		for (IVectorIterator it = a.getNonZeroElementIterator(); it.isValid(); it.next()) {
+			final int index = it.getIndex();
+			result.setElement(index, it.getElement() / b.getElement(index));
+		}
+
+		return result.freeze();
 	}
 
 	/**
@@ -177,7 +218,7 @@ public class Vectors {
 		}
 
 		// General method
-		final IVector tmp = copy(a);
+		final IVector tmp = a.copy();
 		a.assign(b);
 		b.assign(tmp);
 	}
@@ -201,20 +242,13 @@ public class Vectors {
 	}
 	
 	/**
-	 * Returns mutable copy of given vector.
-	 */
-	public static IVector copy(final IVectorRead orig) {
-		return UnaryVectorAlgorithm.getInstance().processElements(orig, DoubleUnaryOperator.identity(), new VectorSetter()).getMutableVector();
-	}
-
-	/**
 	 * Returns immutable copy of given vector.
 	 */
 	public static IVectorRead immutableCopy(final IVectorRead orig) {
 		if (orig.isImmutable())
 			return orig;
 		else
-			return copy(orig).freeze();
+			return orig.copy().freeze();
 	}
 
 	/**
@@ -243,8 +277,10 @@ public class Vectors {
 		final IMatrix result = Matrices.createMutableMatrix(maxDensity(a.density(), b.density()), rowCount, columnCount);
 
 		for (IVectorIterator itA = a.getNonZeroElementIterator(); itA.isValid(); itA.next()) {
+			final IVector resultRow = result.getRowVector(itA.getIndex());
+
 			for (IVectorIterator itB = a.getNonZeroElementIterator(); itB.isValid(); itB.next()) {
-				result.setElement(itA.getIndex(), itB.getIndex(), itA.getElement() * itB.getElement());
+				resultRow.setElement(itB.getIndex(), itA.getElement() * itB.getElement());
 			}
 		}
 

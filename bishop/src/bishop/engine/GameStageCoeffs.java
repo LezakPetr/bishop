@@ -49,4 +49,9 @@ public class GameStageCoeffs {
 		return lastCoeff;
 	}
 
+	public int getCoeffCount() {
+		return lastCoeff - firstCoeff;
+
+	}
+
 }
