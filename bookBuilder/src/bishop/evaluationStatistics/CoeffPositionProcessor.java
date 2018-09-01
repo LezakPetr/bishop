@@ -31,7 +31,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);
 	private final AttackCalculator attackCalculator = new AttackCalculator();
 	private final Random rng = new Random();
-	private final double positionTakeProbability = 1e-2;
+	private final double positionTakeProbability = 1;
 	private int sampleCount;
 	private long memoryConsumption;
 	private GameResult result;
@@ -80,19 +80,16 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 			if (evaluation.getConstantEvaluation() == 0) {
 				final Set<Integer> nonZeroCoeffs = evaluation.getNonZeroCoeffs();
 				final int nonZeroCoeffCount = nonZeroCoeffs.size();
-				final short[] coeffs = new short[nonZeroCoeffCount];
-				final short[] coeffCounts = new short[nonZeroCoeffCount];
+				final int[] coeffs = new int[nonZeroCoeffCount];
+				final int[] coeffCounts = new int[nonZeroCoeffCount];
 
 				int index = 0;
 
 				for (int coeff: nonZeroCoeffs) {
-					coeffs[index] = (short) coeff;
+					coeffs[index] = coeff;
 
 					final int count = evaluation.getCoeffCountRaw(coeff);
-					coeffCounts[index] = (short) count;
-
-					if (coeffs[index] != coeff || coeffCounts[index] != count)
-						throw new RuntimeException("Coeff cannot be represented");
+					coeffCounts[index] = count;
 
 					index++;
 				}
