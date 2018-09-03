@@ -116,7 +116,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		finiteEvaluator = new FinitePositionEvaluator();
 		finiteEvaluator.setRepeatedPositionRegister(repeatedPositionRegister);
-		finiteEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
 		
 		extensionCalculator = new SearchExtensionCalculator();
 		moveExtensionEvaluator = new MoveExtensionEvaluator();
@@ -871,6 +870,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			this.pieceTypeEvaluations = pieceTypeEvaluations;
 			moveExtensionEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
+			finiteEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
 		}
 	}
 

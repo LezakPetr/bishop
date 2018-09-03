@@ -19,7 +19,9 @@ import math.Utils;
 import regression.*;
 
 public class CoeffPositionProcessor implements IPositionProcessor {
-	
+
+	private static final double REGRESSION_LAMBDA = 1;   // Regularization parameter
+
 	private static final Map<GameResult, Float> PROBABILITY_RIGHT_SIDES = createProbabilityRightSides();
 
 	private final File coeffFile;
@@ -31,7 +33,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);
 	private final AttackCalculator attackCalculator = new AttackCalculator();
 	private final Random rng = new Random();
-	private final double positionTakeProbability = 1;
+	private final double positionTakeProbability = 1e-2;
 	private int sampleCount;
 	private long memoryConsumption;
 	private GameResult result;
@@ -47,6 +49,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 		final DirectFeatureCombination featureCombination = new DirectFeatureCombination(EvaluationSample.FEATURE_COUNT);
 
 		regression = new LogisticRegression(EvaluationSample.FEATURE_COUNT, 0, featureCombination, regularizedFeatures);
+		regression.setLambda(REGRESSION_LAMBDA);
 	}
 	
 	@Override

@@ -52,7 +52,11 @@ public class SearchPerformanceTest {
 		engineFactory.setPositionEvaluatorFactory(evaluatorFactory);
 		engineFactory.setEvaluationFactory(evaluationFactory);
 		engineFactory.setMaximalDepth(MAX_DEPTH);
-		engineFactory.setMaterialEvaluator(new DefaultAdditiveMaterialEvaluator(positionEvaluationCoeffs.getPieceTypeEvaluations()));
+
+		final PieceTypeEvaluations pieceTypeEvaluations = positionEvaluationCoeffs.getPieceTypeEvaluations();
+		final IMaterialEvaluator materialEvaluator = new DefaultAdditiveMaterialEvaluator(pieceTypeEvaluations);
+		engineFactory.setMaterialEvaluator(materialEvaluator);
+		engineFactory.setPieceTypeEvaluations(pieceTypeEvaluations);
 		
 		final HashTableImpl hashTable = new HashTableImpl(HASH_TABLE_EXPONENT);
 		
@@ -60,7 +64,8 @@ public class SearchPerformanceTest {
 		manager.setEngineFactory(engineFactory);
 		manager.setHashTable(hashTable);
 		manager.setThreadCount(threadCount);
-		
+		manager.setMaterialEvaluator(materialEvaluator);
+
 		System.out.println (threadCount);
 		
 		manager.setMaxTimeForMove(maxTimeForPosition);
