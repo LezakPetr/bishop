@@ -9,10 +9,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-import bishop.base.GameResult;
-import bishop.base.PieceType;
-import bishop.base.PieceTypeEvaluations;
-import bishop.base.Position;
+import bishop.base.*;
 import bishop.engine.*;
 import math.*;
 import math.Utils;
@@ -20,7 +17,8 @@ import regression.*;
 
 public class CoeffPositionProcessor implements IPositionProcessor {
 
-	private static final double REGRESSION_LAMBDA = 1;   // Regularization parameter
+	private static final double REGRESSION_LAMBDA = 1e-2;   // Regularization parameter
+	private static final int MIN_NON_EXCHANGE_COUNTER = 4;
 
 	private static final Map<GameResult, Float> PROBABILITY_RIGHT_SIDES = createProbabilityRightSides();
 
@@ -37,13 +35,16 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private int sampleCount;
 	private long memoryConsumption;
 	private GameResult result;
+
+	private int nonExchangeCounter;
+	private int lastPieceCount;
 	
 	public CoeffPositionProcessor(final File coeffFile) {
 		this.coeffFile = coeffFile;
 
 		final List<Integer> regularizedFeatures = new ArrayList<>();
 
-		for (int i = 0; i < EvaluationSample.FEATURE_COUNT; i++)
+		for (int i = 0; i < PositionEvaluationCoeffs.LAST; i++)
 			regularizedFeatures.add(i);
 
 		final DirectFeatureCombination featureCombination = new DirectFeatureCombination(EvaluationSample.FEATURE_COUNT);
@@ -55,6 +56,8 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	@Override
 	public void newGame(final GameResult result) {
 		this.result = result;
+		this.nonExchangeCounter = 0;
+		this.lastPieceCount = 32;
 	}
 
 	private static Map<GameResult, Float> createProbabilityRightSides() {
@@ -68,8 +71,17 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 
 	@Override
 	public void processPosition(final Position position) {
+		final int pieceCount = BitBoard.getSquareCount(position.getOccupancy());
+
+		if (pieceCount == lastPieceCount)
+			nonExchangeCounter++;
+		else
+			nonExchangeCounter = 0;
+
+		lastPieceCount = pieceCount;
+
 		if (rng.nextDouble() <= positionTakeProbability &&
-				//position.getMaterialHash().isBalancedExceptFor(PieceType.NONE) &&
+				nonExchangeCounter >= MIN_NON_EXCHANGE_COUNTER &&
 				PROBABILITY_RIGHT_SIDES.containsKey(result) &&
 				position.getStaticExchangeEvaluationOnTurn(PieceTypeEvaluations.DEFAULT) == 0) {
 			final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
