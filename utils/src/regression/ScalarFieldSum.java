@@ -52,7 +52,7 @@ public class ScalarFieldSum<P> implements IParametricScalarField<P> {
                 Matrices.addInPlace(hessian, scalarPointCharacteristics.getHessian());
         }
 
-        return new ScalarPointCharacteristics(value, gradient.freeze(), hessian.freeze());
+        return new ScalarPointCharacteristics(value, (gradient != null) ? gradient.freeze() : null, (hessian != null) ? hessian.freeze() : null);
     }
 
 }

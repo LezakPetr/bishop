@@ -19,6 +19,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 
 	private static final double REGRESSION_LAMBDA = 1e-2;   // Regularization parameter
 	private static final int MIN_NON_EXCHANGE_COUNTER = 4;
+	private static final int MAX_MATERIAL_EVALUATION = PieceTypeEvaluations.getPawnMultiply(1.5);
 
 	private static final Map<GameResult, Float> PROBABILITY_RIGHT_SIDES = createProbabilityRightSides();
 
@@ -31,14 +32,16 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);
 	private final AttackCalculator attackCalculator = new AttackCalculator();
 	private final Random rng = new Random();
-	private final double positionTakeProbability = 1e-2;
+	private final double positionTakeProbability = 1;
+	private final IMaterialEvaluator defaultMaterialEvaluator = new DefaultAdditiveMaterialEvaluator(PieceTypeEvaluations.DEFAULT);
 	private int sampleCount;
 	private long memoryConsumption;
 	private GameResult result;
 
 	private int nonExchangeCounter;
 	private int lastPieceCount;
-	
+
+
 	public CoeffPositionProcessor(final File coeffFile) {
 		this.coeffFile = coeffFile;
 
@@ -83,6 +86,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 		if (rng.nextDouble() <= positionTakeProbability &&
 				nonExchangeCounter >= MIN_NON_EXCHANGE_COUNTER &&
 				PROBABILITY_RIGHT_SIDES.containsKey(result) &&
+				Math.abs(defaultMaterialEvaluator.evaluateMaterial(position.calculateMaterialHash())) <= MAX_MATERIAL_EVALUATION &&
 				position.getStaticExchangeEvaluationOnTurn(PieceTypeEvaluations.DEFAULT) == 0) {
 			final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
 			
