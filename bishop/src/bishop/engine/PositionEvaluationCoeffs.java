@@ -17,7 +17,8 @@ public class PositionEvaluationCoeffs {
 	public static final int FIRST = 0;
 	private static final CoeffRegistry registry = new CoeffRegistry();
 	
-	public static final int RULE_OF_SQUARE_BONUS = registry.add("rule_of_square");
+	public static final int RULE_OF_SQUARE_SINGLE_PAWN_BONUS = registry.add("rule_of_square_single_pawn");
+	public static final int RULE_OF_SQUARE_PAWN_RACE_BONUS = registry.add("rule_of_square_pawn_race");
 
 	public static final List<GameStageCoeffs> GAME_STAGE_COEFFS = createGameStageCoeffs();
 	

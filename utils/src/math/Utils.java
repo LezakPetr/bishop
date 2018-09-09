@@ -122,5 +122,9 @@ public class Utils {
 	public static double sqr (final double x) {
 		return x * x;
 	}
+
+	public static int bound (final int value, final int minValue, final int maxValue) {
+		return Math.min (Math.max(value, minValue), maxValue);
+	}
 	
 }

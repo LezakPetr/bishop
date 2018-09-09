@@ -174,7 +174,7 @@ public class PawnStructureEvaluatorTest {
 		new TestCase(
 			"8/8/8/8/2P4k/8/8/K7 w - - 0 1",
 			new int[] {
-				PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, 1
+				PositionEvaluationCoeffs.RULE_OF_SQUARE_SINGLE_PAWN_BONUS, 1
 			}
 		),
 		new TestCase(
@@ -185,7 +185,7 @@ public class PawnStructureEvaluatorTest {
 		new TestCase(
 			"7k/p4K2/8/8/8/8/8/8 b - - 0 1",
 			new int[] {
-				PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, -1
+				PositionEvaluationCoeffs.RULE_OF_SQUARE_SINGLE_PAWN_BONUS, -1
 			}
 		),
 		new TestCase(
@@ -206,7 +206,13 @@ public class PawnStructureEvaluatorTest {
 		new TestCase(
 			"1k6/5K2/7P/8/p7/8/8/8 w - - 0 1",
 			new int[] {
-				PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, 1
+				PositionEvaluationCoeffs.RULE_OF_SQUARE_PAWN_RACE_BONUS, 2
+			}
+		),
+		new TestCase(
+			"8/1k3K2/7P/8/p7/8/8/8 w - - 0 1",
+			new int[] {
+					PositionEvaluationCoeffs.RULE_OF_SQUARE_PAWN_RACE_BONUS, 1
 			}
 		),
 		new TestCase(
@@ -217,7 +223,7 @@ public class PawnStructureEvaluatorTest {
 		new TestCase(
 			"8/5K2/6P1/8/2k5/8/1p6/8 b - - 0 1",
 			new int[] {
-				PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, -1
+				PositionEvaluationCoeffs.RULE_OF_SQUARE_PAWN_RACE_BONUS, -1
 			}
 		)
 	};
@@ -229,7 +235,7 @@ public class PawnStructureEvaluatorTest {
 	
 	@Test
 	public void testRuleOfSquare() throws IOException {
-		doTest(RULE_OF_SQUARE_TEST_CASES, PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS + 1);
+		doTest(RULE_OF_SQUARE_TEST_CASES, PositionEvaluationCoeffs.RULE_OF_SQUARE_SINGLE_PAWN_BONUS, PositionEvaluationCoeffs.RULE_OF_SQUARE_PAWN_RACE_BONUS + 1);
 	}
 
 	private void doTest(final TestCase[] testCases, final int firstCoeff, final int lastCoeff) throws IOException {

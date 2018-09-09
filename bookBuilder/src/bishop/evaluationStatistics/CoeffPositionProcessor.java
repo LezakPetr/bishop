@@ -32,7 +32,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);
 	private final AttackCalculator attackCalculator = new AttackCalculator();
 	private final Random rng = new Random();
-	private final double positionTakeProbability = 1;
+	private final double positionTakeProbability = 3e-2;
 	private final IMaterialEvaluator defaultMaterialEvaluator = new DefaultAdditiveMaterialEvaluator(PieceTypeEvaluations.DEFAULT);
 	private int sampleCount;
 	private long memoryConsumption;
@@ -177,22 +177,4 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 			coeffs.write(stream);
 		}
 	}
-
-	private void fixCoeffs(final double[] bestCoeffs) {
-		bestCoeffs[PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS] = 5.0 * PieceTypeEvaluations.PAWN_EVALUATION;
-		
-		final Sigmoid sigmoid = new Sigmoid(0.4 * GameStage.LAST, 0.7 * GameStage.LAST, 0.0, 1.0);
-		
-		for (int stage = GameStage.FIRST; stage < GameStage.LAST; stage++) {
-			final double c = sigmoid.applyAsDouble(stage);
-			final GameStageCoeffs coeffs = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(stage);
-			
-			if (stage != GameStage.PAWNS_ONLY) {
-				bestCoeffs[coeffs.kingMainProtectionPawnBonus] = 0.2 * c * PieceTypeEvaluations.PAWN_EVALUATION;
-				bestCoeffs[coeffs.kingSecondProtectionPawnBonus] = 0.01 * c * PieceTypeEvaluations.PAWN_EVALUATION;
-				//bestCoeffs[coeffs.kingAttackBonus] = 0.016 * c * PieceTypeEvaluations.PAWN_EVALUATION;
-			}
-		}
-	}
-
 }

@@ -14,9 +14,13 @@ import bishop.base.Square;
 import bishop.tables.BetweenTable;
 import bishop.tables.FigureAttackTable;
 import bishop.tables.PawnAttackTable;
+import math.Utils;
 
 public class PawnRaceEvaluator {
-	
+
+	private static final int MIN_REMAINDER = 2;
+	private static final int MAX_EVALUATION = 2;
+
 	private final IPositionEvaluation positionEvaluation;
 	private final long[] pawnsMask = new long[Color.LAST];
 	private final int[] kingPosition = new int[Color.LAST];
@@ -50,14 +54,14 @@ public class PawnRaceEvaluator {
 		final boolean someBlackUnstoppablePawn = (unstoppablePawns[Color.BLACK] != 0);
 		
 		if (someWhiteUnstoppablePawn || someBlackUnstoppablePawn) {
-			final int evaluation;
-			
-			if (someWhiteUnstoppablePawn && someBlackUnstoppablePawn)
-				evaluation = evaluatePawnRaces();
-			else
-				evaluation = (someWhiteUnstoppablePawn) ? +1 : -1;
-			
-			positionEvaluation.addCoeff(PositionEvaluationCoeffs.RULE_OF_SQUARE_BONUS, Color.WHITE, evaluation);
+			if (someWhiteUnstoppablePawn && someBlackUnstoppablePawn) {
+				final int evaluation = evaluatePawnRaces();
+				positionEvaluation.addCoeff(PositionEvaluationCoeffs.RULE_OF_SQUARE_PAWN_RACE_BONUS, Color.WHITE, evaluation);
+			}
+			else {
+				final int evaluation = (someWhiteUnstoppablePawn) ? +1 : -1;
+				positionEvaluation.addCoeff(PositionEvaluationCoeffs.RULE_OF_SQUARE_SINGLE_PAWN_BONUS, Color.WHITE, evaluation);
+			}
 		}
 		
 		return positionEvaluation;
@@ -124,19 +128,20 @@ public class PawnRaceEvaluator {
 	}
 	
 	private int evaluatePawnRaces() {
-		int firstEvaluation = -1;
+		int firstEvaluation = -MAX_EVALUATION;
 
 		for (BitLoop firstLoop = new BitLoop(unstoppablePawns[onTurn]); firstLoop.hasNextSquare(); ) {
 			final int firstPawnSquare = firstLoop.getNextSquare();
 			final int firstPawnFile = Square.getFile(firstPawnSquare);
 			final int firstPawnDistance = BoardConstants.getPawnPromotionDistance(onTurn, firstPawnSquare);
 			
-			int secondEvaluation = +1;
+			int secondEvaluation = +MAX_EVALUATION;
 			
 			for (BitLoop secondLoop = new BitLoop(unstoppablePawns[notOnTurn]); secondLoop.hasNextSquare(); ) {
 				final int secondPawnSquare = secondLoop.getNextSquare();
 				final int secondPawnFile = Square.getFile(secondPawnSquare);
 				final int secondPawnDistance = BoardConstants.getPawnPromotionDistance(notOnTurn, secondPawnSquare);
+
 				final boolean onTurnPromoted;
 				final int remainder;
 				final int firstPawnTargetRank;
@@ -189,17 +194,19 @@ public class PawnRaceEvaluator {
 		
 		if (isCheck(promotionSquare, kingSquare))
 			effectiveRemainder++;
-		
-		if (effectiveRemainder >= 2)
-			return (onTurnPromoted) ? +1 : -1;
-		else
+
+		if (effectiveRemainder < MIN_REMAINDER)
 			return 0;
+
+		final int evaluation = Math.min(effectiveRemainder - MIN_REMAINDER + 1, MAX_EVALUATION);
+
+		return (onTurnPromoted) ? +evaluation : -evaluation;
 	}
 	
 	private boolean isCheck(final int promotionSquare, final int kingSquare) {
 		final long queenMask = FigureAttackTable.getItem(PieceType.QUEEN, promotionSquare);
 		
-		return (queenMask & BitBoard.getSquareMask(kingSquare)) != 0 && BetweenTable.getItem(promotionSquare, kingSquare) == 0;
+		return (queenMask & BitBoard.getSquareMask(kingSquare)) != 0 && (BetweenTable.getItem(promotionSquare, kingSquare) & occupancy) == 0;
 	}
 			
 }
