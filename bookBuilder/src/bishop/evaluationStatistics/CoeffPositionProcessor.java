@@ -32,7 +32,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);
 	private final AttackCalculator attackCalculator = new AttackCalculator();
 	private final Random rng = new Random();
-	private final double positionTakeProbability = 3e-2;
+	private final double positionTakeProbability = 1;
 	private final IMaterialEvaluator defaultMaterialEvaluator = new DefaultAdditiveMaterialEvaluator(PieceTypeEvaluations.DEFAULT);
 	private int sampleCount;
 	private long memoryConsumption;
