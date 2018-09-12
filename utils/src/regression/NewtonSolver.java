@@ -5,11 +5,19 @@ import math.*;
 
 import java.util.Random;
 
+/**
+ * Newton solver finds minimum of given cost field by solving set of (nonlinear) equation
+ * that the partial derivations of the cost field against input is zero.
+ */
 public class NewtonSolver {
+
+	private static final double OMEGA_BASE = Math.sqrt(2);
+	private static final int MIN_OMEGA_EXPONENT = -20;
 
     private final IParametricScalarField<Void> costField;
     private long maxIterations = 100;
     private IVectorRead input;
+    private double omega;
     private double epsilon = 1e-9;
 
     public NewtonSolver (final int equationCount, final IParametricScalarField<Void> costField) {
@@ -25,46 +33,60 @@ public class NewtonSolver {
 	}
 
     public IVectorRead solve() {
-        ScalarPointCharacteristics previousPoint = costField.calculate(input, null, ScalarFieldCharacteristic.SET_ALL);
-        IVectorRead dInput = null;   // Solution to the equation system. Needs to be updated only when previousPoint is changed.
-
-        int omegaExponent = 0;
+		ScalarPointCharacteristics previousPoint = costField.calculate(input, null, ScalarFieldCharacteristic.SET_ALL);
 
         for (int i = 0; i < maxIterations; i++) {
-            if (dInput == null) {
-            	System.out.println ("Inverting");
-				//dInput = GaussianElimination.equationSolver(previousPoint.getHessian(), previousPoint.getGradient()).solve();
-				dInput = new CholeskySolver(previousPoint.getHessian(), previousPoint.getGradient()).solve();
-			}
+        	final IVectorRead dInput = new CholeskySolver(previousPoint.getHessian(), previousPoint.getGradient()).solve();
+			selectNextInput(dInput);
 
-            final double omega = Math.pow(2, omegaExponent);
+			final ScalarPointCharacteristics nextPoint = costField.calculate(input, null, ScalarFieldCharacteristic.SET_ALL);
 
-            final IVectorRead nextInput = Vectors.minus(
-                    input,
-                    Vectors.multiply(omega, dInput)
-            );
-
-            final double nextValue = costField.calculateValue(nextInput, null);
+			final double nextValue = nextPoint.getValue();
             final double costDiff = previousPoint.getValue() - nextValue;
-            System.out.println ("Iteration = " + i + ", omega = " + omega + ", residuum = " + nextValue + ", costDiff = " + costDiff);
+            System.out.println ("Iteration = " + i + ", cost = " + nextPoint.getValue() + ", costDiff = " + costDiff);
 
-            if (costDiff >= 0) {
-                final ScalarPointCharacteristics nextPoint = costField.calculate(nextInput, null, ScalarFieldCharacteristic.SET_ALL);
+			if (costDiff / omega <= epsilon)
+				return input;
 
-                input = nextInput;
-                previousPoint = nextPoint;
-                omegaExponent = Math.min(omegaExponent + 1, 0);
-                dInput = null;   // Previous point changed, force recalculation of dInput
-
-                if (costDiff / omega <= epsilon)
-                    return input;
-            }
-            else
-                omegaExponent--;
+			previousPoint = nextPoint;
         }
 
         return null;
     }
+
+	/**
+	 * Select next input based on the current input and input diff.
+	 * It starts with the full dInput and then it shortens it until the value is decreasing.
+	 * It then returns the next input with minimal value. It is guaranteed that the value
+	 * decreases compared to previous iteration if minimal omega is not reached.
+	 * The method also sets omega.
+	 * @param dInput input difference that should move input to minimum if the equations are linear
+	 */
+	private void selectNextInput (final IVectorRead dInput) {
+    	double previousValue = Double.POSITIVE_INFINITY;
+    	IVectorRead previousInput = null;
+
+    	for (int omegaExponent = 0; omegaExponent >= MIN_OMEGA_EXPONENT; omegaExponent--) {
+			final double nextOmega = Math.pow(OMEGA_BASE, omegaExponent);
+
+			final IVectorRead nextInput = Vectors.minus(
+					input,
+					Vectors.multiply(nextOmega, dInput)
+			);
+
+			final double nextValue = costField.calculateValue(nextInput, null);
+			System.out.println ("Omega = " + nextOmega + ", cost = " + nextValue);
+
+			if (nextValue >= previousValue)
+				break;
+
+			previousValue = nextValue;
+			previousInput = nextInput;
+			omega = nextOmega;
+		}
+
+		input = previousInput;
+	}
 
     public void setMaxIterations(final long count) {
         this.maxIterations = count;
