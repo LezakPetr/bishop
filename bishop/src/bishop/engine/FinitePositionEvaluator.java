@@ -4,12 +4,17 @@ import bishop.base.*;
 import bishop.tablebase.Classification;
 
 public final class FinitePositionEvaluator {
-	
+
+	private static final int MAX_PAWN_ENDING_EVALUATOR_COMPLEXITY = 500;
+	private static final int MIN_PAWN_ENDING_EVALUATOR_HORIZON = 6 * ISearchEngine.HORIZON_GRANULARITY;
+	private static final int MIN_PAWN_EVALUATOR_DEPTH = 1;
+
 	private RepeatedPositionRegister repeatedPositionRegister;
 	private TablebasePositionEvaluator tablebaseEvaluator;
 	private PawnEndingTableRegister pawnEndingTableRegister = new PawnEndingTableRegister(null);
 	private PieceTypeEvaluations pieceTypeEvaluations;
 	private int evaluation;
+
 	
 	
 	public boolean evaluate (final Position position, final int depth, final int horizon, final int alpha, final int beta) {
@@ -57,13 +62,13 @@ public final class FinitePositionEvaluator {
 		}
 
 		// Pawn ending
-		if (depth > 3 && horizon > 3 * ISearchEngine.HORIZON_GRANULARITY && !position.getMaterialHash().hasFigure()) {
+		if (depth > MIN_PAWN_EVALUATOR_DEPTH && horizon > MIN_PAWN_ENDING_EVALUATOR_HORIZON && !position.getMaterialHash().hasFigure()) {
 			final PawnEndingKey key = new PawnEndingKey(
 					position.getPiecesMask(Color.WHITE, PieceType.PAWN),
 					position.getPiecesMask(Color.BLACK, PieceType.PAWN)
 			);
 
-			if (key.estimateComplexity() < 300) {
+			if (key.estimateComplexity() < MAX_PAWN_ENDING_EVALUATOR_COMPLEXITY) {
 				final PawnEndingTable table = pawnEndingTableRegister.getTable(key);
 				final int onTurn = position.getOnTurn();
 				final int kingOnTurnSquare = position.getKingPosition(onTurn);
