@@ -48,7 +48,7 @@ public class PawnEndingEvaluator {
             final long oppositePawns = key.getPawnMask(oppositeColor);
 
             for (int kingOnTurnSquare = Square.FIRST; kingOnTurnSquare < Square.LAST; kingOnTurnSquare++) {
-                long matesOrStalemates = BitBoard.EMPTY;
+                final long matesOrStalemates;
 
                 final long possibleKingMoves = ~key.getPawnMask(onTurn) &
                         FigureAttackTable.getItem(PieceType.KING, kingOnTurnSquare) &
@@ -56,30 +56,82 @@ public class PawnEndingEvaluator {
 
                 final boolean isCheck = (PawnAttackTable.getItem(onTurn, kingOnTurnSquare) & oppositePawns) != 0;
 
-                for (int kingNotOnTurnSquare = Square.FIRST; kingNotOnTurnSquare < Square.LAST; kingNotOnTurnSquare++) {
-                    // All possible king moves must be blocked by king not on turn
-                    if ((possibleKingMoves & ~FigureAttackTable.getItem(PieceType.KING, kingNotOnTurnSquare)) == 0) {
-                        // Verify that there is either check or all pawns are blocked
-                        final long squaresBlockedForPawns = pawnOccupancy | BitBoard.of(kingNotOnTurnSquare, kingOnTurnSquare);
-
-                        if (isCheck || (BoardConstants.getPawnSingleMoveSquares(onTurn, key.getPawnMask(onTurn)) & ~squaresBlockedForPawns) == 0)
-                            matesOrStalemates |= BitBoard.getSquareMask(kingNotOnTurnSquare);
-                    }
-                }
+                if (isCheck)
+					matesOrStalemates = findAllMates(onTurn, kingOnTurnSquare, possibleKingMoves);
+				else
+					matesOrStalemates = findAllStalemates(onTurn, kingOnTurnSquare, pawnOccupancy, possibleKingMoves);
 
                 final long illegalPositions = pawnOccupancy |
                         BoardConstants.getKingNearSquares(kingOnTurnSquare) |
                         BoardConstants.getPawnsAttackedSquares(onTurn, key.getPawnMask(onTurn));
 
                 nonTerminalLegalPositions[onTurn][kingOnTurnSquare] = ~(illegalPositions | matesOrStalemates);
-
-                if (isCheck)
-                    lostPositions[onTurn][kingOnTurnSquare] |= matesOrStalemates;
             }
         }
     }
 
-    /**
+	// There is no check se we are finding positions of king not on turn where
+	// it is giving stalemate. The king has to block all the pawns not already blocked
+	// by other pawns or king on turn. It is possible only if there is at most one
+	// such pawn. If there is one such pawn we uses its target square as the square
+	// where the king not on turn must be.
+	// There are 2 cases - either the king on turn cannot move
+	// so the king not on turn can be everywhere or it can move and the king not on turn
+	// has to block it. We takes the first possible target square and calculates the positions
+	// of the king not on turn where it can block it to limit the number of squares that must
+	// be checked inside function getMatesOrStalemates.
+	private long findAllStalemates(int onTurn, int kingOnTurnSquare, long pawnOccupancy, long possibleKingMoves) {
+		final long squareBlockedByPawnsAndKingOnTurn = pawnOccupancy | BitBoard.getSquareMask(kingOnTurnSquare);
+		final long pawnSquaresToBlock = BoardConstants.getPawnSingleMoveSquares(onTurn, key.getPawnMask(onTurn)) & ~squareBlockedByPawnsAndKingOnTurn;
+		final int pawnSquaresToBlockCount = BitBoard.getSquareCount(pawnSquaresToBlock);
+
+		if (pawnSquaresToBlockCount <= 1) {
+			long suspiciousKingNotOnTurnSquares = (possibleKingMoves == BitBoard.EMPTY) ?
+					BitBoard.FULL :
+					FigureAttackTable.getItem(PieceType.KING, BitBoard.getFirstSquare(possibleKingMoves));
+
+			if (pawnSquaresToBlockCount == 1)
+				suspiciousKingNotOnTurnSquares &= pawnSquaresToBlock;
+
+			return getMatesOrStalemates(possibleKingMoves, suspiciousKingNotOnTurnSquares);
+		}
+		else
+			return BitBoard.EMPTY;
+	}
+
+	// There is a check so we are finding positions of king not on turn where
+	// it is giving mate. There are 2 cases - either the king on turn cannot move
+	// so the king not on turn can be everywhere or it can move and the king not on turn
+	// has to block it. We takes the first possible target square and calculates the positions
+	// of the king not on turn where it can block it to limit the number of squares that must
+	// be checked inside function  getMatesOrStalemates.
+	private long findAllMates(int onTurn, int kingOnTurnSquare, long possibleKingMoves) {
+		final long suspiciousKingNotOnTurnSquares = (possibleKingMoves == BitBoard.EMPTY) ?
+				BitBoard.FULL :
+				FigureAttackTable.getItem(PieceType.KING, BitBoard.getFirstSquare(possibleKingMoves));
+
+		final long matesOrStalemates = getMatesOrStalemates(possibleKingMoves, suspiciousKingNotOnTurnSquares);
+		lostPositions[onTurn][kingOnTurnSquare] |= matesOrStalemates;
+
+		return matesOrStalemates;
+	}
+
+	private long getMatesOrStalemates(long possibleKingMoves, long suspiciousKingNotOnTurnSquares) {
+		long matesOrStalemates = BitBoard.EMPTY;
+
+		for (BitLoop kingNotOnTurnLoop = new BitLoop(suspiciousKingNotOnTurnSquares); kingNotOnTurnLoop.hasNextSquare(); ) {
+			final int kingNotOnTurnSquare = kingNotOnTurnLoop.getNextSquare();
+
+			// All possible king moves must be blocked by king not on turn
+			if ((possibleKingMoves & ~FigureAttackTable.getItem(PieceType.KING, kingNotOnTurnSquare)) == 0) {
+				// Verify that there is either check or all pawns are blocked
+				matesOrStalemates |= BitBoard.getSquareMask(kingNotOnTurnSquare);
+			}
+		}
+		return matesOrStalemates;
+	}
+
+	/**
      * Calculate possible pawn captures by king. They are stored in main table as king on pawn squares.
      */
     private void processPawnCapturesByKing() {
