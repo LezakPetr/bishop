@@ -135,6 +135,9 @@ public class BoardConstants {
 	private static final long[][] FRONT_SQUARES_ON_THREE_FILES = initializeSquareMaskBySquareTable(
 			(d, m) -> Square.getRank(m) > Square.getRank(d) && Math.abs(Square.getFile(m) - Square.getFile(d)) <= 1);
 
+	private static final long[][] FRONT_SQUARES_ON_NEIGHBOR_FILES = initializeSquareMaskBySquareTable(
+			(d, m) -> Square.getRank(m) > Square.getRank(d) && Math.abs(Square.getFile(m) - Square.getFile(d)) == 1);
+
 	private static final long[][] PAWN_BLOCKING_SQUARES = initializeSquareMaskBySquareTable((d, m) -> {
 		final int dRank = Square.getRank(d);
 		final int mRank = Square.getRank(m);
@@ -423,17 +426,26 @@ public class BoardConstants {
 	}
 
 	/**
-	 * Returns mask of squares in front of given square on same and neighbour
+	 * Returns mask of squares in front of given square on same and neighbor
 	 * files.
 	 * 
-	 * @param color
-	 *            color of player
-	 * @param square
-	 *            square
+	 * @param color color of player
+	 * @param square square
 	 * @return mask of squares in front of given square
 	 */
 	public static long getFrontSquaresOnThreeFiles(final int color, final int square) {
 		return FRONT_SQUARES_ON_THREE_FILES[color][square];
+	}
+
+	/**
+	 * Returns mask of squares in front of given square on neighbor files.
+	 *
+	 * @param color color of player
+	 * @param square square
+	 * @return mask of squares in front of given square
+	 */
+	public static long getFrontSquaresOnNeighborFiles(final int color, final int square) {
+		return FRONT_SQUARES_ON_NEIGHBOR_FILES[color][square];
 	}
 
 	/**

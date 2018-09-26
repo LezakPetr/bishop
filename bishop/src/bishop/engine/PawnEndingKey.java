@@ -129,12 +129,35 @@ public class PawnEndingKey {
     }
 
     private boolean isPawnPawnCapturePossible() {
-        // Check that white pawns can attack black pawns. It implicitly checks also the opposite.
-        final long whiteAttackableSquares = BitBoard.extendForward(
-                BoardConstants.getPawnsAttackedSquares(Color.WHITE, whitePawns)
-        );
+    	for (int color = Color.FIRST; color < Color.LAST; color++) {
+			final int oppositeColor = Color.getOppositeColor(color);
+    		final long ownPawnMask = getPawnMask(color);
+			final long oppositePawnMask = getPawnMask(oppositeColor);
 
-        return (whiteAttackableSquares & blackPawns) != 0;
+			for (BitLoop ownLoop = new BitLoop(ownPawnMask); ownLoop.hasNextSquare(); ) {
+				final int ownSquare = ownLoop.getNextSquare();
+				final long capturablePawnMask = BoardConstants.getFrontSquaresOnNeighborFiles(color, ownSquare) & oppositePawnMask;
+				final int ownRank = Square.getRank(ownSquare);
+				final int ownFile = Square.getFile(ownSquare);
+
+				for (BitLoop oppositeLoop = new BitLoop(capturablePawnMask); oppositeLoop.hasNextSquare(); ) {
+					final int oppositeSquare = oppositeLoop.getNextSquare();
+					final int oppositeRank = Square.getRank(oppositeSquare);
+
+					if (Math.abs(oppositeRank - ownRank) != 2)
+						return true;
+
+					final int oppositeFile = Square.getFile(oppositeSquare);
+					final int middleRank = (ownRank + oppositeRank) / 2;
+
+					if (!BitBoard.containsSquare(oppositePawnMask, Square.onFileRank(ownFile, middleRank)) ||
+						!BitBoard.containsSquare(ownPawnMask, Square.onFileRank(oppositeFile, middleRank)))
+						return true;
+				}
+			}
+		}
+
+		return false;
     }
 
 }

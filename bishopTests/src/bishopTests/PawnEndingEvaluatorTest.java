@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PawnEndingEvaluatorTest {
@@ -59,7 +60,7 @@ public class PawnEndingEvaluatorTest {
         ),
         new TestCase(
                 "b7, c7", ""
-        )
+		)
     };
 
     private final TestCase[] TERMINAL_TEST_CASES = {
@@ -74,7 +75,29 @@ public class PawnEndingEvaluatorTest {
         )
     };
 
-    @Test
+	private final TestCase[] COMPUTABLE_TEST_CASES = {
+			new TestCase(
+					"e5, f4", "e6, f5"
+			),
+			new TestCase(
+					"e5, f4, g3, h4", "e6, f5, g4, h5"
+			)
+
+	};
+
+	private final TestCase[] NON_COMPUTABLE_TEST_CASES = {
+			new TestCase(
+					"e5, f4", "e6, f5, e7"
+			),
+			new TestCase(
+					"e5, f4", "e6"
+			),
+			new TestCase(
+					"b2, b3, c4", "b4, c5"
+			)
+	};
+
+	@Test
     public void test() {
         final TablebasePositionEvaluator tablebaseEvaluator = new TablebasePositionEvaluator(new File(TBBS_DIR));
         final PawnEndingTableRegister register = new PawnEndingTableRegister(tablebaseEvaluator);
@@ -194,4 +217,27 @@ public class PawnEndingEvaluatorTest {
 
         System.out.println("t = " + dt + " ms, speed = " + speed + " tables/s");
     }
+
+    @Test
+	public void testComputable() {
+		final List<TestCase> testCases = new ArrayList<>();
+		testCases.addAll(Arrays.asList(NON_TERMINAL_TEST_CASES));
+		testCases.addAll(Arrays.asList(TERMINAL_TEST_CASES));
+		testCases.addAll(Arrays.asList(COMPUTABLE_TEST_CASES));
+
+		for (TestCase testCase: testCases) {
+			final PawnEndingKey key = new PawnEndingKey(testCase.pawnMasks);
+			Assert.assertTrue(key.estimateComplexity() < Long.MAX_VALUE);
+		}
+	}
+
+	@Test
+	public void testNotComputable() {
+		for (TestCase testCase: NON_COMPUTABLE_TEST_CASES) {
+			final PawnEndingKey key = new PawnEndingKey(testCase.pawnMasks);
+			Assert.assertEquals(Long.MAX_VALUE, key.estimateComplexity());
+		}
+	}
+
 }
+

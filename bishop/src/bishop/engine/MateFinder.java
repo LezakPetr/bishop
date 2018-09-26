@@ -26,7 +26,7 @@ public class MateFinder {
 	private MoveStack moveStack;
 	private int moveStackTop;
 	private int[] killerMoves;   // Killer moves for given depth
-	private int[] nonLosingMoveCounts;   // Numbers of moves that does not lead to mate for given date
+	private int[] nonLosingMoveCounts;   // Numbers of moves that does not lead to mate for given depth
 	private int[] losingMovesEvaluations;   // Evaluation of losing moves for given depth
 	private final MoveList nonLosingMoves;   // Single moves that does not lead to mate for given depth
 	private int depthAdvance;
@@ -138,6 +138,7 @@ public class MateFinder {
 		moveStackTop = moveStackBegin;
 		
 		if (existLegalMove) {
+			// Singular extension
 			if (!isAttacker && nonLosingMoveCounts[depth] == 1 && singularExtensionPossible)
 				evaluation = evaluateMove(depth, horizon + 2, extension + 2, losingMovesEvaluations[depth], beta, nonLosingMoves.get(depth));
 			
