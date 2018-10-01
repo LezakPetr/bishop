@@ -9,6 +9,8 @@ import bishop.tables.PawnMoveTable;
 
 public class PawnEndingEvaluator {
 
+	private static final int MAX_BLOCKABLE_KING_MOVES_BY_KING = 3;   // King can block only 3 target squares of opposite king
+
     private final PawnEndingKey key;
 
     // Legal positions: true if they are won, false if draw or lost
@@ -54,14 +56,18 @@ public class PawnEndingEvaluator {
                         FigureAttackTable.getItem(PieceType.KING, kingOnTurnSquare) &
                         ~BoardConstants.getPawnsAttackedSquares(oppositeColor, oppositePawns);
 
-                final boolean isCheck = (PawnAttackTable.getItem(onTurn, kingOnTurnSquare) & oppositePawns) != 0;
+                if (BitBoard.getSquareCount(possibleKingMoves) <= MAX_BLOCKABLE_KING_MOVES_BY_KING) {
+					final boolean isCheck = (PawnAttackTable.getItem(onTurn, kingOnTurnSquare) & oppositePawns) != 0;
 
-                if (isCheck)
-					matesOrStalemates = findAllMates(onTurn, kingOnTurnSquare, possibleKingMoves);
+					if (isCheck)
+						matesOrStalemates = findAllMates(onTurn, kingOnTurnSquare, possibleKingMoves);
+					else
+						matesOrStalemates = findAllStalemates(onTurn, kingOnTurnSquare, pawnOccupancy, possibleKingMoves);
+				}
 				else
-					matesOrStalemates = findAllStalemates(onTurn, kingOnTurnSquare, pawnOccupancy, possibleKingMoves);
+					matesOrStalemates = BitBoard.EMPTY;
 
-                final long illegalPositions = pawnOccupancy |
+				final long illegalPositions = pawnOccupancy |
                         BoardConstants.getKingNearSquares(kingOnTurnSquare) |
                         BoardConstants.getPawnsAttackedSquares(onTurn, key.getPawnMask(onTurn));
 
@@ -293,9 +299,7 @@ public class PawnEndingEvaluator {
             // Attacker on turn
             for (BitLoop defendantKingLoop = new BitLoop(possibleAttackerOnTurnKingSquares); defendantKingLoop.hasNextSquare(); ) {
                 final int defendantKingSquare = defendantKingLoop.getNextSquare();
-                final long blockedSquares = pawnOccupancy |
-                        BoardConstants.getKingNearSquares(defendantKingSquare);
-
+                final long blockedSquares = pawnOccupancy | BoardConstants.getKingNearSquares(defendantKingSquare);
                 final long visitableSquares = ~blockedSquares;
                 final long newMask = visitableSquares & BoardConstants.getKingsAttackedSquares(lostPositions[defendantColor][defendantKingSquare]);
 

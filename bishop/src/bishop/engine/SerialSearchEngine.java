@@ -77,7 +77,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private static final int MAX_ATTACK = AttackCalculator.MAX_REASONABLE_ATTACK_EVALUATION;
 	
 	private static final int MIN_MATE_DEPTH = 1;
-	private static final int MAX_MATE_DEPTH = 2;
+	private static final int MAX_MATE_DEPTH = 3;
 	private static final int MAX_MATE_EXTENSION = 4;
 	
 	private static final int MIN_MATE_ATTACK_EVALUATION = 100;
