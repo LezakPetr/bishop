@@ -26,6 +26,7 @@ public class MateFinder {
 	private MoveStack moveStack;
 	private int moveStackTop;
 	private int[] killerMoves;   // Killer moves for given depth
+	private final HistoryTable historyTable = new HistoryTable();
 	private int[] nonLosingMoveCounts;   // Numbers of moves that does not lead to mate for given depth
 	private int[] losingMovesEvaluations;   // Evaluation of losing moves for given depth
 	private final MoveList nonLosingMoves;   // Single moves that does not lead to mate for given depth
@@ -34,7 +35,7 @@ public class MateFinder {
 	
 	private final IMoveWalker walker = new IMoveWalker() {
 		public boolean processMove(final Move move) {
-			moveStack.setRecord(moveStackTop, move, 0);
+			moveStack.setRecord(moveStackTop, move, historyTable.getEvaluation(position.getOnTurn(), move));
 			moveStackTop++;
 
 			return true;
@@ -109,14 +110,18 @@ public class MateFinder {
 		moveGenerator.setGenerateOnlyChecks(isAttacker);
 		moveGenerator.setReduceMovesInCheck(!isAttacker);
 		moveGenerator.generateMoves();
-		final int moveStackEnd = moveStackTop;
+
+		int moveStackEnd = moveStackTop;
+
+		moveStack.sortMoves (moveStackBegin, moveStackEnd);
 		
 		final Move move = new Move();
 		
-		for (int i = moveStackBegin; i < moveStackEnd; i++) {
-			moveStack.getMove(i, move);
+		while (moveStackEnd > moveStackBegin) {
+			moveStack.getMove(moveStackEnd - 1, move);
 			
 			if (!move.equals(killerMove)) {
+				moveStackTop = moveStackEnd;
 				final int subEvaluation = evaluateMove(depth, horizon, extension, effectiveAlpha, beta, move);
 				
 				evaluation = Math.max(evaluation, subEvaluation);
@@ -129,10 +134,13 @@ public class MateFinder {
 				if (effectiveAlpha > beta) {
 					killerMoves[depth + depthAdvance] = move.getCompressedMove();
 					moveStackTop = moveStackBegin;
+					historyTable.addCutoff(position.getOnTurn(), move, horizon);
 					
 					return evaluation;
 				}
 			}
+
+			moveStackEnd--;
 		}
 		
 		moveStackTop = moveStackBegin;
