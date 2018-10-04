@@ -232,10 +232,8 @@ public class BoardConstants {
 	/**
 	 * Returns mask of squares between king and rook before castling.
 	 * 
-	 * @param color
-	 *            color of player
-	 * @param castlingType
-	 *            type of castling
+	 * @param color color of player
+	 * @param castlingType type of castling
 	 * @return required mask
 	 */
 	public static long getCastlingMiddleSquareMask(final int color, final int castlingType) {
@@ -247,10 +245,8 @@ public class BoardConstants {
 	/**
 	 * Return begin square of rook in castling.
 	 * 
-	 * @param color
-	 *            color of player
-	 * @param castlingType
-	 *            type of castling
+	 * @param color color of player
+	 * @param castlingType type of castling
 	 * @return begin square of rook
 	 */
 	public static int getCastlingRookBeginSquare(final int color, final int castlingType) {
@@ -262,10 +258,8 @@ public class BoardConstants {
 	/**
 	 * Return target square of rook in castling.
 	 * 
-	 * @param color
-	 *            color of player
-	 * @param castlingType
-	 *            type of castling
+	 * @param color color of player
+	 * @param castlingType type of castling
 	 * @return target square of rook
 	 */
 	public static int getCastlingRookTargetSquare(final int color, final int castlingType) {
@@ -281,10 +275,8 @@ public class BoardConstants {
 	/**
 	 * Return target square of king in castling.
 	 * 
-	 * @param color
-	 *            color of player
-	 * @param castlingType
-	 *            type of castling
+	 * @param color color of player
+	 * @param castlingType type of castling
 	 * @return target square of king
 	 */
 	public static int getCastlingKingTargetSquare(final int color, final int castlingType) {
@@ -349,8 +341,7 @@ public class BoardConstants {
 	/**
 	 * Returns rank where pawns with given color moves by two squares.
 	 * 
-	 * @param color
-	 *            pawn color
+	 * @param color pawn color
 	 * @return Rank.R4 for white or Rank.R5 for black
 	 */
 	public static int getEpRank(final int color) {
@@ -360,10 +351,8 @@ public class BoardConstants {
 	/**
 	 * Returns square where pawn with given color moves by two squares.
 	 * 
-	 * @param color
-	 *            pawn color
-	 * @param file
-	 *            file where is the pawn
+	 * @param color pawn color
+	 * @param file file where is the pawn
 	 * @return EP square
 	 */
 	public static int getEpSquare(final int color, final int file) {
@@ -394,8 +383,7 @@ public class BoardConstants {
 	/**
 	 * Returns promotion rank for given pawn color.
 	 * 
-	 * @param color
-	 *            pawn color
+	 * @param color pawn color
 	 * @return promotion rank
 	 */
 	public static int getPawnPromotionRank(final int color) {
@@ -452,10 +440,8 @@ public class BoardConstants {
 	 * Returns mask of squares that if they would be occupied by opposite pawn
 	 * stops pawn on given square.
 	 * 
-	 * @param color
-	 *            color of pawn
-	 * @param square
-	 *            square
+	 * @param color color of pawn
+	 * @param square square
 	 * @return mask of blocking squares
 	 */
 	public static long getPawnBlockingSquares(final int color, final int square) {
@@ -469,8 +455,7 @@ public class BoardConstants {
 	/**
 	 * Returns one or two squares on same rank left and right to given square.
 	 * 
-	 * @param square
-	 *            pawn square
+	 * @param square pawn square
 	 * @return mask of neighbor squares
 	 */
 	public static long getConnectedPawnSquareMask(final int square) {
@@ -481,8 +466,7 @@ public class BoardConstants {
 	 * Returns union of masks obtained by calling getConnectedPawnSquareMask for
 	 * every pawn in pawnMask.
 	 * 
-	 * @param pawnMask
-	 *            mask of pawns
+	 * @param pawnMask mask of pawns
 	 * @return mask of neighbor squares
 	 */
 	public static long getAllConnectedPawnSquareMask(final long pawnMask) {
@@ -496,8 +480,7 @@ public class BoardConstants {
 	/**
 	 * Returns mask of first rank of given side.
 	 * 
-	 * @param color
-	 *            color of side
+	 * @param color color of side
 	 * @return first rank
 	 */
 	public static long getFirstRankMask(final int color) {
@@ -507,8 +490,7 @@ public class BoardConstants {
 	/**
 	 * Returns mask of first rank of given side.
 	 * 
-	 * @param color
-	 *            color of side
+	 * @param color color of side
 	 * @return first rank
 	 */
 	public static long getSecondRankMask(final int color) {
@@ -536,8 +518,7 @@ public class BoardConstants {
 	/**
 	 * Returns distance of given square from board edge.
 	 * 
-	 * @param square
-	 *            square
+	 * @param square square
 	 * @return 0 <= distance <= 3
 	 */
 	public static int getSquareEdgeDistance(final int square) {
@@ -579,10 +560,8 @@ public class BoardConstants {
 	/**
 	 * Returns all squares attacked by some pawn.
 	 * 
-	 * @param color
-	 *            color of the pawn
-	 * @param pawnsMask
-	 *            pawn mask
+	 * @param color color of the pawn
+	 * @param pawnsMask pawn mask
 	 * @return mask of attacked squares
 	 */
 	public static long getPawnsAttackedSquares(final int color, final long pawnsMask) {
@@ -601,27 +580,22 @@ public class BoardConstants {
 	/**
 	 * Returns all squares where pawns can move by single step.
 	 * 
-	 * @param color
-	 *            color of the pawn
-	 * @param pawnsMask
-	 *            pawn mask
+	 * @param color color of the pawn
+	 * @param pawnsMask pawn mask
 	 * @return mask of target squares
 	 */
 	public static long getPawnSingleMoveSquares(final int color, final long pawnsMask) {
-		if (color == Color.WHITE) {
+		if (color == Color.WHITE)
 			return pawnsMask << 8;
-		} else {
+		else
 			return pawnsMask >>> 8;
-		}
 	}
 
 	/**
 	 * Returns mask of square on file preceding EP file on EP rank.
 	 * 
-	 * @param color
-	 *            color of the pawn that has moved by two squares
-	 * @param file
-	 *            EP file
+	 * @param color color of the pawn that has moved by two squares
+	 * @param file EP file
 	 * @return mask of square on file preceding EP file on EP rank
 	 */
 	public static long getPrevEpFileMask(final int color, final int file) {
@@ -631,10 +605,8 @@ public class BoardConstants {
 	/**
 	 * Returns mask of square on file succeeding EP file on EP rank.
 	 * 
-	 * @param color
-	 *            color of the pawn that has moved by two squares
-	 * @param file
-	 *            EP file
+	 * @param color color of the pawn that has moved by two squares
+	 * @param file EP file
 	 * @return mask of square on file succeeding EP file on EP rank
 	 */
 	public static long getNextEpFileMask(final int color, final int file) {
@@ -644,8 +616,7 @@ public class BoardConstants {
 	/**
 	 * Returns mask of squares where given piece can be placed.
 	 * 
-	 * @param pieceType
-	 *            type of piece
+	 * @param pieceType type of piece
 	 * @return mask of allowed squares
 	 */
 	public static long getPieceAllowedSquares(final int pieceType) {

@@ -4,15 +4,12 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 
+import bishop.tables.*;
 import utils.IAssignable;
 import utils.ICopyable;
 
 import bishop.engine.Evaluation;
 import bishop.engine.PawnStructure;
-import bishop.tables.BetweenTable;
-import bishop.tables.FigureAttackTable;
-import bishop.tables.PawnAttackTable;
-import bishop.tables.PieceHashTable;
 
 /**
  * Representation of chess position with additional information that affects
@@ -651,6 +648,11 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 * @return true if square is attacked, false if not
 	 */
 	public boolean isSquareAttacked (final int color, final int square) {
+		// Speedup (especially in endings) - if there is no piece by color occupancy that
+		// can attack the square then return false.
+		if ((getColorOccupancy(color) & SuperAttackTable.getItem(square)) == 0)
+			return false;
+
 		// Short move figures
 		if ((getPiecesMask(color, PieceType.KING) & FigureAttackTable.getItem (PieceType.KING, square)) != 0)
 			return true;
@@ -908,7 +910,9 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 * @return true if there is check, false if not
 	 */
 	public boolean isCheck() {
-		return isSquareAttacked(Color.getOppositeColor(onTurn), getKingPosition(onTurn));
+		final int kingPosition = getKingPosition(onTurn);
+
+		return isSquareAttacked(Color.getOppositeColor(onTurn), kingPosition);
 	}
 
 	private static Position createInitialPosition() {
