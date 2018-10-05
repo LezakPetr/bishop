@@ -25,6 +25,7 @@ public class AllTests {
 		MixerTest.class,
 		ParallelTaskRunnerTest.class,
 		BitBoardTest.class,
+		BitBoardCombinatorTest.class,
 		BetweenTableTest.class,
 		CombinatorialNumberSystemTest.class,
 		TableMaterialEvaluatorTest.class,
