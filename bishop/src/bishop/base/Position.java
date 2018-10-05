@@ -694,31 +694,36 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 * @return mask of attacking pieces
 	 */
 	public long getAttackingPieces (final int color, final int square) {
+		// Speedup (especially in endings) - if there is no piece by color occupancy that
+		// can attack the square then return false.
+		if ((getColorOccupancy(color) & SuperAttackTable.getItem(square)) == 0)
+			return BitBoard.EMPTY;
+
 		long attackingPieceMask = BitBoard.EMPTY;
 		
 		// Short move figures
-		attackingPieceMask |= getPiecesMask(color, PieceType.KING) & FigureAttackTable.getItem (PieceType.KING, square);
-		attackingPieceMask |= getPiecesMask(color, PieceType.KNIGHT) & FigureAttackTable.getItem (PieceType.KNIGHT, square);
+		attackingPieceMask |= pieceTypeMasks[PieceType.KING] & FigureAttackTable.getItem (PieceType.KING, square);
+		attackingPieceMask |= pieceTypeMasks[PieceType.KNIGHT] & FigureAttackTable.getItem (PieceType.KNIGHT, square);
 
 		// Pawn
 		final int oppositeColor = Color.getOppositeColor(color);
-		attackingPieceMask |= getPiecesMask(color, PieceType.PAWN) & PawnAttackTable.getItem(oppositeColor, square);
+		attackingPieceMask |= pieceTypeMasks[PieceType.PAWN] & PawnAttackTable.getItem(oppositeColor, square);
 
 		// Long move figures
 		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, square, occupancy);
 		final long orthogonalMask = LineAttackTable.getAttackMask(orthogonalIndex);
 		
-		attackingPieceMask |= getPiecesMask(color, PieceType.ROOK) & orthogonalMask;
+		attackingPieceMask |= pieceTypeMasks[PieceType.ROOK] & orthogonalMask;
 
 		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, square, occupancy);
 		final long diagonalMask = LineAttackTable.getAttackMask(diagonalIndex);
 
-		attackingPieceMask |= getPiecesMask(color, PieceType.BISHOP) & diagonalMask;
+		attackingPieceMask |= pieceTypeMasks[PieceType.BISHOP] & diagonalMask;
 		
 		final long queenMask = orthogonalMask | diagonalMask;
-		attackingPieceMask |= getPiecesMask(color, PieceType.QUEEN) & queenMask;
-				
-		return attackingPieceMask;
+		attackingPieceMask |= pieceTypeMasks[PieceType.QUEEN] & queenMask;
+
+		return attackingPieceMask & colorOccupancy[color];
 	}
 	
 	/**
@@ -743,12 +748,9 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		
 		if ((occupancy & mask) == 0)
 			return PieceType.NONE;
-		
+
 		if ((pieceTypeMasks[PieceType.PAWN] & mask) != 0)
 			return PieceType.PAWN;
-		
-		if ((pieceTypeMasks[PieceType.ROOK] & mask) != 0)
-			return PieceType.ROOK;
 
 		if ((pieceTypeMasks[PieceType.KNIGHT] & mask) != 0)
 			return PieceType.KNIGHT;
@@ -756,12 +758,15 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		if ((pieceTypeMasks[PieceType.BISHOP] & mask) != 0)
 			return PieceType.BISHOP;
 
-		if ((pieceTypeMasks[PieceType.KING] & mask) != 0)
-			return PieceType.KING;
+		if ((pieceTypeMasks[PieceType.ROOK] & mask) != 0)
+			return PieceType.ROOK;
 
 		if ((pieceTypeMasks[PieceType.QUEEN] & mask) != 0)
 			return PieceType.QUEEN;
-		
+
+		if ((pieceTypeMasks[PieceType.KING] & mask) != 0)
+			return PieceType.KING;
+
 		throw new RuntimeException("Corrupted position on square " + square);
 	}
 
