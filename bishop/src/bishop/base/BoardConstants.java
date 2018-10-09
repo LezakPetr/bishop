@@ -361,6 +361,16 @@ public class BoardConstants {
 		return Square.onFileRank(file, rank);
 	}
 
+	/**
+	 * Returns target square of the capturing pawn.
+	 * @param color color of the captured (opposite to capturing) pawn
+	 * @param epFile file where the pawn has moved by 2 squares
+	 * @return EP target square
+	 */
+	public static int getEpTargetSquare(final int color, final int epFile) {
+		return Square.onFileRank(epFile, Rank.getAbsolute(Rank.R3, color));
+	}
+
 	public static long getEpRankMask(final int color) {
 		return TABLE_EP_RANK_MASKS[color];
 	}

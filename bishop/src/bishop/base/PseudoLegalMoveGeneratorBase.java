@@ -21,30 +21,27 @@ public abstract class PseudoLegalMoveGeneratorBase implements IMoveGenerator {
     // Generates en-passant moves.
     // Returns if generation should continue.
     protected final boolean generateEnPassantMoves() {
-    	final int onTurn = position.getOnTurn();
     	final int epFile = position.getEpFile();
 
     	if (epFile == File.NONE)
     		return true;
 
+		final int onTurn = position.getOnTurn();
+		final int oppositeColor = Color.getOppositeColor(onTurn);
     	final long pawnMask = position.getPiecesMask (onTurn, PieceType.PAWN);
-    	
-    	move.setMovingPieceType(PieceType.PAWN);
+		final int epSquare = BoardConstants.getEpSquare(oppositeColor, epFile);
+		final long possibleBeginSquares = BoardConstants.getConnectedPawnSquareMask(epSquare) & pawnMask;
 
-    	for (int direction = EpDirection.FIRST; direction < EpDirection.LAST; direction++) {
-            final EpMoveRecord record = PieceMoveTables.getEpMoveRecord(onTurn, epFile, direction);
-            
-            if (record != null) {
-            	final int beginSquare = record.getBeginSquare();
-            
-            	if ((pawnMask & BitBoard.getSquareMask (beginSquare)) != 0) {
-            		move.setBeginSquare(beginSquare);
-            		move.finishEnPassant (record.getTargetSquare());
+		move.setMovingPieceType(PieceType.PAWN);
 
-            		if (!walker.processMove(move))
-            			return false;
-            	}
-            }
+    	for (BitLoop loop = new BitLoop(possibleBeginSquares); loop.hasNextSquare(); ) {
+			final int beginSquare = loop.getNextSquare();
+
+			move.setBeginSquare(beginSquare);
+			move.finishEnPassant (BoardConstants.getEpTargetSquare(oppositeColor, epFile));
+
+			if (!walker.processMove(move))
+				return false;
     	}
 
     	return true;

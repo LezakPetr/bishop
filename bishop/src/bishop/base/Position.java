@@ -1036,39 +1036,35 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
     public boolean isEnPassantPossible() {
     	if (epFile == File.NONE)
     		return false;
-    	
-    	final long pawnMask = getPiecesMask (onTurn, PieceType.PAWN);
 
-    	for (int direction = EpDirection.FIRST; direction < EpDirection.LAST; direction++) {
-            final EpMoveRecord record = PieceMoveTables.getEpMoveRecord(onTurn, epFile, direction);
-            
-            if (record != null) {
-            	final int beginSquare = record.getBeginSquare();
-            
-            	if ((pawnMask & BitBoard.getSquareMask (beginSquare)) != 0) {
-            		final Move epCheckMove = new Move();
-            		
-            		epCheckMove.initialize(CastlingRights.FIRST_INDEX, epFile);
-            		epCheckMove.setMovingPieceType(PieceType.PAWN);
-            		epCheckMove.setBeginSquare (beginSquare);
-            		epCheckMove.finishEnPassant (record.getTargetSquare());
-            		
-            		makeEnPassantMove(epCheckMove);
-            		
-                	final boolean isCheck = isKingNotOnTurnAttacked();
-            		
-            		undoEnPassantMove(epCheckMove);
-            		
-            		if (!isCheck)
-            			return true;
-            	}
-            }
-    	}
+		final int oppositeColor = Color.getOppositeColor(onTurn);
+    	final int epSquare = BoardConstants.getEpSquare(oppositeColor, epFile);
+		final long possibleBeginSquares = BoardConstants.getConnectedPawnSquareMask(epSquare) & getPiecesMask(onTurn, PieceType.PAWN);
+
+		for (BitLoop loop = new BitLoop(possibleBeginSquares); loop.hasNextSquare(); ) {
+			final int beginSquare = loop.getNextSquare();
+
+			final Move epCheckMove = new Move();
+
+			epCheckMove.initialize(CastlingRights.FIRST_INDEX, epFile);
+			epCheckMove.setMovingPieceType(PieceType.PAWN);
+			epCheckMove.setBeginSquare (beginSquare);
+			epCheckMove.finishEnPassant (BoardConstants.getEpTargetSquare(oppositeColor, epFile));
+
+			makeEnPassantMove(epCheckMove);
+
+			final boolean isCheck = isKingNotOnTurnAttacked();
+
+			undoEnPassantMove(epCheckMove);
+
+			if (!isCheck)
+				return true;
+		}
 
     	return false;
     }
-    
-    public IMaterialHashRead getMaterialHash() {
+
+	public IMaterialHashRead getMaterialHash() {
     	return caching.getMaterialHash();
     }
     
