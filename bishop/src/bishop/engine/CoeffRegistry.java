@@ -11,7 +11,7 @@ public class CoeffRegistry {
 	private final List<String> nameStack = new ArrayList<>();
 	private boolean frozen;
 	
-	public short add (final String name) {
+	public int add (final String name) {
 		checkNotFrozen();
 		
 		final int coeff = coeffNames.size();
@@ -23,30 +23,30 @@ public class CoeffRegistry {
 		
 		nameStack.remove(nameStack.size() - 1);
 		
-		return (short) coeff;
+		return coeff;
 	}
 	
-	public short enterCategory(final String name) {
+	public int enterCategory(final String name) {
 		checkNotFrozen();
 		
 		nameStack.add(name);
 		
-		return (short) coeffNames.size();
+		return coeffNames.size();
 	}
 	
-	public short leaveCategory() {
+	public int leaveCategory() {
 		checkNotFrozen();
 		
 		nameStack.remove(nameStack.size() - 1);
 		
-		return (short) coeffNames.size();
+		return coeffNames.size();
 	}
 	
 	public String getName (final int coeff) {
 		return coeffNames.get(coeff);
 	}
 
-	public short finish() {
+	public int finish() {
 		checkNotFrozen();
 		
 		if (!nameStack.isEmpty())
@@ -54,7 +54,7 @@ public class CoeffRegistry {
 		
 		frozen = true;
 		
-		return (short) coeffNames.size();
+		return coeffNames.size();
 	}
 	
 	private void checkNotFrozen() {
