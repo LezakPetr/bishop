@@ -4,40 +4,44 @@ public class SubVectorIterator implements IVectorIterator {
 	
 	private final IVectorIterator baseIterator;
 	private final int begin;
-	private final int end;
+	private final int dimension;
+	private int index;
 	
 	public SubVectorIterator (final IVectorIterator baseIterator, final int begin, final int end) {
 		this.baseIterator = baseIterator;
 		this.begin = begin;
-		this.end = end;
-		
-		if (baseIterator.isValid() && !isInRange())
-			next();
+		this.dimension = end - begin;
+
+		while (baseIterator.isValid() && baseIterator.getIndex() < begin)
+			baseIterator.next();
+
+		recalculateIndex();
 	}
 	
 	@Override
 	public void next() {
-		if (baseIterator.isValid()) {
-			do {
-				baseIterator.next();
-			} while (baseIterator.isValid() && !isInRange());
+		if (isValid()) {
+			baseIterator.next();
+
+			recalculateIndex();
 		}
 	}
-	
-	private boolean isInRange() {
-		final int index = baseIterator.getIndex();
-		
-		return index >= begin && index < end;
+
+	private void recalculateIndex() {
+		if (baseIterator.isValid())
+			index = baseIterator.getIndex() - begin;
+		else
+			index = Integer.MAX_VALUE;
 	}
-	
+
 	@Override
 	public boolean isValid() {
-		return baseIterator.isValid();
+		return index < dimension;
 	}
 	
 	@Override
 	public int getIndex() {
-		return baseIterator.getIndex() - begin;
+		return index;
 	}
 	
 	@Override

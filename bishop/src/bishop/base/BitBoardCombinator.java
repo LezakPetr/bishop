@@ -2,53 +2,38 @@ package bishop.base;
 
 public class BitBoardCombinator {
 	
-	private final int[] squares;
-	private long combinationIndex;
+	private final long mask;
+	private long combination;
+	private long remainingCombinations;
 	
 	public BitBoardCombinator(final long mask) {
-		final int squareCount = BitBoard.getSquareCount(mask);
-		squares = new int[squareCount];
-		
-		fillSquaresFromMask(mask);
-		
-		combinationIndex = 0;
+		this.mask = mask;
+		this.combination = 0;
+		this.remainingCombinations = getCombinationCount();
 	}
 
-	private void fillSquaresFromMask(final long mask) {
-		int index = 0;
-		
-		for (BitLoop loop = new BitLoop(mask); loop.hasNextSquare(); ) {
-			squares[index] = loop.getNextSquare();
-			index++;
-		}
-	}
-	
 	public boolean hasNextCombination() {
-		final long combinationCount = (1L << squares.length);
-		
-		return combinationIndex < combinationCount;
+		return remainingCombinations > 0;
 	}
 	
 	public long getNextCombination() {
-		final long combination = getCombinationFromIndex();
-		combinationIndex++;
-		
-		return combination;
-	}
+		final long combinationToReturn = combination;
 
-	private long getCombinationFromIndex() {
-		long combination = 0;
+		// We want then number 'combination' to be incremented by 1 in bits of mask. We can simply add 1
+		// to it, but we must ensure that the overflow is carried between non-continuous bits.
+		// So we first set the bits that are not in the mask to 1, then we increment it by 1
+		// and then we clears the bits out of mask again. So:
+		//   combination = (combination + ~mask + 1) & mask
+		// Because ~mask + 1 = -mask we have:
+		//   combination = (combination - mask) & mask
+		// See The Art Of Computer Programming, Volume 1, Fascicle 1: Working with fragmented fields, Equation 84
+		combination = (combination - mask) & mask;
+		remainingCombinations--;
 		
-		for (int i = 0; i < squares.length; i++) {
-			final int square = squares[i];
-			
-			combination |= ((combinationIndex >>> i) & 0x01L) << square;
-		}
-		
-		return combination;
+		return combinationToReturn;
 	}
 
 	public long getCombinationCount() {
-		return 1L << squares.length;
+		return 1L << BitBoard.getSquareCount(mask);
 	}
 }

@@ -8,33 +8,43 @@ import utils.IntArrayBuilder;
 public class GameStage {
 	
 	public static final int FIRST = 0;
-	public static final int LAST = 25;
 	
-	public static final int COUNT = LAST - FIRST;
-	
+	private static final int MAX_LIGHT_FIGURE_COUNT = 4;
+	private static final int MAX_HEAVY_FIGURE_COUNT = 4;
+
+	private static final int HEAVY_FIGURE_INDEX_COEFF = MAX_LIGHT_FIGURE_COUNT + 1;
+	private static final int STRENGTH_SIGNUM_FIGURE_INDEX_COEFF = HEAVY_FIGURE_INDEX_COEFF * (MAX_HEAVY_FIGURE_COUNT + 1);
+	public static final int WITH_FIGURES_COUNT = 3 * STRENGTH_SIGNUM_FIGURE_INDEX_COEFF;
+
 	public static final int PAWNS_ONLY = 0;
 	
 	public static final int WITH_FIGURES_FIRST = PAWNS_ONLY + 1;
-	public static final int WITH_FIGURES_LAST = LAST;
-	public static final int WITH_FIGURES_COUNT = WITH_FIGURES_LAST - WITH_FIGURES_FIRST;
-	
-	private static final int[] PIECE_TYPE_SHIFTS = new IntArrayBuilder(LAST)
-			.put(PieceType.KNIGHT, 0)
-			.put(PieceType.BISHOP, 0)
-			.put(PieceType.ROOK, 1)
-			.put(PieceType.QUEEN, 2)
-			.build();
+	public static final int WITH_FIGURES_LAST = WITH_FIGURES_FIRST + WITH_FIGURES_COUNT;
+
+	public static final int LAST = WITH_FIGURES_LAST;
+	public static final int COUNT = LAST - FIRST;
+
 
 	public static int fromMaterial(final IMaterialHashRead materialHash) {
-		int stage = 0;
-		
-		for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
-			final int shift = PIECE_TYPE_SHIFTS[pieceType];
+		final int whiteLightFigureCount = materialHash.getPieceCount(Color.WHITE, PieceType.KNIGHT) + materialHash.getPieceCount(Color.WHITE, PieceType.BISHOP);
+		final int blackLightFigureCount = materialHash.getPieceCount(Color.BLACK, PieceType.KNIGHT) + materialHash.getPieceCount(Color.BLACK, PieceType.BISHOP);
+		final int whiteHeavyFigureCount = materialHash.getPieceCount(Color.WHITE, PieceType.ROOK) + 2 * materialHash.getPieceCount(Color.WHITE, PieceType.QUEEN);
+		final int blackHeavyFigureCount = materialHash.getPieceCount(Color.BLACK, PieceType.ROOK) + 2 * materialHash.getPieceCount(Color.BLACK, PieceType.QUEEN);
 
-			for (int color = Color.FIRST; color < Color.LAST; color++)
-				stage += materialHash.getPieceCount(color, pieceType) << shift;
-		}
-		
-		return Math.min(stage, LAST - 1);
+		if (whiteLightFigureCount == 0 && blackLightFigureCount == 0 && whiteHeavyFigureCount == 0 && blackHeavyFigureCount == 0)
+			return PAWNS_ONLY;
+
+		final int commonLightFigureCount = Math.min(whiteLightFigureCount, blackLightFigureCount);
+		final int commonHeavyFigureCount = Math.min(whiteHeavyFigureCount, blackHeavyFigureCount);
+
+		final int strengthDiff = 3 * (whiteLightFigureCount - blackLightFigureCount) + 5 * (whiteHeavyFigureCount - blackHeavyFigureCount);
+		final int strengthSignum = Integer.signum(strengthDiff) + 1;
+
+		final int index = WITH_FIGURES_FIRST +
+				Math.min(commonLightFigureCount, MAX_LIGHT_FIGURE_COUNT) +
+				Math.min(commonHeavyFigureCount, MAX_HEAVY_FIGURE_COUNT) * HEAVY_FIGURE_INDEX_COEFF +
+				strengthSignum * STRENGTH_SIGNUM_FIGURE_INDEX_COEFF;
+
+		return index;
 	}
 }

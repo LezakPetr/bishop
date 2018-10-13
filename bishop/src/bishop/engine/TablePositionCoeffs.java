@@ -17,18 +17,17 @@ public class TablePositionCoeffs {
 	private static final int COLOR_SHIFT = 9;
 	private static final int TOTAL_BITS = 1 + 3 + 6;
 	
-	private final short[] coeffIndices;
+	private final int[] coeffIndices;
 	
 	private static int getIndex (final int color, final int pieceType, final int square) {
 		return (color << COLOR_SHIFT) + (pieceType << PIECE_TYPE_SHIFT) + square;
 	}
 
 	public TablePositionCoeffs(final CoeffRegistry registry) {
-		coeffIndices = new short[1 << TOTAL_BITS];
+		coeffIndices = new int[1 << TOTAL_BITS];
 		fillCoeffIndices(registry);
 	}
 	
-
 	private void fillCoeffIndices(final CoeffRegistry registry) {
 		registry.enterCategory("table_position");
 		
@@ -40,7 +39,7 @@ public class TablePositionCoeffs {
 			for (BitLoop loop = new BitLoop(board); loop.hasNextSquare(); ) {
 				final int whiteSquare = loop.getNextSquare();
 				final String coeffName = PieceType.toChar(pieceType, false) + "_" + Square.toString(whiteSquare);
-				final short coeff = registry.add(coeffName);
+				final int coeff = registry.add(coeffName);
 				final int whiteIndex = getIndex(Color.WHITE, pieceType, whiteSquare);
 				coeffIndices[whiteIndex] = coeff;
 				
