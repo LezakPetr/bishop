@@ -8,6 +8,7 @@ import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
+import utils.IntUtils;
 import utils.Logger;
 import utilsTest.*;
 import bishop.base.GlobalSettings;
@@ -22,6 +23,7 @@ public class AllTests {
 	
 	private static final Class<?>[] classArray = {
 		ImmutableOrdinalMapTest.class,
+		IntUtilsTest.class,
 		MixerTest.class,
 		ParallelTaskRunnerTest.class,
 		BitBoardTest.class,
