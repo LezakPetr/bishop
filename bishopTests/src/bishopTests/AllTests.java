@@ -1,17 +1,14 @@
 package bishopTests;
 
-import java.util.LinkedList;
-import java.util.List;
-
-import math.CholeskySolver;
+import bishop.base.GlobalSettings;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
-
-import utils.IntUtils;
 import utils.Logger;
 import utilsTest.*;
-import bishop.base.GlobalSettings;
+
+import java.util.LinkedList;
+import java.util.List;
 
 
 
@@ -39,6 +36,7 @@ public class AllTests {
 		UncompressMoveTest.class,
 		PerftTest.class,
 		AttackCalculatorTest.class,
+		GameStageTest.class,
 		ReverseMoveGeneratorTest.class,
 		VectorTest.class,
 		VectorAlgorithmsTest.class,
