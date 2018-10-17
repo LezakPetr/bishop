@@ -1,5 +1,7 @@
 package math;
 
+import utils.IntUtils;
+
 public class CholeskySolver {
 	private final IMatrixRead matrix;
 	private final IVectorRead rightSide;
@@ -7,24 +9,38 @@ public class CholeskySolver {
 	private final IMatrix triangle;
 	private final IVector diagonal;
 
+	// Arrays with masks. Each item corresponds to one row of triangle.
+	// Every bit is set if there is at least 1 non-zero element in the 1/64th part of the triangle.
+	private final int indexShift;
+	private final long[] nonZeroIndexMasks;
+
 	public CholeskySolver (final IMatrixRead equationMatrix, final IVectorRead rightSide) {
 		this.matrix = equationMatrix;
 		this.rightSide = rightSide;
 		this.equationCount = equationMatrix.getRowCount();
 		this.triangle = Matrices.createMutableMatrix(equationMatrix.density(), equationCount, equationCount);
 		this.diagonal = Vectors.vectorWithDensity(Density.DENSE, equationCount);
-
+		this.indexShift = Math.max(IntUtils.ceilLog(equationCount) - 6, 0);
+		this.nonZeroIndexMasks = new long[equationCount];
 	}
 
 	private double calculateElement (final int row, final int column) {
-		return matrix.getElement(row, column) -
-				Vectors.dotProduct(
-						Vectors.elementMultiply(
-								triangle.getRowVector(row).subVector(0, column),
-								triangle.getRowVector(column).subVector(0, column)
-						),
-						diagonal.subVector(0, column)
-				);
+		final long mask = IntUtils.getLowestBitsLong((column >> indexShift) + 1);
+		final double product;
+
+		if ((nonZeroIndexMasks[row] & nonZeroIndexMasks[column] & mask) == 0)
+			product = 0.0;
+		else
+			product = Vectors.dotProduct(
+					Vectors.elementMultiply(
+							triangle.getRowVector(row).subVector(0, column),
+							triangle.getRowVector(column).subVector(0, column)
+					),
+					diagonal.subVector(0, column)
+			);
+
+		return matrix.getElement(row, column) - product;
+
 	}
 
 	public void decomposition () {
@@ -34,11 +50,15 @@ public class CholeskySolver {
 			for (int j = 0; j < i; j++) {
 				final double value = calculateElement(i, j);
 
-				if (value != 0)
+				if (value != 0) {
 					triangleRow.setElement(j, value / diagonal.getElement(j));
+					nonZeroIndexMasks[i] |= 1L << (j >> indexShift);
+				}
 			}
 
 			triangleRow.setElement(i, 1.0);
+			nonZeroIndexMasks[i] |= 1L << (i >> indexShift);
+
 			diagonal.setElement(i, calculateElement(i, i));
 		}
 	}

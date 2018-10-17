@@ -28,7 +28,7 @@ public class EvaluationSample implements ISample {
 	private static final int MAX_SMALL_INDEX_DIFF = 256 / COEFF_COUNT_CATEGORY_LAST;
 	private static final int LARGE_INDEX_DIFF_MARKER = 0;
 
-	private static final int LARGE_INDEX_DIFF_BYTES = 2;
+	private static final int LARGE_INDEX_DIFF_BYTES = 3;
 	private static final int LARGE_COEFF_COUNT_BYTES = 2;
 
     private final byte[] compressedCoeffs;
