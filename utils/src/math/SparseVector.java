@@ -1,9 +1,12 @@
 package math;
 
+import utils.IntUtils;
+
 import java.util.Arrays;
 
 public class SparseVector extends AbstractVector {
 
+	private static final int MIN_NON_ZERO_ELEMENT_COUNT_FOR_BINARY_SEARCH = 8;
 	private static final double[] EMPTY_ELEMENTS = {};
 	private static final int[] EMPTY_INDICES = {};
 
@@ -45,10 +48,7 @@ public class SparseVector extends AbstractVector {
 	}
 	
 	private int findSparseIndex(final int index) {
-		if (nonZeroElementCount == 0 || index > indices[nonZeroElementCount - 1])
-			return -nonZeroElementCount - 1;   // Optimization for inserting element to the end
-
-		return Arrays.binarySearch(indices, 0, nonZeroElementCount, index);
+		return IntUtils.sortedArraySearch(indices, nonZeroElementCount, index);
 	}
 
 	@Override
