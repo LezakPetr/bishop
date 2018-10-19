@@ -32,7 +32,7 @@ public class GaussSeidelSolver {
 
 		this.reducedEquationMatrix = reducedEquationMatrix.freeze();
 		this.diagonal = diagonal.freeze();
-		this.rightSide = Vectors.immutableCopy(rightSide);
+		this.rightSide = rightSide.immutableCopy();
 	}
 
 	public IVectorRead solve() {

@@ -17,7 +17,7 @@ public class PolynomialTermKey implements Comparable<PolynomialTermKey> {
     private final IVectorRead exponents;
 
     private PolynomialTermKey (final IVectorRead exponents) {
-        this.exponents = Vectors.immutableCopy(exponents);
+        this.exponents = exponents.immutableCopy();
     }
 
     /**

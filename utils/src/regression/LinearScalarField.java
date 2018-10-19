@@ -9,7 +9,7 @@ public class LinearScalarField implements IScalarField {
     private final IMatrixRead hessian;
 
     public LinearScalarField(final IVectorRead coeffs) {
-        this.coeffs = Vectors.immutableCopy(coeffs);
+        this.coeffs = coeffs.immutableCopy();
 
         final int dimension = coeffs.getDimension();
         this.hessian = Matrices.getZeroMatrix(dimension, dimension);

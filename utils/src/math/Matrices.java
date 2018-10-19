@@ -109,6 +109,12 @@ public class Matrices {
 	 * @return a + b
 	 */
 	public static IMatrixRead plus (final IMatrixRead a, final IMatrixRead b) {
+		if (a.isZero())
+			return a.immutableCopy();
+
+		if (b.isZero())
+			return a.immutableCopy();
+
 		return applyToElementsBinaryOneNonzero(a, b, Double::sum);
 	}
 
@@ -134,6 +140,9 @@ public class Matrices {
 	 * @return a - b
 	 */
 	public static IMatrixRead minus (final IMatrixRead a, final IMatrixRead b) {
+		if (b.isZero())
+			return a.immutableCopy();
+
 		return applyToElementsBinaryOneNonzero(a, b, (x, y) -> x - y);
 	}
 
@@ -225,10 +234,11 @@ public class Matrices {
 
 		for (IMatrixRowIterator it = a.getNonZeroRowIterator(); it.isValid(); it.next()) {
 			final int rowIndex = it.getRowIndex();
+			final IVectorRead row = it.getRow();
 			final IVector resultRow = result.getRowVector(rowIndex);
 
 			for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-				final double dotProduct = Vectors.dotProduct (it.getRow(), b.getColumnVector (columnIndex));
+				final double dotProduct = Vectors.dotProduct (row, b.getColumnVector (columnIndex));
 
 				resultRow.setElement(columnIndex, dotProduct);
 			}
@@ -244,6 +254,9 @@ public class Matrices {
 	 * @return matrix c * m
 	 */
 	public static IMatrixRead multiply (final double c, final IMatrixRead m) {
+		if (m.isZero())
+			return m.immutableCopy();
+
 		final int rowCount = m.getRowCount();
 		final int columnCount = m.getColumnCount();
 
@@ -274,8 +287,12 @@ public class Matrices {
 		
 		if (rowCount != v.getDimension())
 			throw new RuntimeException("Bad dimensions");
-		
+
 		final int columnCount = m.getColumnCount();
+
+		if (v.isZero() || m.isZero())
+			return Vectors.getZeroVector(columnCount);
+
 		final Density density = minDensity(v.density(), m.density());
 		final IVector result = Vectors.vectorWithDensity(density, columnCount);
 		
@@ -300,8 +317,12 @@ public class Matrices {
 		
 		if (columnCount != v.getDimension())
 			throw new RuntimeException("Bad dimensions");
-		
+
 		final int rowCount = m.getRowCount();
+
+		if (m.isZero() || v.isZero())
+			return Vectors.getZeroVector(rowCount);
+
 		final Density density = minDensity(v.density(), m.density());
 		final IVector result = Vectors.vectorWithDensity(density, rowCount);
 
@@ -342,17 +363,6 @@ public class Matrices {
 		}
 		
 		return result.freeze();
-	}
-
-	/**
-	 * Returns immutable copy of given matrix.
-	 * Returns the matrix itself if it is already immutable.
-	 */
-	public static IMatrixRead immutableCopy(final IMatrixRead orig) {
-		if (orig.isImmutable())
-			return orig;
-		else
-			return orig.copy().freeze();
 	}
 
 	/**
