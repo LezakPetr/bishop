@@ -25,6 +25,7 @@ import bishop.engine.ISearchEngine;
 import bishop.engine.ISearchManager;
 import bishop.engine.ISearchManagerHandler;
 import bishop.engine.SearchInfo;
+import utils.IoUtils;
 
 @SuppressWarnings("serial")
 public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, ILocalizedComponent {
@@ -296,10 +297,10 @@ public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, IL
 			fieldElapsedTime.setText(Long.toString(elapsedTime / 1000));
 			
 			final long nodeCount = info.getNodeCount();
-			fieldNodeCount.setText(Long.toString(nodeCount));
+			fieldNodeCount.setText(IoUtils.countToString(nodeCount));
 			
 			final long nodesPerSecond = (elapsedTime > 0) ? (1000*nodeCount / elapsedTime) : 0;
-			fieldNodesPerSecond.setText(Long.toString(nodesPerSecond));	
+			fieldNodesPerSecond.setText(IoUtils.countToString(nodesPerSecond));
 			
 			final String additionalInfo = info.getAdditionalInfo().stream().collect(Collectors.joining("\n"));
 			fieldAdditionalInfo.setText(additionalInfo);

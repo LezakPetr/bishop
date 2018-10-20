@@ -13,6 +13,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URL;
+import java.text.DecimalFormat;
 
 public class IoUtils {
 	
@@ -28,6 +29,8 @@ public class IoUtils {
 	public static final int SHORT_BYTES = Short.SIZE / Byte.SIZE;
 	public static final int INT_BYTES = Integer.SIZE / Byte.SIZE;
 	public static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
+
+	private static final DecimalFormat COUNT_FORMAT = new DecimalFormat("###,###,###,###,###,###,###");
 
 	/**
 	 * Reads character from given reader and returns it.
@@ -416,12 +419,12 @@ public class IoUtils {
 	public static PushbackReader getPushbackReader(final String str) {
 		return new PushbackReader(new StringReader(str));
 	}
-	
+
 	public static void writeSize (final PrintStream stream, final double size) {
 		final double kilo = 1024;
-		final double mega = 1024 * kilo;
-		final double giga = 1024 * mega;
-		
+		final double mega = kilo * kilo;
+		final double giga = kilo * mega;
+
 		if (size < kilo) {
 			stream.format("%1$.2fB", size);
 			return;
@@ -436,8 +439,12 @@ public class IoUtils {
 			stream.format("%1$.2fMeB", size / mega);
 			return;
 		}
-		
+
 		stream.format("%1$.2fGiB", size / giga);
+	}
+
+	public static String countToString(final long count) {
+		return COUNT_FORMAT.format(count);
 	}
 
 	public static boolean hasExpectedBytes (final InputStream stream, final byte[] expectedBytes) throws IOException {
