@@ -1,5 +1,7 @@
 package math;
 
+import utils.IntUtils;
+
 import java.util.*;
 
 /**
@@ -77,10 +79,7 @@ public class SparseMatrix extends MatrixImpl {
 		if (nonZeroElementCount == rowCount)
 			return index;   // Optimization for the case that there is not any zero vector
 
-		if (nonZeroElementCount == 0 || index > rowIndices[nonZeroElementCount - 1])
-			return -nonZeroElementCount - 1;   // Optimization for inserting row to the end
-
-		return Arrays.binarySearch(rowIndices, 0, nonZeroElementCount, index);
+		return IntUtils.sortedArraySearch(rowIndices, nonZeroElementCount, index);
 	}
 
 	/**

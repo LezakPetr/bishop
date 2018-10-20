@@ -240,16 +240,6 @@ public class Vectors {
 				.processElements(a, b, (x, y) -> x * y, new VectorElementSum())
 				.getSum();
 	}
-	
-	/**
-	 * Returns immutable copy of given vector.
-	 */
-	public static IVectorRead immutableCopy(final IVectorRead orig) {
-		if (orig.isImmutable())
-			return orig;
-		else
-			return orig.copy().freeze();
-	}
 
 	/**
 	 * Returns frozen random vector with elements in range <-1; +1>.

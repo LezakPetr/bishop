@@ -17,8 +17,8 @@ public class ScalarPointCharacteristics {
 
     public ScalarPointCharacteristics(final double value, final IVectorRead gradient, final IMatrixRead hessian) {
         this.value = value;
-        this.gradient = (gradient != null) ? Vectors.immutableCopy(gradient) : null;
-        this.hessian = (hessian != null) ? Matrices.immutableCopy(hessian) : null;
+        this.gradient = (gradient != null) ? gradient.immutableCopy() : null;
+        this.hessian = (hessian != null) ? hessian.immutableCopy() : null;
     }
 
     public ScalarPointCharacteristics(final DoubleSupplier valueSupplier, final Supplier<IVectorRead> gradientSupplier, final Supplier<IMatrixRead> hessianSupplier, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {

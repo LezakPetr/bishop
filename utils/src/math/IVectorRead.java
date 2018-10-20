@@ -45,4 +45,27 @@ public interface IVectorRead extends Comparable<IVectorRead> {
 		return UnaryVectorAlgorithm.getInstance().processElements(this, DoubleUnaryOperator.identity(), new VectorSetter()).getMutableVector();
 	}
 
+	/**
+	 * Returns immutable copy of given vector.
+	 */
+	public default IVectorRead immutableCopy() {
+		if (isImmutable())
+			return this;
+		else
+			return copy().freeze();
+	}
+
+	/**
+	 * Checks if vector is zero.
+	 * @return true if vector is zero, false if it contains at least one nonzero element
+	 */
+	public default boolean isZero() {
+		for (IVectorIterator it = getNonZeroElementIterator(); it.isValid(); it.next()) {
+			if (it.getElement() != 0)
+				return false;
+		}
+
+		return true;
+	}
+
 }

@@ -10,8 +10,8 @@ public class Sample implements ISample {
 	private final double weight;
 
 	public Sample(final IVectorRead input, final IVectorRead output, final double weight) {
-		this.input = Vectors.immutableCopy(input);
-		this.output = Vectors.immutableCopy(output);
+		this.input = input.immutableCopy();
+		this.output = output.immutableCopy();
 		this.weight = weight;
 	}
 	

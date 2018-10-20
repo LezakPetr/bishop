@@ -1,8 +1,11 @@
 package utils;
 
+import java.util.Arrays;
+
 public class IntUtils {
 	
 	private static final double INV_LOG_2 = 1.0 / Math.log(2);
+	private static final int MIN_SIZE_FOR_BINARY_SEARCH = 8;
 	
 	/**
 	 * Returns ceil (log2(x))
@@ -72,5 +75,34 @@ public class IntUtils {
 	public static long getLowestBitsLong (final int count) {
 		return ((1L << count) - 1) |   // Works for count 0-63
 				~((count >>> 6) - 1);   // Fixes count 64
+	}
+
+	/**
+	 * Finds value in given sorted array.
+	 * @param array array
+	 * @param size number of searched elements - range <0; size) is searched
+	 * @param value value to find
+	 * @return index of value if found; -index - 1 if not found to indicate insertion point
+	 */
+	public static int sortedArraySearch (final int[] array, final int size, final int value) {
+		if (size == 0 || value > array[size - 1])
+			return -size - 1;   // Optimization for inserting element to the end
+
+		if (size >= MIN_SIZE_FOR_BINARY_SEARCH)
+			return Arrays.binarySearch(array, 0, size, value);
+		else {
+			for (int i = 0; i < size; i++) {
+				final int element = array[i];
+
+				if (element >= value) {
+					if (element == value)
+						return i;
+					else
+						return -i - 1;
+				}
+			}
+
+			return -size - 1;
+		}
 	}
 }
