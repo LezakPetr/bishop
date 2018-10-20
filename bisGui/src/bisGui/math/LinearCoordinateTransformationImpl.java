@@ -39,7 +39,7 @@ public class LinearCoordinateTransformationImpl implements ILinearCoordinateTran
 	 * @return transformed point
 	 */
 	public IVectorRead transformPointForward (final IVectorRead point) {
-		return Vectors.plus(origin, Matrices.multiply(point, forwardMatrix));
+		return origin.plus(Matrices.multiply(point, forwardMatrix));
 	}
 	
 	/**
@@ -48,7 +48,7 @@ public class LinearCoordinateTransformationImpl implements ILinearCoordinateTran
 	 * @return original point
 	 */
 	public IVectorRead transformPointBackward (final IVectorRead point) {
-		return Matrices.multiply (Vectors.minus(point, origin), backwardMatrix);
+		return Matrices.multiply (point.minus(origin), backwardMatrix);
 	}
 
 	/**

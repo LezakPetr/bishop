@@ -67,7 +67,7 @@ public class GradientOptimizerTest {
         optimizer.initialize();
         optimizer.optimize(null);
 
-        final double diff = Vectors.getLength(Vectors.minus(expectedOptimum, optimizer.getOptimumInput()));
+        final double diff = expectedOptimum.minus(optimizer.getOptimumInput()).getLength();
         Assert.assertEquals(0.0, diff, 1e-6);
     }
 

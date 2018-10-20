@@ -67,10 +67,7 @@ public class ValueMappingScalarField<P> implements IParametricScalarField<P> {
 
         return new ScalarPointCharacteristics(
                 () -> function.applyAsDouble(basePointCharacteristics.getValue()),
-                () -> Vectors.multiply(
-                        firstDerivationValue,
-                        gradient
-                ),
+                () -> gradient.multiply(firstDerivationValue),
                 () -> Matrices.plus(
                         Matrices.multiply(secondDerivationValue, Vectors.cartesianProduct(gradient, gradient)),
                         Matrices.multiply(firstDerivationValue, basePointCharacteristics.getHessian())

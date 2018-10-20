@@ -68,7 +68,7 @@ public class VectorAlgorithmsTest {
 	
 	@Test
 	public void testSameResultsOfUnaryAlgorithms() {
-		testOneUnaryFunctionEquality(v -> Vectors.multiply(2.0, v));
+		testOneUnaryFunctionEquality(v -> v.multiply(2.0));
 	}
 	
 	private void testOneUnaryFunctionEquality(final Function<IVectorRead, ? extends IVectorRead> function) {

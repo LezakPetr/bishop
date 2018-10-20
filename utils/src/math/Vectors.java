@@ -85,18 +85,6 @@ public class Vectors {
 	}
 
 	/**
-	 * Adds two vectors.
-	 * @param a vector
-	 * @param b vector
-	 * @return a + b
-	 */
-	public static IVectorRead plus (final IVectorRead a, final IVectorRead b) {
-		return BinaryVectorAlgorithmOneNonzero.getInstance()
-				.processElements(a, b, Double::sum, new VectorSetter())
-				.getVector();
-	}
-
-	/**
 	 * Adds second vector to the first vector. Vectors cannot be modified by the operation,
 	 * so calling addTo on same vectors or subvectors of same vector is not legal.
 	 * @param a target vector
@@ -113,84 +101,6 @@ public class Vectors {
 				a.getElement(index) + it.getElement()
 			);
 		}
-	}
-
-	/**
-	 * Subtracts two vectors.
-	 * @param a vector
-	 * @param b vector
-	 * @return a - b
-	 */
-	public static IVectorRead minus (final IVectorRead a, final IVectorRead b) {
-		return BinaryVectorAlgorithmOneNonzero.getInstance()
-				.processElements(a, b, (x, y) -> x - y, new VectorSetter())
-				.getVector();
-	}
-
-	/**
-	 * Multiplies vector by scalar.
-	 * @param c scalar
-	 * @param v vector
-	 * @return c * v
-	 */
-	public static IVectorRead multiply (final double c, final IVectorRead v) {
-		return UnaryVectorAlgorithm.getInstance().processElements(v, x -> c * x, new VectorSetter()).getVector();
-	}
-
-	/**
-	 * Multiplies two vectors element by element.
-	 * @param a vector
-	 * @param b vector
-	 * @return vector with elements equal to products of corresponding elements of input vectors
-	 */
-	public static IVectorRead elementMultiply (final IVectorRead a, final IVectorRead b) {
-		return BinaryVectorAlgorithmBothNonzero.getInstance()
-				.processElements(a, b, (x, y) -> x * y, new VectorSetter())
-				.getVector();
-	}
-
-	/**
-	 * Divides two vectors element by element.
-	 * @param a vector
-	 * @param b vector
-	 * @return a / b
-	 */
-	public static IVectorRead elementDivide (final IVectorRead a, final IVectorRead b) {
-		final int dimension = a.getDimension();
-
-		if (b.getDimension() != dimension)
-			throw new RuntimeException("Different dimensions");
-
-		final IVector result = vectorWithDensity(a.density(), dimension);
-
-		for (IVectorIterator it = a.getNonZeroElementIterator(); it.isValid(); it.next()) {
-			final int index = it.getIndex();
-			result.setElement(index, it.getElement() / b.getElement(index));
-		}
-
-		return result.freeze();
-	}
-
-	/**
-	 * Makes the vector unit. Result is undefined for zero vector.
-	 * @param vec vector
-	 * @return unit vector with same direction
-	 */
-	public static IVectorRead normalize(final IVectorRead vec) {
-		final double length = getLength(vec);
-		
-		return multiply(1 / length, vec);
-	}
-
-	/**
-	 * Returns length of the vector.
-	 * @param vec vector
-	 * @return length
-	 */
-	public static double getLength(final IVectorRead vec) {
-		final double squareSum = UnaryVectorAlgorithm.getInstance().processElements(vec, x -> x*x, new VectorElementSum()).getSum();
-		
-		return Math.sqrt(squareSum);
 	}
 
 	public static void swap(final IVector a, final IVector b) {
@@ -221,24 +131,6 @@ public class Vectors {
 		final IVector tmp = a.copy();
 		a.assign(b);
 		b.assign(tmp);
-	}
-
-	/**
-	 * Calculates a + b*coeff
-	 */
-	public static IVectorRead multiplyAndAdd(final IVectorRead a, final IVectorRead b, final double coeff) {
-		return BinaryVectorAlgorithmOneNonzero.getInstance()
-				.processElements(a, b, (x, y) -> x + coeff * y, new VectorSetter())
-				.getVector();
-	}
-
-	/**
-	 * Calculates dot product of two vectors.
-	 */
-	public static double dotProduct(final IVectorRead a, final IVectorRead b) {
-		return BinaryVectorAlgorithmBothNonzero.getInstance()
-				.processElements(a, b, (x, y) -> x * y, new VectorElementSum())
-				.getSum();
 	}
 
 	/**

@@ -42,7 +42,7 @@ public class PolynomialTermKey implements Comparable<PolynomialTermKey> {
      * @return this * that
      */
     public PolynomialTermKey multiply(final PolynomialTermKey that) {
-        final IVectorRead resultExponents = Vectors.plus(this.exponents, that.exponents);
+        final IVectorRead resultExponents = this.exponents.plus(that.exponents);
 
         return new PolynomialTermKey(resultExponents);
     }
@@ -53,10 +53,7 @@ public class PolynomialTermKey implements Comparable<PolynomialTermKey> {
      * @return key with decremented power
      */
     public PolynomialTermKey decrementPower (final int index) {
-        final IVectorRead newExponents = Vectors.minus(
-            exponents,
-            Vectors.getUnitVector (index, exponents.getDimension())
-        );
+        final IVectorRead newExponents = exponents.minus(Vectors.getUnitVector (index, exponents.getDimension()));
 
         return new PolynomialTermKey(newExponents);
     }

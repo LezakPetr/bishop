@@ -66,7 +66,7 @@ public class MultiSampleCostField implements IScalarField {
         final IVectorRead gradient;
 
         if (characteristics.contains(ScalarFieldCharacteristic.GRADIENT))
-            gradient = Vectors.plus(Vectors.multiply(1.0 / weightSum, statistics.getTotalGradient()), regularizationTerm.getGradient());
+            gradient = statistics.getTotalGradient().plus(regularizationTerm.getGradient()).multiply(1.0 / weightSum);
         else
             gradient = null;
 

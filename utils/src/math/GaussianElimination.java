@@ -85,8 +85,8 @@ public class GaussianElimination<S> {
                     final double coeff = -equationMatrix.getElement(row, i) / divider;
 
                     if (coeff != 0) {
-                        equationMatrix.setRowVector (row, Vectors.multiplyAndAdd (equationMatrix.getRowVector(row), equationMatrix.getRowVector(i), coeff));
-                        rightSide.setRowVector (row, Vectors.multiplyAndAdd (rightSide.getRowVector(row), rightSide.getRowVector(i), coeff));
+                        equationMatrix.setRowVector (row, equationMatrix.getRowVector(row).multiplyAndAdd (equationMatrix.getRowVector(i), coeff));
+                        rightSide.setRowVector (row, rightSide.getRowVector(row).multiplyAndAdd (rightSide.getRowVector(i), coeff));
                     }
                 }
             }
@@ -116,7 +116,7 @@ public class GaussianElimination<S> {
 
                 if (coeff != 0) {
                     //orig.setRowVector (row, Vectors.multiplyAndAdd (orig.getRowVector(row), orig.getRowVector(i), coeff));
-                    rightSide.setRowVector (row, Vectors.multiplyAndAdd (rightSide.getRowVector(row), rightSide.getRowVector(i), coeff));
+                    rightSide.setRowVector (row, rightSide.getRowVector(row).multiplyAndAdd (rightSide.getRowVector(i), coeff));
                 }
             }
         }

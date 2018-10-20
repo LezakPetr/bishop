@@ -130,4 +130,28 @@ abstract public class MatrixImpl implements IMatrix {
 		return frozen;
 	}
 
+	@Override
+	public IMatrixRead transpose() {
+		final IMatrix result = Matrices.createMutableMatrix(density(), getColumnCount(), getRowCount());
+
+		for (IMatrixRowIterator rowIt = getNonZeroRowIterator(); rowIt.isValid(); rowIt.next()) {
+			for (IVectorIterator it = rowIt.getRow().getNonZeroElementIterator(); it.isValid(); it.next()) {
+				result.setElement(it.getIndex(), rowIt.getRowIndex(), it.getElement());
+			}
+		}
+
+		return result.freeze();
+	}
+
+	@Override
+	public boolean isZero() {
+		for (IMatrixRowIterator rowIt = getNonZeroRowIterator(); rowIt.isValid(); rowIt.next()) {
+			if (!rowIt.getRow().isZero())
+				return false;
+		}
+
+		return true;
+	}
+
+
 }

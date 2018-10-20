@@ -3,13 +3,14 @@ package math;
 public interface IMatrix extends IMatrixRead {
 	/**
 	 * Sets element on given row and column.
-	 * @param row row index
+	 *
+	 * @param row    row index
 	 * @param column column index
 	 * @value element on given row and column
 	 */
-	public IMatrix setElement (final int row, final int column, final double value);
+	public IMatrix setElement(final int row, final int column, final double value);
 
-	public default IMatrix addElement (final int row, final int column, final double value) {
+	public default IMatrix addElement(final int row, final int column, final double value) {
 		final IVector rowVector = getRowVector(row);
 		final double oldValue = rowVector.getElement(column);
 		rowVector.setElement(column, value + oldValue);
@@ -19,6 +20,7 @@ public interface IMatrix extends IMatrixRead {
 
 	/**
 	 * Makes the matrix immutable,
+	 *
 	 * @return this
 	 */
 	public IMatrixRead freeze();

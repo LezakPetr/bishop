@@ -69,11 +69,7 @@ public class NewtonSolver {
     	for (int omegaExponent = 0; omegaExponent >= MIN_OMEGA_EXPONENT; omegaExponent--) {
 			final double nextOmega = Math.pow(OMEGA_BASE, omegaExponent);
 
-			final IVectorRead nextInput = Vectors.minus(
-					input,
-					Vectors.multiply(nextOmega, dInput)
-			);
-
+			final IVectorRead nextInput = input.minus(dInput.multiply(nextOmega));
 			final double nextValue = costField.calculateValue(nextInput, null);
 			System.out.println ("Omega = " + nextOmega + ", cost = " + nextValue);
 

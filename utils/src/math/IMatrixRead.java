@@ -103,12 +103,7 @@ public interface IMatrixRead {
 	 *
 	 * @return true if matrix is zero, false if it contains at least one nonzero element
 	 */
-	public default boolean isZero() {
-		for (IMatrixRowIterator rowIt = getNonZeroRowIterator(); rowIt.isValid(); rowIt.next()) {
-			if (!rowIt.getRow().isZero())
-				return false;
-		}
+	public boolean isZero();
 
-		return true;
-	}
+	public IMatrixRead transpose();
 }

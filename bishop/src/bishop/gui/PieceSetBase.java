@@ -163,8 +163,8 @@ public abstract class PieceSetBase implements IPieceSet {
 		final RasterPieceSet result = new RasterPieceSet();
 
 		result.setName(this.getName());
-		result.setCenterPoint(Vectors.multiply(scale, this.getCenterPoint()));
-		result.setPieceSize(Vectors.multiply(scale, this.getPieceSize()));
+		result.setCenterPoint(this.getCenterPoint().multiply(scale));
+		result.setPieceSize(this.getPieceSize().multiply(scale));
 		return result;
 	}
 	

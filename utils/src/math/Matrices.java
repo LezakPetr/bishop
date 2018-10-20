@@ -238,7 +238,7 @@ public class Matrices {
 			final IVector resultRow = result.getRowVector(rowIndex);
 
 			for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-				final double dotProduct = Vectors.dotProduct (row, b.getColumnVector (columnIndex));
+				final double dotProduct = row.dotProduct (b.getColumnVector (columnIndex));
 
 				resultRow.setElement(columnIndex, dotProduct);
 			}
@@ -297,7 +297,7 @@ public class Matrices {
 		final IVector result = Vectors.vectorWithDensity(density, columnCount);
 		
 		for (int column = 0; column < columnCount; column++) {
-			final double dotProduct = Vectors.dotProduct (v, m.getColumnVector (column));
+			final double dotProduct = v.dotProduct (m.getColumnVector (column));
 			
 			if (dotProduct != 0)
 				result.setElement(column, dotProduct);
@@ -327,7 +327,7 @@ public class Matrices {
 		final IVector result = Vectors.vectorWithDensity(density, rowCount);
 
 		for (IMatrixRowIterator rowIt = m.getNonZeroRowIterator(); rowIt.isValid(); rowIt.next()) {
-			final double dotProduct = Vectors.dotProduct (v, rowIt.getRow());
+			final double dotProduct = v.dotProduct (rowIt.getRow());
 			result.setElement(rowIt.getRowIndex(), dotProduct);
 		}
 		
@@ -351,18 +351,6 @@ public class Matrices {
 		}
 
 		return maxAbsElement;
-	}
-	
-	public static IMatrixRead transpose (final IMatrixRead matrix) {
-		final IMatrix result = createMutableMatrix(matrix.density(), matrix.getColumnCount(), matrix.getRowCount());
-
-		for (IMatrixRowIterator rowIt = matrix.getNonZeroRowIterator(); rowIt.isValid(); rowIt.next()) {
-			for (IVectorIterator it = rowIt.getRow().getNonZeroElementIterator(); it.isValid(); it.next()) {
-				result.setElement(it.getIndex(), rowIt.getRowIndex(), it.getElement());
-			}
-		}
-		
-		return result.freeze();
 	}
 
 	/**

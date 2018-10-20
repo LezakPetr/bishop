@@ -52,7 +52,7 @@ public class MatrixTest {
 			final IVectorRead r = Vectors.of (1.0, 2.0, -3.0);
 
 			final IVectorRead s = GaussianElimination.equationSolver(matrixA, r).solve();
-			Assert.assertEquals(0.0, Vectors.getLength(Vectors.minus(Matrices.multiply(matrixA, s), r)), 1e-9);
+			Assert.assertEquals(0.0, Matrices.multiply(matrixA, s).minus(r).getLength(), 1e-9);
 		}
 	}
 
@@ -64,7 +64,7 @@ public class MatrixTest {
 			final IVectorRead r = Vectors.of (1.0, 2.0, -3.0);
 
 			final IVectorRead s = GaussJordanElimination.equationSolver(matrixA, r).solve();
-			Assert.assertEquals(0.0, Vectors.getLength(Vectors.minus(Matrices.multiply(matrixA, s), r)), 1e-9);
+			Assert.assertEquals(0.0, Matrices.multiply(matrixA, s).minus(r).getLength(), 1e-9);
 		}
 	}
 
