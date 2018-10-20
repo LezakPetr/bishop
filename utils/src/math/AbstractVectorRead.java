@@ -162,4 +162,30 @@ public abstract class AbstractVectorRead implements IVectorRead {
 				.getSum();
 	}
 
+	@Override
+	public IVectorRead multiply (final IMatrixRead m) {
+    	final int rowCount = m.getRowCount();
+
+		if (rowCount != this.getDimension())
+			throw new RuntimeException("Bad dimensions");
+
+		final int columnCount = m.getColumnCount();
+
+		if (this.isZero() || m.isZero())
+			return Vectors.getZeroVector(columnCount);
+
+		final Density density = Matrices.minDensity(this.density(), m.density());
+		final IVector result = Vectors.vectorWithDensity(density, columnCount);
+
+		for (int column = 0; column < columnCount; column++) {
+			final double dotProduct = this.dotProduct (m.getColumnVector (column));
+
+			if (dotProduct != 0)
+				result.setElement(column, dotProduct);
+		}
+
+		return result.freeze();
+	}
+
+
 }

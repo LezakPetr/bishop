@@ -42,7 +42,7 @@ public class GaussSeidelSolver {
 			final IVectorRead prevSolution = solution;
 
 			solution = rightSide
-					.minus(Matrices.multiply(reducedEquationMatrix, solution))
+					.minus(reducedEquationMatrix.multiply(solution))
 					.elementDivide(diagonal);
 
 			final double diff = solution.minus(prevSolution).getLength();

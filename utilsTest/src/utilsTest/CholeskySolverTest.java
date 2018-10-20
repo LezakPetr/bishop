@@ -15,13 +15,9 @@ public class CholeskySolverTest {
 		final IMatrixRead triangle = solver.getTriangle();
 		final IVectorRead diagonal = solver.getDiagonal();
 
-		final IMatrixRead recomposed = Matrices.multiply(
-				Matrices.multiply(
-						triangle,
-						Matrices.getDiagonalMatrix(diagonal)
-				),
-				triangle.transpose()
-		);
+		final IMatrixRead recomposed = triangle
+				.multiply(Matrices.getDiagonalMatrix(diagonal))
+				.multiply(triangle.transpose());
 
 		Assert.assertEquals(m, recomposed);
 	}
@@ -33,7 +29,7 @@ public class CholeskySolverTest {
 
 		final CholeskySolver solver = new CholeskySolver(m, rightSide);
 		final IVectorRead solution = solver.solve();
-		final IVectorRead calculatedRightSide = Matrices.multiply(m, solution);
+		final IVectorRead calculatedRightSide = m.multiply(solution);
 
 		Assert.assertEquals(0.0, calculatedRightSide.minus(rightSide).getLength(), 1e-9);
 	}

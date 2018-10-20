@@ -106,4 +106,52 @@ public interface IMatrixRead {
 	public boolean isZero();
 
 	public IMatrixRead transpose();
+
+	/**
+	 * Adds two matrices.
+	 * @param that matrix
+	 * @return this + that
+	 */
+	public IMatrixRead plus (final IMatrixRead that);
+
+	/**
+	 * Subtracts two matrices.
+	 * @param that matrix
+	 * @return this - that
+	 */
+	public IMatrixRead minus (final IMatrixRead that);
+
+	/**
+	 * Multiplies two matrices.
+	 * @param that input matrix
+	 * @return matrix this * that
+	 */
+	public IMatrixRead multiply (final IMatrixRead that);
+
+	/**
+	 * Multiplies matrix with constant.
+	 * @param c constant
+	 * @return matrix c * this
+	 */
+	public IMatrixRead multiply (final double c);
+
+	/**
+	 * Multiplies given matrix by given vector.
+	 * @param v input vector
+	 * @return vector that * v
+	 */
+	public IVectorRead multiply (final IVectorRead v);
+
+	/**
+	 * Returns maximal absolute element in the matrix.
+	 * @return maximal absolute element
+	 */
+	public double maxAbsElement();
+
+	/**
+	 * Returns opposite matrix.
+	 * @return -this
+	 */
+	public IMatrixRead negate();
+
 }

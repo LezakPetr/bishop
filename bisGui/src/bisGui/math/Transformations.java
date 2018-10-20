@@ -47,7 +47,7 @@ public class Transformations {
 		
 		for (int i = lastIndex-1; i >= 0; i--) {
 			origin = transformations[i].transformPointForward(origin);
-			forwardMatrix = Matrices.multiply(transformations[i].getForwardMatrix(), forwardMatrix);
+			forwardMatrix = transformations[i].getForwardMatrix().multiply(forwardMatrix);
 		}
 		
 		return new LinearCoordinateTransformationImpl(origin, forwardMatrix);

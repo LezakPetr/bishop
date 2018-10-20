@@ -132,4 +132,11 @@ public interface IVectorRead extends Comparable<IVectorRead> {
 	 */
 	public double dotProduct(final IVectorRead that);
 
+	/**
+	 * Multiplies given vector by given matrix.
+	 * @param m input matrix
+	 * @return vector v*m
+	 */
+	public IVectorRead multiply (final IMatrixRead m);
+
 }

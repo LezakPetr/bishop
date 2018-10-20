@@ -103,22 +103,6 @@ public class Matrices {
 	}
 	
 	/**
-	 * Adds two matrices.
-	 * @param a matrix
-	 * @param b matrix
-	 * @return a + b
-	 */
-	public static IMatrixRead plus (final IMatrixRead a, final IMatrixRead b) {
-		if (a.isZero())
-			return a.immutableCopy();
-
-		if (b.isZero())
-			return a.immutableCopy();
-
-		return applyToElementsBinaryOneNonzero(a, b, Double::sum);
-	}
-
-	/**
 	 * Adds matrix b into matrix a - calculates a += b.
 	 * @param a target matrix
 	 * @param b added matrix
@@ -131,19 +115,6 @@ public class Matrices {
 
 		for (IMatrixRowIterator rowIt = b.getNonZeroRowIterator(); rowIt.isValid(); rowIt.next())
 			Vectors.addInPlace(a.getRowVector(rowIt.getRowIndex()), rowIt.getRow());
-	}
-
-	/**
-	 * Subtracts two matrices.
-	 * @param a matrix
-	 * @param b matrix
-	 * @return a - b
-	 */
-	public static IMatrixRead minus (final IMatrixRead a, final IMatrixRead b) {
-		if (b.isZero())
-			return a.immutableCopy();
-
-		return applyToElementsBinaryOneNonzero(a, b, (x, y) -> x - y);
 	}
 
 	/**
@@ -214,143 +185,8 @@ public class Matrices {
 		return result.freeze();
 	}
 
-	/**
-	 * Multiplies two matrices.
-	 * @param a input matrix
-	 * @param b input matrix
-	 * @return matrix a*b
-	 */
-	public static IMatrixRead multiply (final IMatrixRead a, final IMatrixRead b) {
-		final int innerCount = a.getColumnCount();
-		
-		if (innerCount != b.getRowCount())
-			throw new RuntimeException("Bad dimensions of matrices");
-		
-		final int rowCount = a.getRowCount();
-		final int columnCount = b.getColumnCount();
-		
-		final Density density = minDensity(a.density(), b.density());
-		final IMatrix result = createMutableMatrix(density, rowCount, columnCount);
-
-		for (IMatrixRowIterator it = a.getNonZeroRowIterator(); it.isValid(); it.next()) {
-			final int rowIndex = it.getRowIndex();
-			final IVectorRead row = it.getRow();
-			final IVector resultRow = result.getRowVector(rowIndex);
-
-			for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-				final double dotProduct = row.dotProduct (b.getColumnVector (columnIndex));
-
-				resultRow.setElement(columnIndex, dotProduct);
-			}
-		}
-		
-		return result.freeze();
-	}
-
-	/**
-	 * Multiplies matrix with constant.
-	 * @param c constant
-	 * @param m matrix
-	 * @return matrix c * m
-	 */
-	public static IMatrixRead multiply (final double c, final IMatrixRead m) {
-		if (m.isZero())
-			return m.immutableCopy();
-
-		final int rowCount = m.getRowCount();
-		final int columnCount = m.getColumnCount();
-
-		final IMatrix result = createMutableMatrix(m.density(), rowCount, columnCount);
-
-		for (IMatrixRowIterator rowIt = m.getNonZeroRowIterator(); rowIt.isValid(); rowIt.next()) {
-			final IVector resultRow = result.getRowVector(rowIt.getRowIndex());
-
-			for (IVectorIterator it = rowIt.getRow().getNonZeroElementIterator(); it.isValid(); it.next())
-				resultRow.setElement(it.getIndex(), c * it.getElement());
-		}
-
-		return result.freeze();
-	}
-	
-	private static Density minDensity (final Density a, final Density b) {
+	public static Density minDensity (final Density a, final Density b) {
 		return (a == Density.SPARSE && b == Density.SPARSE) ? Density.SPARSE : Density.DENSE;
-	}
-
-	/**
-	 * Multiplies given vector by given matrix.
-	 * @param v input vector
-	 * @param m input matrix
-	 * @return vector v*m
-	 */
-	public static IVectorRead multiply (final IVectorRead v, final IMatrixRead m) {
-		final int rowCount = m.getRowCount();
-		
-		if (rowCount != v.getDimension())
-			throw new RuntimeException("Bad dimensions");
-
-		final int columnCount = m.getColumnCount();
-
-		if (v.isZero() || m.isZero())
-			return Vectors.getZeroVector(columnCount);
-
-		final Density density = minDensity(v.density(), m.density());
-		final IVector result = Vectors.vectorWithDensity(density, columnCount);
-		
-		for (int column = 0; column < columnCount; column++) {
-			final double dotProduct = v.dotProduct (m.getColumnVector (column));
-			
-			if (dotProduct != 0)
-				result.setElement(column, dotProduct);
-		}
-		
-		return result.freeze();
-	}
-	
-	/**
-	 * Multiplies given matrix by given vector.
-	 * @param m input matrix
-	 * @param v input vector
-	 * @return vector m*v
-	 */
-	public static IVectorRead multiply (final IMatrixRead m, final IVectorRead v) {
-		final int columnCount = m.getColumnCount();
-		
-		if (columnCount != v.getDimension())
-			throw new RuntimeException("Bad dimensions");
-
-		final int rowCount = m.getRowCount();
-
-		if (m.isZero() || v.isZero())
-			return Vectors.getZeroVector(rowCount);
-
-		final Density density = minDensity(v.density(), m.density());
-		final IVector result = Vectors.vectorWithDensity(density, rowCount);
-
-		for (IMatrixRowIterator rowIt = m.getNonZeroRowIterator(); rowIt.isValid(); rowIt.next()) {
-			final double dotProduct = v.dotProduct (rowIt.getRow());
-			result.setElement(rowIt.getRowIndex(), dotProduct);
-		}
-		
-		return result.freeze();
-	}
-
-
-	/**
-	 * Returns maximal absolute element in the matrix.
-	 * @param matrix matrix
-	 * @return maximal absolute element
-	 */
-	public static double maxAbsElement (final IMatrixRead matrix) {
-		double maxAbsElement = 0.0;
-
-		for (IMatrixRowIterator rowIt = matrix.getNonZeroRowIterator(); rowIt.isValid(); rowIt.next()) {
-			for (IVectorIterator it = rowIt.getRow().getNonZeroElementIterator(); it.isValid(); it.next()) {
-				final double absElement = Math.abs(it.getElement());
-				maxAbsElement = Math.max(maxAbsElement, absElement);
-			}
-		}
-
-		return maxAbsElement;
 	}
 
 	/**

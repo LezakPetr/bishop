@@ -14,6 +14,7 @@ import math.Vectors;
 
 public class VectorTest {
 	private static final int[] SIZES = {0, 3, 10, 1024};
+	private static final int COUNT = 100;
 	
 	private final Random rng = new Random();
 	
@@ -25,34 +26,36 @@ public class VectorTest {
 	
 	private void fillTest (final IntFunction<IVector> vectorCreator) {
 		for (int size: SIZES) {
-			final double[] values = new double[size];
-			final IVector vector = vectorCreator.apply(size);	
-			
-			fillRandomVector(size, vector, values);
-			
-			testVectorValues (vector, values);
-			
-			testVectorValues (
-					vector.subVector(    0, size / 3),
-					getSubArray (values, 0, size / 3)
-			);
-			
-			testVectorValues (
-					vector.subVector(    size / 4, size / 3),
-					getSubArray (values, size / 4, size / 3)
-			);
-			
-			testVectorValues (
-					vector.subVector(    size / 5, size),
-					getSubArray (values, size / 5, size)
-			);
-			
-			testVectorValues (
-					vector.subVector(                 size / 4, 3 * size / 4).subVector(size / 3, size / 2),
-					getSubArray (getSubArray (values, size / 4, 3 * size / 4),          size / 3, size / 2)
-			);
-			
-			testVectorValues (vector.copy(), values);
+			for (int i = 0; i < COUNT; i++) {
+				final double[] values = new double[size];
+				final IVector vector = vectorCreator.apply(size);
+
+				fillRandomVector(size, vector, values);
+
+				testVectorValues(vector, values);
+
+				testVectorValues(
+						vector.subVector(0, size / 3),
+						getSubArray(values, 0, size / 3)
+				);
+
+				testVectorValues(
+						vector.subVector(size / 4, size / 3),
+						getSubArray(values, size / 4, size / 3)
+				);
+
+				testVectorValues(
+						vector.subVector(size / 5, size),
+						getSubArray(values, size / 5, size)
+				);
+
+				testVectorValues(
+						vector.subVector(size / 4, 3 * size / 4).subVector(size / 3, size / 2),
+						getSubArray(getSubArray(values, size / 4, 3 * size / 4), size / 3, size / 2)
+				);
+
+				testVectorValues(vector.copy(), values);
+			}
 		}
 	}
 
@@ -100,11 +103,13 @@ public class VectorTest {
 		for (int size: SIZES) {
 			for (Density srcDensity: Density.values()) {
 				for (Density targetDensity: Density.values()) {
-					final IVectorRead source = createRandomVector(srcDensity, size).freeze();
-					final IVector target = createRandomVector(targetDensity, size);
-					target.assign(source);
-					
-					Assert.assertEquals(source, target);
+					for (int i = 0; i < COUNT; i++) {
+						final IVectorRead source = createRandomVector(srcDensity, size).freeze();
+						final IVector target = createRandomVector(targetDensity, size);
+						target.assign(source);
+
+						Assert.assertEquals(source, target);
+					}
 				}
 			}
 		}
@@ -112,7 +117,9 @@ public class VectorTest {
 	
 	private IVector createRandomVector(final Density density, final int size) {
 		final IVector vector = Vectors.vectorWithDensity(density, size);
-		fillRandomVector(size, vector, new double[size]);
+
+		if (rng.nextBoolean())
+			fillRandomVector(size, vector, new double[size]);
 		
 		return vector;
 	}
@@ -122,15 +129,17 @@ public class VectorTest {
 		for (int size: SIZES) {
 			for (Density density1: Density.values()) {
 				for (Density density2: Density.values()) {
-					final IVector vector1 = createRandomVector(density1, size);
-					final IVector vector2 = createRandomVector(density2, size);
-					final int hash1 = vector1.hashCode();
-					final int hash2 = vector2.hashCode();
-					
-					Vectors.swap(vector1, vector2);
-					
-					Assert.assertEquals(vector1.hashCode(), hash2);
-					Assert.assertEquals(vector2.hashCode(), hash1);
+					for (int i = 0; i < COUNT; i++) {
+						final IVector vector1 = createRandomVector(density1, size);
+						final IVector vector2 = createRandomVector(density2, size);
+						final int hash1 = vector1.hashCode();
+						final int hash2 = vector2.hashCode();
+
+						Vectors.swap(vector1, vector2);
+
+						Assert.assertEquals(vector1.hashCode(), hash2);
+						Assert.assertEquals(vector2.hashCode(), hash1);
+					}
 				}
 			}
 		}

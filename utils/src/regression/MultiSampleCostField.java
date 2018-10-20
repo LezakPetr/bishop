@@ -73,7 +73,7 @@ public class MultiSampleCostField implements IScalarField {
         final IMatrixRead hessian;
 
         if (characteristics.contains(ScalarFieldCharacteristic.HESSIAN))
-            hessian = Matrices.plus(Matrices.multiply(1.0 / weightSum, statistics.getTotalHessian()), regularizationTerm.getHessian());
+            hessian = statistics.getTotalHessian().multiply(1.0 / weightSum).plus(regularizationTerm.getHessian());
         else
             hessian = null;
 
