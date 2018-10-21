@@ -36,7 +36,6 @@ public class AllTests {
 		UncompressMoveTest.class,
 		PerftTest.class,
 		AttackCalculatorTest.class,
-		GameStageTest.class,
 		ReverseMoveGeneratorTest.class,
 		VectorTest.class,
 		VectorAlgorithmsTest.class,
