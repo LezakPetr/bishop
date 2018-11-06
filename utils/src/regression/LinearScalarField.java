@@ -23,7 +23,7 @@ public class LinearScalarField implements IScalarField {
     @Override
     public ScalarPointCharacteristics calculate(final IVectorRead x, final Void parameter, final ImmutableEnumSet<ScalarFieldCharacteristic> characteristics) {
         return new ScalarPointCharacteristics(
-                () -> Vectors.dotProduct(coeffs, x),
+                () -> coeffs.dotProduct(x),
                 () -> coeffs,
                 () -> hessian,
                 characteristics

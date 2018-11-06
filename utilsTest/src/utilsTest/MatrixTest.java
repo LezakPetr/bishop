@@ -9,6 +9,8 @@ import org.junit.Test;
 
 public class MatrixTest {
 
+	private static final int COUNT = 100;
+
 	private final Random rng = new Random();
 	private IMatrixRead matrixA;
 	private IMatrixRead matrixInvA;
@@ -29,16 +31,16 @@ public class MatrixTest {
 	
 	private void checkInversion (final IMatrixRead matrix, final IMatrixRead expected) {
 		final IMatrixRead inv = GaussianElimination.matrixInversion(matrix).solve();
-		final IMatrixRead diff = Matrices.minus(inv, expected);
+		final IMatrixRead diff = inv.minus(expected);
 		
-		Assert.assertTrue(Matrices.maxAbsElement (diff) <= 1e-6);
+		Assert.assertTrue(diff.maxAbsElement() <= 1e-6);
 	}
 	
 	@Test
 	public void inverseTest() {
 		for (Density density: Density.values()) {
 			initMatrices(density);
-			 
+
 			checkInversion(matrixA, matrixInvA);
 			checkInversion(matrixInvA, matrixA);
 		}
@@ -52,7 +54,7 @@ public class MatrixTest {
 			final IVectorRead r = Vectors.of (1.0, 2.0, -3.0);
 
 			final IVectorRead s = GaussianElimination.equationSolver(matrixA, r).solve();
-			Assert.assertEquals(0.0, Vectors.getLength(Vectors.minus(Matrices.multiply(matrixA, s), r)), 1e-9);
+			Assert.assertEquals(0.0, matrixA.multiply(s).minus(r).getLength(), 1e-9);
 		}
 	}
 
@@ -64,7 +66,7 @@ public class MatrixTest {
 			final IVectorRead r = Vectors.of (1.0, 2.0, -3.0);
 
 			final IVectorRead s = GaussJordanElimination.equationSolver(matrixA, r).solve();
-			Assert.assertEquals(0.0, Vectors.getLength(Vectors.minus(Matrices.multiply(matrixA, s), r)), 1e-9);
+			Assert.assertEquals(0.0, matrixA.multiply(s).minus(r).getLength(), 1e-9);
 		}
 	}
 
@@ -72,14 +74,14 @@ public class MatrixTest {
 	// A * (B + C - D) = A*B + A*C - A*D
 	@Test
 	public void testCalculation1() {
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < COUNT; i++) {
 			final IMatrix a = createRandomMatrix(getRandomDensity(), 2, 3);
 			final IMatrix b = createRandomMatrix(getRandomDensity(), 3, 4);
 			final IMatrix c = createRandomMatrix(getRandomDensity(), 3, 4);
 			final IMatrix d = createRandomMatrix(getRandomDensity(), 3, 4);
 			
-			final IMatrixRead left = Matrices.multiply(a, Matrices.minus(Matrices.plus(b, c), d));
-			final IMatrixRead right = Matrices.minus(Matrices.plus(Matrices.multiply(a, b), Matrices.multiply(a, c)), Matrices.multiply(a, d));
+			final IMatrixRead left = a.multiply(b.plus(c).minus(d));
+			final IMatrixRead right = a.multiply(b).plus(a.multiply(c)).minus(a.multiply(d));
 			
 			Assert.assertEquals(left, right);
 		}
@@ -89,13 +91,13 @@ public class MatrixTest {
 	// (A * B) * V = A * (B * V) 
 	@Test
 	public void testCalculation2() {
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < COUNT; i++) {
 			final IMatrix a = createRandomMatrix(getRandomDensity(), 2, 3);
 			final IMatrix b = createRandomMatrix(getRandomDensity(), 3, 4);
 			final IVectorRead v = createRandomVector(getRandomDensity(), 4);
 			
-			final IVectorRead left = Matrices.multiply(Matrices.multiply(a, b), v);
-			final IVectorRead right = Matrices.multiply(a, Matrices.multiply(b, v));
+			final IVectorRead left = a.multiply(b).multiply(v);
+			final IVectorRead right = a.multiply(b.multiply(v));
 			
 			Assert.assertEquals(left, right);
 		}
@@ -105,13 +107,13 @@ public class MatrixTest {
 	// V * (A * B) = (V * A) * B 
 	@Test
 	public void testCalculation3() {
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < COUNT; i++) {
 			final IVectorRead v = createRandomVector(getRandomDensity(), 5);
 			final IMatrix a = createRandomMatrix(getRandomDensity(), 5, 3);
 			final IMatrix b = createRandomMatrix(getRandomDensity(), 3, 4);
 			
-			final IVectorRead left = Matrices.multiply(v, Matrices.multiply(a, b));
-			final IVectorRead right = Matrices.multiply(Matrices.multiply(v, a), b);
+			final IVectorRead left = v.multiply(a.multiply(b));
+			final IVectorRead right = v.multiply(a).multiply(b);
 			
 			Assert.assertEquals(left, right);
 		}
@@ -119,12 +121,12 @@ public class MatrixTest {
 
 	@Test
 	public void testAssociativity() {
-		testAssociativityOfOperator(Matrices::plus);
-		testAssociativityOfOperator(Matrices::multiply);
+		testAssociativityOfOperator(IMatrixRead::plus);
+		testAssociativityOfOperator(IMatrixRead::multiply);
 	}
 	
 	public void testAssociativityOfOperator(final BinaryOperator<IMatrixRead> operator) {
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < COUNT; i++) {
 			final IMatrix a = createRandomMatrix(getRandomDensity(), 3, 3);
 			final IMatrix b = createRandomMatrix(getRandomDensity(), 3, 3);
 			final IMatrix c = createRandomMatrix(getRandomDensity(), 3, 3);
@@ -138,10 +140,12 @@ public class MatrixTest {
 	
 	private IMatrix createRandomMatrix(final Density density, final int rowCount, final int columnCount) {
 		final IMatrix result = Matrices.createMutableMatrix(density, rowCount, columnCount);
-		
-		for (int i = 0; i < rowCount; i++) {
-			for (int j = 0; j < columnCount; j++) {
-				result.setElement(i, j, getRandomElement());
+
+		if (rng.nextBoolean()) {
+			for (int i = 0; i < rowCount; i++) {
+				for (int j = 0; j < columnCount; j++) {
+					result.setElement(i, j, getRandomElement());
+				}
 			}
 		}
 		

@@ -184,11 +184,8 @@ public class GaussJordanElimination<S> {
 
 		rightSide.setRowVector(
 				targetRowIndex,
-				Vectors.multiplyAndAdd(
-						rightSide.getRowVector(targetRowIndex),
-						rightSide.getRowVector(sourceRowIndex),
-						sourceCoeff
-				)
+				rightSide.getRowVector(targetRowIndex)
+					.multiplyAndAdd(rightSide.getRowVector(sourceRowIndex), sourceCoeff)
 		);
 	}
 
@@ -210,7 +207,7 @@ public class GaussJordanElimination<S> {
 		for (int i = 0; i < row.getSize(); i++)
 			row.setItem(i, row.getItem(i) * coeff);
 
-		rightSide.setRowVector(rowIndex, Vectors.multiply(coeff, rightSide.getRowVector(rowIndex)));
+		rightSide.setRowVector(rowIndex, rightSide.getRowVector(rowIndex).multiply(coeff));
 	}
 
 	private boolean checkIntegrity (final int minColumn) {

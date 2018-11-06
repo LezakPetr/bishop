@@ -1,5 +1,7 @@
 package math;
 
+import java.util.Objects;
+
 abstract public class AbstractVector extends AbstractVectorRead implements IVector {
 	private boolean frozen;
 	
@@ -19,5 +21,5 @@ abstract public class AbstractVector extends AbstractVectorRead implements IVect
 	public boolean isImmutable() {
 		return frozen;
 	}
-	
+
 }

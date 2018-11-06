@@ -1,5 +1,6 @@
 package bishop.engine;
 
+import bishop.base.CombinedPositionEvaluationTable;
 import bishop.base.IHandlerRegistrar;
 import bishop.base.IMaterialEvaluator;
 import bishop.base.Position;
@@ -87,7 +88,14 @@ public interface ISearchManager {
 	 * @param evaluator material evaluator
 	 */
 	public void setMaterialEvaluator (final IMaterialEvaluator evaluator);
-	
+
+	/**
+	 * Sets combined position evaluation table.
+	 * Manager must be in STOPPED state.
+	 * @param table evaluation table
+	 */
+	public void setCombinedPositionEvaluationTable(final CombinedPositionEvaluationTable table);
+
 	/**
 	 * Returns hash table.
 	 * @returns hash table

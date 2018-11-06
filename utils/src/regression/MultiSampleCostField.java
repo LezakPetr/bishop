@@ -66,14 +66,14 @@ public class MultiSampleCostField implements IScalarField {
         final IVectorRead gradient;
 
         if (characteristics.contains(ScalarFieldCharacteristic.GRADIENT))
-            gradient = Vectors.plus(Vectors.multiply(1.0 / weightSum, statistics.getTotalGradient()), regularizationTerm.getGradient());
+            gradient = statistics.getTotalGradient().plus(regularizationTerm.getGradient()).multiply(1.0 / weightSum);
         else
             gradient = null;
 
         final IMatrixRead hessian;
 
         if (characteristics.contains(ScalarFieldCharacteristic.HESSIAN))
-            hessian = Matrices.plus(Matrices.multiply(1.0 / weightSum, statistics.getTotalHessian()), regularizationTerm.getHessian());
+            hessian = statistics.getTotalHessian().multiply(1.0 / weightSum).plus(regularizationTerm.getHessian());
         else
             hessian = null;
 

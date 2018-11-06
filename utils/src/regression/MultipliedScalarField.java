@@ -25,8 +25,8 @@ public class MultipliedScalarField<P> implements IParametricScalarField<P> {
 
         return new ScalarPointCharacteristics(
                 () -> coeff * basePointCharacteristics.getValue(),
-                () -> Vectors.multiply(coeff, basePointCharacteristics.getGradient()),
-                () -> Matrices.multiply(coeff, basePointCharacteristics.getHessian()),
+                () -> basePointCharacteristics.getGradient().multiply(coeff),
+                () -> basePointCharacteristics.getHessian().multiply(coeff),
                 characteristics
         );
     }

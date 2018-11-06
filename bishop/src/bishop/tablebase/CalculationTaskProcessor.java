@@ -1,6 +1,8 @@
 package bishop.tablebase;
 
 import java.util.concurrent.Callable;
+
+import bishop.base.CombinedPositionEvaluationTable;
 import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
 import bishop.base.ReverseMoveGenerator;

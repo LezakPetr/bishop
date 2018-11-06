@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.function.Supplier;
 
+import bishop.base.CombinedPositionEvaluationTable;
 import bishop.base.DefaultAdditiveMaterialEvaluator;
 import bishop.base.IMaterialEvaluator;
 import bishop.base.PieceTypeEvaluations;
@@ -18,7 +19,6 @@ import bishop.engine.PositionEvaluatorSwitchFactory;
 import bishop.engine.PositionEvaluatorSwitchSettings;
 import bishop.engine.SearchManagerImpl;
 import bishop.engine.SerialSearchEngineFactory;
-import bishop.engine.TableMaterialEvaluator;
 import bishop.engine.TablebasePositionEvaluator;
 
 public class SearchResources {
@@ -70,6 +70,7 @@ public class SearchResources {
 		searchManager.setTablebaseEvaluator (tablebasePositionEvaluator);
 		searchManager.setThreadCount(threadCount);
 		searchManager.setMaterialEvaluator (materialEvaluator);
+		searchManager.setCombinedPositionEvaluationTable(new CombinedPositionEvaluationTable(evaluationCoeffs));
 		
 		setBookToManager();
 		updateSettings();

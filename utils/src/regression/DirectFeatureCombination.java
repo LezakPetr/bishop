@@ -26,7 +26,7 @@ public class DirectFeatureCombination implements ISampleCostField {
 		final IVectorRead gradient = sample.getInput();
 
 		return new ScalarPointCharacteristics(
-				() -> Vectors.dotProduct(gradient, x),
+				() -> gradient.dotProduct(x),
 				() -> gradient,
 				() -> hessian,
 				characteristics

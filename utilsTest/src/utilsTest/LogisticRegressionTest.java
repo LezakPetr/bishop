@@ -73,7 +73,7 @@ public class LogisticRegressionTest {
         final List<ISample> randomSamples = getRandomSamples(SAMPLE_COUNT);
         regression.addSamples (randomSamples);
 
-        final IVectorRead optimum = Vectors.multiply(1.0 / M, regression.optimize());
+        final IVectorRead optimum = regression.optimize().multiply(1.0 / M);
         final IVectorRead expected = Vectors.of(C0, C1, C2, C3, C4, C5);
         Assert.assertEquals(expected.getDimension(), optimum.getDimension());
 

@@ -210,10 +210,10 @@ public abstract class BoardBase implements IBoard {
 		final RasterBoard result = new RasterBoard();
 		
 		result.setName (this.getName());
-		result.setMinSquareCorner (Vectors.multiply(scale, this.getMinSquareCorner()));
-		result.setMaxSquareCorner (Vectors.multiply(scale, this.getMaxSquareCorner()));
-		result.setBoardCenterPoint (Vectors.multiply(scale, this.getBoardCenterPoint()));
-		result.setMarkCenterPoint (Vectors.multiply(scale, this.getMarkCenterPoint()));
+		result.setMinSquareCorner (this.getMinSquareCorner().multiply(scale));
+		result.setMaxSquareCorner (this.getMaxSquareCorner().multiply(scale));
+		result.setBoardCenterPoint (this.getBoardCenterPoint().multiply(scale));
+		result.setMarkCenterPoint (this.getMarkCenterPoint().multiply(scale));
 		
 		return result;
 	}

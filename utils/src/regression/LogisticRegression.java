@@ -21,7 +21,7 @@ public class LogisticRegression {
 	private static final double TRAINING_SET_RATIO = 0.7;
 
 	private final List<ISample> sampleList = new ArrayList<>();
-	private long maxIterations = 100;
+	private long maxIterations = 500;
 	private double lambda = 1.0;
 
 	public LogisticRegression(final int inputDimension, final int outputIndex, final ISampleCostField featureCombination, final List<Integer> regularizedFeatures) {

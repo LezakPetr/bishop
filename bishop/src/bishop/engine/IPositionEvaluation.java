@@ -10,4 +10,5 @@ public interface IPositionEvaluation {
 	public void addCoeff(final int index, final int color, final int count);
 	public void shiftRight (final int shift);
 	public void addSubEvaluation (final IPositionEvaluation subEvaluation);
+	public void addSubEvaluation (final IPositionEvaluation subEvaluation, final int coeff);
 }

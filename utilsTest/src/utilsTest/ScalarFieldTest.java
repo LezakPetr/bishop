@@ -85,9 +85,9 @@ public class ScalarFieldTest {
             final ScalarPointCharacteristics scalarPointCharacteristics = field.calculate(point, null, ScalarFieldCharacteristic.SET_GRADIENT);
 
             for (int j = 0; j < field.getInputDimension(); j++) {
-                final IVectorRead dPoint = Vectors.multiply(EPSILON, Vectors.getUnitVector(j, field.getInputDimension()));
-                final double d1 = field.calculateValue(Vectors.minus(point, dPoint), null);
-                final double d2 = field.calculateValue(Vectors.plus(point, dPoint), null);
+                final IVectorRead dPoint = Vectors.getUnitVector(j, field.getInputDimension()).multiply(EPSILON);
+                final double d1 = field.calculateValue(point.minus(dPoint), null);
+                final double d2 = field.calculateValue(point.plus(dPoint), null);
                 final double expectedDerivation = (d2 - d1) / (2 * EPSILON);
                 Assert.assertEquals(expectedDerivation, scalarPointCharacteristics.getGradient().getElement(j), MAX_DERIVATION_DIFF);
             }
@@ -100,13 +100,13 @@ public class ScalarFieldTest {
             final ScalarPointCharacteristics scalarPointCharacteristics = field.calculate(point, null, ScalarFieldCharacteristic.SET_HESSIAN);
 
             for (int j = 0; j < field.getInputDimension(); j++) {
-                final IVectorRead dPoint = Vectors.multiply(EPSILON, Vectors.getUnitVector(j, field.getInputDimension()));
-                final IVectorRead d1 = field.calculateGradient(Vectors.minus(point, dPoint), null);
-                final IVectorRead d2 = field.calculateGradient(Vectors.plus(point, dPoint), null);
-                final IVectorRead expectedDerivation = Vectors.multiply(1.0 / (2 * EPSILON), Vectors.minus(d2, d1));
+                final IVectorRead dPoint = Vectors.getUnitVector(j, field.getInputDimension()).multiply(EPSILON);
+                final IVectorRead d1 = field.calculateGradient(point.minus(dPoint), null);
+                final IVectorRead d2 = field.calculateGradient(point.plus(dPoint), null);
+                final IVectorRead expectedDerivation = d2.minus(d1).multiply(1.0 / (2 * EPSILON));
                 Assert.assertEquals(
                         0.0,
-                        Vectors.getLength(Vectors.minus(expectedDerivation, scalarPointCharacteristics.getHessian().getRowVector(j))),
+                        expectedDerivation.minus(scalarPointCharacteristics.getHessian().getRowVector(j)).getLength(),
                         MAX_DERIVATION_DIFF
                 );
             }
@@ -127,8 +127,8 @@ public class ScalarFieldTest {
             Assert.assertEquals(valueFromNonParametricFunction, valueFromParametricFunction, MAX_VALUE_DIFF);
             Assert.assertEquals(scalarPointCharacteristics.getValue(), valueFromParametricFunction, MAX_VALUE_DIFF);
 
-            Assert.assertEquals(0.0, Vectors.getLength(Vectors.minus(gradientFromNonParametricFunction, gradientFromParametricFunction)), MAX_VALUE_DIFF);
-            Assert.assertEquals(0.0, Vectors.getLength(Vectors.minus(gradientFromNonParametricFunction, scalarPointCharacteristics.getGradient())), MAX_VALUE_DIFF);
+            Assert.assertEquals(0.0, gradientFromNonParametricFunction.minus(gradientFromParametricFunction).getLength(), MAX_VALUE_DIFF);
+            Assert.assertEquals(0.0, gradientFromNonParametricFunction.minus(scalarPointCharacteristics.getGradient()).getLength(), MAX_VALUE_DIFF);
         }
     }
 

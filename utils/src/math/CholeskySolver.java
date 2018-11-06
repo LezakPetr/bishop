@@ -31,13 +31,9 @@ public class CholeskySolver {
 		if ((nonZeroIndexMasks[row] & nonZeroIndexMasks[column] & mask) == 0)
 			product = 0.0;
 		else
-			product = Vectors.dotProduct(
-					Vectors.elementMultiply(
-							triangle.getRowVector(row).subVector(0, column),
-							triangle.getRowVector(column).subVector(0, column)
-					),
-					diagonal.subVector(0, column)
-			);
+			product = triangle.getRowVector(row).subVector(0, column)
+			          .elementMultiply(triangle.getRowVector(column).subVector(0, column))
+			          .dotProduct(diagonal.subVector(0, column));
 
 		return matrix.getElement(row, column) - product;
 
@@ -75,10 +71,8 @@ public class CholeskySolver {
 		final IVector result = Vectors.dense(equationCount);
 
 		for (int i = 0; i < equationCount; i++) {
-			final double subtractor = Vectors.dotProduct(
-				triangle.getRowVector(i).subVector(0, i),
-				result.subVector(0, i)
-			);
+			final double subtractor = triangle.getRowVector(i).subVector(0, i)
+					.dotProduct(result.subVector(0, i));
 
 			result.setElement(i, rightSide.getElement(i) - subtractor);
 		}
@@ -87,14 +81,12 @@ public class CholeskySolver {
 	}
 
 	public IVectorRead solveBackwardTransposedTriangle(final IVectorRead previousRightSide) {
-		final IMatrixRead transposedTriangle = Matrices.transpose(triangle);
+		final IMatrixRead transposedTriangle = triangle.transpose();
 		final IVector result = Vectors.dense(equationCount);
 
 		for (int row = equationCount - 1; row >= 0; row--) {
-			final double subtractor = Vectors.dotProduct(
-					transposedTriangle.getRowVector(row).subVector(row + 1, equationCount),
-					result.subVector(row + 1, equationCount)
-			);
+			final double subtractor = transposedTriangle.getRowVector(row).subVector(row + 1, equationCount)
+					.dotProduct(result.subVector(row + 1, equationCount));
 
 			result.setElement(row, previousRightSide.getElement(row) - subtractor);
 		}
@@ -106,7 +98,7 @@ public class CholeskySolver {
 		decomposition();
 
 		final IVectorRead solution1 = solveBackwardTriangle();
-		final IVectorRead solution2 = Vectors.elementDivide(solution1, diagonal);
+		final IVectorRead solution2 = solution1.elementDivide(diagonal);
 		final IVectorRead solution3 = solveBackwardTransposedTriangle(solution2);
 
 		return solution3;

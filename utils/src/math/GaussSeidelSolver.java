@@ -41,15 +41,11 @@ public class GaussSeidelSolver {
 		for (int i = 0; i < maxIterations; i++) {
 			final IVectorRead prevSolution = solution;
 
-			solution = Vectors.elementDivide(
-					Vectors.minus(
-							rightSide,
-							Matrices.multiply(reducedEquationMatrix, solution)
-					),
-					diagonal
-			);
+			solution = rightSide
+					.minus(reducedEquationMatrix.multiply(solution))
+					.elementDivide(diagonal);
 
-			final double diff = Vectors.getLength(Vectors.minus(solution, prevSolution));
+			final double diff = solution.minus(prevSolution).getLength();
 			System.out.println (diff);
 
 			if (diff < 1e-9)

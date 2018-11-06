@@ -60,14 +60,10 @@ public class GradientOptimizer<P> {
         for (long i = 0; i < maxIterations; i++) {
             final IVectorRead previousGradient = previousOutput.getGradient();
 
-            if (Vectors.getLength(previousGradient) <= maxTerminationGradientLength)
+            if (previousGradient.getLength() <= maxTerminationGradientLength)
                 break;
 
-            final IVectorRead nextInput = Vectors.minus(
-                    previousInput,
-                    Vectors.multiply(currentAlpha, previousGradient)
-            );
-
+            final IVectorRead nextInput = previousInput.multiplyAndAdd(previousGradient, -currentAlpha);
             final ScalarPointCharacteristics nextOutput = field.calculate(nextInput, parameter, ScalarFieldCharacteristic.SET_VALUE_GRADIENT);
 
             if (nextOutput.getValue() <= optimumOutput.getValue()) {
@@ -75,7 +71,7 @@ public class GradientOptimizer<P> {
                 optimumOutput = nextOutput;
             }
 
-            if (Vectors.dotProduct(previousGradient, nextOutput.getGradient()) >= 0)
+            if (previousGradient.dotProduct(nextOutput.getGradient()) >= 0)
                 currentAlpha *= ALPHA_COEFF_BEFORE_OPTIMUM;
             else
                 currentAlpha *= ALPHA_COEFF_AFTER_OPTIMUM;

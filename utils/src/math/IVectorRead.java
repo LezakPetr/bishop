@@ -68,4 +68,75 @@ public interface IVectorRead extends Comparable<IVectorRead> {
 		return true;
 	}
 
+	/**
+	 * Returns opposite vector.
+	 * @return -this
+	 */
+	public IVectorRead negate();
+
+	/**
+	 * Adds two vectors.
+	 *
+	 * @param that vector
+	 * @return this + that
+	 */
+	public IVectorRead plus(final IVectorRead that);
+
+	/**
+	 * Subtracts two vectors.
+	 * @param that vector
+	 * @return this - that
+	 */
+	public IVectorRead minus (final IVectorRead that);
+
+	/**
+	 * Multiplies vector by scalar.
+	 * @param c scalar
+	 * @return c * this
+	 */
+	public IVectorRead multiply (final double c);
+
+	/**
+	 * Multiplies two vectors element by element.
+	 * @param that vector
+	 * @return vector with elements equal to products of corresponding elements of input vectors
+	 */
+	public IVectorRead elementMultiply (final IVectorRead that);
+
+	/**
+	 * Divides two vectors element by element.
+	 * @param that vector
+	 * @return this / that
+	 */
+	public IVectorRead elementDivide (final IVectorRead that);
+
+	/**
+	 * Makes the vector unit. Result is undefined for zero vector.
+	 * @return unit vector with same direction
+	 */
+	public IVectorRead normalize();
+
+	/**
+	 * Returns length of the vector.
+	 * @return length
+	 */
+	public double getLength();
+
+	/**
+	 * Calculates this + that*coeff
+	 */
+	public IVectorRead multiplyAndAdd(final IVectorRead that, final double coeff);
+
+	/**
+	 * Calculates dot product of two vectors.
+	 */
+	public double dotProduct(final IVectorRead that);
+
+	/**
+	 * Multiplies given vector by given matrix.
+	 * @param m input matrix
+	 * @return vector v*m
+	 */
+	public IVectorRead multiply (final IMatrixRead m);
+
 }

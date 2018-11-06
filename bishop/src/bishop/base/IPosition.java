@@ -9,4 +9,6 @@ public interface IPosition extends IPieceCounts {
 	public int getOnTurn();
 	public IMaterialHashRead getMaterialHash();
 	public CastlingRights getCastlingRights();
+	public int getTablePositionEvaluation (final int gameStage);
+	public void setCombinedPositionEvaluationTable(final CombinedPositionEvaluationTable table);
 }

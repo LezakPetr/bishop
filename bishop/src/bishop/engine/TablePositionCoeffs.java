@@ -5,11 +5,8 @@ import java.util.Arrays;
 import bishop.base.BitLoop;
 import bishop.base.BoardConstants;
 import bishop.base.Color;
-import bishop.base.File;
 import bishop.base.PieceType;
-import bishop.base.Rank;
 import bishop.base.Square;
-import math.EquationSystemSolver;
 
 public class TablePositionCoeffs {
 	
@@ -58,22 +55,5 @@ public class TablePositionCoeffs {
 		return coeffIndices[index];
 	}
 
-	public void addZeroSumEquation(final EquationSystemSolver equationSolver) {
-		final double[] rightSides = new double[equationSolver.getRightSideCount()];
-		
-		for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
-			final long board = BoardConstants.getPieceAllowedSquares(pieceType);
-			final double[] equationCoeffs = new double[PositionEvaluationCoeffs.LAST];
-			
-			for (BitLoop loop = new BitLoop(board); loop.hasNextSquare(); ) {
-				final int square = loop.getNextSquare();
-				final int coeff = getCoeff(Color.WHITE, pieceType, square);
-				
-				equationCoeffs[coeff] = 1.0;
-			}
-			
-			equationSolver.addEquation(equationCoeffs, rightSides, 1.0);
-		}
-	}
 
 }
