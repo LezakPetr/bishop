@@ -905,6 +905,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 */
 	public Position copy() {
 		final Position position = new Position(caching instanceof NullPositionCaching);
+		position.setCombinedPositionEvaluationTable(caching.getCombinedPositionEvaluationTable());
 		position.assign(this);
 		
 		return position;
@@ -954,6 +955,15 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 */
 	public int hashCode() {
 		return (int) getHash();
+	}
+
+	/**
+	 * Returns table position evaluation for given game stage.
+	 * @param gameStage game stage
+	 * @return evaluation from the white side
+	 */
+	public int getTablePositionEvaluation (final int gameStage) {
+		return caching.getTablePositionEvaluation(gameStage);
 	}
 	
 	/**
@@ -1226,5 +1236,10 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final long blackPawnMask = getPiecesMask(Color.BLACK, PieceType.PAWN);
 		
 		return new PawnStructure(whitePawnMask, blackPawnMask);
+	}
+
+	@Override
+	public void setCombinedPositionEvaluationTable(final CombinedPositionEvaluationTable table) {
+		caching.setCombinedPositionEvaluationTable(table);
 	}
 }

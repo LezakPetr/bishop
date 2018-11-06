@@ -2,6 +2,7 @@ package bishop.engine;
 
 import java.util.function.Supplier;
 
+import bishop.base.CombinedPositionEvaluationTable;
 import bishop.base.IHandlerRegistrar;
 import bishop.base.IMaterialEvaluator;
 import bishop.base.PieceTypeEvaluations;
@@ -53,11 +54,18 @@ public interface ISearchEngine {
 	 * @param table hash table
 	 */
 	public void setHashTable (final IHashTable table);
-	
+
+	/**
+	 * Sets combined position evaluation table.
+	 * Engine must be in STOPPED state.
+	 * @param table hash table
+	 */
+	public void setCombinedPositionEvaluationTable(final CombinedPositionEvaluationTable table);
+
 	/**
 	 * Searches given task and returns results. Changes state from STOPPED
 	 * to SEARCHING and when search is finished changes state from SEARCHING
-	 * to STOPPED. 
+	 * to STOPPED.
 	 * @param task search task
 	 */
 	public SearchResult search(final SearchTask task);

@@ -3,8 +3,7 @@ package bishop.engine;
 public class GameStageCoeffs {
 	
 	private final int firstCoeff;
-	
-	public final TablePositionCoeffs tableEvaluatorCoeffs;
+
 	public final PawnStructureCoeffs pawnStructureCoeffs; 
 	public final int pawnOnSameColorBonus;
 	public final int rookOnOpenFileBonus;
@@ -23,8 +22,7 @@ public class GameStageCoeffs {
 		firstCoeff = registry.enterCategory("game_stage_" + gameStage);
 		
 		final boolean withFigures = gameStage != GameStage.PAWNS_ONLY;
-		
-		tableEvaluatorCoeffs = new TablePositionCoeffs(registry);
+
 		pawnStructureCoeffs = new PawnStructureCoeffs(registry, withFigures);
 		
 		pawnOnSameColorBonus = (withFigures) ? registry.add("pawn_on_same_color") : -1;

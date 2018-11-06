@@ -65,4 +65,14 @@ public class MirrorPosition implements IPosition {
 		return rights;
 	}
 
+	@Override
+	public int getTablePositionEvaluation (final int gameStage) {
+		return -basePosition.getTablePositionEvaluation(gameStage);
+	}
+
+	@Override
+	public void setCombinedPositionEvaluationTable(CombinedPositionEvaluationTable table) {
+
+	}
+
 }

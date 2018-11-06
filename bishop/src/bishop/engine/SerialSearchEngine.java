@@ -111,7 +111,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		monitor = new Object();
 		moveEstimator = new MoveEstimator();
 		
-		currentPosition = new Position();
+		currentPosition = new Position(false);
 		repeatedPositionRegister = new RepeatedPositionRegister();
 		
 		finiteEvaluator = new FinitePositionEvaluator();
@@ -1060,6 +1060,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 			checkEngineState(EngineState.STOPPED);
 
 			this.hashTable = table;
+		}
+	}
+
+	@Override
+	public void setCombinedPositionEvaluationTable(final CombinedPositionEvaluationTable table) {
+		synchronized (monitor) {
+			checkEngineState(EngineState.STOPPED);
+
+			this.currentPosition.setCombinedPositionEvaluationTable(table);
 		}
 	}
 

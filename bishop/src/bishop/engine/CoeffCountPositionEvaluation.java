@@ -42,31 +42,33 @@ public class CoeffCountPositionEvaluation extends AlgebraicPositionEvaluation {
 		
 		coeffCounts.merge(index, shiftedCount, Integer::sum);
 	}
-	
+
 	@Override
 	public void shiftRight (final int shift) {
 		super.shiftRight(shift);
 		
 		constantEvaluation >>= shift;
 		
-		coeffCounts.replaceAll((k, v) -> k >> shift);
+		coeffCounts.replaceAll((k, v) -> v >> shift);
+	}
+
+	public void addSubEvaluation (final IPositionEvaluation subEvaluation) {
+		addSubEvaluation(subEvaluation, 1);
 	}
 	
 	@Override
-	public void addSubEvaluation (final IPositionEvaluation subEvaluation) {
-		super.addSubEvaluation(subEvaluation);
+	public void addSubEvaluation (final IPositionEvaluation subEvaluation, final int coeff) {
+		super.addSubEvaluation(subEvaluation, coeff);
 		
 		if (subEvaluation instanceof CoeffCountPositionEvaluation) {
 			final CoeffCountPositionEvaluation subCoeffEvaluation = (CoeffCountPositionEvaluation) subEvaluation;
 			
-			this.constantEvaluation += subCoeffEvaluation.constantEvaluation;
-			
 			subCoeffEvaluation.coeffCounts.forEach(
-				(k, v) -> this.coeffCounts.merge(k, v, Integer::sum)	
+				(k, v) -> this.coeffCounts.merge(k, coeff * v, Integer::sum)
 			);
 		}
-		else
-			this.constantEvaluation += subEvaluation.getEvaluation();
+
+		this.constantEvaluation += coeff * subEvaluation.getEvaluation();
 	}
 	
 	public int getConstantEvaluation() {

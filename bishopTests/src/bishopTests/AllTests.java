@@ -30,6 +30,7 @@ public class AllTests {
 		TableMaterialEvaluatorTest.class,
 		LineIndexerTest.class,
 		FenTest.class,
+		CombinedEvaluationTest.class,
 		LegalMoveGeneratorTest.class,
 		PseudoLegalMoveGeneratorTest.class,
 		QuiescencePseudoLegalMoveGeneratorTest.class,

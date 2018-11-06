@@ -12,13 +12,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-import bishop.base.Color;
-import bishop.base.Fen;
-import bishop.base.LegalMoveFinder;
-import bishop.base.MaterialHash;
-import bishop.base.PieceType;
-import bishop.base.Position;
-import bishop.base.PositionValidator;
+import bishop.base.*;
 import parallel.Parallel;
 
 public class TableCalculator {

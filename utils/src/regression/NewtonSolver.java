@@ -15,7 +15,7 @@ public class NewtonSolver {
 	private static final int MIN_OMEGA_EXPONENT = -20;
 
     private final IParametricScalarField<Void> costField;
-    private long maxIterations = 100;
+    private long maxIterations = 200;
     private IVectorRead input;
     private double omega;
     private double epsilon = 1e-9;

@@ -25,6 +25,7 @@ public final class SearchManagerImpl implements ISearchManager {
 	private int minHorizon = 3 * ISearchEngine.HORIZON_GRANULARITY;
 	private int threadCount = 1;
 	private IMaterialEvaluator materialEvaluator;
+	private CombinedPositionEvaluationTable combinedPositionEvaluationTable = CombinedPositionEvaluationTable.ZERO_TABLE;
 	
 	private final List<ISearchEngine> searchEngineList = new ArrayList<>();
 	
@@ -119,6 +120,14 @@ public final class SearchManagerImpl implements ISearchManager {
 			this.materialEvaluator = evaluator;
 		}
 	}
+
+	@Override
+	public void setCombinedPositionEvaluationTable(final CombinedPositionEvaluationTable table) {
+		synchronized (monitor) {
+			checkManagerState(ManagerState.STOPPED);
+			this.combinedPositionEvaluationTable = table;
+		}
+	}
 	
 	/**
 	 * Sets book.
@@ -185,7 +194,7 @@ public final class SearchManagerImpl implements ISearchManager {
 	 * Checks if manager is in one of given expected states.
 	 * If not exception is thrown.
 	 * Expects that calling thread owns the monitor.
-	 * @param expectedState expected manager state
+	 * @param expectedStates expected manager states
 	 */
 	private void checkManagerState (final ManagerState... expectedStates) {
 		for (ManagerState state: expectedStates) {
@@ -228,6 +237,8 @@ public final class SearchManagerImpl implements ISearchManager {
 			engine.getHandlerRegistrar().addHandler(engineHandler);
 			engine.setTablebaseEvaluator(tablebaseEvaluator);
 			engine.setHashTable(hashTable);
+			engine.setMaterialEvaluator(materialEvaluator);
+			engine.setCombinedPositionEvaluationTable(combinedPositionEvaluationTable);
 			
 			searchEngineList.add(engine);
 		}

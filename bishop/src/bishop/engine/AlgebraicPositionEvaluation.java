@@ -39,12 +39,17 @@ public class AlgebraicPositionEvaluation implements IPositionEvaluation {
 	public void shiftRight (final int shift) {
 		this.evaluation >>= shift;
 	}
-	
+
 	@Override
 	public void addSubEvaluation (final IPositionEvaluation subEvaluation) {
 		this.evaluation += subEvaluation.getEvaluation();
 	}
-	
+
+	@Override
+	public void addSubEvaluation (final IPositionEvaluation subEvaluation, final int coeff) {
+		this.evaluation += coeff * subEvaluation.getEvaluation();
+	}
+
 	@Override
 	public void addCoeff(final int index, final int color, final int count) {
 		final int signedCount = (color == Color.WHITE) ? +count : -count;

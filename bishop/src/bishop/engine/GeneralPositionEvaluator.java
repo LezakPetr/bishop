@@ -10,7 +10,7 @@ import bishop.base.PieceType;
 import bishop.base.Position;
 
 public class GeneralPositionEvaluator  implements IPositionEvaluator {
-	private final TablePositionEvaluator[] tablePositionEvaluators;
+	private final IGameStageTablePositionEvaluator tablePositionEvaluator;
 	private final BishopColorPositionEvaluator[] bishopColorPositionEvaluators;
 	private final PawnStructureEvaluator[] pawnStructureEvaluators;
 	private final MobilityPositionEvaluator[] mobilityEvaluators;
@@ -36,7 +36,12 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		this.settings = settings;
 		this.tacticalEvaluation = evaluationFactory.get();
 		this.positionalEvaluation = evaluationFactory.get();
-		this.tablePositionEvaluators = new TablePositionEvaluator[GameStage.COUNT];
+
+		if (positionalEvaluation instanceof CoeffCountPositionEvaluation)
+			this.tablePositionEvaluator = new GameStageTablePositionEvaluator(PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS, evaluationFactory);
+		else
+			this.tablePositionEvaluator = new IterativeGameStageTablePositionEvaluator(evaluationFactory);
+
 		this.bishopColorPositionEvaluators = new BishopColorPositionEvaluator[GameStage.COUNT];
 		this.mobilityEvaluators = new MobilityPositionEvaluator[GameStage.COUNT];
 		this.pawnStructureEvaluators = new PawnStructureEvaluator[GameStage.COUNT];
@@ -45,8 +50,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		
 		for (int gameStage = GameStage.FIRST; gameStage < GameStage.LAST; gameStage++) {
 			final GameStageCoeffs coeffs = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(gameStage);
-			
-			tablePositionEvaluators[gameStage] = new TablePositionEvaluator(coeffs.tableEvaluatorCoeffs, evaluationFactory);
+
 			bishopColorPositionEvaluators[gameStage] = new BishopColorPositionEvaluator(coeffs, evaluationFactory);
 			mobilityEvaluators[gameStage] = new MobilityPositionEvaluator(evaluationFactory);
 			pawnStructureEvaluators[gameStage] = new PawnStructureEvaluator(coeffs.pawnStructureCoeffs, structureCache, evaluationFactory);
@@ -100,9 +104,8 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	@Override
 	public IPositionEvaluation evaluatePositional (final AttackCalculator attackCalculator) {
 		pawnStructureEvaluator.calculate(position);
-		
-		final TablePositionEvaluator tablePositionEvaluator = tablePositionEvaluators[gameStage];
-		positionalEvaluation.addSubEvaluation(tablePositionEvaluator.evaluatePosition(position));
+
+		positionalEvaluation.addSubEvaluation(tablePositionEvaluator.evaluate(position, gameStage));
 		
 		if (gameStage != GameStage.PAWNS_ONLY) {
 			final BishopColorPositionEvaluator bishopColorPositionEvaluator = bishopColorPositionEvaluators[gameStage];
@@ -120,7 +123,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		positionalEvaluation.addSubEvaluation(mobilityEvaluator.evaluatePosition(position, attackCalculator));
 		
 		positionalEvaluation.addCoeff(gameStageCoeffs.onTurnBonus, position.getOnTurn());
-		
+
 		return positionalEvaluation;
 	}
 	
