@@ -31,6 +31,7 @@ public class AllTests {
 		LineIndexerTest.class,
 		FenTest.class,
 		CombinedEvaluationTest.class,
+		GameStageTablePositionEvaluatorTest.class,
 		LegalMoveGeneratorTest.class,
 		PseudoLegalMoveGeneratorTest.class,
 		QuiescencePseudoLegalMoveGeneratorTest.class,
