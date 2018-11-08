@@ -25,7 +25,10 @@ public class CombinedPositionEvaluationTable {
 		final int coeffIndex = PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS.get(gameStageIndex).getCoeff(color, pieceType, square);
 		final int coeff = evaluationCoeffs.getEvaluationCoeff(coeffIndex);
 
-		return coeff;
+		if (color == Color.WHITE)
+			return coeff;
+		else
+			return -coeff;
 	}
 
 	public CombinedPositionEvaluationTable(final PositionEvaluationCoeffs evaluationCoeffs) {

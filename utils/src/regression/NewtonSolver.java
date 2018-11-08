@@ -11,8 +11,8 @@ import java.util.Random;
  */
 public class NewtonSolver {
 
-	private static final double OMEGA_BASE = Math.sqrt(2);
-	private static final int MIN_OMEGA_EXPONENT = -20;
+	private static final int OMEGA_ITERATION_COUNT = 16;
+	private static final double MAX_OMEGA = 16.0;
 
     private final IParametricScalarField<Void> costField;
     private long maxIterations = 200;
@@ -45,7 +45,7 @@ public class NewtonSolver {
             final double costDiff = previousPoint.getValue() - nextValue;
             System.out.println ("Iteration = " + i + ", cost = " + nextPoint.getValue() + ", costDiff = " + costDiff);
 
-			if (costDiff / omega <= epsilon)
+			if (costDiff >= -epsilon && costDiff / omega <= epsilon)
 				return input;
 
 			previousPoint = nextPoint;
@@ -56,35 +56,52 @@ public class NewtonSolver {
 
 	/**
 	 * Select next input based on the current input and input diff.
-	 * It starts with the full dInput and then it shortens it until the value is decreasing.
-	 * It then returns the next input with minimal value. It is guaranteed that the value
-	 * decreases compared to previous iteration if minimal omega is not reached.
 	 * The method also sets omega.
 	 * @param dInput input difference that should move input to minimum if the equations are linear
 	 */
 	private void selectNextInput (final IVectorRead dInput) {
-    	double previousValue = Double.POSITIVE_INFINITY;
-    	IVectorRead previousInput = null;
+    	double minOmega = MAX_OMEGA;
+    	double dOmega = MAX_OMEGA / 2;
 
-    	for (int omegaExponent = 0; omegaExponent >= MIN_OMEGA_EXPONENT; omegaExponent--) {
-			final double nextOmega = Math.pow(OMEGA_BASE, omegaExponent);
+		IVectorRead minInput = getInputForOmega(dInput, minOmega);
+		double minValue = costField.calculateValue(minInput, null);
 
-			final IVectorRead nextInput = input.minus(dInput.multiply(nextOmega));
+    	for (int omegaIteration = 0; omegaIteration < OMEGA_ITERATION_COUNT; omegaIteration++) {
+    		double prevOmega = minOmega - dOmega;
+			double nextOmega = minOmega + dOmega;
+
+			final IVectorRead nextInput = getInputForOmega(dInput, nextOmega);
 			final double nextValue = costField.calculateValue(nextInput, null);
-			System.out.println ("Omega = " + nextOmega + ", cost = " + nextValue);
 
-			if (nextValue >= previousValue)
-				break;
+			final IVectorRead prevInput = getInputForOmega(dInput, prevOmega);
+			final double prevValue = costField.calculateValue(prevInput, null);
 
-			previousValue = nextValue;
-			previousInput = nextInput;
-			omega = nextOmega;
+			if (prevValue < minValue) {
+				minValue = prevValue;
+				minOmega = prevOmega;
+				minInput = prevInput;
+			}
+
+			if (nextValue < minValue) {
+				minValue = nextValue;
+				minOmega = nextOmega;
+				minInput = nextInput;
+			}
+
+			System.out.println ("Omega = " + minOmega + ", cost = " + minValue);
+
+			dOmega /= 2;
 		}
 
-		input = previousInput;
+		input = minInput;
+    	omega = minOmega;
 	}
 
-    public void setMaxIterations(final long count) {
+	private IVectorRead getInputForOmega(IVectorRead dInput, double omega) {
+		return input.minus(dInput.multiply(omega));
+	}
+
+	public void setMaxIterations(final long count) {
         this.maxIterations = count;
     }
 
