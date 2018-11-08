@@ -11,8 +11,9 @@ import java.util.Random;
  */
 public class NewtonSolver {
 
-	private static final double OMEGA_BASE = Math.sqrt(2);
-	private static final int MIN_OMEGA_EXPONENT = -20;
+	private static final double OMEGA_BASE = Math.pow(2, 1.0/4.0);
+	private static final int MIN_OMEGA_EXPONENT = -30;
+	private static final double OMEGA_COEFF = 8.0;
 
     private final IParametricScalarField<Void> costField;
     private long maxIterations = 200;
@@ -67,7 +68,7 @@ public class NewtonSolver {
     	IVectorRead previousInput = null;
 
     	for (int omegaExponent = 0; omegaExponent >= MIN_OMEGA_EXPONENT; omegaExponent--) {
-			final double nextOmega = Math.pow(OMEGA_BASE, omegaExponent);
+			final double nextOmega = OMEGA_COEFF * Math.pow(OMEGA_BASE, omegaExponent);
 
 			final IVectorRead nextInput = input.minus(dInput.multiply(nextOmega));
 			final double nextValue = costField.calculateValue(nextInput, null);

@@ -95,5 +95,9 @@ public final class PositionCachingImpl implements IPositionCaching {
 		this.evaluationTable = table;
 	}
 
+	@Override
+	public long getCombinedEvaluation() {
+		return combinedEvaluation;
+	}
 
 }

@@ -13,6 +13,7 @@ public interface IPositionCaching {
 	public void assign (final IPositionCaching orig);
 	public MaterialHash getMaterialHash();
 	public int getTablePositionEvaluation(final int gameStage);
+	public long getCombinedEvaluation();
 	public CombinedPositionEvaluationTable getCombinedPositionEvaluationTable();
 	public void setCombinedPositionEvaluationTable(final CombinedPositionEvaluationTable table);
 }

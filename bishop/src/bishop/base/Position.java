@@ -851,7 +851,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 */
 	public void refreshCachedData() {
 		updatePiecesMasks();
-		updateHash();
+		updateCaches();
 	}
 
 	private void updatePiecesMasks() {
@@ -881,7 +881,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		return hash;
 	}
 	
-	private void updateHash() {
+	private void updateCaches() {
 		caching.refreshCache(this);
 	}
 
@@ -1014,10 +1014,19 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		
 		// Hash
 		final long oldHash = getHash();
-		updateHash();
+		final MaterialHash oldMaterialHash = getMaterialHash().copy();
+		final long oldCombinedEvaluation = caching.getCombinedEvaluation();
+
+		updateCaches();
 		
 		if (getHash() != oldHash)
 			throw new RuntimeException("Hash was corrupted");
+
+		if (!getMaterialHash().equals(oldMaterialHash))
+			throw new RuntimeException("Material hash was corrupted");
+
+		if (caching.getCombinedEvaluation() != oldCombinedEvaluation)
+			throw new RuntimeException("Combinedevaluation was corrupted");
 	}
 	
 	/**
