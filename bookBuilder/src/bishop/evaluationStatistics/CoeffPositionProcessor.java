@@ -17,7 +17,7 @@ import regression.*;
 
 public class CoeffPositionProcessor implements IPositionProcessor {
 
-	private static final double REGRESSION_LAMBDA = 1e-2;   // Regularization parameter
+	private static final double REGRESSION_LAMBDA = 1e-1;   // Regularization parameter
 	private static final int MIN_NON_EXCHANGE_COUNTER = 4;
 	private static final int MAX_MATERIAL_EVALUATION = PieceTypeEvaluations.getPawnMultiply(1.5);
 
