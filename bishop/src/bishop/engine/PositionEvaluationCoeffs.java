@@ -14,8 +14,6 @@ import utils.IoUtils;
 
 public class PositionEvaluationCoeffs {
 
-	private static final int TABLE_EVALUATOR_COEFF_COUNT = 2;
-
 	public static final int FIRST = 0;
 	private static final CoeffRegistry registry = new CoeffRegistry();
 	
@@ -24,6 +22,7 @@ public class PositionEvaluationCoeffs {
 
 	public static final List<GameStageCoeffs> GAME_STAGE_COEFFS = createGameStageCoeffs();
 	public static final List<TablePositionCoeffs> TABLE_EVALUATOR_COEFFS = createTableEvaluatorCoeffs();
+	public static final List<PawnStructureCoeffs> PAWN_STRUCTURE_COEFFS = createPawnStructureCoeffs();
 
 	public static final int MOBILITY_OFFSET = MobilityPositionEvaluator.registerCoeffs(registry);
 	
@@ -45,10 +44,10 @@ public class PositionEvaluationCoeffs {
 	}
 
 	private static List<TablePositionCoeffs> createTableEvaluatorCoeffs() {
-		final ImmutableList.Builder<TablePositionCoeffs> builder = ImmutableList.<TablePositionCoeffs>builder().withCapacity(TABLE_EVALUATOR_COEFF_COUNT);
+		final ImmutableList.Builder<TablePositionCoeffs> builder = ImmutableList.<TablePositionCoeffs>builder().withCapacity(CombinedEvaluation.COMPONENT_LAST);
 		builder.addTimes(null, GameStage.FIRST);
 
-		for (int i = 0; i < TABLE_EVALUATOR_COEFF_COUNT; i++) {
+		for (int i = CombinedEvaluation.COMPONENT_FIRST; i < CombinedEvaluation.COMPONENT_LAST; i++) {
 			registry.enterCategory("table_position_" + i);
 			builder.add(new TablePositionCoeffs(registry));
 			registry.leaveCategory();
@@ -56,7 +55,20 @@ public class PositionEvaluationCoeffs {
 
 		return builder.build();
 	}
-	
+
+	private static List<PawnStructureCoeffs> createPawnStructureCoeffs() {
+		final ImmutableList.Builder<PawnStructureCoeffs> builder = ImmutableList.<PawnStructureCoeffs>builder().withCapacity(CombinedEvaluation.COMPONENT_LAST);
+		builder.addTimes(null, GameStage.FIRST);
+
+		for (int i = CombinedEvaluation.COMPONENT_FIRST; i < CombinedEvaluation.COMPONENT_LAST; i++) {
+			registry.enterCategory("pawn_structure_" + i);
+			builder.add(new PawnStructureCoeffs(registry));
+			registry.leaveCategory();
+		}
+
+		return builder.build();
+	}
+
 	public int getEvaluationCoeff (final int index) {
 		return coeffs[index];
 	}

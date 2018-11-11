@@ -7,8 +7,13 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class CombinedEvaluation {
-	public
-	static final int ALPHA_BITS = 7;
+
+	public static final int COMPONENT_FIRST = 0;
+	public static final int COMPONENT_ENDING = 0;
+	public static final int COMPONENT_OPENING = 1;
+	public static final int COMPONENT_LAST = 2;
+
+	public static final int ALPHA_BITS = 7;
 	public static final int MAX_ALPHA = 1 << ALPHA_BITS;
 
 	private static final int COMPONENT_SHIFT = 32;

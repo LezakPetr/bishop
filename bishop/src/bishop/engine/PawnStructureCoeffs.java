@@ -15,7 +15,6 @@ public class PawnStructureCoeffs {
 	private final int[][] connectedPassedPawnBonusCoeffs;
 	private final int[][] protectedPassedPawnBonusCoeffs;
 	private final int[][] singlePassedPawnBonusCoeffs;
-	private final int[][] rookPawnBonusCoeffs;
 	private final int[][] doublePawnBonusCoeffs;
 	private final int[][] connectedNotPassedPawnBonusCoeffs;
 	private final int[][] protectedNotPassedPawnBonusCoeffs;
@@ -30,19 +29,11 @@ public class PawnStructureCoeffs {
 	private static final int PAWN_COUNT = 8;
 		
 	
-	public PawnStructureCoeffs(final CoeffRegistry registry, final boolean withFigures) {
+	public PawnStructureCoeffs(final CoeffRegistry registry) {
 		firstCoeff = registry.enterCategory("pawn_structure");
-		
-		if (withFigures) {
-			coeffUnprotectedOpenFilePawnBonus = registry.add("unprotected_open_file_pawn");
-			rookPawnBonusCoeffs = createRankCoeffs (registry, "rook_pawn", Rank.R2, Rank.R7);		
-		}
-		else {
-			// Without figures -> without coeffs that requires figure
-			coeffUnprotectedOpenFilePawnBonus = -1;
-			rookPawnBonusCoeffs = createRankCoeffs (registry, "rook_pawn", Rank.LAST, Rank.FIRST);
-		}
-		
+
+		coeffUnprotectedOpenFilePawnBonus = registry.add("unprotected_open_file_pawn");
+
 		connectedPassedPawnBonusCoeffs = createRankCoeffs (registry, "connected_passed_pawn", Rank.R2, Rank.R7);
 		protectedPassedPawnBonusCoeffs = createRankCoeffs (registry, "protected_passed_pawn", Rank.R3, Rank.R7);
 		singlePassedPawnBonusCoeffs = createRankCoeffs (registry, "single_passed_pawn", Rank.R2, Rank.R7);
@@ -127,12 +118,6 @@ public class PawnStructureCoeffs {
 	public int getSinglePassedPawnBonusCoeff(final int color, final int rank) {
 		return singlePassedPawnBonusCoeffs[color][rank];
 	}
-
-
-	public int getRookPawnBonusCoeff(final int color, final int rank) {
-		return rookPawnBonusCoeffs[color][rank];
-	}
-
 
 	public int getDoublePawnBonusCoeff(final int color, final int rank) {
 		return doublePawnBonusCoeffs[color][rank];

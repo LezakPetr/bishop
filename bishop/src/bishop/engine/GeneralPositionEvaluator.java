@@ -12,7 +12,6 @@ import bishop.base.Position;
 public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	private final IGameStageTablePositionEvaluator tablePositionEvaluator;
 	private final BishopColorPositionEvaluator[] bishopColorPositionEvaluators;
-	private final PawnStructureEvaluator[] pawnStructureEvaluators;
 	private final MobilityPositionEvaluator[] mobilityEvaluators;
 	private final KingSafetyEvaluator[] kingSafetyEvaluators;
 
@@ -22,7 +21,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	// Supplementary
 	private Position position;
 	
-	private PawnStructureEvaluator pawnStructureEvaluator;
+	private final PawnStructureEvaluator pawnStructureEvaluator;
 	private final IPositionEvaluation tacticalEvaluation;
 	private final IPositionEvaluation positionalEvaluation;
 	
@@ -32,7 +31,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	private GameStageCoeffs gameStageCoeffs;
 
 
-	public GeneralPositionEvaluator(final GeneralEvaluatorSettings settings, final PawnStructureCache structureCache, final Supplier<IPositionEvaluation> evaluationFactory) {
+	public GeneralPositionEvaluator(final GeneralEvaluatorSettings settings, final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.settings = settings;
 		this.tacticalEvaluation = evaluationFactory.get();
 		this.positionalEvaluation = evaluationFactory.get();
@@ -44,16 +43,15 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 
 		this.bishopColorPositionEvaluators = new BishopColorPositionEvaluator[GameStage.COUNT];
 		this.mobilityEvaluators = new MobilityPositionEvaluator[GameStage.COUNT];
-		this.pawnStructureEvaluators = new PawnStructureEvaluator[GameStage.COUNT];
 		this.kingSafetyEvaluators = new KingSafetyEvaluator[GameStage.COUNT];
 		this.pawnRaceEvaluator = new PawnRaceEvaluator(evaluationFactory);
+		this.pawnStructureEvaluator = new PawnStructureEvaluator(evaluationFactory);
 		
 		for (int gameStage = GameStage.FIRST; gameStage < GameStage.LAST; gameStage++) {
 			final GameStageCoeffs coeffs = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(gameStage);
 
 			bishopColorPositionEvaluators[gameStage] = new BishopColorPositionEvaluator(coeffs, evaluationFactory);
 			mobilityEvaluators[gameStage] = new MobilityPositionEvaluator(evaluationFactory);
-			pawnStructureEvaluators[gameStage] = new PawnStructureEvaluator(coeffs.pawnStructureCoeffs, structureCache, evaluationFactory);
 			
 			if (gameStage != GameStage.PAWNS_ONLY)
 				kingSafetyEvaluators[gameStage] = new KingSafetyEvaluator(coeffs, evaluationFactory);
@@ -104,7 +102,6 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	@Override
 	public IPositionEvaluation evaluatePositional (final AttackCalculator attackCalculator) {
 		pawnStructureEvaluator.calculate(position);
-
 		positionalEvaluation.addSubEvaluation(tablePositionEvaluator.evaluate(position, gameStage));
 		
 		if (gameStage != GameStage.PAWNS_ONLY) {
@@ -117,7 +114,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 			evaluateSecureFigures();
 		}
 		
-		positionalEvaluation.addSubEvaluation(pawnStructureEvaluator.evaluate(position, attackCalculator));
+		positionalEvaluation.addSubEvaluation(pawnStructureEvaluator.evaluate(position, gameStage));
 		
 		final MobilityPositionEvaluator mobilityEvaluator = mobilityEvaluators[gameStage];
 		positionalEvaluation.addSubEvaluation(mobilityEvaluator.evaluatePosition(position, attackCalculator));
@@ -131,7 +128,6 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		gameStage = GameStage.fromMaterial (position.getMaterialHash());
 		
 		gameStageCoeffs = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(gameStage);
-		pawnStructureEvaluator = pawnStructureEvaluators[gameStage];
 	}
 	
 	private void calculateAttacks(final AttackCalculator attackCalculator) {
@@ -170,7 +166,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		}
 		
 		return queenMoveEvaluation;
-	}	
+	}
 
 	public void writeLog(final PrintWriter writer) {
 	}

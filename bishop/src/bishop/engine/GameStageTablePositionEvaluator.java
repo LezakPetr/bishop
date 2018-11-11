@@ -24,15 +24,15 @@ public class GameStageTablePositionEvaluator implements IGameStageTablePositionE
 		this.evaluation = evaluationFactory.get();
 		this.components = new Component[GameStage.LAST][];
 
-		final TablePositionEvaluator endEvaluator = new TablePositionEvaluator(coeffs.get(0), evaluationFactory);
-		final TablePositionEvaluator beginEvaluator = new TablePositionEvaluator(coeffs.get(1), evaluationFactory);
+		final TablePositionEvaluator endingEvaluator = new TablePositionEvaluator(coeffs.get(CombinedEvaluation.COMPONENT_ENDING), evaluationFactory);
+		final TablePositionEvaluator openingEvaluator = new TablePositionEvaluator(coeffs.get(CombinedEvaluation.COMPONENT_OPENING), evaluationFactory);
 
 		for (int i = GameStage.FIRST; i < GameStage.LAST; i++) {
 			final int alpha = CombinedEvaluation.getAlphaForGameStage(i);
 
 			components[i] = new Component[] {
-					new Component(CombinedEvaluation.MAX_ALPHA - alpha, endEvaluator),
-					new Component(alpha, beginEvaluator),
+					new Component(CombinedEvaluation.MAX_ALPHA - alpha, endingEvaluator),
+					new Component(alpha, openingEvaluator),
 			};
 		}
 	}

@@ -13,7 +13,6 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 	private final GeneralPositionEvaluator generalPositionEvaluator;
 	private final MatingPositionEvaluator generalMatingEvaluator;
 	private final DrawPositionEvaluator drawEvaluator;
-	private final PawnStructureCache pawnStructureCache;
 
 	private IMaterialHashRead materialHash;
 	
@@ -25,9 +24,7 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 
 	
 	public PositionEvaluatorSwitch(final PositionEvaluatorSwitchSettings settings, final Supplier<IPositionEvaluation> evaluationFactory) {
-		pawnStructureCache = new PawnStructureCache();
-		
-		generalPositionEvaluator = new GeneralPositionEvaluator(settings.getGeneralEvaluatorSettings(), pawnStructureCache, evaluationFactory);
+		generalPositionEvaluator = new GeneralPositionEvaluator(settings.getGeneralEvaluatorSettings(), evaluationFactory);
 		generalMatingEvaluator = new MatingPositionEvaluator(evaluationFactory);
 		drawEvaluator = new DrawPositionEvaluator(evaluationFactory);
 		
