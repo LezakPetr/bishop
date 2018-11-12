@@ -50,9 +50,8 @@ public class PositionEvaluatorTest {
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 		
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
-		final PawnStructureCache pawnStructureCache = new PawnStructureCache();
 		
-		testPositionEvaluatorSpeed (position, new GeneralPositionEvaluator(settings.getGeneralEvaluatorSettings(), pawnStructureCache, evaluationFactory));
+		testPositionEvaluatorSpeed (position, new GeneralPositionEvaluator(settings.getGeneralEvaluatorSettings(), evaluationFactory));
 		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings, evaluationFactory));
 	}
 }

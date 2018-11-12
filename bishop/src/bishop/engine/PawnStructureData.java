@@ -72,9 +72,6 @@ public class PawnStructureData {
 	private static final int PASSED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
 	
 	private static final int CONNECTED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
-	private static final int ISOLATED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
-	private static final int BACKWARDS_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
-	private static final int DOUBLED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
 	private static final int PROTECTED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
 	
 	private static final int SINGLE_DISADVANTAGE_ATTACK_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
@@ -154,12 +151,15 @@ public class PawnStructureData {
 		return data[FRONT_SQUARES_OFFSET + color];
 	}
 
-	public void calculate(final PawnStructure structure) {
+	public void precalculate(final PawnStructure structure) {
 		this.structure = structure;
-		
+
 		fillOpenFileSquares();
 		fillOppositeFileAndAttackableSquares();
 		fillSecureSquares();
+	}
+
+	public void calculate() {
 		calculatePawnTypes();
 		calculatePawnDynamic();
 		calculatePawnIslands();
@@ -176,12 +176,6 @@ public class PawnStructureData {
 			final long connectedPawnMask = BoardConstants.getAllConnectedPawnSquareMask(ownPawnMask);
 			data[CONNECTED_PAWNS_OFFSET + color] = ownPawnMask & connectedPawnMask;
 			
-			final long frontOrBackSquares = data[FRONT_SQUARES_OFFSET + color] | data[BACK_SQUARES_OFFSET + color];
-			final long occupiedFiles = frontOrBackSquares | ownPawnMask;
-			data[ISOLATED_PAWNS_OFFSET + color] = ownPawnMask & ~BoardConstants.getAllConnectedPawnSquareMask(occupiedFiles);
-			
-			data[BACKWARDS_PAWNS_OFFSET + color] = ownPawnMask & openSquares & data[NEIGHBOR_FRONT_SQUARES_OFFSET + oppositeColor] & ~data[NEIGHBOR_FRONT_SQUARES_OFFSET + color];
-			data[DOUBLED_PAWNS_OFFSET + color] = ownPawnMask & frontOrBackSquares;
 			data[PROTECTED_PAWNS_OFFSET + color] = ownPawnMask & BoardConstants.getPawnsAttackedSquares(color, ownPawnMask);
 		}
 	}
@@ -290,18 +284,6 @@ public class PawnStructureData {
 
 	public long getConnectedPawnMask(final int color) {
 		return data[CONNECTED_PAWNS_OFFSET + color];
-	}
-
-	public long getIsolatedPawnMask(final int color) {
-		return data[ISOLATED_PAWNS_OFFSET + color];
-	}
-	
-	public long getBackwardPawnMask(final int color) {
-		return data[BACKWARDS_PAWNS_OFFSET + color];
-	}
-
-	public long getDoubledPawnMask(final int color) {
-		return data[DOUBLED_PAWNS_OFFSET + color];
 	}
 
 	public long getProtectedPawnMask(final int color) {

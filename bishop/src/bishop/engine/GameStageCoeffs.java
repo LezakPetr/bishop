@@ -4,7 +4,6 @@ public class GameStageCoeffs {
 	
 	private final int firstCoeff;
 
-	public final PawnStructureCoeffs pawnStructureCoeffs; 
 	public final int pawnOnSameColorBonus;
 	public final int rookOnOpenFileBonus;
 	
@@ -23,8 +22,6 @@ public class GameStageCoeffs {
 		
 		final boolean withFigures = gameStage != GameStage.PAWNS_ONLY;
 
-		pawnStructureCoeffs = new PawnStructureCoeffs(registry, withFigures);
-		
 		pawnOnSameColorBonus = (withFigures) ? registry.add("pawn_on_same_color") : -1;
 		rookOnOpenFileBonus = (withFigures) ? registry.add("rook_on_open_file") : -1;
 		figureOnSecureSquareBonus = (withFigures) ? registry.add("figure_on_secure_square") : -1;
