@@ -54,10 +54,10 @@ public class CombinedEvaluation {
 		else {
 			t = (double) (gameStage - MIDDLE_GAME_TRESHOLD) / (double) (GameStage.LAST - 1 - MIDDLE_GAME_TRESHOLD);
 			lowerShift = MIDDLE_GAME_SHIFT;
-			upperShift = ENDING_SHIFT;
+			upperShift = OPENING_SHIFT;
 		}
 
-		final int alpha = Utils.roundToInt(MAX_ALPHA * t);
+		final long alpha = Utils.roundToInt(MAX_ALPHA * t);
 
 		return ((MAX_ALPHA - alpha) << lowerShift) + (alpha << upperShift);
 	}
