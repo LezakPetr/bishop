@@ -5,7 +5,7 @@ import bishop.base.PieceTypeEvaluations;
 import bishop.tablebase.Classification;
 
 public class Evaluation {
-	
+
 	public static final int MAX = (1 << 19) - 1;
 	public static final int MATE_ZERO_DEPTH = MAX - 1;
 	public static final int MATE_MIN = MATE_ZERO_DEPTH - (1 << 15);
@@ -17,6 +17,7 @@ public class Evaluation {
 	public static final int UNKNOWN = MAX + 1;
 	
 	public static final int BYTES = 3;
+	public static final int BITS = 20;
 	
 	public static int getMateEvaluation (final int depth) {
 		return MATE_ZERO_DEPTH - depth;

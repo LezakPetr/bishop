@@ -43,8 +43,9 @@ public class CombinedPositionEvaluationTable {
 					final int index = getIndex(color, pieceType, square);
 
 					combinedEvaluations[index] = CombinedEvaluation.combine(
-							getCoeff(evaluationCoeffs, color, pieceType, square, 1),
-							getCoeff(evaluationCoeffs, color, pieceType, square, 0)
+							getCoeff(evaluationCoeffs, color, pieceType, square, CombinedEvaluation.COMPONENT_OPENING),
+							getCoeff(evaluationCoeffs, color, pieceType, square, CombinedEvaluation.COMPONENT_MIDDLE_GAME),
+							getCoeff(evaluationCoeffs, color, pieceType, square, CombinedEvaluation.COMPONENT_ENDING)
 					);
 				}
 			}
