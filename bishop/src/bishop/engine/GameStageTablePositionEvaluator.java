@@ -4,6 +4,8 @@ import bishop.base.IPosition;
 
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class GameStageTablePositionEvaluator implements IGameStageTablePositionEvaluator {
 	private class Component {
@@ -24,16 +26,19 @@ public class GameStageTablePositionEvaluator implements IGameStageTablePositionE
 		this.evaluation = evaluationFactory.get();
 		this.components = new Component[GameStage.LAST][];
 
-		final TablePositionEvaluator endingEvaluator = new TablePositionEvaluator(coeffs.get(CombinedEvaluation.COMPONENT_ENDING), evaluationFactory);
-		final TablePositionEvaluator openingEvaluator = new TablePositionEvaluator(coeffs.get(CombinedEvaluation.COMPONENT_OPENING), evaluationFactory);
+		final List<TablePositionEvaluator> evaluators = IntStream.range(CombinedEvaluation.COMPONENT_FIRST, CombinedEvaluation.COMPONENT_LAST)
+				.mapToObj(i -> new TablePositionEvaluator(coeffs.get(i), evaluationFactory))
+				.collect(Collectors.toList());
 
-		for (int i = GameStage.FIRST; i < GameStage.LAST; i++) {
-			final int alpha = CombinedEvaluation.getAlphaForGameStage(i);
+		for (int gameStage = GameStage.FIRST; gameStage < GameStage.LAST; gameStage++) {
+			final int gameStageFinal = gameStage;
 
-			components[i] = new Component[] {
-					new Component(CombinedEvaluation.MAX_ALPHA - alpha, endingEvaluator),
-					new Component(alpha, openingEvaluator),
-			};
+			components[gameStage] = IntStream.range(CombinedEvaluation.COMPONENT_FIRST, CombinedEvaluation.COMPONENT_LAST)
+					.mapToObj(i -> new Component(
+							CombinedEvaluation.getComponentMultiplicator(gameStageFinal, i),
+							evaluators.get(i)
+					))
+					.toArray(Component[]::new);
 		}
 	}
 

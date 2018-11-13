@@ -9,28 +9,38 @@ public class PawnStructureEvaluator {
 
 	private static final PawnStructureCoeffs ENDING_COEFFS = PositionEvaluationCoeffs.PAWN_STRUCTURE_COEFFS.get(CombinedEvaluation.COMPONENT_ENDING);
 	private static final PawnStructureCoeffs OPENING_COEFFS = PositionEvaluationCoeffs.PAWN_STRUCTURE_COEFFS.get(CombinedEvaluation.COMPONENT_OPENING);
+	private static final PawnStructureCoeffs MIDDLE_GAME_COEFFS = PositionEvaluationCoeffs.PAWN_STRUCTURE_COEFFS.get(CombinedEvaluation.COMPONENT_MIDDLE_GAME);
 
 	private static final int OPENING_COEFF_DIFF = OPENING_COEFFS.getFirstCoeff() - ENDING_COEFFS.getFirstCoeff();
+	private static final int MIDDLE_GAME_COEFF_DIFF = MIDDLE_GAME_COEFFS.getFirstCoeff() - ENDING_COEFFS.getFirstCoeff();
 
 	private final IPositionEvaluation evaluation;
 	private final PawnStructureCache structureCache;
 	private final IPositionEvaluation openingCachedEvaluation;
+	private final IPositionEvaluation middleGameCachedEvaluation;
 	private final IPositionEvaluation endingCachedEvaluation;
 	private final IPositionEvaluation openingPositionDependentEvaluation;
+	private final IPositionEvaluation middleGamePositionDependentEvaluation;
 	private final IPositionEvaluation endingPositionDependentEvaluation;
 	private final PawnStructureData structureData = new PawnStructureData();
 
 	public PawnStructureEvaluator(final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.evaluation = evaluationFactory.get();
 		this.openingCachedEvaluation = evaluationFactory.get();
+		this.middleGameCachedEvaluation = evaluationFactory.get();
 		this.endingCachedEvaluation = evaluationFactory.get();
 		this.openingPositionDependentEvaluation = evaluationFactory.get();
+		this.middleGamePositionDependentEvaluation = evaluationFactory.get();
 		this.endingPositionDependentEvaluation = evaluationFactory.get();
 		this.structureCache = new PawnStructureCache(
 			pawnStructure -> {
 				evaluatePawnStructure(pawnStructure);
 
-				return CombinedEvaluation.combine(openingCachedEvaluation.getEvaluation(), endingCachedEvaluation.getEvaluation());
+				return CombinedEvaluation.combine(
+						openingCachedEvaluation.getEvaluation(),
+						middleGameCachedEvaluation.getEvaluation(),
+						endingCachedEvaluation.getEvaluation()
+				);
 			}
 		);
 	}
@@ -41,13 +51,17 @@ public class PawnStructureEvaluator {
 		if (evaluation instanceof CoeffCountPositionEvaluation) {
 			evaluatePawnStructure(structure);
 
-			final int alpha = CombinedEvaluation.getAlphaForGameStage(gameStage);
+			final int openingCount = CombinedEvaluation.getComponentMultiplicator (gameStage, CombinedEvaluation.COMPONENT_OPENING);
+			final int middleGameCount = CombinedEvaluation.getComponentMultiplicator (gameStage, CombinedEvaluation.COMPONENT_MIDDLE_GAME);
+			final int endingCount = CombinedEvaluation.getComponentMultiplicator (gameStage, CombinedEvaluation.COMPONENT_ENDING);
 
-			evaluation.addSubEvaluation(openingCachedEvaluation, alpha);
-			evaluation.addSubEvaluation(endingCachedEvaluation, CombinedEvaluation.MAX_ALPHA - alpha);
+			evaluation.addSubEvaluation(openingCachedEvaluation, openingCount);
+			evaluation.addSubEvaluation(middleGameCachedEvaluation, middleGameCount);
+			evaluation.addSubEvaluation(endingCachedEvaluation, endingCount);
 
-			evaluation.addSubEvaluation(openingPositionDependentEvaluation, alpha);
-			evaluation.addSubEvaluation(endingPositionDependentEvaluation, CombinedEvaluation.MAX_ALPHA - alpha);
+			evaluation.addSubEvaluation(openingPositionDependentEvaluation, openingCount);
+			evaluation.addSubEvaluation(middleGamePositionDependentEvaluation, middleGameCount);
+			evaluation.addSubEvaluation(endingPositionDependentEvaluation, endingCount);
 
 			evaluation.shiftRight(CombinedEvaluation.ALPHA_BITS);
 		}
@@ -56,7 +70,11 @@ public class PawnStructureEvaluator {
 			combinedEvaluation += structureCache.getCombinedEvaluation(structure);
 
 			evaluatePositionDependent(position);
-			combinedEvaluation += CombinedEvaluation.combine(openingPositionDependentEvaluation.getEvaluation(), endingPositionDependentEvaluation.getEvaluation());
+			combinedEvaluation += CombinedEvaluation.combine(
+					openingPositionDependentEvaluation.getEvaluation(),
+					middleGamePositionDependentEvaluation.getEvaluation(),
+					endingPositionDependentEvaluation.getEvaluation()
+			);
 
 			final long multiplicator = CombinedEvaluation.getMultiplicatorForGameStage(gameStage);
 			evaluation.addEvaluation(CombinedEvaluation.decode(combinedEvaluation, multiplicator));
@@ -138,8 +156,9 @@ public class PawnStructureEvaluator {
 		}
 	}
 
-	private void addCachedEvaluation(int endingCoeff, int color) {
+	private void addCachedEvaluation(final int endingCoeff, final int color) {
 		endingCachedEvaluation.addCoeff(endingCoeff, color);
+		middleGameCachedEvaluation.addCoeff(endingCoeff + MIDDLE_GAME_COEFF_DIFF, color);
 		openingCachedEvaluation.addCoeff(endingCoeff + OPENING_COEFF_DIFF, color);
 	}
 
@@ -154,9 +173,12 @@ public class PawnStructureEvaluator {
 				final long frontSquares = structureData.getFrontSquares(color);
 
 				final long unprotectedOpenPawnMask = unprotectedPawnMask & ~frontSquares;
+				final int endingCoeff = ENDING_COEFFS.getCoeffUnprotectedOpenFilePawnBonus();
+				final int coeffCount = BitBoard.getSquareCount(unprotectedOpenPawnMask);
 
-				endingPositionDependentEvaluation.addCoeff(ENDING_COEFFS.getCoeffUnprotectedOpenFilePawnBonus(), color, BitBoard.getSquareCount(unprotectedOpenPawnMask));
-				openingPositionDependentEvaluation.addCoeff(OPENING_COEFFS.getCoeffUnprotectedOpenFilePawnBonus(), color, BitBoard.getSquareCount(unprotectedOpenPawnMask));
+				endingPositionDependentEvaluation.addCoeff(endingCoeff, color, coeffCount);
+				middleGamePositionDependentEvaluation.addCoeff(endingCoeff + MIDDLE_GAME_COEFF_DIFF, color, coeffCount);
+				openingPositionDependentEvaluation.addCoeff(endingCoeff + OPENING_COEFF_DIFF, color, coeffCount);
 			}
 		}
 	}
@@ -179,8 +201,10 @@ public class PawnStructureEvaluator {
 		structureData.clear();
 		evaluation.clear();
 		openingCachedEvaluation.clear();
+		middleGameCachedEvaluation.clear();
 		endingCachedEvaluation.clear();
 		openingPositionDependentEvaluation.clear();
+		middleGamePositionDependentEvaluation.clear();
 		endingPositionDependentEvaluation.clear();
 	}
 

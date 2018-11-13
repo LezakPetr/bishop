@@ -8,11 +8,10 @@ public class PawnStructureCache {
 
 	private static final int CACHE_BITS = 20;
 	private static final int CACHE_SIZE = 1 << CACHE_BITS;
-	private static final int CACHE_MASK = CACHE_SIZE - 1;
+	private static final int CACHE_MASK = (CACHE_SIZE - 1) << 1;
 
 	private final ToLongFunction<PawnStructure> calculateCombinedEvaluation;
-	private final long[] combinedEvaluations;
-	private final long[] hashes;
+	private final long[] table;
 	private long hitCount;
 	private long missCount;
 	
@@ -27,26 +26,25 @@ public class PawnStructureCache {
 	
 	public PawnStructureCache(final ToLongFunction<PawnStructure> calculateCombinedEvaluation) {
 		this.calculateCombinedEvaluation = calculateCombinedEvaluation;
-		this.hashes = new long[CACHE_SIZE];
-		this.combinedEvaluations = new long[CACHE_SIZE];
+		this.table = new long[2 * CACHE_SIZE];
 	}
 
 	public long getCombinedEvaluation (final PawnStructure structure) {
 		final long hash = getHash(structure);
-		final int index = (int) hash & CACHE_MASK;
+		final int baseIndex = (int) hash & CACHE_MASK;
+		final long hashFromTable = table[baseIndex];
 		final long combinedEvaluation;
 		
-		if (hashes[index] != hash) {
-			combinedEvaluation = calculateCombinedEvaluation.applyAsLong(structure);
-
-			combinedEvaluations[index] = combinedEvaluation;
-			hashes[index] = hash;
-
-			missCount++;
+		if (hashFromTable == hash) {
+			combinedEvaluation = table[baseIndex + 1];
+			hitCount++;
 		}
 		else {
-			combinedEvaluation = combinedEvaluations[index];
-			hitCount++;
+			combinedEvaluation = calculateCombinedEvaluation.applyAsLong(structure);
+
+			table[baseIndex] = hash;
+			table[baseIndex + 1] = combinedEvaluation;
+			missCount++;
 		}
 
 		return combinedEvaluation;

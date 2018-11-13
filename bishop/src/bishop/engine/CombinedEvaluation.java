@@ -2,6 +2,7 @@ package bishop.engine;
 
 import math.Sigmoid;
 import math.Utils;
+import utils.IntUtils;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -10,52 +11,77 @@ public class CombinedEvaluation {
 
 	public static final int COMPONENT_FIRST = 0;
 	public static final int COMPONENT_ENDING = 0;
-	public static final int COMPONENT_OPENING = 1;
-	public static final int COMPONENT_LAST = 2;
+	public static final int COMPONENT_MIDDLE_GAME = 1;
+	public static final int COMPONENT_OPENING = 2;
+	public static final int COMPONENT_LAST = 3;
 
 	public static final int ALPHA_BITS = 7;
 	public static final int MAX_ALPHA = 1 << ALPHA_BITS;
 
-	private static final int COMPONENT_SHIFT = 32;
+	public static final int MIDDLE_GAME_TRESHOLD = 8;
 
-	private static final int BASE_EXPONENT = 23;
-	private static final int DECODE_BASE = 1 << BASE_EXPONENT;
-	private static final int DECODE_SHIFT = COMPONENT_SHIFT + ALPHA_BITS;
+	private static final int COMPONENT_SHIFT = Evaluation.BITS + 1;
 
-	public static final long ACCUMULATOR_BASE = (1L << BASE_EXPONENT) + (1L << (BASE_EXPONENT + COMPONENT_SHIFT));
+	private static final int ENDING_SHIFT = COMPONENT_ENDING * COMPONENT_SHIFT;
+	private static final int MIDDLE_GAME_SHIFT = COMPONENT_MIDDLE_GAME * COMPONENT_SHIFT;
+	private static final int OPENING_SHIFT = COMPONENT_OPENING * COMPONENT_SHIFT;
 
-	private static final Sigmoid ALPHA_GAME_STAGE_MAPPING = new Sigmoid(0.3 * GameStage.COUNT, 0.7 * GameStage.COUNT, 0, 1);
+	private static final int EVALUATION_MASK = (1 << Evaluation.BITS) - 1;
 
-	private static final int[] ALPHA_FOR_GAME_STAGES = IntStream.range(GameStage.FIRST, GameStage.LAST)
-			.mapToDouble(ALPHA_GAME_STAGE_MAPPING::applyAsDouble)
-			.mapToInt(t -> Utils.roundToInt(t * MAX_ALPHA))
+	private static final int BASE_EXPONENT = Evaluation.BITS - 1;
+
+	private static final int EVALUATION_BASE = 1 << BASE_EXPONENT;
+
+	public static final long ACCUMULATOR_BASE =
+			(1L << (BASE_EXPONENT + ENDING_SHIFT)) +
+			(1L << (BASE_EXPONENT + MIDDLE_GAME_SHIFT)) +
+			(1L << (BASE_EXPONENT + OPENING_SHIFT));
+
+	private static final long[] EVALUATION_DECODE_MULTIPLICATORS = IntStream.range(GameStage.FIRST, GameStage.LAST)
+			.mapToLong(CombinedEvaluation::calculateMultiplicatorForGameStage)
 			.toArray();
 
-	private static final long[] EVALUATION_DECODE_MULTIPLICATORS = Arrays.stream(ALPHA_FOR_GAME_STAGES)
-			.mapToLong(CombinedEvaluation::getMultiplicatorForAlpha)
-			.toArray();
+	public static long calculateMultiplicatorForGameStage(final int gameStage) {
+		int lowerShift;
+		int upperShift;
+		double t;
+
+		if (gameStage <= MIDDLE_GAME_TRESHOLD) {
+			t = (double) (gameStage - GameStage.FIRST) / (double) (MIDDLE_GAME_TRESHOLD - GameStage.FIRST);
+			lowerShift = ENDING_SHIFT;
+			upperShift = MIDDLE_GAME_SHIFT;
+		}
+		else {
+			t = (double) (gameStage - MIDDLE_GAME_TRESHOLD) / (double) (GameStage.LAST - 1 - MIDDLE_GAME_TRESHOLD);
+			lowerShift = MIDDLE_GAME_SHIFT;
+			upperShift = ENDING_SHIFT;
+		}
+
+		final int alpha = Utils.roundToInt(MAX_ALPHA * t);
+
+		return ((MAX_ALPHA - alpha) << lowerShift) + (alpha << upperShift);
+	}
 
 
 	public static int decode (final long combinedEvaluation, final long multiplicator) {
-		final long basedEvaluation = (combinedEvaluation * multiplicator) >>> DECODE_SHIFT;
-		final int evaluation = (int) basedEvaluation - DECODE_BASE;
+		final int opening = (((int) (combinedEvaluation >>> OPENING_SHIFT) & EVALUATION_MASK) - EVALUATION_BASE) * ((int) (multiplicator >>> OPENING_SHIFT) & EVALUATION_MASK);
+		final int middleGame = (((int) (combinedEvaluation >>> MIDDLE_GAME_SHIFT) & EVALUATION_MASK) - EVALUATION_BASE) * ((int) (multiplicator >>> MIDDLE_GAME_SHIFT) & EVALUATION_MASK);
+		final int ending = (((int) (combinedEvaluation >>> ENDING_SHIFT) & EVALUATION_MASK) - EVALUATION_BASE) * ((int) (multiplicator >>> ENDING_SHIFT) & EVALUATION_MASK);
 
-		return evaluation;
-	}
-
-	public static int getAlphaForGameStage (final int gameStage) {
-		return ALPHA_FOR_GAME_STAGES[gameStage];
-	}
-
-	public static long getMultiplicatorForAlpha (final int alpha) {
-		return (MAX_ALPHA - alpha) + ((long) alpha << COMPONENT_SHIFT);
+		return (opening + middleGame + ending) >> ALPHA_BITS;
 	}
 
 	public static long getMultiplicatorForGameStage (final int gameStage) {
 		return EVALUATION_DECODE_MULTIPLICATORS[gameStage];
 	}
 
-	public static long combine (final int evaluationOpening, final int evaluationEnding) {
-		return ((long) evaluationOpening << COMPONENT_SHIFT) + (long) evaluationEnding;
+	public static long combine (final int evaluationOpening, final int evaluationMiddle, final int evaluationEnding) {
+		return ((long) evaluationOpening << OPENING_SHIFT) +
+		       ((long) evaluationMiddle << MIDDLE_GAME_SHIFT) +
+				((long) evaluationEnding << ENDING_SHIFT);
+	}
+
+	public static int getComponentMultiplicator (final int gameStage, final int component) {
+		return (int) (getMultiplicatorForGameStage(gameStage) >>> (component * COMPONENT_SHIFT)) & EVALUATION_MASK;
 	}
 }
