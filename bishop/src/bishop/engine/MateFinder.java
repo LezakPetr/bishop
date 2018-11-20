@@ -81,9 +81,14 @@ public class MateFinder {
 			return (isMate()) ? -Evaluation.getMateEvaluation(depth + depthAdvance) : Evaluation.DRAW;
 		
 		final boolean isAttacker = position.getOnTurn() == attackerColor;
-		
-		if (!isAttacker && !position.isCheck())
-			return Evaluation.DRAW;
+		boolean mustBeCheck = false;
+
+		if (!isAttacker) {
+			if (!position.isCheck())
+				return Evaluation.DRAW;
+			else
+				mustBeCheck = true;
+		}
 		
 		final Move killerMove = new Move();
 		boolean existLegalMove = false;
@@ -153,7 +158,7 @@ public class MateFinder {
 			return evaluation;
 		}
 		else {
-			if (position.isCheck())
+			if (mustBeCheck || position.isCheck())
 				return -Evaluation.getMateEvaluation(depth + depthAdvance);
 			else
 				return Evaluation.DRAW;

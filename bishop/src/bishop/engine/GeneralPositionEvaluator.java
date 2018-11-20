@@ -125,7 +125,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	}
 	
 	private void selectGameStage() {
-		gameStage = GameStage.fromMaterial (position.getMaterialHash());
+		gameStage = position.getGameStage();
 		
 		gameStageCoeffs = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(gameStage);
 	}

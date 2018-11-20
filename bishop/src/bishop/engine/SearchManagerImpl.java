@@ -24,8 +24,8 @@ public final class SearchManagerImpl implements ISearchManager {
 	private HandlerRegistrarImpl<ISearchManagerHandler> handlerRegistrar;
 	private int minHorizon = 3 * ISearchEngine.HORIZON_GRANULARITY;
 	private int threadCount = 1;
-	private IMaterialEvaluator materialEvaluator;
 	private CombinedPositionEvaluationTable combinedPositionEvaluationTable = CombinedPositionEvaluationTable.ZERO_TABLE;
+	private PieceTypeEvaluations pieceTypeEvaluations;
 	
 	private final List<ISearchEngine> searchEngineList = new ArrayList<>();
 	
@@ -105,19 +105,6 @@ public final class SearchManagerImpl implements ISearchManager {
 		synchronized (monitor) {
 			checkManagerState(ManagerState.STOPPED);
 			this.engineFactory = factory;
-		}
-	}
-
-	/**
-	 * Sets material evaluator.
-	 * Manager must be in STOPPED state.
-	 * @param evaluator material evaluator
-	 */
-	@Override
-	public void setMaterialEvaluator (final IMaterialEvaluator evaluator) {
-		synchronized (monitor) {
-			checkManagerState(ManagerState.STOPPED);
-			this.materialEvaluator = evaluator;
 		}
 	}
 
@@ -237,7 +224,6 @@ public final class SearchManagerImpl implements ISearchManager {
 			engine.getHandlerRegistrar().addHandler(engineHandler);
 			engine.setTablebaseEvaluator(tablebaseEvaluator);
 			engine.setHashTable(hashTable);
-			engine.setMaterialEvaluator(materialEvaluator);
 			engine.setCombinedPositionEvaluationTable(combinedPositionEvaluationTable);
 			
 			searchEngineList.add(engine);
@@ -371,7 +357,7 @@ public final class SearchManagerImpl implements ISearchManager {
 			task.setHorizon(horizon);
 			task.setInitialSearch(initialSearch);
 			
-			final int materialEvaluation = materialEvaluator.evaluateMaterial(rootPosition.getMaterialHash());
+			final int materialEvaluation = rootPosition.getMaterialEvaluation();
 			task.setRootMaterialEvaluation(materialEvaluation);
 			
 			final RepeatedPositionRegister repeatedPositionRegister = new RepeatedPositionRegister();
@@ -561,6 +547,7 @@ public final class SearchManagerImpl implements ISearchManager {
 			this.lastSearchInfoTime = 0;
 			this.isSearchRunning = true;
 			this.rootPosition.assign(position);
+			this.rootPosition.refreshCachedData();
 			
 			searchStartTime = System.currentTimeMillis();
 			totalNodeCount = 0;
@@ -659,6 +646,20 @@ public final class SearchManagerImpl implements ISearchManager {
 			this.hashTable = table;
 		}
 	}
+
+
+	/**
+	 * Sets piece type evaluations.
+	 * Manager must be in STOPPED state.
+	 */
+	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations) {
+		synchronized (monitor) {
+			checkManagerState (ManagerState.STOPPED);
+
+			this.pieceTypeEvaluations = pieceTypeEvaluations;
+			rootPosition.setPieceTypeEvaluations(pieceTypeEvaluations);
+		}
+	}
 	
 	/**
 	 * Enables or disables book.
@@ -729,9 +730,8 @@ public final class SearchManagerImpl implements ISearchManager {
 			checkManagerState (ManagerState.STOPPED, ManagerState.WAITING);
 			this.threadCount = threadCount;
 		}
-
 	}
-	
+
 	/**
 	 * Sets tablebase position evaluator.
 	 * Manager must be in STOPPED state.

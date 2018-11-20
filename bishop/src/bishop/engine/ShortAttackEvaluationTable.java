@@ -1,22 +1,31 @@
 package bishop.engine;
 
+import bishop.base.BitBoard;
 import bishop.base.BitLoop;
 import bishop.base.Piece;
 import bishop.base.Square;
+import math.Utils;
 
 public class ShortAttackEvaluationTable {
 
 	private final byte[] attackTable = new byte[Square.LAST];
+	private final long nonZeroSquares;
 	
 	public ShortAttackEvaluationTable(final Piece piece, final double[] attackedSquareEvaluation) {
-		setTable(piece, attackedSquareEvaluation);
+		nonZeroSquares = setTable(piece, attackedSquareEvaluation);
 	}
 	
 	public int getAttackEvaluation(final int square) {
 		return attackTable[square];
 	}
 
-	private void setTable(final Piece piece, final double[] squareEvaluation) {
+	public long getNonZeroSquares() {
+		return nonZeroSquares;
+	}
+
+	private long setTable(final Piece piece, final double[] squareEvaluation) {
+		long nonZeroSquares = BitBoard.EMPTY;
+
 		for (int square = Square.FIRST; square < Square.LAST; square++) {
 			final long attackMask = piece.getAttackedSquares(square);
 			
@@ -26,9 +35,15 @@ public class ShortAttackEvaluationTable {
 				final int targetSquare = loop.getNextSquare();
 				dblEvaluation += squareEvaluation[targetSquare];
 			}
-			
-			attackTable[square] = math.Utils.roundToByte(dblEvaluation);
+
+			final byte byteEvaluation = Utils.roundToByte(dblEvaluation);
+			attackTable[square] = byteEvaluation;
+
+			if (byteEvaluation != 0)
+				nonZeroSquares |= BitBoard.of(square);
 		}
+
+		return nonZeroSquares;
 	}
 
 	// Universal zero table - the WHITE_KNIGHT is used just because the constructor needs some piece,

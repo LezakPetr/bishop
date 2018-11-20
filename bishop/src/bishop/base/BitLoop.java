@@ -40,7 +40,7 @@ public final class BitLoop {
 	 */
 	public int getNextSquare() {
 		final int square = Long.numberOfTrailingZeros(board);
-		board = board & ~BitBoard.getSquareMask (square);
+		board &= board - 1;
 		
 		return square;
 	}

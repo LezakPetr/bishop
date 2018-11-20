@@ -1,6 +1,8 @@
 package bishop.base;
 
 import bishop.engine.CombinedEvaluation;
+import bishop.engine.GameStage;
+import bishop.engine.GameStageCoeffs;
 import bishop.tables.PieceHashTable;
 
 public final class PositionCachingImpl implements IPositionCaching {
@@ -9,6 +11,9 @@ public final class PositionCachingImpl implements IPositionCaching {
 	private long combinedEvaluation;
 	private final MaterialHash materialHash = new MaterialHash();
 	private CombinedPositionEvaluationTable evaluationTable = CombinedPositionEvaluationTable.ZERO_TABLE;
+	private PieceTypeEvaluations pieceTypeEvaluations = PieceTypeEvaluations.DEFAULT;
+	private int materialEvaluation;
+	private int gameStageUnbound;
 
 
 	public void movePiece(final int color, final int pieceType, final int beginSquare, final int targetSquare) {
@@ -22,12 +27,16 @@ public final class PositionCachingImpl implements IPositionCaching {
 		hash ^= PieceHashTable.getItem(color, pieceType, square);
 		materialHash.addPiece(color, pieceType);
 		combinedEvaluation += evaluationTable.getCombinedEvaluation(color, pieceType, square);
+		materialEvaluation += pieceTypeEvaluations.getPieceEvaluation(color, pieceType);
+		gameStageUnbound += GameStage.getPieceTypeMultiplicator(pieceType);
 	}
 	
 	public void removePiece(final int color, final int pieceType, final int square) {
 		hash ^= PieceHashTable.getItem(color, pieceType, square);
 		materialHash.removePiece(color, pieceType);
 		combinedEvaluation -= evaluationTable.getCombinedEvaluation(color, pieceType, square);
+		materialEvaluation -= pieceTypeEvaluations.getPieceEvaluation(color, pieceType);
+		gameStageUnbound -= GameStage.getPieceTypeMultiplicator(pieceType);
 	}
 	
 	public void swapOnTurn() {
@@ -59,6 +68,8 @@ public final class PositionCachingImpl implements IPositionCaching {
 		hash = position.calculateHash();
 		materialHash.assign(position.calculateMaterialHash());
 		combinedEvaluation = NullPositionCaching.calculateCombinedEvaluation(position, evaluationTable);
+		materialEvaluation = new DefaultAdditiveMaterialEvaluator(pieceTypeEvaluations).evaluateMaterial(position.getMaterialHash());
+		gameStageUnbound = GameStage.fromMaterialUnbound(position);
 	}
 	
 	@Override
@@ -70,6 +81,8 @@ public final class PositionCachingImpl implements IPositionCaching {
 	public void assign (final IPositionCaching orig) {
 		this.hash = orig.getHash();
 		this.materialHash.assign(orig.getMaterialHash());
+		this.materialEvaluation = orig.getMaterialEvaluation();
+		this.gameStageUnbound = orig.getGameStageUnbound();
 
 		if (orig instanceof PositionCachingImpl)
 			this.combinedEvaluation = ((PositionCachingImpl) orig).combinedEvaluation;
@@ -96,8 +109,28 @@ public final class PositionCachingImpl implements IPositionCaching {
 	}
 
 	@Override
+	public PieceTypeEvaluations getPieceTypeEvaluations() {
+		return pieceTypeEvaluations;
+	}
+
+	@Override
+	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations) {
+		this.pieceTypeEvaluations = pieceTypeEvaluations;
+	}
+
+	@Override
 	public long getCombinedEvaluation() {
 		return combinedEvaluation;
+	}
+
+	@Override
+	public int getMaterialEvaluation() {
+		return materialEvaluation;
+	}
+
+	@Override
+	public int getGameStageUnbound() {
+		return gameStageUnbound;
 	}
 
 }

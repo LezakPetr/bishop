@@ -1,25 +1,13 @@
 package bishop.controller;
 
+import bishop.base.CombinedPositionEvaluationTable;
+import bishop.base.PieceTypeEvaluations;
+import bishop.engine.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.function.Supplier;
-
-import bishop.base.CombinedPositionEvaluationTable;
-import bishop.base.DefaultAdditiveMaterialEvaluator;
-import bishop.base.IMaterialEvaluator;
-import bishop.base.PieceTypeEvaluations;
-import bishop.engine.AlgebraicPositionEvaluation;
-import bishop.engine.BookReader;
-import bishop.engine.HashTableImpl;
-import bishop.engine.IPositionEvaluation;
-import bishop.engine.ISearchManager;
-import bishop.engine.PositionEvaluationCoeffs;
-import bishop.engine.PositionEvaluatorSwitchFactory;
-import bishop.engine.PositionEvaluatorSwitchSettings;
-import bishop.engine.SearchManagerImpl;
-import bishop.engine.SerialSearchEngineFactory;
-import bishop.engine.TablebasePositionEvaluator;
 
 public class SearchResources {
 	
@@ -49,10 +37,8 @@ public class SearchResources {
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 
 		final PieceTypeEvaluations pieceTypeEvaluations = evaluationCoeffs.getPieceTypeEvaluations();
-		final IMaterialEvaluator materialEvaluator = new DefaultAdditiveMaterialEvaluator(pieceTypeEvaluations);
 		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, getEvaluationFactory());
-		
-		searchEngineFactory.setMaterialEvaluator(materialEvaluator);
+
 		searchEngineFactory.setPositionEvaluatorFactory(evaluatorFactory);
 		searchEngineFactory.setEvaluationFactory(evaluationFactory);
 		searchEngineFactory.setMaximalDepth(MAX_TOTAL_DEPTH);
@@ -69,7 +55,7 @@ public class SearchResources {
 		searchManager.setHashTable(hashTable);
 		searchManager.setTablebaseEvaluator (tablebasePositionEvaluator);
 		searchManager.setThreadCount(threadCount);
-		searchManager.setMaterialEvaluator (materialEvaluator);
+		searchManager.setPieceTypeEvaluations (pieceTypeEvaluations);
 		searchManager.setCombinedPositionEvaluationTable(new CombinedPositionEvaluationTable(evaluationCoeffs));
 		
 		setBookToManager();

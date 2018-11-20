@@ -18,13 +18,11 @@ public class MobilityPositionEvaluator {
 	
 	public IPositionEvaluation evaluatePosition(final Position position, final AttackCalculator attackCalculator) {
 		mobilityEvaluation.clear();
-				
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
-				final int mobility = attackCalculator.getMobility(color, pieceType);
-				final int coeff = getCoeffForPieceType(pieceType);
-				mobilityEvaluation.addCoeff(coeff, color, mobility);
-			}
+
+		for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
+			final int mobility = attackCalculator.getMobility(pieceType);
+			final int coeff = getCoeffForPieceType(pieceType);
+			mobilityEvaluation.addCoeff(coeff, mobility);
 		}
 		
 		return mobilityEvaluation;

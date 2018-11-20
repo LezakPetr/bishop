@@ -66,7 +66,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final MoveExtensionEvaluator moveExtensionEvaluator;
 	private SearchTask task;
 	private PieceTypeEvaluations pieceTypeEvaluations;
-	private IMaterialEvaluator materialEvaluator;
 	private IPositionEvaluator positionEvaluator;
 	private final HandlerRegistrarImpl<ISearchEngineHandler> handlerRegistrar;
 	private int lastPositionalEvaluation;
@@ -240,7 +239,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			// Evaluate position
 			int whitePositionEvaluation = tacticalEvaluation;
 			
-			final int materialEvaluation = materialEvaluator.evaluateMaterial(currentPosition.getMaterialHash());
+			final int materialEvaluation = currentPosition.getMaterialEvaluation();
 			final int materialEvaluationShift = positionEvaluator.getMaterialEvaluationShift();
 			
 			whitePositionEvaluation += materialEvaluation >> materialEvaluationShift;
@@ -338,7 +337,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	
 				// If precalculated move didn't make beta cutoff try other moves
 				if (!precalculatedBetaCutoff) {
-					generateAndSortMoves(currentRecord, horizon, isQuiescenceSearch, isCheckSearch);
+					generateAndSortMoves(currentRecord, horizon, isQuiescenceSearch, isCheckSearch, isCheck);
 					
 					// First legal move
 					while (currentRecord.moveListEnd > currentRecord.moveListBegin) {
@@ -349,7 +348,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 						moveStack.getMove(currentRecord.moveListEnd - 1, move);
 						
 						if (!move.equals(precalculatedMove)) {
-							final int beginMaterialEvaluation = materialEvaluator.evaluateMaterial(currentPosition.getMaterialHash());
+							final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
 							currentPosition.makeMove(move);
 							
 							final int reducedHorizon = calculateReducedHorizon(horizon, move, isCheck, pvNode, currentRecord);
@@ -594,7 +593,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		return false;
 	}
 
-	private void generateAndSortMoves(final NodeRecord currentRecord, final int horizon, final boolean isQuiescenceSearch, final boolean isCheckSearch) {
+	private void generateAndSortMoves(final NodeRecord currentRecord, final int horizon, final boolean isQuiescenceSearch, final boolean isCheckSearch, final boolean isCheck) {
 		currentRecord.moveListBegin = moveStackTop;
 		
 		final EvaluatedMoveList rootMoveList = task.getRootMoveList();
@@ -616,7 +615,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			}
 			else {
 				pseudoLegalMoveGenerator.setPosition(currentPosition);
-				pseudoLegalMoveGenerator.setReduceMovesInCheck(isCheckSearch);
+				pseudoLegalMoveGenerator.setReduceMovesInCheck(isCheck);
 				pseudoLegalMoveGenerator.generateMoves();
 				
 				currentRecord.allMovesGenerated = true;
@@ -637,7 +636,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 */
 	private ISearchResult evaluateMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta) {
 		final NodeRecord currentRecord = nodeStack[currentDepth];
-		final int beginMaterialEvaluation = materialEvaluator.evaluateMaterial(currentPosition.getMaterialHash());
+		final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
 		
 		currentPosition.makeMove(move);
 		
@@ -845,21 +844,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	}
 
 	/**
-	 * Sets material evaluator.
-	 * Engine must be in STOPPED state.
-	 * @param evaluator material evaluator
-	 */
-	@Override
-	public void setMaterialEvaluator(final IMaterialEvaluator evaluator) {
-		synchronized (monitor) {
-			checkEngineState(EngineState.STOPPED);
-
-			this.materialEvaluator = evaluator;
-			moveExtensionEvaluator.setMaterialEvaluator(materialEvaluator);
-		}
-	}
-
-	/**
 	 * Sets piece type evaluations.
 	 * Engine must be in STOPPED state.
 	 */
@@ -871,6 +855,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			this.pieceTypeEvaluations = pieceTypeEvaluations;
 			moveExtensionEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
 			finiteEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
+			currentPosition.setPieceTypeEvaluations(pieceTypeEvaluations);
 		}
 	}
 

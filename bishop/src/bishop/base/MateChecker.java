@@ -1,6 +1,7 @@
 package bishop.base;
 
 import bishop.tables.FigureAttackTable;
+import bishop.tables.MateCheckerTables;
 
 public class MateChecker {
 
@@ -45,7 +46,7 @@ public class MateChecker {
 		long attackedSquares = FigureAttackTable.getItem(PieceType.KING, oppositeKingSquare);
 		
 		// Knight
-		final long oppositeKnightMask = position.getPiecesMask(oppositeColor, PieceType.KNIGHT);
+		final long oppositeKnightMask = position.getPiecesMask(oppositeColor, PieceType.KNIGHT) & MateCheckerTables.getKnightAffectingSquares(ownKingSquare);
 		
 		for (BitLoop loop = new BitLoop(oppositeKnightMask); loop.hasNextSquare(); ) {
 			final int sourceSquare = loop.getNextSquare();
@@ -61,7 +62,8 @@ public class MateChecker {
 		final long ownKingMask = BitBoard.getSquareMask(ownKingSquare);
 		final long blockers = occupancy & ~ownKingMask;
 
-		final long oppositeBishopMask = position.getPiecesMask(oppositeColor, PieceType.BISHOP);
+		final long diagonalAffectingSquares = MateCheckerTables.getLineAffectingSquares(CrossDirection.DIAGONAL, ownKingSquare);
+		final long oppositeBishopMask = position.getPiecesMask(oppositeColor, PieceType.BISHOP) & diagonalAffectingSquares;
 		
 		for (BitLoop loop = new BitLoop(oppositeBishopMask); loop.hasNextSquare(); ) {
 			final int sourceSquare = loop.getNextSquare();
@@ -71,7 +73,8 @@ public class MateChecker {
 		}
 
 		// Rook
-		final long oppositeRookMask = position.getPiecesMask(oppositeColor, PieceType.ROOK);
+		final long orthogonalAffectingSquares = MateCheckerTables.getLineAffectingSquares(CrossDirection.ORTHOGONAL, ownKingSquare);
+		final long oppositeRookMask = position.getPiecesMask(oppositeColor, PieceType.ROOK) & orthogonalAffectingSquares;
 		
 		for (BitLoop loop = new BitLoop(oppositeRookMask); loop.hasNextSquare(); ) {
 			final int sourceSquare = loop.getNextSquare();
@@ -81,7 +84,7 @@ public class MateChecker {
 		}
 
 		// Queen
-		final long oppositeQueenMask = position.getPiecesMask(oppositeColor, PieceType.QUEEN);
+		final long oppositeQueenMask = position.getPiecesMask(oppositeColor, PieceType.QUEEN) & (orthogonalAffectingSquares | diagonalAffectingSquares);
 		
 		for (BitLoop loop = new BitLoop(oppositeQueenMask); loop.hasNextSquare(); ) {
 			final int sourceSquare = loop.getNextSquare();

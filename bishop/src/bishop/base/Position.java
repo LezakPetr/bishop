@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 
+import bishop.engine.GameStage;
 import bishop.tables.*;
 import utils.IAssignable;
 import utils.ICopyable;
@@ -906,6 +907,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	public Position copy() {
 		final Position position = new Position(caching instanceof NullPositionCaching);
 		position.setCombinedPositionEvaluationTable(caching.getCombinedPositionEvaluationTable());
+		position.setPieceTypeEvaluations(caching.getPieceTypeEvaluations());
 		position.assign(this);
 		
 		return position;
@@ -1016,6 +1018,8 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final long oldHash = getHash();
 		final MaterialHash oldMaterialHash = getMaterialHash().copy();
 		final long oldCombinedEvaluation = caching.getCombinedEvaluation();
+		final int oldMaterialEvaluation = caching.getMaterialEvaluation();
+		final int oldGameStageUnbound = caching.getGameStageUnbound();
 
 		updateCaches();
 		
@@ -1026,7 +1030,13 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 			throw new RuntimeException("Material hash was corrupted");
 
 		if (caching.getCombinedEvaluation() != oldCombinedEvaluation)
-			throw new RuntimeException("Combinedevaluation was corrupted");
+			throw new RuntimeException("Combined evaluation was corrupted");
+
+		if (caching.getMaterialEvaluation() != oldMaterialEvaluation)
+			throw new RuntimeException("Material evaluation was corrupted");
+
+		if (caching.getGameStageUnbound() != oldGameStageUnbound)
+			throw new RuntimeException("Game stage unbound was corrupted");
 	}
 	
 	/**
@@ -1250,5 +1260,20 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	@Override
 	public void setCombinedPositionEvaluationTable(final CombinedPositionEvaluationTable table) {
 		caching.setCombinedPositionEvaluationTable(table);
+	}
+
+	@Override
+	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations) {
+		caching.setPieceTypeEvaluations (pieceTypeEvaluations);
+	}
+
+	@Override
+	public int getMaterialEvaluation() {
+		return caching.getMaterialEvaluation();
+	}
+
+	@Override
+	public int getGameStage() {
+		return Math.min(caching.getGameStageUnbound(), GameStage.MAX);
 	}
 }

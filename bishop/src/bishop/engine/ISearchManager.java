@@ -1,9 +1,6 @@
 package bishop.engine;
 
-import bishop.base.CombinedPositionEvaluationTable;
-import bishop.base.IHandlerRegistrar;
-import bishop.base.IMaterialEvaluator;
-import bishop.base.Position;
+import bishop.base.*;
 
 public interface ISearchManager {
 	enum ManagerState {
@@ -83,11 +80,10 @@ public interface ISearchManager {
 	public void setEngineFactory (final ISearchEngineFactory factory);
 
 	/**
-	 * Sets material evaluator.
+	 * Sets piece type evaluations.
 	 * Manager must be in STOPPED state.
-	 * @param evaluator material evaluator
 	 */
-	public void setMaterialEvaluator (final IMaterialEvaluator evaluator);
+	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations);
 
 	/**
 	 * Sets combined position evaluation table.

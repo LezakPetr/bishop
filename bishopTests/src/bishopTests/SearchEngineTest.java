@@ -94,7 +94,6 @@ public class SearchEngineTest {
 		engine.setPositionEvaluator(evaluator);
 		engine.setMaximalDepth(20);
 		engine.setSearchSettings(new SearchSettings());
-		engine.setMaterialEvaluator(new DefaultAdditiveMaterialEvaluator(pte));
 		engine.setPieceTypeEvaluations(pte);
 	}
 

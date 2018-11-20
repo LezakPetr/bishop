@@ -27,23 +27,23 @@ public final class GeneralEvaluatorSettings {
 		final ShortAttackEvaluationTable[] knightTables = new ShortAttackEvaluationTable[Square.LAST];
 		final ShortAttackEvaluationTable[][] pawnTables = new ShortAttackEvaluationTable[Color.LAST][Square.LAST];
 		
-		for (int square = Square.FIRST; square < Square.LAST; square++) {
-			lineTables[square] = calculateLineTableForSquare (square);
-			knightTables[square] = calculateShortTableForSquare (Piece.WHITE_KNIGHT, square);
+		for (int kingSquare = Square.FIRST; kingSquare < Square.LAST; kingSquare++) {
+			lineTables[kingSquare] = calculateLineTableForSquare (kingSquare);
+			knightTables[kingSquare] = calculateShortTableForSquare (Piece.WHITE_KNIGHT, kingSquare);
 			
-			for (int color = Color.FIRST; color < Color.LAST; color++)
-				pawnTables[color][square] = calculateShortTableForSquare (Piece.withColorAndType(color, PieceType.PAWN), square);
+			for (int pawnColor = Color.FIRST; pawnColor < Color.LAST; pawnColor++)
+				pawnTables[pawnColor][kingSquare] = calculateShortTableForSquare (Piece.withColorAndType(pawnColor, PieceType.PAWN), kingSquare);
 		}
 		
-		for (int whiteSquare = Square.FIRST; whiteSquare < Square.LAST; whiteSquare++) {
-			for (int blackSquare = Square.FIRST; blackSquare < Square.LAST; blackSquare++) {
+		for (int whiteKingSquare = Square.FIRST; whiteKingSquare < Square.LAST; whiteKingSquare++) {
+			for (int blackKingSquare = Square.FIRST; blackKingSquare < Square.LAST; blackKingSquare++) {
 				final AttackEvaluationTableGroup group = new AttackEvaluationTableGroup(
-					lineTables[whiteSquare], lineTables[blackSquare],
-					knightTables[whiteSquare], knightTables[blackSquare],
-					pawnTables[Color.BLACK][whiteSquare], pawnTables[Color.WHITE][blackSquare]
+					lineTables[whiteKingSquare], lineTables[blackKingSquare],
+					knightTables[whiteKingSquare], knightTables[blackKingSquare],
+					pawnTables[Color.BLACK][whiteKingSquare], pawnTables[Color.WHITE][blackKingSquare]
 				);
 				
-				attackTableGroups[whiteSquare][blackSquare] = group;
+				attackTableGroups[whiteKingSquare][blackKingSquare] = group;
 			}
 		}
 	}

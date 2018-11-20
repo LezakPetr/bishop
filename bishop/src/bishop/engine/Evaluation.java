@@ -3,6 +3,7 @@ package bishop.engine;
 import bishop.base.Color;
 import bishop.base.PieceTypeEvaluations;
 import bishop.tablebase.Classification;
+import utils.IntUtils;
 
 public class Evaluation {
 
@@ -43,17 +44,17 @@ public class Evaluation {
 	}
 
 	public static int getRelative(final int absoluteEvaluation, final int onTurn) {
-		if (onTurn == Color.WHITE)
-			return absoluteEvaluation;
-		else
-			return -absoluteEvaluation;
+		assert Color.WHITE == 0;
+		assert Color.BLACK == 1;
+
+		return IntUtils.conditionalNegate(onTurn, absoluteEvaluation);
 	}
 	
 	public static int getAbsolute(final int relativeEvaluation, final int onTurn) {
-		if (onTurn == Color.WHITE)
-			return relativeEvaluation;
-		else
-			return -relativeEvaluation;
+		assert Color.WHITE == 0;
+		assert Color.BLACK == 1;
+
+		return IntUtils.conditionalNegate(onTurn, relativeEvaluation);
 	}
 
 	public static boolean isLoseMateSearch(final int beta) {
