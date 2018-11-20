@@ -6,11 +6,9 @@ import bishop.engine.GameStage;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.stream.IntStream;
-
 public class CombinedEvaluationTest {
 	@Test
-	public void test() {
+	public void testDecoder() {
 		for (int gameStage = GameStage.FIRST; gameStage < GameStage.LAST; gameStage++) {
 			final long multiplier = CombinedEvaluation.getMultiplicatorForGameStage(gameStage);
 
@@ -34,5 +32,18 @@ public class CombinedEvaluationTest {
 				}
 			}
 		}
+	}
+
+	private void testComponentMultiplicatorsForGameStage(final int gameStage, final int multiplicatorOpening, final int multiplicatorMiddleGame, final int multiplicatorEnding) {
+		Assert.assertEquals(multiplicatorOpening, CombinedEvaluation.getComponentMultiplicator(gameStage, CombinedEvaluation.COMPONENT_OPENING));
+		Assert.assertEquals(multiplicatorMiddleGame, CombinedEvaluation.getComponentMultiplicator(gameStage, CombinedEvaluation.COMPONENT_MIDDLE_GAME));
+		Assert.assertEquals(multiplicatorEnding, CombinedEvaluation.getComponentMultiplicator(gameStage, CombinedEvaluation.COMPONENT_ENDING));
+	}
+
+	@Test
+	public void testComponentMultiplicators() {
+		testComponentMultiplicatorsForGameStage(GameStage.FIRST, 0, 0, CombinedEvaluation.MAX_ALPHA);
+		testComponentMultiplicatorsForGameStage(CombinedEvaluation.MIDDLE_GAME_TRESHOLD, 0, CombinedEvaluation.MAX_ALPHA, 0);
+		testComponentMultiplicatorsForGameStage(GameStage.LAST - 1, CombinedEvaluation.MAX_ALPHA, 0, 0);
 	}
 }
