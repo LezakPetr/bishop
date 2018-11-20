@@ -44,17 +44,11 @@ public class Evaluation {
 	}
 
 	public static int getRelative(final int absoluteEvaluation, final int onTurn) {
-		assert Color.WHITE == 0;
-		assert Color.BLACK == 1;
-
-		return IntUtils.conditionalNegate(onTurn, absoluteEvaluation);
+		return Color.colorNegate(onTurn, absoluteEvaluation);
 	}
 	
 	public static int getAbsolute(final int relativeEvaluation, final int onTurn) {
-		assert Color.WHITE == 0;
-		assert Color.BLACK == 1;
-
-		return IntUtils.conditionalNegate(onTurn, relativeEvaluation);
+		return Color.colorNegate(onTurn, relativeEvaluation);
 	}
 
 	public static boolean isLoseMateSearch(final int beta) {

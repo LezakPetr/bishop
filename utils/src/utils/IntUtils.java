@@ -106,12 +106,4 @@ public class IntUtils {
 		}
 	}
 
-	/**
-	 * Returns value if condition == 0.
-	 * Returns -value if condition == 1.
-	 * Result is undefined if condition has other value.
-	 */
-	public static int conditionalNegate (final int condition, final int value) {
-		return (value ^ -condition) + condition;
-	}
 }

@@ -105,4 +105,13 @@ public class Color {
 
 		return table;
 	}
+
+	/**
+	 * Returns value if color == Color.WHITE.
+	 * Returns -value if color == Color.BLACK.
+	 * Result is undefined if color has other value.
+	 */
+	public static int colorNegate (final int color, final int value) {
+		return (value ^ -color) + color;
+	}
 }

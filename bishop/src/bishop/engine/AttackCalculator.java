@@ -61,7 +61,7 @@ public class AttackCalculator {
 		final long occupancy = position.getOccupancy();
 		final BitLoop sourceSquareLoop = new BitLoop();
 		hasPin = false;
-		
+
 		Arrays.fill(mobility, 0);
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
@@ -77,16 +77,14 @@ public class AttackCalculator {
 			
 			// Bishop
 			final long bishopMask = position.getPiecesMask(color, PieceType.BISHOP);
+			long bishopAttackedSquares = BitBoard.EMPTY;
 			
 			for (sourceSquareLoop.init(bishopMask); sourceSquareLoop.hasNextSquare(); ) {
 				final int sourceSquare = sourceSquareLoop.getNextSquare();
 				
 				final int index = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, sourceSquare, blockingSquares);
 				final long attack = LineAttackTable.getAttackMask(index);
-				final int mobilityCount = BitBoard.getSquareCount(attack & freeSquares);
-				
-				mobility[PieceType.BISHOP] += Evaluation.getRelative(mobilityCount, color);
-				ownAttackedSquares |= attack;
+				bishopAttackedSquares |= attack;
 
 				final long pinTargets = oppositeRooks | oppositeQueens | oppositeKings;
 
@@ -94,18 +92,19 @@ public class AttackCalculator {
 					hasPin |= isPin (sourceSquare, pinTargets, index);
 			}
 
+			mobility[PieceType.BISHOP] += Color.colorNegate(color, BitBoard.getSquareCount(bishopAttackedSquares & freeSquares));
+			ownAttackedSquares |= bishopAttackedSquares;
+
 			// Rook
 			final long rookMask = position.getPiecesMask(color, PieceType.ROOK);
+			long rookAttackedSquares = BitBoard.EMPTY;
 			
 			for (sourceSquareLoop.init(rookMask); sourceSquareLoop.hasNextSquare(); ) {
 				final int sourceSquare = sourceSquareLoop.getNextSquare();
 				
 				final int index = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, sourceSquare, blockingSquares);
 				final long attack = LineAttackTable.getAttackMask(index);
-				final int mobilityCount = BitBoard.getSquareCount(attack & freeSquares);
-				
-				mobility[PieceType.ROOK] += Evaluation.getRelative(mobilityCount, color);
-				ownAttackedSquares |= attack;
+				rookAttackedSquares |= attack;
 
 				final long pinnedSquares = oppositeQueens | oppositeKings;
 
@@ -113,8 +112,12 @@ public class AttackCalculator {
 					hasPin |= isPin (sourceSquare, pinnedSquares, index);
 			}
 
+			mobility[PieceType.ROOK] += Color.colorNegate(color, BitBoard.getSquareCount(rookAttackedSquares & freeSquares));
+			ownAttackedSquares |= rookAttackedSquares;
+
 			// Queen
 			final long queenMask = position.getPiecesMask(color, PieceType.QUEEN);
+			long queenAttackedSquares = BitBoard.EMPTY;
 			
 			for (sourceSquareLoop.init(queenMask); sourceSquareLoop.hasNextSquare(); ) {
 				final int sourceSquare = sourceSquareLoop.getNextSquare();
@@ -126,24 +129,25 @@ public class AttackCalculator {
 				final long attackOrthogonal = LineAttackTable.getAttackMask(indexOrthogonal);
 
 				final long attack = attackOrthogonal | attackDiagonal;
-				final int mobilityCount = BitBoard.getSquareCount(attack & freeSquares);
-				mobility[PieceType.QUEEN] += Evaluation.getRelative(mobilityCount, color);
-
-				ownAttackedSquares |= attack;
+				queenAttackedSquares |= attack;
 			}
+
+			mobility[PieceType.QUEEN] += Color.colorNegate(color, BitBoard.getSquareCount(queenAttackedSquares & freeSquares));
+			ownAttackedSquares |= queenAttackedSquares;
 			
 			//Knight
 			final long knightMask = position.getPiecesMask(color, PieceType.KNIGHT);
+			long knightAttackedSquares = BitBoard.EMPTY;
 			
 			for (sourceSquareLoop.init(knightMask); sourceSquareLoop.hasNextSquare(); ) {
 				final int sourceSquare = sourceSquareLoop.getNextSquare();
 				final long attack = FigureAttackTable.getItem(PieceType.KNIGHT, sourceSquare);
-				
-				final int mobilityCount = BitBoard.getSquareCount(attack & freeSquares);
-				mobility[PieceType.KNIGHT] += Evaluation.getRelative(mobilityCount, color);
-				ownAttackedSquares |= attack;
+				knightAttackedSquares |= attack;
 			}
-			
+
+			mobility[PieceType.QUEEN] += Color.colorNegate(color, BitBoard.getSquareCount(knightAttackedSquares & freeSquares));
+			ownAttackedSquares |= knightAttackedSquares;
+
 			// King
 			final int kingSquare = position.getKingPosition(color);
 			final long kingAttack = FigureAttackTable.getItem(PieceType.KING, kingSquare);
