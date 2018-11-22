@@ -3,6 +3,8 @@ package bishop.engine;
 import bishop.base.*;
 import bishop.tables.FigureAttackTable;
 
+import java.util.Arrays;
+
 public class MobilityCalculator {
 	private final long[] colorOccupancy = new long[Color.LAST];
 
@@ -18,14 +20,18 @@ public class MobilityCalculator {
 	private final long[] queenKeys = new long[Color.LAST];
 	private final long[] queenAttackedSquares = new long[Color.LAST];
 
+	private final long[] pawnAttackedSquares = new long[Color.LAST];
+	private final long[] kingAttackedSquares = new long[Color.LAST];
+
 	private final long[] attackedSquares = new long[Color.LAST];
 
 	public void calculate(final Position position, final MobilityCalculator parentCalculator) {
 		readColorOccupancy(position);
 
 		final long changeMask = calculateChangeMask(parentCalculator);
-
 		final long occupancy = position.getOccupancy();
+
+		Arrays.fill(attackedSquares, BitBoard.EMPTY);
 
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int oppositeColor = Color.getOppositeColor(color);
@@ -34,7 +40,9 @@ public class MobilityCalculator {
 			calculateKnights(color, position, parentCalculator, changeMask);
 			calculateBishops(color, blockingSquares, position, parentCalculator, changeMask);
 			calculateRooks(color, blockingSquares, position, parentCalculator, changeMask);
-			calculateQueen(color, blockingSquares, position, parentCalculator, changeMask);
+			calculateQueens(color, blockingSquares, position, parentCalculator, changeMask);
+			calculatePawns(color, position);
+			calculateKings(color, position);
 		}
 	}
 
@@ -76,6 +84,8 @@ public class MobilityCalculator {
 			knightAttackedSquares[color] = attackedSquares;
 			knightMasks[color] = knightMask;
 		}
+
+		attackedSquares[color] |= knightAttackedSquares[color];
 	}
 
 	private void calculateBishops(final int color, final long blockingSquares, final Position position, final MobilityCalculator parentCalculator, final long changeMask) {
@@ -99,6 +109,8 @@ public class MobilityCalculator {
 			bishopKeys[color] = bishopMask | attackedSquares;
 			bishopAttackedSquares[color] = attackedSquares;
 		}
+
+		attackedSquares[color] |= bishopAttackedSquares[color];
 	}
 
 	private void calculateRooks(final int color, final long blockingSquares, final Position position, final MobilityCalculator parentCalculator, final long changeMask) {
@@ -122,9 +134,11 @@ public class MobilityCalculator {
 			rookKeys[color] = rookMask | attackedSquares;
 			rookAttackedSquares[color] = attackedSquares;
 		}
+
+		attackedSquares[color] |= rookAttackedSquares[color];
 	}
 
-	private void calculateQueen(final int color, final long blockingSquares, final Position position, final MobilityCalculator parentCalculator, final long changeMask) {
+	private void calculateQueens(final int color, final long blockingSquares, final Position position, final MobilityCalculator parentCalculator, final long changeMask) {
 		final long queenMask = position.getPiecesMask(color, PieceType.QUEEN);
 
 		if (parentCalculator != null && ((parentCalculator.queenKeys[color] | queenMask) & changeMask) == 0) {
@@ -150,7 +164,22 @@ public class MobilityCalculator {
 			queenKeys[color] = queenMask | attackedSquares;
 			queenAttackedSquares[color] = attackedSquares;
 		}
+
+		attackedSquares[color] |= queenAttackedSquares[color];
 	}
+
+	private void calculatePawns(final int color, final Position position) {
+		final long attack = BoardConstants.getPawnsAttackedSquares(color, position.getPiecesMask(color, PieceType.PAWN));
+		pawnAttackedSquares[color] = attack;
+		attackedSquares[color] |= attack;
+	}
+
+	private void calculateKings(final int color, final Position position) {
+		final long attack = FigureAttackTable.getItem(PieceType.KING, position.getKingPosition(color));
+		pawnAttackedSquares[color] = attack;
+		attackedSquares[color] |= attack;
+	}
+
 
 	public long getKnightAttackedSquares(final int color) {
 		return knightAttackedSquares[color];
@@ -166,6 +195,34 @@ public class MobilityCalculator {
 
 	public long getQueenAttackedSquares(final int color) {
 		return queenAttackedSquares[color];
+	}
+
+	public long getKingAttackedSquares(final int color) {
+		return kingAttackedSquares[color];
+	}
+
+	public long getPawnAttackedSquares(final int color) {
+		return pawnAttackedSquares[color];
+	}
+
+	public long getAllAttackedSquares(final int color) {
+		return attackedSquares[color];
+	}
+
+	public boolean isSquareAttacked (final int color, final int square) {
+		return BitBoard.containsSquare(attackedSquares[color], square);
+	}
+
+	public boolean canBeMate(final Position position) {
+		final int onTurn = position.getOnTurn();
+		final int notOnTurn = Color.getOppositeColor(onTurn);
+		final int kingSquare = position.getKingPosition(onTurn);
+		final long kingMask = BitBoard.getSquareMask(kingSquare);
+
+		final long requiredSquares = kingMask | FigureAttackTable.getItem(PieceType.KING, kingSquare);
+		final long inaccessibleSquares = (position.getColorOccupancy(onTurn) & ~kingMask) | attackedSquares[notOnTurn];
+
+		return ((~inaccessibleSquares & requiredSquares) == 0);
 	}
 
 }

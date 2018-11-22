@@ -24,6 +24,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	private final PawnStructureEvaluator pawnStructureEvaluator;
 	private final IPositionEvaluation tacticalEvaluation;
 	private final IPositionEvaluation positionalEvaluation;
+	private final AttackCalculator attackCalculator = new AttackCalculator();
 	
 	private final GeneralEvaluatorSettings settings;
 	
@@ -74,7 +75,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		}
 	}
 	
-	private void evaluatePawns(final AttackCalculator attackCalculator) {
+	private void evaluatePawns() {
 		// Rule of square
 		if (gameStage == GameStage.PAWNS_ONLY) {
 			tacticalEvaluation.addSubEvaluation(pawnRaceEvaluator.evaluate(position));
@@ -82,14 +83,14 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	}
 	
 	@Override
-	public IPositionEvaluation evaluateTactical(final Position position, final AttackCalculator attackCalculator, final MobilityCalculator mobilityCalculator) {
+	public IPositionEvaluation evaluateTactical(final Position position, final MobilityCalculator mobilityCalculator) {
 		this.position = position;
 		
 		selectGameStage();
 		
 		clear();
-		calculateAttacks(attackCalculator, mobilityCalculator);
-		evaluatePawns(attackCalculator);
+		calculateAttacks(mobilityCalculator);
+		evaluatePawns();
 		
 		if (gameStage != GameStage.PAWNS_ONLY) {
 			final KingSafetyEvaluator kingSafetyEvaluator = kingSafetyEvaluators[gameStage];
@@ -100,7 +101,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	}
 
 	@Override
-	public IPositionEvaluation evaluatePositional (final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluatePositional() {
 		pawnStructureEvaluator.calculate(position);
 		positionalEvaluation.addSubEvaluation(tablePositionEvaluator.evaluate(position, gameStage));
 		
@@ -130,7 +131,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		gameStageCoeffs = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(gameStage);
 	}
 	
-	private void calculateAttacks(final AttackCalculator attackCalculator, final MobilityCalculator mobilityCalculator) {
+	private void calculateAttacks(final MobilityCalculator mobilityCalculator) {
 		final int whiteKingSquare = position.getKingPosition(Color.WHITE);
 		final int blackKingSquare = position.getKingPosition(Color.BLACK);
 		

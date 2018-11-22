@@ -251,10 +251,10 @@ public class PawnStructureEvaluatorTest {
 			evaluation.clear();
 			mobilityCalculator.calculate(position);
 
-			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, attackCalculator, mobilityCalculator);
+			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, mobilityCalculator);
 			evaluation.addSubEvaluation(tacticalEvaluation);
 			
-			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional(attackCalculator);
+			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional();
 			evaluation.addSubEvaluation(positionalEvaluation);
 						
 			final Map<Integer, Integer> givenCoeffMap = new HashMap<>();

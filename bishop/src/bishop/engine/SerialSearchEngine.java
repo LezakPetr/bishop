@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import bishop.base.*;
+import bishop.tables.FigureAttackTable;
 import math.SampledIntFunction;
 import math.Sigmoid;
 import utils.Logger;
@@ -74,20 +75,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private static final long[] bestMovePerIndexCounts = new long[PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION];
 	
 	private static final int MAX_ATTACK = AttackCalculator.MAX_REASONABLE_ATTACK_EVALUATION;
-	
-	private static final int MIN_MATE_DEPTH = 1;
-	private static final int MAX_MATE_DEPTH = 3;
+
+	private static final int WIN_MATE_DEPTH = 1;
+	private static final int LOSE_MATE_DEPTH = 1;
+	private static final int MAX_MATE_DEPTH = Math.max(WIN_MATE_DEPTH, LOSE_MATE_DEPTH);
 	private static final int MAX_MATE_EXTENSION = 4;
 	
-	private static final int MIN_MATE_ATTACK_EVALUATION = 100;
-	private static final int MAX_MATE_ATTACK_EVALUATION = 200;
-	
-	private static final SampledIntFunction MATE_DEPTH_CALCULATOR = new SampledIntFunction(
-		new Sigmoid(MIN_MATE_ATTACK_EVALUATION, MAX_MATE_ATTACK_EVALUATION, MIN_MATE_DEPTH, MAX_MATE_DEPTH),
-		AttackCalculator.MIN_ATTACK_EVALUATION, AttackCalculator.MAX_REASONABLE_ATTACK_EVALUATION
-	);
-	
-	private static final RatioCalculator[] mateSearchSuccessRatio = createMateStatistics();
 	private static final RatioCalculator hashSuccessRatio = new RatioCalculator();
 	private static final RatioCalculator hashPrimaryCollisionRate = new RatioCalculator();
 
@@ -135,7 +128,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	/**
 	 * Checks if engine is in one of given expected states. If not exception is
 	 * thrown. Expects that calling thread owns the monitor.
-	 * @param expectedState expected engine state
+	 * @param expectedStates expected engine states
 	 */
 	private void checkEngineState(final EngineState... expectedStates) {
 		for (EngineState state : expectedStates) {
@@ -195,7 +188,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		final NodeRecord currentRecord = nodeStack[currentDepth];
 		final int onTurn = currentPosition.getOnTurn();
-		final boolean isLegalPosition = !currentPosition.isSquareAttacked(onTurn, currentPosition.getKingPosition(Color.getOppositeColor(onTurn)));
+
+		final MobilityCalculator mobilityCalculator = nodeStack[currentDepth].mobilityCalculator;
+		mobilityCalculator.calculate(currentPosition, (currentDepth > 0) ? nodeStack[currentDepth - 1].mobilityCalculator : null);
+
+		final int oppositeColor = Color.getOppositeColor(onTurn);
+		final boolean isLegalPosition = !mobilityCalculator.isSquareAttacked(onTurn, currentPosition.getKingPosition(oppositeColor));
 		
 		currentRecord.principalVariation.clear();
 
@@ -229,12 +227,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		final boolean isFirstQuiescence = isQuiescenceSearch && currentDepth > 0 && !nodeStack[currentDepth - 1].isQuiescenceSearch;
 		final MobilityCalculator mobilityCalculator = nodeStack[currentDepth].mobilityCalculator;
-		mobilityCalculator.calculate(currentPosition, (currentDepth > 0) ? nodeStack[currentDepth - 1].mobilityCalculator : null);
 
-		final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, currentRecord.attackCalculator, mobilityCalculator).getEvaluation();
-		
+		final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, mobilityCalculator).getEvaluation();
+		final int ownKingSquare = currentPosition.getKingPosition(onTurn);
+		final boolean isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
+
 		if (currentDepth > 0 && (!isQuiescenceSearch || isFirstQuiescence)) {
-			if (mateSearch(currentRecord, onTurn, oppositeColor, horizon, initialAlpha, initialBeta))
+			if (mateSearch(currentRecord, onTurn, oppositeColor, horizon, initialAlpha, initialBeta, isCheck))
 				return;
 		}
 		
@@ -250,21 +249,20 @@ public final class SerialSearchEngine implements ISearchEngine {
 			if (!isQuiescenceSearch || isFirstQuiescence) {
 				// Calculate positional evaluation in normal search and first depth of quiescence search.
 				// So it will remain cached for the quiescence search, 
-				lastPositionalEvaluation = positionEvaluator.evaluatePositional(currentRecord.attackCalculator).getEvaluation();;
+				lastPositionalEvaluation = positionEvaluator.evaluatePositional().getEvaluation();
 			}
 			
 			whitePositionEvaluation += lastPositionalEvaluation;
 			
 			final int positionEvaluation = Evaluation.getRelative(fixDrawByRepetitionEvaluation(whitePositionEvaluation), onTurn);
 			final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
-			final boolean isCheck = currentPosition.isCheck();
-			
+
 			final boolean isCheckSearch = isQuiescenceSearch && horizon > -maxCheckSearchDepth && isCheck;
 	
 			final int positionExtension;
 			
 			if (horizon >= searchSettings.getMinExtensionHorizon())
-				positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, hashRecord, horizon, currentRecord.attackCalculator);
+				positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, hashRecord, horizon);
 			else
 				positionExtension = 0;
 	
@@ -380,7 +378,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				
 				final int mateEvaluation = Evaluation.getMateEvaluation(currentDepth);
 				
-				checkMate(onTurn, isCheck, horizon, currentRecord, mateEvaluation, currentRecord.attackCalculator);
+				checkMate(onTurn, isCheck, horizon, currentRecord, mateEvaluation);
 			}
 		}
 		finally {
@@ -411,54 +409,35 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 	}
 
-	private boolean mateSearch(final NodeRecord currentRecord, final int onTurn, final int oppositeColor, final int horizon, final int alpha, final int beta) {
+	private boolean mateSearch(final NodeRecord currentRecord, final int onTurn, final int oppositeColor, final int horizon, final int alpha, final int beta, final boolean isCheck) {
 		mateFinder.setPosition(currentPosition);
 		mateFinder.setDepthAdvance(currentDepth);
 		
 		// Win
-		final int winAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(onTurn);
-		final int winDepth = MATE_DEPTH_CALCULATOR.applyAsInt(winAttackEvaluation);
-		
-		final int winEvaluation = mateFinder.findWin(winDepth);
+		final int winEvaluation = mateFinder.findWin(WIN_MATE_DEPTH);
 		
 		if (winEvaluation >= Evaluation.MATE_MIN) {
 			currentRecord.evaluation.setEvaluation(winEvaluation);				
 			currentRecord.evaluation.setAlpha(Evaluation.MIN);
 			currentRecord.evaluation.setBeta(Evaluation.MAX);
 			currentRecord.principalVariation.clear();
-			
-			if (GlobalSettings.isDebug())
-				mateSearchSuccessRatio[Math.min(winAttackEvaluation, MAX_ATTACK)].addInvocation(true);
-			
+
 			return true;
 		}
-		else {
-			if (GlobalSettings.isDebug())
-				mateSearchSuccessRatio[Math.min(winAttackEvaluation, MAX_ATTACK)].addInvocation(false);
-		}
-		
+
 		// Lose
-		if (currentRecord.attackCalculator.isKingAttacked(onTurn)) {
-			final int loseAttackEvaluation = currentRecord.attackCalculator.getAttackEvaluation(oppositeColor);
-			final int loseDepth = MATE_DEPTH_CALCULATOR.applyAsInt(loseAttackEvaluation);
-			
-			final int loseEvaluation = mateFinder.findLose(loseDepth);
+		if (isCheck) {
+			final int loseEvaluation = mateFinder.findLose(LOSE_MATE_DEPTH);
 			
 			if (loseEvaluation <= -Evaluation.MATE_MIN) {
 				currentRecord.evaluation.setEvaluation(loseEvaluation);				
 				currentRecord.evaluation.setAlpha(Evaluation.MIN);
 				currentRecord.evaluation.setBeta(Evaluation.MAX);
 				currentRecord.principalVariation.clear();
-				
-				if (GlobalSettings.isDebug())
-					mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(true);
-				
+
 				return true;
 			}	
 			else {
-				if (GlobalSettings.isDebug())
-					mateSearchSuccessRatio[Math.min(loseAttackEvaluation, MAX_ATTACK)].addInvocation(false);
-				
 				if (mateFinder.getNonLosingMoveCount() == 1) {
 					currentRecord.moveListBegin = moveStackTop;
 					currentRecord.moveListEnd = moveStackTop;
@@ -501,7 +480,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 * @param isCheck if there is check in the position
 	 * @return if there is a mate
 	 */
-	private boolean checkMate(final int onTurn, final boolean isCheck, final int horizon, final NodeRecord currentRecord, final int mateEvaluation, final AttackCalculator attackCalculator) {
+	private boolean checkMate(final int onTurn, final boolean isCheck, final int horizon, final NodeRecord currentRecord, final int mateEvaluation) {
 		boolean isMate = false;
 		
 		if (currentRecord.firstLegalMove.getMoveType() == MoveType.INVALID) {
@@ -521,7 +500,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			// If we are at horizon 0 not all moves was generated so we must
 			// check if there really isn't legal move. This is slow so we
 			// will detect only mate in case of check.
-			if (isCheck && !isMate && attackCalculator.getCanBeMate()) {
+			if (isCheck && !isMate && currentRecord.mobilityCalculator.canBeMate(currentPosition)) {
 				if (!legalMoveFinder.existsLegalMove(currentPosition)) {
 					currentRecord.evaluation.setEvaluation(-mateEvaluation);
 					
@@ -532,7 +511,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		return isMate;
 	}
-	
+
 	private boolean readHashRecord(final int horizon, final NodeRecord currentRecord, final HashRecord hashRecord) {
 		if (horizon <= 0)
 			return false;
@@ -653,7 +632,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final int moveExtension;
 		
 		if (horizon >= searchSettings.getMinExtensionHorizon())
-			moveExtension = moveExtensionEvaluator.getExtension(currentPosition, move, task.getRootMaterialEvaluation(), beginMaterialEvaluation, currentRecord.attackCalculator);
+			moveExtension = moveExtensionEvaluator.getExtension(currentPosition, move, task.getRootMaterialEvaluation(), beginMaterialEvaluation);
 		else
 			moveExtension = 0;
 		
@@ -840,7 +819,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			this.moveStack = new MoveStack(maxTotalDepth * PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
 
 			for (int i = 0; i < nodeStack.length; i++)
-				this.nodeStack[i] = new NodeRecord(maxTotalDepth - i - 1, evaluationFactory);
+				this.nodeStack[i] = new NodeRecord(maxTotalDepth - i - 1);
 			
 			mateFinder.setMaxDepth (MAX_MATE_DEPTH, maxTotalDepth, MAX_MATE_EXTENSION);
 		}
@@ -946,14 +925,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	
 	private void printStatistics() {
 		Logger.logMessage("Mate search");
-		
-		for (int i = 0; i <= MAX_ATTACK; i++) {
-			final double probability = mateSearchSuccessRatio[i].getRatio();
-			
-			if (Double.isFinite(probability))
-				Logger.logMessage(i + ", " + probability);
-		}
-		
+
 		final double hitRatio = hashSuccessRatio.getRatio();
 		final double primaryColissionRate = hashPrimaryCollisionRate.getRatio();
 		

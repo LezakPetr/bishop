@@ -92,10 +92,10 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 			final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
 			mobilityCalculator.calculate(position);
 			
-			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, attackCalculator, mobilityCalculator);
+			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, mobilityCalculator);
 			evaluation.addSubEvaluation(tacticalEvaluation);
 			
-			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional(attackCalculator);
+			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional();
 			evaluation.addSubEvaluation(positionalEvaluation);
 
 			if (evaluation.getConstantEvaluation() == 0) {

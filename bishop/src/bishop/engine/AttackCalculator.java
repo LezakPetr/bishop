@@ -12,7 +12,6 @@ import bishop.base.LineIndexer;
 import bishop.base.PieceType;
 import bishop.base.Position;
 import bishop.tables.BetweenTable;
-import bishop.tables.FigureAttackTable;
 
 public class AttackCalculator {
 
@@ -31,14 +30,12 @@ public class AttackCalculator {
 	private final long[] directlyAttackedSquares = new long[Color.LAST];   // Squares attacked by some piece
 	private final int[] mobility = new int[PieceType.LAST];
 	private final int[] attackEvaluation = new int[Color.LAST];   // Attack evaluation (always positive)
-	private boolean canBeMate;
 
 	public void calculate(final Position position, final AttackEvaluationTableGroup attackTables, final MobilityCalculator mobilityCalculator) {
 		fillKingMasks(position);
 		calculatePawnAttacks(position);
 		calculateMobility(position, mobilityCalculator);
 		calculateAttacks(position, attackTables);
-		calculateCanBeMate(position);
 	}
 
 	private void fillKingMasks(final Position position) {
@@ -62,34 +59,24 @@ public class AttackCalculator {
 			final int oppositeColor = Color.getOppositeColor(color);
 			final long oppositePawnAttacks = pawnAttackedSquares[oppositeColor];
 			final long freeSquares = ~(oppositePawnAttacks | position.getColorOccupancy(color));
-			long ownAttackedSquares = pawnAttackedSquares[color];
 
 			// Bishop
 			final long bishopAttackedSquares = mobilityCalculator.getBishopAttackedSquares(color);
 			mobility[PieceType.BISHOP] += Color.colorNegate(color, BitBoard.getSquareCount(bishopAttackedSquares & freeSquares));
-			ownAttackedSquares |= bishopAttackedSquares;
 
 			// Rook
 			final long rookAttackedSquares = mobilityCalculator.getRookAttackedSquares(color);
 			mobility[PieceType.ROOK] += Color.colorNegate(color, BitBoard.getSquareCount(rookAttackedSquares & freeSquares));
-			ownAttackedSquares |= rookAttackedSquares;
 
 			// Queen
 			final long queenAttackedSquares = mobilityCalculator.getQueenAttackedSquares(color);
 			mobility[PieceType.QUEEN] += Color.colorNegate(color, BitBoard.getSquareCount(queenAttackedSquares & freeSquares));
-			ownAttackedSquares |= queenAttackedSquares;
 			
 			//Knight
 			final long knightAttackedSquares = mobilityCalculator.getKnightAttackedSquares(color);
 			mobility[PieceType.QUEEN] += Color.colorNegate(color, BitBoard.getSquareCount(knightAttackedSquares & freeSquares));
-			ownAttackedSquares |= knightAttackedSquares;
 
-			// King
-			final int kingSquare = position.getKingPosition(color);
-			final long kingAttack = FigureAttackTable.getItem(PieceType.KING, kingSquare);
-			ownAttackedSquares |= kingAttack;
-			
-			directlyAttackedSquares[color] = ownAttackedSquares;
+			directlyAttackedSquares[color] = mobilityCalculator.getAllAttackedSquares(color);
 		}
 	}
 
@@ -183,18 +170,6 @@ public class AttackCalculator {
 		}
 	}
 	
-	private void calculateCanBeMate(final Position position) {
-		final int onTurn = position.getOnTurn();
-		final int notOnTurn = Color.getOppositeColor(onTurn);
-		final int kingSquare = position.getKingPosition(onTurn);
-		final long kingMask = BitBoard.getSquareMask(kingSquare);
-		
-		final long requiredSquares = kingMask | FigureAttackTable.getItem(PieceType.KING, kingSquare);
-		final long inaccessibleSquares = (position.getColorOccupancy(onTurn) & ~kingMask) | directlyAttackedSquares[notOnTurn];
-		
-		canBeMate = ((~inaccessibleSquares & requiredSquares) == 0);
-	}
-	
 	public int getMobility (final int pieceType) {
 		return mobility[pieceType];
 	}
@@ -202,19 +177,9 @@ public class AttackCalculator {
 	public int getAttackEvaluation(final int color) {
 		return attackEvaluation[color];
 	}
-	
-	public boolean isKingAttacked (final int color) {
-		final int oppositeColor = Color.getOppositeColor(color);
-		
-		return (directlyAttackedSquares[oppositeColor] & kingMasks[color]) != 0;
-	}
 
 	public long getDirectlyAttackedSquares(final int color) {
 		return directlyAttackedSquares[color];
-	}
-	
-	public boolean getCanBeMate() {
-		return canBeMate;
 	}
 
 }

@@ -19,10 +19,10 @@ public class PositionEvaluatorTest {
 			final long t1 = System.currentTimeMillis();
 
 			for (int j = 0; j < iterationCount; j++) {
-				evaluator.evaluateTactical(position, attackCalculator, mobilityCalculator);
+				evaluator.evaluateTactical(position, mobilityCalculator);
 
 				if (withPositionalEvaluation)
-					evaluator.evaluatePositional(attackCalculator);
+					evaluator.evaluatePositional();
 			}
 
 			if (i == 1) {

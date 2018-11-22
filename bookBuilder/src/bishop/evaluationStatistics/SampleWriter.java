@@ -53,10 +53,10 @@ public class SampleWriter implements IPositionProcessor, Closeable {
 			final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
 			mobilityCalculator.calculate(position);
 			
-			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, attackCalculator, mobilityCalculator);
+			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, mobilityCalculator);
 			evaluation.addSubEvaluation(tacticalEvaluation);
 			
-			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional(attackCalculator);
+			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional();
 			evaluation.addSubEvaluation(positionalEvaluation);
 
 			final double probabilityRightSide = PROBABILITY_RIGHT_SIDES.get(result);   // We will update the right side vector later in calculate

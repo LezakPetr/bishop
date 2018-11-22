@@ -22,18 +22,16 @@ public interface IPositionEvaluator {
 	/**
 	 * Returns tactical evaluation of given position.
 	 * @param position position to evaluate
-	 * @param attackCalculator calculator of attacks, it will be filled by current position
 	 * @param mobilityCalculator
 	 * @return evaluation from view of white side
 	 */
-	public IPositionEvaluation evaluateTactical(final Position position, final AttackCalculator attackCalculator, final MobilityCalculator mobilityCalculator);
+	public IPositionEvaluation evaluateTactical(final Position position, final MobilityCalculator mobilityCalculator);
 
 	/**
 	 * Returns positional evaluation of given position.
-	 * @param attackCalculator already filled calculator of attacks
 	 * @return evaluation from view of white side
 	 */
-	public IPositionEvaluation evaluatePositional (final AttackCalculator attackCalculator);
+	public IPositionEvaluation evaluatePositional();
 
 	/**
 	 * Returns number of bits that the material evaluation should be shifted right. 

@@ -8,7 +8,7 @@ public class MoveExtensionEvaluator {
 	private SearchSettings settings;
 	private PieceTypeEvaluations pieceTypeEvaluations;
 		
-	public int getExtension (final Position targetPosition, final Move move, final int rootMaterialEvaluation, final int beginMaterialEvaluation, final AttackCalculator attackCalculator) {
+	public int getExtension (final Position targetPosition, final Move move, final int rootMaterialEvaluation, final int beginMaterialEvaluation) {
 		final int movingPieceType = move.getMovingPieceType();
 		final int onTurn = targetPosition.getOnTurn();
 		final int oppositeColor = Color.getOppositeColor(onTurn);
