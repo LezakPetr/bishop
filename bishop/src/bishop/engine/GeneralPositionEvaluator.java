@@ -82,13 +82,13 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	}
 	
 	@Override
-	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluateTactical(final Position position, final AttackCalculator attackCalculator, final MobilityCalculator mobilityCalculator) {
 		this.position = position;
 		
 		selectGameStage();
 		
 		clear();
-		calculateAttacks(attackCalculator);
+		calculateAttacks(attackCalculator, mobilityCalculator);
 		evaluatePawns(attackCalculator);
 		
 		if (gameStage != GameStage.PAWNS_ONLY) {
@@ -130,11 +130,11 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		gameStageCoeffs = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(gameStage);
 	}
 	
-	private void calculateAttacks(final AttackCalculator attackCalculator) {
+	private void calculateAttacks(final AttackCalculator attackCalculator, final MobilityCalculator mobilityCalculator) {
 		final int whiteKingSquare = position.getKingPosition(Color.WHITE);
 		final int blackKingSquare = position.getKingPosition(Color.BLACK);
 		
-		attackCalculator.calculate(position, settings.getAttackTableGroup(whiteKingSquare, blackKingSquare));
+		attackCalculator.calculate(position, settings.getAttackTableGroup(whiteKingSquare, blackKingSquare), mobilityCalculator);
 	}
 	
 	private void evaluateSecureFigures() {

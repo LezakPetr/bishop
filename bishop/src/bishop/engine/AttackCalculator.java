@@ -9,7 +9,6 @@ import bishop.base.Color;
 import bishop.base.CrossDirection;
 import bishop.base.LineAttackTable;
 import bishop.base.LineIndexer;
-import bishop.base.Piece;
 import bishop.base.PieceType;
 import bishop.base.Position;
 import bishop.tables.BetweenTable;
@@ -33,12 +32,11 @@ public class AttackCalculator {
 	private final int[] mobility = new int[PieceType.LAST];
 	private final int[] attackEvaluation = new int[Color.LAST];   // Attack evaluation (always positive)
 	private boolean canBeMate;
-	private boolean hasPin;
 
-	public void calculate(final Position position, final AttackEvaluationTableGroup attackTables) {
+	public void calculate(final Position position, final AttackEvaluationTableGroup attackTables, final MobilityCalculator mobilityCalculator) {
 		fillKingMasks(position);
 		calculatePawnAttacks(position);
-		calculateMobility(position);
+		calculateMobility(position, mobilityCalculator);
 		calculateAttacks(position, attackTables);
 		calculateCanBeMate(position);
 	}
@@ -57,94 +55,32 @@ public class AttackCalculator {
 		}
 	}
 	
-	private void calculateMobility(final Position position) {
-		final long occupancy = position.getOccupancy();
-		final BitLoop sourceSquareLoop = new BitLoop();
-		hasPin = false;
-
+	private void calculateMobility(final Position position, final MobilityCalculator mobilityCalculator) {
 		Arrays.fill(mobility, 0);
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int oppositeColor = Color.getOppositeColor(color);
 			final long oppositePawnAttacks = pawnAttackedSquares[oppositeColor];
 			final long freeSquares = ~(oppositePawnAttacks | position.getColorOccupancy(color));
-			final long blockingSquares = occupancy & ~kingMasks[oppositeColor];
 			long ownAttackedSquares = pawnAttackedSquares[color];
-			
-			final long oppositeRooks = position.getPiecesMask(oppositeColor, PieceType.ROOK);
-			final long oppositeQueens = position.getPiecesMask(oppositeColor, PieceType.QUEEN);
-			final long oppositeKings = position.getPiecesMask(oppositeColor, PieceType.KING);
-			
+
 			// Bishop
-			final long bishopMask = position.getPiecesMask(color, PieceType.BISHOP);
-			long bishopAttackedSquares = BitBoard.EMPTY;
-			
-			for (sourceSquareLoop.init(bishopMask); sourceSquareLoop.hasNextSquare(); ) {
-				final int sourceSquare = sourceSquareLoop.getNextSquare();
-				
-				final int index = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, sourceSquare, blockingSquares);
-				final long attack = LineAttackTable.getAttackMask(index);
-				bishopAttackedSquares |= attack;
-
-				final long pinTargets = oppositeRooks | oppositeQueens | oppositeKings;
-
-				if ((pinTargets & attack) != 0)      // Speedup - there must be some attacked piece which is pinned																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																													
-					hasPin |= isPin (sourceSquare, pinTargets, index);
-			}
-
+			final long bishopAttackedSquares = mobilityCalculator.getBishopAttackedSquares(color);
 			mobility[PieceType.BISHOP] += Color.colorNegate(color, BitBoard.getSquareCount(bishopAttackedSquares & freeSquares));
 			ownAttackedSquares |= bishopAttackedSquares;
 
 			// Rook
-			final long rookMask = position.getPiecesMask(color, PieceType.ROOK);
-			long rookAttackedSquares = BitBoard.EMPTY;
-			
-			for (sourceSquareLoop.init(rookMask); sourceSquareLoop.hasNextSquare(); ) {
-				final int sourceSquare = sourceSquareLoop.getNextSquare();
-				
-				final int index = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, sourceSquare, blockingSquares);
-				final long attack = LineAttackTable.getAttackMask(index);
-				rookAttackedSquares |= attack;
-
-				final long pinnedSquares = oppositeQueens | oppositeKings;
-
-				if ((pinnedSquares & attack) != 0)   // Speedup - there must be some attacked piece which is pinned
-					hasPin |= isPin (sourceSquare, pinnedSquares, index);
-			}
-
+			final long rookAttackedSquares = mobilityCalculator.getRookAttackedSquares(color);
 			mobility[PieceType.ROOK] += Color.colorNegate(color, BitBoard.getSquareCount(rookAttackedSquares & freeSquares));
 			ownAttackedSquares |= rookAttackedSquares;
 
 			// Queen
-			final long queenMask = position.getPiecesMask(color, PieceType.QUEEN);
-			long queenAttackedSquares = BitBoard.EMPTY;
-			
-			for (sourceSquareLoop.init(queenMask); sourceSquareLoop.hasNextSquare(); ) {
-				final int sourceSquare = sourceSquareLoop.getNextSquare();
-				
-				final int indexDiagonal = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, sourceSquare, blockingSquares);
-				final long attackDiagonal = LineAttackTable.getAttackMask(indexDiagonal);
-				
-				final int indexOrthogonal = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, sourceSquare, blockingSquares);
-				final long attackOrthogonal = LineAttackTable.getAttackMask(indexOrthogonal);
-
-				final long attack = attackOrthogonal | attackDiagonal;
-				queenAttackedSquares |= attack;
-			}
-
+			final long queenAttackedSquares = mobilityCalculator.getQueenAttackedSquares(color);
 			mobility[PieceType.QUEEN] += Color.colorNegate(color, BitBoard.getSquareCount(queenAttackedSquares & freeSquares));
 			ownAttackedSquares |= queenAttackedSquares;
 			
 			//Knight
-			final long knightMask = position.getPiecesMask(color, PieceType.KNIGHT);
-			long knightAttackedSquares = BitBoard.EMPTY;
-			
-			for (sourceSquareLoop.init(knightMask); sourceSquareLoop.hasNextSquare(); ) {
-				final int sourceSquare = sourceSquareLoop.getNextSquare();
-				final long attack = FigureAttackTable.getItem(PieceType.KNIGHT, sourceSquare);
-				knightAttackedSquares |= attack;
-			}
-
+			final long knightAttackedSquares = mobilityCalculator.getKnightAttackedSquares(color);
 			mobility[PieceType.QUEEN] += Color.colorNegate(color, BitBoard.getSquareCount(knightAttackedSquares & freeSquares));
 			ownAttackedSquares |= knightAttackedSquares;
 
@@ -280,8 +216,5 @@ public class AttackCalculator {
 	public boolean getCanBeMate() {
 		return canBeMate;
 	}
-	
-	public boolean isPin() {
-		return hasPin;
-	}
+
 }

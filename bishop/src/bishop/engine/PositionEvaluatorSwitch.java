@@ -60,13 +60,13 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 	}
 	
 	@Override
-	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluateTactical(final Position position, final AttackCalculator attackCalculator, final MobilityCalculator mobilityCalculator) {
 		this.materialHash = position.getMaterialHash();
 		
 		calculateHasMatingMaterial();
 		selectCurrentEvaluator();
 		
-		tacticalEvaluation = currentEvaluator.evaluateTactical(position, attackCalculator);
+		tacticalEvaluation = currentEvaluator.evaluateTactical(position, attackCalculator, mobilityCalculator);
 		
 		return tacticalEvaluation;
 	}

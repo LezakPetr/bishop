@@ -2,29 +2,24 @@ package bishopTests;
 
 import java.util.function.Supplier;
 
+import bishop.engine.*;
 import org.junit.Test;
 
 import bishop.base.Position;
-import bishop.engine.AlgebraicPositionEvaluation;
-import bishop.engine.AttackCalculator;
-import bishop.engine.GeneralPositionEvaluator;
-import bishop.engine.IPositionEvaluation;
-import bishop.engine.IPositionEvaluator;
-import bishop.engine.PawnStructureCache;
-import bishop.engine.PositionEvaluatorSwitch;
-import bishop.engine.PositionEvaluatorSwitchSettings;
 
 public class PositionEvaluatorTest {
 	
 	private void testPositionEvaluatorSpeed (final Position position, final IPositionEvaluator evaluator, final boolean withPositionalEvaluation) {
 		final int iterationCount = 4000000;
 		final AttackCalculator attackCalculator = new AttackCalculator();
+		final MobilityCalculator mobilityCalculator = new MobilityCalculator();
+		mobilityCalculator.calculate(position);
 
 		for (int i = 0; i < 2; i++) {
 			final long t1 = System.currentTimeMillis();
 
 			for (int j = 0; j < iterationCount; j++) {
-				evaluator.evaluateTactical(position, attackCalculator);
+				evaluator.evaluateTactical(position, attackCalculator, mobilityCalculator);
 
 				if (withPositionalEvaluation)
 					evaluator.evaluatePositional(attackCalculator);

@@ -20,10 +20,10 @@ public final class MatingPositionEvaluator implements IPositionEvaluator {
 	}
 	
 	@Override
-	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator, final MobilityCalculator mobilityCalculator) {
 		this.position = position;
 		
-		attackCalculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
+		attackCalculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP, mobilityCalculator);
 		
 		return tacticalEvaluation;		
 	}

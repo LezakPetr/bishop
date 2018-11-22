@@ -21,6 +21,7 @@ public class NodeRecord implements ISearchResult {
 	public boolean isQuiescenceSearch;
 	public int legalMoveCount;
 	public int bestLegalMoveIndex;
+	public final MobilityCalculator mobilityCalculator;
 
 	public NodeRecord(final int maxPrincipalDepth, final Supplier<IPositionEvaluation> evaluationFactory) {
 		currentMove = new Move();
@@ -31,6 +32,7 @@ public class NodeRecord implements ISearchResult {
 		hashBestMove = new Move();
 		firstLegalMove = new Move();
 		attackCalculator = new AttackCalculator();
+		mobilityCalculator = new MobilityCalculator();
 	}
 
 	public void openNode(final int alpha, final int beta) {

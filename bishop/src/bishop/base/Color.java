@@ -112,6 +112,9 @@ public class Color {
 	 * Result is undefined if color has other value.
 	 */
 	public static int colorNegate (final int color, final int value) {
+		assert WHITE == 0;
+		assert BLACK == 1;
+
 		return (value ^ -color) + color;
 	}
 }

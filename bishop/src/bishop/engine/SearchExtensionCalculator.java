@@ -46,10 +46,7 @@ public class SearchExtensionCalculator {
 			
 			if (isRankAttack (position))
 				return settings.getRankAttackExtension();
-			
-			if (attackCalculator.isPin())
-				return settings.getPinExtension();
-			
+
 			return 0;
 		}
 	}

@@ -6,15 +6,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
+
+import bishop.base.*;
+import bishop.engine.MobilityCalculator;
 import org.junit.Assert;
 import junit.framework.AssertionFailedError;
 import org.junit.Test;
-
-import bishop.base.Fen;
-import bishop.base.IMoveGenerator;
-import bishop.base.IMoveWalker;
-import bishop.base.Move;
-import bishop.base.Position;
 
 public abstract class MoveGeneratorTestBase {
 
@@ -144,13 +141,16 @@ public abstract class MoveGeneratorTestBase {
 			final TestValue[] testValueArray = getTestValues();
 			final Fen fen = new Fen();
 			final IMoveGenerator generator = getMoveGenerator();
-	
+
 			for (TestValue testValue: testValueArray) {
 				fen.readFenFromString(testValue.positionFen);
 				
 				final Position position = fen.getPosition();
 				position.checkIntegrity();
-				
+
+				final MobilityCalculator parentMobilityCalculator = new MobilityCalculator();
+				parentMobilityCalculator.calculate(position);
+
 				final Set<Move> moveSet = getMoveSet(position);
 				
 				for (Move move: moveSet) {
@@ -161,6 +161,7 @@ public abstract class MoveGeneratorTestBase {
 						case DIRECT:
 							copyPosition.makeMove(move);
 							copyPosition.checkIntegrity();
+							checkMobility (copyPosition, parentMobilityCalculator);
 							copyPosition.undoMove(move);
 							copyPosition.checkIntegrity();
 							
@@ -175,6 +176,7 @@ public abstract class MoveGeneratorTestBase {
 						case REVERSE:
 							copyPosition.undoMove(move);
 							copyPosition.checkIntegrity();
+							checkMobility (copyPosition, parentMobilityCalculator);
 							copyPosition.makeMove(move);
 							copyPosition.checkIntegrity();
 							break;
@@ -185,6 +187,21 @@ public abstract class MoveGeneratorTestBase {
 					}
 				}
 			}	
+		}
+	}
+
+	private void checkMobility(final Position position, final MobilityCalculator parentMobilityCalculator) {
+		final MobilityCalculator incrementalCalculator = new MobilityCalculator();
+		incrementalCalculator.calculate(position, parentMobilityCalculator);
+
+		final MobilityCalculator directCalculator = new MobilityCalculator();
+		directCalculator.calculate(position);
+
+		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			Assert.assertEquals(directCalculator.getKnightAttackedSquares(color), incrementalCalculator.getKnightAttackedSquares(color));
+			Assert.assertEquals(directCalculator.getBishopAttackedSquares(color), incrementalCalculator.getBishopAttackedSquares(color));
+			Assert.assertEquals(directCalculator.getRookAttackedSquares(color), incrementalCalculator.getRookAttackedSquares(color));
+			Assert.assertEquals(directCalculator.getQueenAttackedSquares(color), incrementalCalculator.getQueenAttackedSquares(color));
 		}
 	}
 

@@ -2,6 +2,7 @@ package bishopTests;
 
 import java.io.IOException;
 
+import bishop.engine.MobilityCalculator;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -63,7 +64,10 @@ public class AttackCalculatorTest {
 			fen.readFenFromString(testValue.positionFen);
 			
 			final Position position = fen.getPosition();
-			calculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
+			final MobilityCalculator mobilityCalculator = new MobilityCalculator();
+			mobilityCalculator.calculate(position);
+
+			calculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP, mobilityCalculator);
 			
 			for (int color = Color.FIRST; color < Color.LAST; color++) {
 				final long attackedSquares = calculator.getDirectlyAttackedSquares(color);
@@ -100,7 +104,9 @@ public class AttackCalculatorTest {
 			fen.readFenFromString(testValue.positionFen);
 			
 			final Position position = fen.getPosition();
-			calculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
+			final MobilityCalculator mobilityCalculator = new MobilityCalculator();
+			mobilityCalculator.calculate(position);
+			calculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP, mobilityCalculator);
 			
 			Assert.assertEquals(testValue.canBeMate, calculator.getCanBeMate());
 		}

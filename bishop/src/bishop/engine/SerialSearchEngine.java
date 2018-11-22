@@ -228,7 +228,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 		currentRecord.isQuiescenceSearch = isQuiescenceSearch;
 		
 		final boolean isFirstQuiescence = isQuiescenceSearch && currentDepth > 0 && !nodeStack[currentDepth - 1].isQuiescenceSearch;
-		final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, currentRecord.attackCalculator).getEvaluation();
+		final MobilityCalculator mobilityCalculator = nodeStack[currentDepth].mobilityCalculator;
+		mobilityCalculator.calculate(currentPosition, (currentDepth > 0) ? nodeStack[currentDepth - 1].mobilityCalculator : null);
+
+		final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, currentRecord.attackCalculator, mobilityCalculator).getEvaluation();
 		
 		if (currentDepth > 0 && (!isQuiescenceSearch || isFirstQuiescence)) {
 			if (mateSearch(currentRecord, onTurn, oppositeColor, horizon, initialAlpha, initialBeta))
