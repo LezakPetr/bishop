@@ -74,30 +74,10 @@ public class AttackCalculator {
 			
 			//Knight
 			final long knightAttackedSquares = mobilityCalculator.getKnightAttackedSquares(color);
-			mobility[PieceType.QUEEN] += Color.colorNegate(color, BitBoard.getSquareCount(knightAttackedSquares & freeSquares));
+			mobility[PieceType.KNIGHT] += Color.colorNegate(color, BitBoard.getSquareCount(knightAttackedSquares & freeSquares));
 
 			directlyAttackedSquares[color] = mobilityCalculator.getAllAttackedSquares(color);
 		}
-	}
-
-	/**
-	 * Checks if there is a pin by piece from sourceSquare to two pieces with pieceMask.
-	 * @param sourceSquare square with pinning piece
-	 * @param pieceMask mask of possible pinned and pinned-to squares
-	 * @param index cross index
-	 * @return true if there is a pin, false if not
-	 */
-	private boolean isPin(final int sourceSquare, final long pieceMask, final int index) {
-		final long pins = LineAttackTable.getPinMask(index) & pieceMask;
-		
-		for (BitLoop loop = new BitLoop(pins); loop.hasNextSquare(); ) {
-			final int pinSquare = loop.getNextSquare();
-			
-			if ((BetweenTable.getItem(sourceSquare, pinSquare) & pieceMask) != 0)
-				return true;
-		}
-		
-		return false;
 	}
 
 	private void calculateAttacks(final Position position, final AttackEvaluationTableGroup attackTables) {

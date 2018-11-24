@@ -12,7 +12,7 @@ import bishop.base.Position;
 public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	private final IGameStageTablePositionEvaluator tablePositionEvaluator;
 	private final BishopColorPositionEvaluator[] bishopColorPositionEvaluators;
-	private final MobilityPositionEvaluator[] mobilityEvaluators;
+	private final MobilityPositionEvaluator mobilityEvaluator;
 	private final KingSafetyEvaluator[] kingSafetyEvaluators;
 
 	// Ending only
@@ -43,7 +43,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 			this.tablePositionEvaluator = new IterativeGameStageTablePositionEvaluator(evaluationFactory);
 
 		this.bishopColorPositionEvaluators = new BishopColorPositionEvaluator[GameStage.COUNT];
-		this.mobilityEvaluators = new MobilityPositionEvaluator[GameStage.COUNT];
+		this.mobilityEvaluator = new MobilityPositionEvaluator(evaluationFactory);
 		this.kingSafetyEvaluators = new KingSafetyEvaluator[GameStage.COUNT];
 		this.pawnRaceEvaluator = new PawnRaceEvaluator(evaluationFactory);
 		this.pawnStructureEvaluator = new PawnStructureEvaluator(evaluationFactory);
@@ -52,7 +52,6 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 			final GameStageCoeffs coeffs = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(gameStage);
 
 			bishopColorPositionEvaluators[gameStage] = new BishopColorPositionEvaluator(coeffs, evaluationFactory);
-			mobilityEvaluators[gameStage] = new MobilityPositionEvaluator(evaluationFactory);
 			
 			if (gameStage != GameStage.PAWNS_ONLY)
 				kingSafetyEvaluators[gameStage] = new KingSafetyEvaluator(coeffs, evaluationFactory);
@@ -116,9 +115,8 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		}
 		
 		positionalEvaluation.addSubEvaluation(pawnStructureEvaluator.evaluate(position, gameStage));
-		
-		final MobilityPositionEvaluator mobilityEvaluator = mobilityEvaluators[gameStage];
-		positionalEvaluation.addSubEvaluation(mobilityEvaluator.evaluatePosition(position, attackCalculator));
+
+		positionalEvaluation.addSubEvaluation(mobilityEvaluator.evaluatePosition(position, attackCalculator, gameStage));
 		
 		positionalEvaluation.addCoeff(gameStageCoeffs.onTurnBonus, position.getOnTurn());
 
