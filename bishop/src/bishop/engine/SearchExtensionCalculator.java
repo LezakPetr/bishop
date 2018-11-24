@@ -29,7 +29,7 @@ public class SearchExtensionCalculator {
 		finder.setMaxDepth(MAX_NULL_MATE_DEPTH, 0, 0);
 	}
 	
-	public int getExtension (final Position position, final boolean isCheck, final HashRecord hashRecord, final int horizon, final AttackCalculator attackCalculator) {
+	public int getExtension (final Position position, final boolean isCheck, final HashRecord hashRecord, final int horizon) {
 		if (isCheck) {
 			final int freeSquareCount;
 			
@@ -46,10 +46,7 @@ public class SearchExtensionCalculator {
 			
 			if (isRankAttack (position))
 				return settings.getRankAttackExtension();
-			
-			if (attackCalculator.isPin())
-				return settings.getPinExtension();
-			
+
 			return 0;
 		}
 	}

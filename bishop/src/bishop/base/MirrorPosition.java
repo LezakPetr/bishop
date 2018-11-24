@@ -75,4 +75,19 @@ public class MirrorPosition implements IPosition {
 
 	}
 
+	@Override
+	public void setPieceTypeEvaluations(PieceTypeEvaluations pieceTypeEvaluations) {
+
+	}
+
+	@Override
+	public int getMaterialEvaluation() {
+		return -basePosition.getMaterialEvaluation();
+	}
+
+	@Override
+	public int getGameStage() {
+		return basePosition.getGameStage();
+	}
+
 }

@@ -4,14 +4,12 @@ abstract public class AdditiveMaterialEvaluator implements IMaterialEvaluator {
 	@Override
 	public int evaluateMaterial(final IMaterialHashRead materialHash) {
 		int evaluation = 0;
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
-				final int count = materialHash.getPieceCount(color, pieceType);
-				final int unitEvaluation = getPieceEvaluation(color, pieceType);
-				
-				evaluation += unitEvaluation * count;
-			}
+
+		for (int pieceType = PieceType.FIRST; pieceType < PieceType.LAST; pieceType++) {
+			final int count = materialHash.getPieceCountDiff(pieceType);
+			final int unitEvaluation = getPieceEvaluation(Color.WHITE, pieceType);
+
+			evaluation += unitEvaluation * count;
 		}
 		
 		return evaluation;

@@ -52,7 +52,7 @@ public class AlgebraicPositionEvaluation implements IPositionEvaluation {
 
 	@Override
 	public void addCoeff(final int index, final int color, final int count) {
-		final int signedCount = (color == Color.WHITE) ? +count : -count;
+		final int signedCount = Color.colorNegate(color, count);
 		
 		addCoeffWithCount(index, signedCount);
 	}

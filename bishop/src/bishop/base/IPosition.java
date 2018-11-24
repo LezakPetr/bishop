@@ -11,4 +11,7 @@ public interface IPosition extends IPieceCounts {
 	public CastlingRights getCastlingRights();
 	public int getTablePositionEvaluation (final int gameStage);
 	public void setCombinedPositionEvaluationTable(final CombinedPositionEvaluationTable table);
+	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations);
+	public int getMaterialEvaluation();
+	public int getGameStage();
 }

@@ -16,4 +16,8 @@ public interface IPositionCaching {
 	public long getCombinedEvaluation();
 	public CombinedPositionEvaluationTable getCombinedPositionEvaluationTable();
 	public void setCombinedPositionEvaluationTable(final CombinedPositionEvaluationTable table);
+	public PieceTypeEvaluations getPieceTypeEvaluations();
+	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations);
+	public int getMaterialEvaluation();
+	public int getGameStageUnbound();
 }

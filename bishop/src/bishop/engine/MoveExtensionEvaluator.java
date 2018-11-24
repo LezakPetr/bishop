@@ -6,10 +6,9 @@ import bishop.tables.PawnAttackTable;
 public class MoveExtensionEvaluator {
 			
 	private SearchSettings settings;
-	private IMaterialEvaluator materialEvaluator;
 	private PieceTypeEvaluations pieceTypeEvaluations;
 		
-	public int getExtension (final Position targetPosition, final Move move, final int rootMaterialEvaluation, final int beginMaterialEvaluation, final AttackCalculator attackCalculator) {
+	public int getExtension (final Position targetPosition, final Move move, final int rootMaterialEvaluation, final int beginMaterialEvaluation) {
 		final int movingPieceType = move.getMovingPieceType();
 		final int onTurn = targetPosition.getOnTurn();
 		final int oppositeColor = Color.getOppositeColor(onTurn);
@@ -44,7 +43,7 @@ public class MoveExtensionEvaluator {
 			boolean isRecapture = false;
 			
 			if (move.getCapturedPieceType() != PieceType.NONE) {
-				final int materialEvaluation = materialEvaluator.evaluateMaterial(targetPosition.getMaterialHash());
+				final int materialEvaluation = targetPosition.getMaterialEvaluation();
 				final int relativeTargetEvaluation = Evaluation.getRelative(materialEvaluation, oppositeColor);
 				final int targetSquare = move.getTargetSquare();
 				final int sse = targetPosition.getStaticExchangeEvaluation(onTurn, targetSquare, pieceTypeEvaluations);
@@ -64,14 +63,6 @@ public class MoveExtensionEvaluator {
 			}
 		}
 		
-		// Figure escape extension
-		if (PieceType.isFigure(movingPieceType)) {
-			final long cheaperAttackedMask = attackCalculator.getCheaperAttackedMask(onTurn, movingPieceType);
-			
-			if (BitBoard.containsSquare(cheaperAttackedMask, move.getBeginSquare()) && !BitBoard.containsSquare(cheaperAttackedMask, move.getTargetSquare()))
-				extension += settings.getFigureEscapeExtension (movingPieceType);
-		}
-		
 		return extension;
 	}
 
@@ -81,14 +72,6 @@ public class MoveExtensionEvaluator {
 
 	public void setSettings(final SearchSettings settings) {
 		this.settings = settings;
-	}
-
-	public IMaterialEvaluator getMaterialEvaluator() {
-		return materialEvaluator;
-	}
-
-	public void setMaterialEvaluator(IMaterialEvaluator materialEvaluator) {
-		this.materialEvaluator = materialEvaluator;
 	}
 
 	public PieceTypeEvaluations getPieceTypeEvaluations() {

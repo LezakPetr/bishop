@@ -22,16 +22,8 @@ public class DrawChecker {
 			return LIVE_POSITION;
 		
 		// Now we have a position with just light figures
-		long allKnightMask = BitBoard.EMPTY;
-		long allBishopMask = BitBoard.EMPTY;
-		
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final long knightMask = position.getPiecesMask(color, PieceType.KNIGHT);
-			allKnightMask |= knightMask;
-			
-			final long bishopMask = position.getPiecesMask(color, PieceType.BISHOP);
-			allBishopMask |= bishopMask;
-		}
+		final long allKnightMask = position.getBothColorPiecesMask(PieceType.KNIGHT);
+		final long allBishopMask = position.getBothColorPiecesMask(PieceType.BISHOP);
 		
 		int effectiveCount = BitBoard.getSquareCount(allKnightMask);
 		

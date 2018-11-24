@@ -32,15 +32,6 @@ public final class SearchSettings {
 	private int recaptureTargetTreshold;
 	private int pinExtension;
 	private int maxCheckSearchDepth;
-	
-	private final int[] figureEscapeExtensions = new DoubleArrayBuilder(PieceType.LAST)
-			.put(PieceType.KNIGHT, 0.5)
-			.put(PieceType.BISHOP, 0.5)
-			.put(PieceType.ROOK, 0.75)
-			.put(PieceType.QUEEN, 1.0)
-			.stream()
-			.mapToInt(SearchSettings::makeHorizon)
-			.toArray();
 
 	public SearchSettings() {
 		maxQuiescenceDepth = makeHorizon(5.0);
@@ -275,10 +266,6 @@ public final class SearchSettings {
 
 	public void setMaxCheckSearchDepth(final int maxCheckSearchDepth) {
 		this.maxCheckSearchDepth =  maxCheckSearchDepth;
-	}
-
-	public int getFigureEscapeExtension(final int movingPieceType) {
-		return figureEscapeExtensions[movingPieceType];
 	}
 
 }

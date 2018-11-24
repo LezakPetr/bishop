@@ -1,24 +1,26 @@
 package bishop.engine;
 
-import bishop.base.BitBoardCombinator;
-import bishop.base.BitLoop;
-import bishop.base.CrossDirection;
-import bishop.base.LineAttackTable;
-import bishop.base.LineIndexer;
-import bishop.base.Square;
+import bishop.base.*;
+import math.Utils;
 
 public class LineAttackEvaluationTable {
 	
 	private final byte[] attackTable;
+	private final long[] nonZeroSquares;
 	
 	public LineAttackEvaluationTable(final double[] squareEvaluation) {
 		attackTable = new byte[LineIndexer.getLastIndex()];
+		nonZeroSquares = new long[CrossDirection.LAST];
 		
 		setTable(squareEvaluation);
 	}
 	
 	public int getAttackEvaluation(final int index) {
 		return attackTable[index];
+	}
+
+	public long getNonZeroSquares(final int direction) {
+		return nonZeroSquares[direction];
 	}
 
 	private void setTable(final double[] squareEvaluation) {
@@ -37,8 +39,12 @@ public class LineAttackEvaluationTable {
 						final int targetSquare = loop.getNextSquare();
 						dblEvaluation += squareEvaluation[targetSquare];
 					}
-					
-					attackTable[index] = math.Utils.roundToByte(dblEvaluation);
+
+					final byte byteEvaluation = Utils.roundToByte(dblEvaluation);
+					attackTable[index] = byteEvaluation;
+
+					if (byteEvaluation != 0)
+						nonZeroSquares[direction] |= BitBoard.of(square);
 				}
 			}
 		}

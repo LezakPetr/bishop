@@ -116,17 +116,15 @@ public class SearchManagerTest {
 	private void doSearch(final TestValue[] testValueArray,	final ISearchManager manager, final Holder<Boolean> searchFinished, final int threadCount) throws IOException, InterruptedException {
 		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
-		final IMaterialEvaluator materialEvaluator = new DefaultAdditiveMaterialEvaluator(pte);
 
 		engineFactory.setPositionEvaluatorFactory(new MaterialPositionEvaluatorFactory(evaluationFactory));
 		engineFactory.setMaximalDepth(25);
 		engineFactory.setEvaluationFactory(evaluationFactory);
-		engineFactory.setMaterialEvaluator(materialEvaluator);
 		engineFactory.setPieceTypeEvaluations(pte);
 
 		manager.setEngineFactory(engineFactory);
 		manager.setThreadCount(threadCount);
-		manager.setMaterialEvaluator(materialEvaluator);
+		manager.setPieceTypeEvaluations(pte);
 
 		manager.start();
 		

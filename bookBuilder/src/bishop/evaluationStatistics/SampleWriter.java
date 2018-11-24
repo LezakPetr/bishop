@@ -22,6 +22,7 @@ public class SampleWriter implements IPositionProcessor, Closeable {
 	private final PositionEvaluationCoeffs coeffs = new PositionEvaluationCoeffs();
 	private final Supplier<IPositionEvaluation> evaluationFactory = () -> new CoeffCountPositionEvaluation(coeffs);
 	private final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
+	private final MobilityCalculator mobilityCalculator = new MobilityCalculator();
 
 	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);
 	private final AttackCalculator attackCalculator = new AttackCalculator();
@@ -50,11 +51,12 @@ public class SampleWriter implements IPositionProcessor, Closeable {
 	public void processPosition(final Position position) {
 		if (PROBABILITY_RIGHT_SIDES.containsKey(result)) {
 			final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
+			mobilityCalculator.calculate(position);
 			
-			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, attackCalculator);
+			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, mobilityCalculator);
 			evaluation.addSubEvaluation(tacticalEvaluation);
 			
-			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional(attackCalculator);
+			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional();
 			evaluation.addSubEvaluation(positionalEvaluation);
 
 			final double probabilityRightSide = PROBABILITY_RIGHT_SIDES.get(result);   // We will update the right side vector later in calculate

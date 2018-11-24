@@ -27,13 +27,6 @@ public interface ISearchEngine {
 	 * @param maxTotalDepth maximal total depth of the search
 	 */
 	public void setMaximalDepth (final int maxTotalDepth);
-	
-	/**
-	 * Sets material evaluator.
-	 * Engine must be in STOPPED state.
-	 * @param evaluator material evaluator
-	 */
-	public void setMaterialEvaluator(final IMaterialEvaluator evaluator);
 
 	/**
 	 * Sets piece type evaluations.

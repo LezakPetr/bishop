@@ -16,29 +16,29 @@ public class MobilityPositionEvaluator {
 		this.mobilityEvaluation = evaluationFactory.get();
 	}
 	
-	public IPositionEvaluation evaluatePosition(final Position position, final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluatePosition(final Position position, final AttackCalculator attackCalculator, final int gameStage) {
 		mobilityEvaluation.clear();
-				
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
-				final int mobility = attackCalculator.getMobility(color, pieceType);
-				final int coeff = getCoeffForPieceType(pieceType);
-				mobilityEvaluation.addCoeff(coeff, color, mobility);
-			}
+
+		for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
+			final int mobility = attackCalculator.getMobility(pieceType);
+			final int coeff = getCoeffForPieceType(pieceType, gameStage);
+			mobilityEvaluation.addCoeff(coeff, Color.WHITE, mobility);
 		}
 		
 		return mobilityEvaluation;
 	}
 
-	private static int getCoeffForPieceType(int pieceType) {
-		return PositionEvaluationCoeffs.MOBILITY_OFFSET + pieceType - PieceType.PROMOTION_FIGURE_FIRST;
+	private static int getCoeffForPieceType(final int pieceType, final int gameStage) {
+		return PositionEvaluationCoeffs.MOBILITY_OFFSET + pieceType - PieceType.PROMOTION_FIGURE_FIRST + gameStage * PieceType.PROMOTION_FIGURE_COUNT;
 	}
 	
 	public static int registerCoeffs(final CoeffRegistry registry) {
 		final int offset = registry.enterCategory("mobility");
-		
-		for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
-			registry.add(Character.toString(PieceType.toChar(pieceType, false)));
+
+		for (int gameStage = GameStage.FIRST; gameStage < GameStage.LAST; gameStage++) {
+			for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
+				registry.add(gameStage + "." + Character.toString(PieceType.toChar(pieceType, false)));
+			}
 		}
 		
 		registry.leaveCategory();

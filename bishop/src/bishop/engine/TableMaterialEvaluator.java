@@ -8,12 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import bishop.base.Color;
-import bishop.base.IMaterialEvaluator;
-import bishop.base.IMaterialHashRead;
-import bishop.base.MaterialHash;
-import bishop.base.PieceType;
-import bishop.base.PieceTypeEvaluations;
+import bishop.base.*;
 import utils.IntArrayBuilder;
 import utils.IoUtils;
 

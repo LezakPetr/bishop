@@ -6,8 +6,7 @@ import bishop.base.IMaterialEvaluator;
 import bishop.base.PieceTypeEvaluations;
 
 public final class SerialSearchEngineFactory implements ISearchEngineFactory {
-	
-	private IMaterialEvaluator materialEvaluator;
+
 	private PieceTypeEvaluations pieceTypeEvaluations;
 	private IPositionEvaluatorFactory positionEvaluatorFactory;
 	private Supplier<IPositionEvaluation> evaluationFactory;
@@ -19,14 +18,6 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 	
 	public void setEvaluationFactory(final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.evaluationFactory = evaluationFactory;
-	}
-	
-	/**
-	 * Sets material evaluator.
-	 * @param evaluator material evaluator
-	 */
-	public void setMaterialEvaluator(final IMaterialEvaluator evaluator) {
-		this.materialEvaluator = evaluator;
 	}
 
 	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations) {
@@ -76,7 +67,6 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 		
 		searchEngine.setEvaluationFactory(evaluationFactory);
 		searchEngine.setPositionEvaluator(evaluator);
-		searchEngine.setMaterialEvaluator(materialEvaluator);
 		searchEngine.setPieceTypeEvaluations(pieceTypeEvaluations);
 		searchEngine.setMaximalDepth(maximalDepth);
 		

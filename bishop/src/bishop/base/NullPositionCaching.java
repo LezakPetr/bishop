@@ -1,11 +1,13 @@
 package bishop.base;
 
 import bishop.engine.CombinedEvaluation;
+import bishop.engine.GameStage;
 
 public class NullPositionCaching implements IPositionCaching {
 
 	private final Position position;
 	private CombinedPositionEvaluationTable evaluationTable;
+	private PieceTypeEvaluations pieceTypeEvaluations = PieceTypeEvaluations.DEFAULT;
 	
 	public NullPositionCaching (final Position position) {
 		this.position = position;
@@ -91,6 +93,26 @@ public class NullPositionCaching implements IPositionCaching {
 	@Override
 	public void setCombinedPositionEvaluationTable(final CombinedPositionEvaluationTable table) {
 		this.evaluationTable = table;
+	}
+
+	@Override
+	public PieceTypeEvaluations getPieceTypeEvaluations() {
+		return pieceTypeEvaluations;
+	}
+
+	@Override
+	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations) {
+		this.pieceTypeEvaluations = pieceTypeEvaluations;
+	}
+
+	@Override
+	public int getMaterialEvaluation() {
+		return new DefaultAdditiveMaterialEvaluator(pieceTypeEvaluations).evaluateMaterial(position.getMaterialHash());
+	}
+
+	@Override
+	public int getGameStageUnbound() {
+		return GameStage.fromMaterialUnbound(position);
 	}
 
 }

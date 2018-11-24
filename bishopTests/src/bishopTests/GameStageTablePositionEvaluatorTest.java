@@ -41,25 +41,26 @@ public class GameStageTablePositionEvaluatorTest {
 		for (int gameStage = GameStage.FIRST; gameStage < GameStage.LAST; gameStage++) {
 			final CoeffCountPositionEvaluation normalEvaluation = (CoeffCountPositionEvaluation) normalEvaluator.evaluate(position, gameStage);
 
-			final double whiteKingBeginning = normalEvaluation.getCoeffCount(PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS.get(1).getCoeff(Color.WHITE, PieceType.KING, WHITE_KING_SQUARE));
-			final double whiteKingEnding = normalEvaluation.getCoeffCount(PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS.get(0).getCoeff(Color.WHITE, PieceType.KING, WHITE_KING_SQUARE));
+			final double whiteKingOpening = normalEvaluation.getCoeffCount(PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS.get(CombinedEvaluation.COMPONENT_OPENING).getCoeff(Color.WHITE, PieceType.KING, WHITE_KING_SQUARE));
+			final double whiteKingMiddleGame = normalEvaluation.getCoeffCount(PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS.get(CombinedEvaluation.COMPONENT_MIDDLE_GAME).getCoeff(Color.WHITE, PieceType.KING, WHITE_KING_SQUARE));
+			final double whiteKingEnding = normalEvaluation.getCoeffCount(PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS.get(CombinedEvaluation.COMPONENT_ENDING).getCoeff(Color.WHITE, PieceType.KING, WHITE_KING_SQUARE));
 
-			final double blackKingBeginning = normalEvaluation.getCoeffCount(PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS.get(1).getCoeff(Color.BLACK, PieceType.KING, BLACK_KING_SQUARE));
-			final double blackKingEnding = normalEvaluation.getCoeffCount(PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS.get(0).getCoeff(Color.BLACK, PieceType.KING, BLACK_KING_SQUARE));
+			final double blackKingOpening = normalEvaluation.getCoeffCount(PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS.get(CombinedEvaluation.COMPONENT_OPENING).getCoeff(Color.BLACK, PieceType.KING, BLACK_KING_SQUARE));
+			final double blackKingMiddleGame = normalEvaluation.getCoeffCount(PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS.get(CombinedEvaluation.COMPONENT_MIDDLE_GAME).getCoeff(Color.BLACK, PieceType.KING, BLACK_KING_SQUARE));
+			final double blackKingEnding = normalEvaluation.getCoeffCount(PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS.get(CombinedEvaluation.COMPONENT_ENDING).getCoeff(Color.BLACK, PieceType.KING, BLACK_KING_SQUARE));
 
-			Assert.assertEquals(1.0, whiteKingBeginning + whiteKingEnding, EPS);
-			Assert.assertEquals(-1.0, blackKingBeginning + blackKingEnding, EPS);
+			Assert.assertEquals(1.0, whiteKingOpening + whiteKingMiddleGame + whiteKingEnding, EPS);
+			Assert.assertEquals(-1.0, blackKingOpening + blackKingMiddleGame + blackKingEnding, EPS);
 
-			Assert.assertTrue(0.0 <= whiteKingBeginning && whiteKingBeginning <= 1.0);
+			Assert.assertTrue(0.0 <= whiteKingOpening && whiteKingOpening <= 1.0);
+			Assert.assertTrue(0.0 <= whiteKingMiddleGame && whiteKingMiddleGame <= 1.0);
 			Assert.assertTrue(0.0 <= whiteKingEnding && whiteKingEnding <= 1.0);
-			Assert.assertTrue(-1.0 <= blackKingBeginning && blackKingBeginning <= 0.0);
+			Assert.assertTrue(-1.0 <= blackKingOpening && blackKingOpening <= 0.0);
+			Assert.assertTrue(-1.0 <= blackKingMiddleGame && blackKingMiddleGame <= 0.0);
 			Assert.assertTrue(-1.0 <= blackKingEnding && blackKingEnding <= 0.0);
 
 			final IPositionEvaluation iterativeEvaluation = iterativeEvaluator.evaluate(position, gameStage);
 			Assert.assertEquals(normalEvaluation.getEvaluation(), iterativeEvaluation.getEvaluation());
-
-			//System.out.println("Game stage " + gameStage);
-			//System.out.println(evaluation);
 		}
 
 	}

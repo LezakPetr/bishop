@@ -28,6 +28,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private final PositionEvaluationCoeffs coeffs = new PositionEvaluationCoeffs();
 	private final Supplier<IPositionEvaluation> evaluationFactory = () -> new CoeffCountPositionEvaluation(coeffs);
 	private final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
+	private final MobilityCalculator mobilityCalculator = new MobilityCalculator();
 	
 	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);
 	private final AttackCalculator attackCalculator = new AttackCalculator();
@@ -89,11 +90,12 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 				Math.abs(defaultMaterialEvaluator.evaluateMaterial(position.calculateMaterialHash())) <= MAX_MATERIAL_EVALUATION &&
 				position.getStaticExchangeEvaluationOnTurn(PieceTypeEvaluations.DEFAULT) == 0) {
 			final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
+			mobilityCalculator.calculate(position);
 			
-			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, attackCalculator);
+			final IPositionEvaluation tacticalEvaluation = evaluator.evaluateTactical(position, mobilityCalculator);
 			evaluation.addSubEvaluation(tacticalEvaluation);
 			
-			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional(attackCalculator);
+			final IPositionEvaluation positionalEvaluation = evaluator.evaluatePositional();
 			evaluation.addSubEvaluation(positionalEvaluation);
 
 			if (evaluation.getConstantEvaluation() == 0) {

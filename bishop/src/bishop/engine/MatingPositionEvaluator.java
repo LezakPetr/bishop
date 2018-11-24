@@ -20,16 +20,14 @@ public final class MatingPositionEvaluator implements IPositionEvaluator {
 	}
 	
 	@Override
-	public IPositionEvaluation evaluateTactical (final Position position, final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluateTactical (final Position position, final MobilityCalculator mobilityCalculator) {
 		this.position = position;
-		
-		attackCalculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP);
-		
+
 		return tacticalEvaluation;		
 	}
 
 	@Override
-	public IPositionEvaluation evaluatePositional (final AttackCalculator attackCalculator) {
+	public IPositionEvaluation evaluatePositional() {
 		final int matingColor = position.getSideWithMorePieces();
 		final int matedColor = Color.getOppositeColor(matingColor);
 		final int matedKingSquare = position.getKingPosition(matedColor);

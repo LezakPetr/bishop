@@ -15,7 +15,6 @@ public class QuiescencePseudoLegalMoveGeneratorTest extends MoveGeneratorTestBas
 				new TestValue ("4k3/8/8/8/8/5b2/8/R3K2R w KQ - 0 1", ""),
 				new TestValue ("4k3/8/8/8/2b5/n7/8/R3K2R w KQ - 0 1", "a1a3"),
 				new TestValue ("rnbqkb1r/ppp2pPp/8/4p3/P6P/8/1p1PPP2/RNBQKBNR b KQkq - 0 1", "b2a1q, b2a1r, b2a1n, b2a1b, b2c1q, b2c1r, b2c1n, b2c1b, f8g7, d8h4, d8d2")
-				
 		};
 	}
 	
