@@ -1,17 +1,14 @@
 package bishopTests;
 
-import bishop.base.IMoveGenerator;
-import bishop.base.LegalMoveFinder;
-import bishop.base.MateChecker;
-import bishop.base.Move;
-import bishop.base.MoveList;
-import bishop.base.MoveType;
-import bishop.base.PieceType;
-import bishop.base.Position;
-import bishop.base.PseudoLegalMoveGenerator;
+import bishop.base.*;
+import bishop.engine.MobilityCalculator;
+import org.junit.Assert;
 
 public class PerftCalculator {
-	
+
+	// How many moves before horizon are we checking mobility - affects performance.
+	private static final int MOBILITY_DEPTH_DIFFERENCE = 2;
+
 	public static class Statistics {
 		public long nodeCount;
 		public long captureCount;
@@ -61,18 +58,21 @@ public class PerftCalculator {
 	
 	private final IMoveGenerator moveGenerator = new PseudoLegalMoveGenerator();
 	private final Statistics[] statisticsStack = new Statistics[MAX_DEPTH];
+	private final MobilityCalculator[] mobilityCalculatorStack = new MobilityCalculator[MAX_DEPTH];
 	private final MoveList moveStack = new MoveList(MOVE_STACK_CAPACITY);
 	private int moveStackTop;
 	private int maxDepth;
-	private final Position currentPosition = new Position();
+	private final Position currentPosition = new Position(true);
 	private final MateChecker mateChecker = new MateChecker();
 	
 	public PerftCalculator() {
 		for (int i = 0; i < MOVE_STACK_CAPACITY; i++)
 			moveStack.add(new Move());
 		
-		for (int i = 0; i < MAX_DEPTH; i++)
+		for (int i = 0; i < MAX_DEPTH; i++) {
 			statisticsStack[i] = new Statistics();
+			mobilityCalculatorStack[i] = new MobilityCalculator();
+		}
 		
 		moveGenerator.setPosition(currentPosition);
 		moveGenerator.setWalker(m -> {
@@ -86,6 +86,8 @@ public class PerftCalculator {
 	public Statistics getPerft (final Position position, final int depth) {
 		currentPosition.assign(position);
 		maxDepth = depth;
+
+		mobilityCalculatorStack[0].calculate(position);
 		
 		calculatePerft(0);
 		
@@ -102,13 +104,23 @@ public class PerftCalculator {
 		for (int i = moveStackBegin; i < moveStackEnd; i++) {
 			final Move move = moveStack.get(i);
 			currentPosition.makeMove(move);
-			
-			if (!currentPosition.isKingNotOnTurnAttacked()) {
+
+			final boolean checkFromPosition = currentPosition.isKingNotOnTurnAttacked();
+
+			if (depth < maxDepth - MOBILITY_DEPTH_DIFFERENCE) {
+				mobilityCalculatorStack[depth + 1].calculate(currentPosition, mobilityCalculatorStack[depth]);
+
+				final int onTurn = currentPosition.getOnTurn();
+				final int notOnTurn = Color.getOppositeColor(onTurn);
+				final boolean checkFromMobility = mobilityCalculatorStack[depth + 1].isSquareAttacked(onTurn, currentPosition.getKingPosition(notOnTurn));
+				Assert.assertEquals(checkFromPosition, checkFromMobility);
+			}
+
+			if (!checkFromPosition) {
 				if (depth + 1 < maxDepth)
 					calculatePerft(depth + 1);
 				else
 					setMoveStatistics (move, statisticsStack[depth + 1]);
-					
 				
 				statisticsStack[depth].add(statisticsStack[depth + 1]);
 			}
@@ -140,7 +152,7 @@ public class PerftCalculator {
 				statistics.castlingCount++;
 				break;
 		}
-		
+
 		if (currentPosition.isCheck()) {
 			statistics.checkCount++;
 			

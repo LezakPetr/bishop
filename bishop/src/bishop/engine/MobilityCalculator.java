@@ -225,4 +225,12 @@ public class MobilityCalculator {
 		return ((~inaccessibleSquares & requiredSquares) == 0);
 	}
 
+	public boolean isStablePosition (final Position position) {
+		final int onTurn = position.getOnTurn();
+		final int oppositeColor = Color.getOppositeColor(onTurn);
+
+		final long ownFigures = position.getColorOccupancy(onTurn) & ~position.getBothColorPiecesMask(PieceType.PAWN);
+
+		return (attackedSquares[oppositeColor] & ownFigures) == 0;
+	}
 }
