@@ -229,8 +229,11 @@ public class MobilityCalculator {
 		final int onTurn = position.getOnTurn();
 		final int oppositeColor = Color.getOppositeColor(onTurn);
 
-		final long ownFigures = position.getColorOccupancy(onTurn) & ~position.getBothColorPiecesMask(PieceType.PAWN);
+		final long ownPawns = position.getPiecesMask(onTurn, PieceType.PAWN);
+		final long ownFigures = position.getColorOccupancy(onTurn) & ~ownPawns;
+		final long unprotectedPawns = ownPawns & ~attackedSquares[onTurn];
+		final long attacks = attackedSquares[oppositeColor];
 
-		return (attackedSquares[oppositeColor] & ownFigures) == 0;
+		return (attacks & (ownFigures | unprotectedPawns)) == 0;
 	}
 }

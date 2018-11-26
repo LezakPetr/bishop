@@ -45,14 +45,14 @@ public class SearchManagerTest {
 	public void searchManagerTest() throws Exception {
 		final TestValue[] testValueArray = {
 			new TestValue("2k5/8/2K1R3/8/8/8/8/8 w - - 0 1", 1, Evaluation.getMateEvaluation(1), "e6e8"),
-			new TestValue("7k/8/8/6RK/8/8/8/8 w - - 0 1", 4, Evaluation.getMateEvaluation(5), "h5g6"),
-			new TestValue("8/8/8/8/6rk/8/8/7K b - - 0 1", 4, Evaluation.getMateEvaluation(5), "h4g3"),
+			new TestValue("7k/8/8/6RK/8/8/8/8 w - - 0 1", 5, Evaluation.getMateEvaluation(5), "h5g6"),
+			new TestValue("8/8/8/8/6rk/8/8/7K b - - 0 1", 5, Evaluation.getMateEvaluation(5), "h4g3"),
 			new TestValue("3r3k/8/1b6/8/3r4/8/2N5/3Q3K w - - 0 1", 1, pte.getPieceTypeEvaluation(PieceType.QUEEN) + pte.getPieceTypeEvaluation(PieceType.KNIGHT) - 2*pte.getPieceTypeEvaluation(PieceType.ROOK), "d1h5"),
 			new TestValue("k3r3/8/8/3N4/8/8/8/K7 w - - 0 1", 2, Evaluation.DRAW, "d5c7"),
 			new TestValue("3k2q1/8/8/8/8/8/1R6/K7 w - - 0 1", 2, pte.getPieceTypeEvaluation(PieceType.ROOK), "b2b8"),
 			new TestValue("7k/4Np1p/q2n2p1/6P1/8/8/2R2PP1/2R3K1 w - - 0 1", 6, pte.getPieceTypeEvaluation(PieceType.KNIGHT), "c2c8"),
-			new TestValue("8/1k1K3R/8/8/8/8/8/8 w - - 0 1", 6, Evaluation.getMateEvaluation(7), "h7h6"),   // Test of hash tables
-			new TestValue("QR6/7k/8/8/7q/8/6P1/6K1 b - - 0 1", 4, Evaluation.DRAW_BY_REPETITION, "h4e1"),   // Test of draw by repetition
+			new TestValue("8/1k1K3R/8/8/8/8/8/8 w - - 0 1", 7, Evaluation.getMateEvaluation(7), "h7h6"),   // Test of hash tables
+			new TestValue("QR6/7k/8/8/7q/8/6P1/6K1 b - - 0 1", 5, Evaluation.DRAW_BY_REPETITION, "h4e1"),   // Test of draw by repetition
 			new TestValue("2N5/8/k2K4/8/p1PB4/P7/8/8 w - - 0 1", 7, Evaluation.getMateEvaluation(7), "d6c7"),
 			new TestValue("1k6/8/2n5/3KNB2/8/8/8/8 w - - 0 1", 11, Evaluation.getMateEvaluation(11), "d5c6")
 		};

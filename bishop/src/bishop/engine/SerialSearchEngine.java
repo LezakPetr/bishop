@@ -221,7 +221,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		final MobilityCalculator mobilityCalculator = nodeStack[currentDepth].mobilityCalculator;
 
-		final int reducedHorizon = (horizon >= ISearchEngine.HORIZON_GRANULARITY && 2 * horizon < ISearchEngine.HORIZON_GRANULARITY && mobilityCalculator.isStablePosition (currentPosition)) ?
+		final int reducedHorizon = (currentDepth >= 2 && horizon >= ISearchEngine.HORIZON_GRANULARITY && horizon < 2 * ISearchEngine.HORIZON_GRANULARITY && mobilityCalculator.isStablePosition (currentPosition)) ?
 				horizon - ISearchEngine.HORIZON_GRANULARITY : horizon;
 		
 		final boolean isQuiescenceSearch = (reducedHorizon < ISearchEngine.HORIZON_GRANULARITY);
