@@ -90,8 +90,8 @@ public class PawnStructureEvaluator {
 			final int oppositeColor = Color.getOppositeColor(color);
 			final long ownPawnMask = structure.getPawnMask(color);
 			final long passedPawnMask = structureData.getPassedPawnMask(color);
-			final long connectedPawnMask = structureData.getConnectedPawnMask(color);
-			final long protectedPawnMask = structureData.getProtectedPawnMask(color);
+			final long connectedPawnMask = ownPawnMask & BoardConstants.getAllConnectedPawnSquareMask(ownPawnMask);
+			final long protectedPawnMask = ownPawnMask & BoardConstants.getPawnsAttackedSquares(color, ownPawnMask);
 			final long singleDisadvantageAttackPawnMask = structureData.getSingleDisadvantageAttackPawnMask(color);
 			final long doubleDisadvantageAttackPawnMask = structureData.getDoubleDisadvantageAttackPawnMask(color);
 			final long blockedPawnMask = structureData.getBlockedPawnMask(color);

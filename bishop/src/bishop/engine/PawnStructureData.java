@@ -71,9 +71,6 @@ public class PawnStructureData {
 	// Pawns without opposite pawn in front of them on 3 neighbor files.
 	private static final int PASSED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
 	
-	private static final int CONNECTED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
-	private static final int PROTECTED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
-	
 	private static final int SINGLE_DISADVANTAGE_ATTACK_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
 	private static final int DOUBLE_DISADVANTAGE_ATTACK_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
 	private static final int BLOCKED_PAWNS_OFFSET = OFFSET.getAndAdd(Color.LAST);
@@ -130,19 +127,13 @@ public class PawnStructureData {
 		data[FRONT_SQUARES_OFFSET + Color.BLACK] = blackReachableSquares >>> File.LAST;
 		data[NEIGHBOR_FRONT_SQUARES_OFFSET + Color.BLACK] = BoardConstants.getPawnsAttackedSquares(Color.BLACK, blackReachableSquares & ~BoardConstants.RANK_18_MASK);
 	}
-	
+
 	private void fillSecureSquares() {
-		final long notPawnsSquares = ~structure.getBothColorPawnMask();
-		
+
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int oppositeColor = Color.getOppositeColor(color);
-			final long pawnsMask = structure.getPawnMask(color);
-			final long attackedSquares = BoardConstants.getPawnsAttackedSquares(color, pawnsMask);
-			
-			data[SECURE_SQUARES_OFFSET + color] = attackedSquares & notPawnsSquares & ~data[NEIGHBOR_FRONT_SQUARES_OFFSET + oppositeColor];
 		}
-	}	
-	
+	}
+
 	public long getBackSquares(final int color) {
 		return data[BACK_SQUARES_OFFSET + color];
 	}
@@ -172,11 +163,6 @@ public class PawnStructureData {
 			final long ownPawnMask = structure.getPawnMask(color);
 			final long openSquares = ~data[FRONT_SQUARES_OFFSET + oppositeColor];
 			data[PASSED_PAWNS_OFFSET + color] = ownPawnMask & openSquares & ~data[NEIGHBOR_FRONT_SQUARES_OFFSET + oppositeColor];
-			
-			final long connectedPawnMask = BoardConstants.getAllConnectedPawnSquareMask(ownPawnMask);
-			data[CONNECTED_PAWNS_OFFSET + color] = ownPawnMask & connectedPawnMask;
-			
-			data[PROTECTED_PAWNS_OFFSET + color] = ownPawnMask & BoardConstants.getPawnsAttackedSquares(color, ownPawnMask);
 		}
 	}
 	
@@ -282,14 +268,6 @@ public class PawnStructureData {
 		return data[PASSED_PAWNS_OFFSET + color];
 	}
 
-	public long getConnectedPawnMask(final int color) {
-		return data[CONNECTED_PAWNS_OFFSET + color];
-	}
-
-	public long getProtectedPawnMask(final int color) {
-		return data[PROTECTED_PAWNS_OFFSET + color];
-	}
-	
 	public long getSingleDisadvantageAttackPawnMask(final int color) {
 		return data[SINGLE_DISADVANTAGE_ATTACK_PAWNS_OFFSET + color];
 	}
