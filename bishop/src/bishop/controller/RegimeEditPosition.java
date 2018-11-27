@@ -52,4 +52,5 @@ public class RegimeEditPosition implements IRegime {
 	public IHandlerRegistrar<IRegimeListener> getRegimeListenerRegistrar() {
 		return regimeListenerRegistrar;
 	}
+
 }

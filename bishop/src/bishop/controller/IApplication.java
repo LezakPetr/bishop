@@ -33,6 +33,11 @@ public interface IApplication {
 	 * @param regimeType new regime type
 	 */
 	public void setRegimeType (final RegimeType regimeType);
+
+	/**
+	 * Changes regime type to previous one.
+	 */
+	public void popRegimeType();
 	
 	/**
 	 * Returns regime play.
