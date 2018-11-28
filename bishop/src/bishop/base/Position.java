@@ -10,7 +10,6 @@ import utils.IAssignable;
 import utils.ICopyable;
 
 import bishop.engine.Evaluation;
-import bishop.engine.PawnStructure;
 
 /**
  * Representation of chess position with additional information that affects
@@ -1248,13 +1247,6 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		final long pieceMask = getPiecesMask(color, pieceType);
 		
 		return BitBoard.getSquareCount(pieceMask);
-	}
-
-	public PawnStructure getPawnStructure() {
-		final long whitePawnMask = getPiecesMask(Color.WHITE, PieceType.PAWN);
-		final long blackPawnMask = getPiecesMask(Color.BLACK, PieceType.PAWN);
-		
-		return new PawnStructure(whitePawnMask, blackPawnMask);
 	}
 
 	@Override

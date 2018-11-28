@@ -214,7 +214,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		currentRecord.moveListBegin = moveStackTop;
 		
 		// Try to find position in hash table
-		final HashRecord hashRecord = new HashRecord();
+		final HashRecord hashRecord = nodeStack[currentDepth].hashRecord;
 		
 		if (updateRecordByHash(horizon, currentRecord, initialAlpha, initialBeta, hashRecord))
 			return;

@@ -21,6 +21,7 @@ public class NodeRecord implements ISearchResult {
 	public int legalMoveCount;
 	public int bestLegalMoveIndex;
 	public final MobilityCalculator mobilityCalculator;
+	public final HashRecord hashRecord;
 
 	public NodeRecord(final int maxPrincipalDepth) {
 		currentMove = new Move();
@@ -31,6 +32,7 @@ public class NodeRecord implements ISearchResult {
 		hashBestMove = new Move();
 		firstLegalMove = new Move();
 		mobilityCalculator = new MobilityCalculator();
+		hashRecord = new HashRecord();
 	}
 
 	public void openNode(final int alpha, final int beta) {
