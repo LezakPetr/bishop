@@ -61,7 +61,7 @@ public class MoveEstimator {
 		}
 	}
 	
-	public int getMoveEstimate(final NodeRecord nodeRecord, final int color, final Move move) {
+	public int getMoveEstimate(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move) {
 		final SimpleLinearModel model = getModel(nodeRecord, color, move);
 		
 		final int history = historyTable.getEvaluation(color, move);
@@ -70,12 +70,12 @@ public class MoveEstimator {
 		return estimate;
 	}
 
-	public void addCutoff(final NodeRecord nodeRecord, final int color, final Move cutoffMove, final int horizon) {
-		if (cutoffMove.equals(nodeRecord.firstLegalMove))
+	public void addCutoff(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move cutoffMove, final int horizon) {
+		if (cutoffMove.equals(nodeRecord.getFirstLegalMove()))
 			return;
 		
 		updateModel(nodeRecord, color, cutoffMove, MOVE_ESTIMATE);
-		updateModel(nodeRecord, color, nodeRecord.firstLegalMove, -MOVE_ESTIMATE);
+		updateModel(nodeRecord, color, nodeRecord.getFirstLegalMove(), -MOVE_ESTIMATE);
 		
 		historyTable.addCutoff(color, cutoffMove, horizon);
 
@@ -87,15 +87,15 @@ public class MoveEstimator {
 		}
 	}
 
-	private void updateModel (final NodeRecord nodeRecord, final int color, final Move move, final int estimate) {
+	private void updateModel (final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move, final int estimate) {
 		final SimpleLinearModel model = getModel(nodeRecord, color, move);
 		final int history = historyTable.getEvaluation(color, move);
 				
 		model.addSample(history, estimate);
 	}
 	
-	private SimpleLinearModel getModel(final NodeRecord nodeRecord, final int color, final Move move) {
-		final int killer = (move.equals(nodeRecord.killerMove)) ? 1 : 0;
+	private SimpleLinearModel getModel(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move) {
+		final int killer = (move.equals(nodeRecord.getKillerMove())) ? 1 : 0;
 		final int capture = estimateCapture(move.getMovingPieceType(), move.getCapturedPieceType());
 		final SimpleLinearModel model = models[color][killer][capture];
 		

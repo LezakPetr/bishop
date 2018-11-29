@@ -11,24 +11,665 @@ import utils.RatioCalculator;
 
 public final class SerialSearchEngine implements ISearchEngine {
 
-	private static final int RECEIVE_UPDATES_COUNT = 8192;
+	public class NodeRecord implements ISearchResult {
+		private class MoveWalker implements IMoveWalker {
+			public boolean processMove(final Move move) {
+				int estimate;
 
-	private class MoveWalker implements IMoveWalker {
-		public boolean processMove(final Move move) {
-			final NodeRecord nodeRecord = nodeStack[currentDepth];
-			int estimate;
-			
-			if (move.equals(nodeRecord.hashBestMove))
-				estimate = HASH_BEST_MOVE_ESTIMATE;
-			else
-				estimate = moveEstimator.getMoveEstimate(nodeRecord, currentPosition.getOnTurn(), move);
-			
-			moveStack.setRecord(moveStackTop, move, estimate);
-			moveStackTop++;
+				if (move.equals(hashBestMove))
+					estimate = HASH_BEST_MOVE_ESTIMATE;
+				else
+					estimate = moveEstimator.getMoveEstimate(NodeRecord.this, currentPosition.getOnTurn(), move);
 
-			return true;
+				moveStack.setRecord(moveStackTop, move, estimate);
+				moveStackTop++;
+
+				return true;
+			}
+		};
+
+		private final MoveWalker moveWalker;
+		private final QuiescencePseudoLegalMoveGenerator quiescenceLegalMoveGenerator;
+		private final PseudoLegalMoveGenerator pseudoLegalMoveGenerator;
+		private final int depth;
+		private final NodeRecord nextRecord;
+		private NodeRecord previousRecord;
+		private final Move currentMove = new Move();
+		private int moveListBegin;
+		private int moveListEnd;
+		private final MoveList principalVariation;
+		private final NodeEvaluation evaluation = new NodeEvaluation();
+		private final Move killerMove = new Move();
+		private final Move principalMove = new Move();
+		private final Move hashBestMove = new Move();
+		private final Move firstLegalMove = new Move();
+		private boolean allMovesGenerated;
+		private int maxExtension;
+		private boolean isQuiescenceSearch;
+		private int legalMoveCount;
+		private int bestLegalMoveIndex;
+		private final MobilityCalculator mobilityCalculator = new MobilityCalculator();
+
+		// Precreated objects to prevent reallocation
+		private final HashRecord hashRecord = new HashRecord();
+		private final Move nullMove = new Move();
+		private final Move precalculatedMove = new Move();
+		private final Move precreatedCurrentMove = new Move();
+		private final Move nonLosingMove = new Move();
+
+		public NodeRecord(final int depth, final int maxPrincipalDepth, final NodeRecord nextRecord) {
+			this.depth = depth;
+			this.nextRecord = nextRecord;
+			this.principalVariation = new MoveList(maxPrincipalDepth);
+
+			moveWalker = new MoveWalker();
+
+			quiescenceLegalMoveGenerator = new QuiescencePseudoLegalMoveGenerator();
+			quiescenceLegalMoveGenerator.setWalker(moveWalker);
+
+			pseudoLegalMoveGenerator = new PseudoLegalMoveGenerator();
+			pseudoLegalMoveGenerator.setWalker(moveWalker);
 		}
-	};
+
+		public Move getKillerMove() {
+			return killerMove;
+		}
+
+		public Move getFirstLegalMove() {
+			return firstLegalMove;
+		}
+
+		public void setPreviousRecord(final NodeRecord previousRecord) {
+			this.previousRecord = previousRecord;
+		}
+
+		public void openNode(final int alpha, final int beta) {
+			this.evaluation.setEvaluation(Evaluation.MIN);
+			this.evaluation.setAlpha(alpha);
+			this.evaluation.setBeta(beta);
+			this.firstLegalMove.clear();
+			this.allMovesGenerated = false;
+			this.legalMoveCount = 0;
+			this.bestLegalMoveIndex = -1;
+		}
+
+		public NodeEvaluation getNodeEvaluation() {
+			return evaluation;
+		}
+
+		public MoveList getPrincipalVariation() {
+			return principalVariation;
+		}
+
+		private void alphaBeta (final int horizon) {
+			receiveUpdates();
+
+			final int onTurn = currentPosition.getOnTurn();
+			mobilityCalculator.calculate(currentPosition, (depth > 0) ? nodeStack[depth - 1].mobilityCalculator : null);
+
+			final int oppositeColor = Color.getOppositeColor(onTurn);
+			final boolean isLegalPosition = !mobilityCalculator.isSquareAttacked(onTurn, currentPosition.getKingPosition(oppositeColor));
+			principalVariation.clear();
+
+			if (isLegalPosition)
+				alphaBetaInLegalPosition(horizon);
+			else
+				evaluation.setEvaluation(Evaluation.MAX);
+		}
+
+		public void alphaBetaInLegalPosition(final int horizon) {
+			final int onTurn = currentPosition.getOnTurn();
+			final int oppositeColor = Color.getOppositeColor(onTurn);
+			final int initialAlpha = evaluation.getAlpha();
+			final int initialBeta = evaluation.getBeta();
+			final boolean pvNode = initialBeta - initialAlpha > 1;
+
+			if (checkFiniteEvaluation(horizon, initialAlpha, initialBeta))
+				return;
+
+			moveListBegin = moveStackTop;
+
+			// Try to find position in hash table
+			if (updateRecordByHash(horizon, initialAlpha, initialBeta, hashRecord))
+				return;
+
+			final int reducedHorizon = (depth >= 2 && horizon >= ISearchEngine.HORIZON_GRANULARITY && horizon < 2 * ISearchEngine.HORIZON_GRANULARITY && mobilityCalculator.isStablePosition (currentPosition)) ?
+					horizon - ISearchEngine.HORIZON_GRANULARITY : horizon;
+
+			isQuiescenceSearch = (reducedHorizon < ISearchEngine.HORIZON_GRANULARITY);
+
+			final boolean isFirstQuiescence = isQuiescenceSearch && depth > 0 && !previousRecord.isQuiescenceSearch;
+
+			final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, mobilityCalculator).getEvaluation();
+			final int ownKingSquare = currentPosition.getKingPosition(onTurn);
+			final boolean isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
+
+			if (depth > 0 && (!isQuiescenceSearch || isFirstQuiescence)) {
+				if (mateSearch(onTurn, oppositeColor, reducedHorizon, initialAlpha, initialBeta, isCheck))
+					return;
+			}
+
+			try {
+				// Evaluate position
+				int whitePositionEvaluation = tacticalEvaluation;
+
+				final int materialEvaluation = currentPosition.getMaterialEvaluation();
+				final int materialEvaluationShift = positionEvaluator.getMaterialEvaluationShift();
+
+				whitePositionEvaluation += materialEvaluation >> materialEvaluationShift;
+
+				if (!isQuiescenceSearch || isFirstQuiescence) {
+					// Calculate positional evaluation in normal search and first depth of quiescence search.
+					// So it will remain cached for the quiescence search,
+					lastPositionalEvaluation = positionEvaluator.evaluatePositional().getEvaluation();
+				}
+
+				whitePositionEvaluation += lastPositionalEvaluation;
+
+				final int positionEvaluation = Evaluation.getRelative(fixDrawByRepetitionEvaluation(whitePositionEvaluation), onTurn);
+				final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
+
+				final boolean isCheckSearch = isQuiescenceSearch && reducedHorizon > -maxCheckSearchDepth && isCheck;
+
+				final int positionExtension;
+
+				if (reducedHorizon >= searchSettings.getMinExtensionHorizon())
+					positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, hashRecord, horizon);
+				else
+					positionExtension = 0;
+
+				final boolean isMaxDepth = (depth >= maxTotalDepth - 1);
+
+				// Use position evaluation as initial evaluation
+				if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
+					evaluation.setEvaluation(positionEvaluation);
+
+					nodeCount++;
+
+					if (evaluation.updateBoundaries (positionEvaluation)) {
+						evaluation.setAlpha(positionEvaluation);
+						return;
+					}
+				}
+
+				final int maxQuiescenceDepth = searchSettings.getMaxQuiescenceDepth();
+				final boolean winMateRequired = Evaluation.isWinMateSearch(initialAlpha);
+				final boolean loseMateRequired = Evaluation.isLoseMateSearch(initialBeta);
+				final boolean mateRequired = winMateRequired || loseMateRequired;
+
+				if (!isMaxDepth && reducedHorizon > -maxQuiescenceDepth && (!isQuiescenceSearch || isCheckSearch || !mateRequired)) {
+					moveListBegin = moveStackTop;
+					moveListEnd = moveStackTop;
+
+					// Null move heuristic
+					if (!isQuiescenceSearch && isNullSearchPossible(isCheck)) {
+						final int nullReduction = Math.min(searchSettings.getNullMoveReduction(), reducedHorizon / 2);
+
+						if (nullReduction >= ISearchEngine.HORIZON_GRANULARITY) {
+							int nullHorizon = reducedHorizon - (nullReduction & ISearchEngine.HROZION_INTEGRAL_MASK);
+
+							nullMove.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
+
+							evaluateMove(nullMove, nullHorizon, 0, initialBeta, initialBeta + 1);
+
+							final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
+
+							if (parentEvaluation.getEvaluation() > initialBeta) {
+								evaluation.update(parentEvaluation);
+								return;
+							}
+						}
+					}
+
+					// Try P-var move first
+					final boolean precalculatedMoveFound;
+					boolean precalculatedBetaCutoff = false;
+
+					if (hashBestMove.getMoveType() != MoveType.INVALID) {
+						precalculatedMoveFound = true;
+						precalculatedMove.assign(hashBestMove);
+					}
+					else {
+						precalculatedMoveFound = precalculatedMove.uncompressMove(principalMove.getCompressedMove(), currentPosition);
+					}
+
+					if (precalculatedMoveFound) {
+						final int alpha = evaluation.getAlpha();
+						final int beta = evaluation.getBeta();
+
+						evaluateMove(precalculatedMove, reducedHorizon, positionExtension, alpha, beta);
+
+						if (updateCurrentRecordAfterEvaluation(precalculatedMove, reducedHorizon, nextRecord)) {
+							precalculatedBetaCutoff = true;
+						}
+					}
+
+					// If precalculated move didn't make beta cutoff try other moves
+					if (!precalculatedBetaCutoff) {
+						generateAndSortMoves(reducedHorizon, isQuiescenceSearch, isCheckSearch, isCheck);
+
+						// First legal move
+						while (moveListEnd > moveListBegin) {
+							final int alpha = evaluation.getAlpha();
+							final int beta = evaluation.getBeta();
+
+							final Move move = precreatedCurrentMove;
+							moveStack.getMove(moveListEnd - 1, move);
+
+							if (!move.equals(precalculatedMove)) {
+								final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
+								currentPosition.makeMove(move);
+
+								final int moveOrderReducedHorizon = calculateMoveOrderReducedHorizon(reducedHorizon, move, isCheck, pvNode);
+
+								if (firstLegalMove.getMoveType() != MoveType.INVALID && (beta - alpha != 1 || moveOrderReducedHorizon != reducedHorizon)) {
+									evaluateMadeMove (move, moveOrderReducedHorizon, positionExtension, alpha, alpha + 1, beginMaterialEvaluation);
+
+									final int childEvaluation = -nextRecord.evaluation.getEvaluation();
+
+									if (childEvaluation > alpha)
+										evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, beginMaterialEvaluation);
+								}
+								else {
+									evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, beginMaterialEvaluation);
+								}
+
+								currentPosition.undoMove(move);
+
+								if (updateCurrentRecordAfterEvaluation(move, reducedHorizon, nextRecord))
+									break;
+							}
+
+							moveListEnd--;
+						}
+					}
+
+					final int mateEvaluation = Evaluation.getMateEvaluation(depth);
+
+					checkMate(onTurn, isCheck, reducedHorizon, mateEvaluation);
+				}
+			}
+			finally {
+				updateHashRecord(reducedHorizon);
+				updateBestMovePerIndexCounts();
+			}
+		}
+
+		private boolean isNullSearchPossible(final boolean isCheck) {
+			if (isCheck)
+				return false;
+
+			if (depth > 0) {
+				final Move lastMove = previousRecord.currentMove;
+
+				if (lastMove.getMoveType() == MoveType.NULL)
+					return false;
+			}
+
+			final int beta = evaluation.getBeta();
+
+			if (beta > Evaluation.MATE_ZERO_DEPTH)
+				return false;
+
+			// Check position - at least two figures are needed
+			final int onTurn = currentPosition.getOnTurn();
+			long figureMask = BitBoard.EMPTY;
+
+			for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
+				figureMask |= currentPosition.getPiecesMask(onTurn, pieceType);
+			}
+
+			final int figureCount = BitBoard.getSquareCount(figureMask);
+
+			return figureCount > 1;
+		}
+
+		/**
+		 * Updates currentRecord by hash table.
+		 * @param horizon current horizon
+		 * @param initialAlpha initial alpha of the alpha-beta
+		 * @param initialBeta initial beta of the alpha-beta
+		 * @param hashRecord target hash record
+		 * @return true if the position evaluation with enough horizon was obtained
+		 */
+		private boolean updateRecordByHash(final int horizon, final int initialAlpha, final int initialBeta, final HashRecord hashRecord) {
+			if (!readHashRecord(horizon, hashRecord)) {
+				hashBestMove.clear();
+
+				return false;
+			}
+
+			if (depth > 0 && hashRecord.getHorizon() >= horizon) {
+				final int hashEvaluation = hashRecord.getNormalizedEvaluation(depth);
+				final int hashType = hashRecord.getType();
+
+				if (hashType == HashRecordType.VALUE || (hashType == HashRecordType.LOWER_BOUND && hashEvaluation > initialBeta) || (hashType == HashRecordType.UPPER_BOUND && hashEvaluation < initialAlpha)) {
+					evaluation.setEvaluation(hashEvaluation);
+
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		private void generateAndSortMoves(final int horizon, final boolean isQuiescenceSearch, final boolean isCheckSearch, final boolean isCheck) {
+			moveListBegin = moveStackTop;
+
+			final EvaluatedMoveList rootMoveList = task.getRootMoveList();
+			final int rootMoveSize = rootMoveList.getSize();
+
+			if (depth == 0 && rootMoveSize > 0) {
+				moveStack.copyRecords(rootMoveList, 0, 0, rootMoveSize);
+				moveStackTop += rootMoveSize;
+
+				moveListEnd = moveStackTop;
+			}
+			else {
+				if (isQuiescenceSearch && !isCheckSearch) {
+					final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
+
+					quiescenceLegalMoveGenerator.setGenerateChecks(horizon > -maxCheckSearchDepth);
+					quiescenceLegalMoveGenerator.setPosition(currentPosition);
+					quiescenceLegalMoveGenerator.generateMoves();
+				}
+				else {
+					pseudoLegalMoveGenerator.setPosition(currentPosition);
+					pseudoLegalMoveGenerator.setReduceMovesInCheck(isCheck);
+					pseudoLegalMoveGenerator.generateMoves();
+
+					allMovesGenerated = true;
+				}
+
+				moveListEnd = moveStackTop;
+
+				moveStack.sortMoves (moveListBegin, moveListEnd);
+			}
+		}
+
+		/**
+		 * Evaluates given move.
+		 * @param move move to evaluate
+		 * @param horizon needed horizon
+		 * @param alpha alpha from current view
+		 * @param beta alpha from current view
+		 */
+		private ISearchResult evaluateMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta) {
+			final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
+
+			currentPosition.makeMove(move);
+
+			final ISearchResult result = evaluateMadeMove(move, horizon, positionExtension, alpha, beta, beginMaterialEvaluation);
+			currentPosition.undoMove(move);
+
+			return result;
+		}
+
+		private ISearchResult evaluateMadeMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta, final int beginMaterialEvaluation) {
+			final int moveExtension;
+
+			if (horizon >= searchSettings.getMinExtensionHorizon())
+				moveExtension = moveExtensionEvaluator.getExtension(currentPosition, move, task.getRootMaterialEvaluation(), beginMaterialEvaluation);
+			else
+				moveExtension = 0;
+
+			final int totalExtension = Math.min(Math.min(positionExtension + moveExtension, ISearchEngine.HORIZON_GRANULARITY), maxExtension);
+
+			int subHorizon = horizon + totalExtension - ISearchEngine.HORIZON_GRANULARITY;
+			subHorizon = matePrunning(depth, subHorizon, alpha, beta, ISearchEngine.HORIZON_GRANULARITY);
+
+			repeatedPositionRegister.pushPosition (currentPosition, move);
+			currentMove.assign(move);
+
+			moveStackTop = moveListEnd;
+
+			nextRecord.openNode(-beta, -alpha);
+			nextRecord.maxExtension = maxExtension - totalExtension;
+
+			nextRecord.alphaBeta(subHorizon);
+
+			final ISearchResult result = nextRecord;
+
+			moveStackTop = moveListEnd;
+
+			currentMove.clear();
+			repeatedPositionRegister.popPosition();
+
+			return result;
+		}
+
+		private boolean updateCurrentRecordAfterEvaluation(final Move move, final int horizon, final ISearchResult result) {
+			final NodeEvaluation parentEvaluation = result.getNodeEvaluation().getParent();
+			final int evaluation = parentEvaluation.getEvaluation();
+			final boolean isLegalMove = move.getMoveType() != MoveType.NULL && evaluation > Evaluation.MIN;
+			boolean betaCutoff = false;
+
+			if (isLegalMove && firstLegalMove.getMoveType() == MoveType.INVALID) {
+				firstLegalMove.assign(move);
+			}
+
+			if (this.evaluation.update(parentEvaluation)) {
+				// Update principal variation
+				principalVariation.clear();
+
+				if (this.evaluation.getEvaluation() != Evaluation.MIN) {   // Move where king is left attacked is not legal
+					principalVariation.add(move);
+					principalVariation.addAll(result.getPrincipalVariation());
+				}
+
+				// Update alpha and beta
+				if (this.evaluation.isBetaCutoff()) {
+					moveEstimator.addCutoff(this, currentPosition.getOnTurn(), move, horizon);
+
+					killerMove.assign(move);
+
+					betaCutoff = true;
+				}
+
+				bestLegalMoveIndex = legalMoveCount;
+				legalMoveCount++;
+			}
+
+			// Send result and update root move list if depth = 0
+			if (depth == 0) {
+				if (isLegalMove)
+					evaluatedMoveList.addRecord(move, evaluation);
+
+				for (ISearchEngineHandler handler: handlerRegistrar.getHandlers()) {
+					final SearchResult partialResult = getResult(horizon);
+
+					handler.onResultUpdate(partialResult);
+				}
+			}
+
+			return betaCutoff;
+		}
+
+		private void updateHashRecord(final int horizon) {
+			final NodeEvaluation nodeEvaluation = evaluation;
+			final int evaluation = nodeEvaluation.getEvaluation();
+
+			if (horizon > 0 && !Evaluation.isDrawByRepetition(evaluation)) {
+				final HashRecord record = hashRecord;
+				record.setEvaluationAndType(nodeEvaluation, depth);
+
+				final int effectiveHorizon;
+
+				if (evaluation >= Evaluation.MATE_MIN || evaluation <= -Evaluation.MATE_MIN) {
+					effectiveHorizon = ISearchEngine.MAX_HORIZON - 1;
+				}
+				else
+					effectiveHorizon = horizon;
+
+				record.setHorizon(effectiveHorizon);
+
+				if (principalVariation.getSize() > 0) {
+					record.setCompressedBestMove(principalVariation.getCompressedMove(0));
+				}
+				else {
+					record.setCompressedBestMove(Move.NONE_COMPRESSED_MOVE);
+				}
+
+				hashTable.updateRecord(currentPosition, record);
+			}
+		}
+
+		private void updateBestMovePerIndexCounts() {
+			if (GlobalSettings.isDebug()) {
+				final int index = bestLegalMoveIndex;
+
+				if (index >= 0)
+					bestMovePerIndexCounts[index]++;
+			}
+		}
+
+		private boolean mateSearch(final int onTurn, final int oppositeColor, final int horizon, final int alpha, final int beta, final boolean isCheck) {
+			mateFinder.setPosition(currentPosition);
+			mateFinder.setDepthAdvance(depth);
+
+			// Win
+			final int winEvaluation = mateFinder.findWin(WIN_MATE_DEPTH);
+
+			if (winEvaluation >= Evaluation.MATE_MIN) {
+				evaluation.setEvaluation(winEvaluation);
+				evaluation.setAlpha(Evaluation.MIN);
+				evaluation.setBeta(Evaluation.MAX);
+				principalVariation.clear();
+
+				return true;
+			}
+
+			// Lose
+			if (isCheck) {
+				final int loseEvaluation = mateFinder.findLose(LOSE_MATE_DEPTH);
+
+				if (loseEvaluation <= -Evaluation.MATE_MIN) {
+					evaluation.setEvaluation(loseEvaluation);
+					evaluation.setAlpha(Evaluation.MIN);
+					evaluation.setBeta(Evaluation.MAX);
+					principalVariation.clear();
+
+					return true;
+				}
+				else {
+					if (mateFinder.getNonLosingMoveCount() == 1) {
+						moveListBegin = moveStackTop;
+						moveListEnd = moveStackTop;
+						evaluation.update(mateFinder.getLosingMovesEvaluation());
+
+						mateFinder.getNonLosingMove(nonLosingMove);
+						evaluateMove(nonLosingMove, horizon, ISearchEngine.HORIZON_GRANULARITY, alpha, beta);
+
+						updateCurrentRecordAfterEvaluation(nonLosingMove, horizon, nextRecord);
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		/**
+		 * Checks if there is mate in the position.
+		 * At zero horizon method checks legal moves itself, otherwise it uses number of moves
+		 * stored in current node record.
+		 * @param horizon horizon
+		 * @param isCheck if there is check in the position
+		 * @param mateEvaluation evaluation of the mate
+		 * @param isCheck if there is check in the position
+		 * @return if there is a mate
+		 */
+		private boolean checkMate(final int onTurn, final boolean isCheck, final int horizon, final int mateEvaluation) {
+			boolean isMate = false;
+
+			if (firstLegalMove.getMoveType() == MoveType.INVALID) {
+				if (allMovesGenerated) {
+					final int evaluation;
+
+					if (isCheck) {
+						evaluation = -mateEvaluation;
+						isMate = true;
+					}
+					else
+						evaluation = Evaluation.DRAW;
+
+					this.evaluation.setEvaluation(evaluation);
+				}
+
+				// If we are at horizon 0 not all moves was generated so we must
+				// check if there really isn't legal move. This is slow so we
+				// will detect only mate in case of check.
+				if (isCheck && !isMate && mobilityCalculator.canBeMate(currentPosition)) {
+					if (!legalMoveFinder.existsLegalMove(currentPosition)) {
+						this.evaluation.setEvaluation(-mateEvaluation);
+
+						isMate = true;
+					}
+				}
+			}
+
+			return isMate;
+		}
+
+		private boolean checkFiniteEvaluation(final int horizon, final int initialAlpha, final int initialBeta) {
+			if (depth > 0 && finiteEvaluator.evaluate(currentPosition, depth, horizon, initialAlpha, initialBeta)) {
+				evaluation.setEvaluation(finiteEvaluator.getEvaluation());
+
+				return true;
+			}
+
+			return false;
+		}
+
+		private int calculateMoveOrderReducedHorizon(final int horizon, final Move move, final boolean isCheck, final boolean pvNode) {
+			if (isCheck || pvNode || horizon < 3 * HORIZON_GRANULARITY || legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getPromotionPieceType() == PieceType.QUEEN)
+				return horizon;
+
+			if (currentPosition.isCheck())
+				return horizon;
+
+			if (legalMoveCount < 7)
+				return horizon - HORIZON_GRANULARITY;
+			else
+				return horizon - 2 * HORIZON_GRANULARITY;
+		}
+
+		private boolean readHashRecord(final int horizon, final HashRecord hashRecord) {
+			if (horizon <= 0)
+				return false;
+
+			final boolean success = readHashRecordImpl(horizon, hashRecord);
+
+			if (GlobalSettings.isDebug())
+				hashSuccessRatio.addInvocation(success);
+
+			return success;
+		}
+
+		private boolean readHashRecordImpl(final int horizon, final HashRecord hashRecord) {
+			if (!hashTable.getRecord(currentPosition, horizon, hashRecord))
+				return false;
+
+			if (hashRecord.getCompressedBestMove() == Move.NONE_COMPRESSED_MOVE) {
+				hashBestMove.clear();
+
+				if (GlobalSettings.isDebug())
+					hashPrimaryCollisionRate.addInvocation (false);
+
+				return true;
+			}
+
+			final boolean success = hashBestMove.uncompressMove(hashRecord.getCompressedBestMove(), currentPosition);
+
+			if (GlobalSettings.isDebug())
+				hashPrimaryCollisionRate.addInvocation (!success);
+
+			return success;
+		}
+
+	}
+
+	private static final int RECEIVE_UPDATES_COUNT = 8192;
 
 	private static final int HASH_BEST_MOVE_ESTIMATE = Integer.MAX_VALUE;
 	
@@ -42,7 +683,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private NodeRecord[] nodeStack;
 	private MoveStack moveStack;
 	private final Position currentPosition;
-	private int currentDepth;
 	private int moveStackTop;
 	private volatile long nodeCount;
 	private final RepeatedPositionRegister repeatedPositionRegister;
@@ -54,10 +694,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private int receiveUpdatesCounter;
 
 	// Supplementary objects
-	private final QuiescencePseudoLegalMoveGenerator quiescenceLegalMoveGenerator;
-	private final PseudoLegalMoveGenerator pseudoLegalMoveGenerator;
 	private final LegalMoveFinder legalMoveFinder;
-	private final MoveWalker moveWalker;
 	private final MoveEstimator moveEstimator;
 	private final FinitePositionEvaluator finiteEvaluator;
 	private final SearchExtensionCalculator extensionCalculator;
@@ -85,15 +722,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	public SerialSearchEngine() {
 		this.evaluatedMoveList = new EvaluatedMoveList(PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
 		this.handlerRegistrar = new HandlerRegistrarImpl<>();
-		
-		moveWalker = new MoveWalker();
 
-		quiescenceLegalMoveGenerator = new QuiescencePseudoLegalMoveGenerator();
-		quiescenceLegalMoveGenerator.setWalker(moveWalker);
-
-		pseudoLegalMoveGenerator = new PseudoLegalMoveGenerator();
-		pseudoLegalMoveGenerator.setWalker(moveWalker);
-		
 		legalMoveFinder = new LegalMoveFinder();
 
 		engineState = EngineState.STOPPED;
@@ -150,520 +779,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 			receiveUpdatesCounter = 0;
 		}
 	}
-	
-	private boolean isNullSearchPossible(final boolean isCheck) {
-		if (isCheck)
-			return false;
 
-		if (currentDepth > 0) {
-			final Move lastMove = nodeStack[currentDepth - 1].currentMove;
-			
-			if (lastMove.getMoveType() == MoveType.NULL)
-				return false;
-		}
-		
-		final int beta = nodeStack[currentDepth].evaluation.getBeta();
-		
-		if (beta > Evaluation.MATE_ZERO_DEPTH)
-			return false;
-				
-		// Check position - at least two figures are needed
-		final int onTurn = currentPosition.getOnTurn();
-		long figureMask = BitBoard.EMPTY;
-		
-		for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
-			figureMask |= currentPosition.getPiecesMask(onTurn, pieceType);
-		}
-		
-		final int figureCount = BitBoard.getSquareCount(figureMask);
-		
-		return figureCount > 1;
-	}
-	
-	private void alphaBeta (final int horizon) {
-		receiveUpdates();
-		
-		final NodeRecord currentRecord = nodeStack[currentDepth];
-		final int onTurn = currentPosition.getOnTurn();
-
-		final MobilityCalculator mobilityCalculator = nodeStack[currentDepth].mobilityCalculator;
-		mobilityCalculator.calculate(currentPosition, (currentDepth > 0) ? nodeStack[currentDepth - 1].mobilityCalculator : null);
-
-		final int oppositeColor = Color.getOppositeColor(onTurn);
-		final boolean isLegalPosition = !mobilityCalculator.isSquareAttacked(onTurn, currentPosition.getKingPosition(oppositeColor));
-		
-		currentRecord.principalVariation.clear();
-
-		if (isLegalPosition)
-			alphaBetaInLegalPosition(horizon);
-		else
-			currentRecord.evaluation.setEvaluation(Evaluation.MAX);
-	}
-	
-	public void alphaBetaInLegalPosition(final int horizon) {
-		final NodeRecord currentRecord = nodeStack[currentDepth];
-		final int onTurn = currentPosition.getOnTurn();
-		final int oppositeColor = Color.getOppositeColor(onTurn);
-		final int initialAlpha = currentRecord.evaluation.getAlpha();
-		final int initialBeta = currentRecord.evaluation.getBeta();
-		final boolean pvNode = initialBeta - initialAlpha > 1;
-		
-		if (checkFiniteEvaluation(horizon, currentRecord, initialAlpha, initialBeta))
-			return;
-		
-		currentRecord.moveListBegin = moveStackTop;
-		
-		// Try to find position in hash table
-		final HashRecord hashRecord = nodeStack[currentDepth].precreatedHashRecord;
-		
-		if (updateRecordByHash(horizon, currentRecord, initialAlpha, initialBeta, hashRecord))
-			return;
-
-		final MobilityCalculator mobilityCalculator = nodeStack[currentDepth].mobilityCalculator;
-
-		final int reducedHorizon = (currentDepth >= 2 && horizon >= ISearchEngine.HORIZON_GRANULARITY && horizon < 2 * ISearchEngine.HORIZON_GRANULARITY && mobilityCalculator.isStablePosition (currentPosition)) ?
-				horizon - ISearchEngine.HORIZON_GRANULARITY : horizon;
-		
-		final boolean isQuiescenceSearch = (reducedHorizon < ISearchEngine.HORIZON_GRANULARITY);
-		currentRecord.isQuiescenceSearch = isQuiescenceSearch;
-		
-		final boolean isFirstQuiescence = isQuiescenceSearch && currentDepth > 0 && !nodeStack[currentDepth - 1].isQuiescenceSearch;
-
-		final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, mobilityCalculator).getEvaluation();
-		final int ownKingSquare = currentPosition.getKingPosition(onTurn);
-		final boolean isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
-
-		if (currentDepth > 0 && (!isQuiescenceSearch || isFirstQuiescence)) {
-			if (mateSearch(currentRecord, onTurn, oppositeColor, reducedHorizon, initialAlpha, initialBeta, isCheck))
-				return;
-		}
-		
-		try {
-			// Evaluate position
-			int whitePositionEvaluation = tacticalEvaluation;
-			
-			final int materialEvaluation = currentPosition.getMaterialEvaluation();
-			final int materialEvaluationShift = positionEvaluator.getMaterialEvaluationShift();
-			
-			whitePositionEvaluation += materialEvaluation >> materialEvaluationShift;
-			
-			if (!isQuiescenceSearch || isFirstQuiescence) {
-				// Calculate positional evaluation in normal search and first depth of quiescence search.
-				// So it will remain cached for the quiescence search, 
-				lastPositionalEvaluation = positionEvaluator.evaluatePositional().getEvaluation();
-			}
-			
-			whitePositionEvaluation += lastPositionalEvaluation;
-			
-			final int positionEvaluation = Evaluation.getRelative(fixDrawByRepetitionEvaluation(whitePositionEvaluation), onTurn);
-			final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
-
-			final boolean isCheckSearch = isQuiescenceSearch && reducedHorizon > -maxCheckSearchDepth && isCheck;
-	
-			final int positionExtension;
-			
-			if (reducedHorizon >= searchSettings.getMinExtensionHorizon())
-				positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, hashRecord, horizon);
-			else
-				positionExtension = 0;
-	
-			final boolean isMaxDepth = (currentDepth >= maxTotalDepth - 1);
-		
-			// Use position evaluation as initial evaluation
-			if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
-				currentRecord.evaluation.setEvaluation(positionEvaluation);
-				
-				nodeCount++;
-	
-				if (currentRecord.evaluation.updateBoundaries (positionEvaluation)) {
-					currentRecord.evaluation.setAlpha(positionEvaluation);
-					return;
-				}
-			}
-	
-			final int maxQuiescenceDepth = searchSettings.getMaxQuiescenceDepth();
-			final boolean winMateRequired = Evaluation.isWinMateSearch(initialAlpha);
-			final boolean loseMateRequired = Evaluation.isLoseMateSearch(initialBeta);
-			final boolean mateRequired = winMateRequired || loseMateRequired;
-			
-			if (!isMaxDepth && reducedHorizon > -maxQuiescenceDepth && (!isQuiescenceSearch || isCheckSearch || !mateRequired)) {
-				final NodeRecord nextRecord = nodeStack[currentDepth + 1];
-				
-				currentRecord.moveListBegin = moveStackTop;
-				currentRecord.moveListEnd = moveStackTop;
-
-				// Null move heuristic
-				if (!isQuiescenceSearch && isNullSearchPossible(isCheck)) {
-					final int nullReduction = Math.min(searchSettings.getNullMoveReduction(), reducedHorizon / 2);
-
-					if (nullReduction >= ISearchEngine.HORIZON_GRANULARITY) {
-						int nullHorizon = reducedHorizon - (nullReduction & ISearchEngine.HROZION_INTEGRAL_MASK);
-
-						final Move move = currentRecord.precreatedNullMove;
-						move.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
-
-						evaluateMove(move, nullHorizon, 0, initialBeta, initialBeta + 1);
-
-						final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
-
-						if (parentEvaluation.getEvaluation() > initialBeta) {
-							currentRecord.evaluation.update(parentEvaluation);
-							return;
-						}
-					}
-				}
-
-				// Try P-var move first
-				final Move precalculatedMove = currentRecord.precreatedPrecalculatedMove;
-				final boolean precalculatedMoveFound;
-				boolean precalculatedBetaCutoff = false;
-				
-				if (currentRecord.hashBestMove.getMoveType() != MoveType.INVALID) {
-					precalculatedMoveFound = true;
-					precalculatedMove.assign(currentRecord.hashBestMove);
-				}
-				else {
-					precalculatedMoveFound = precalculatedMove.uncompressMove(currentRecord.principalMove.getCompressedMove(), currentPosition);
-				}
-				
-				if (precalculatedMoveFound) {
-					final int alpha = currentRecord.evaluation.getAlpha();
-					final int beta = currentRecord.evaluation.getBeta();
-					
-					evaluateMove(precalculatedMove, reducedHorizon, positionExtension, alpha, beta);
-					
-					if (updateCurrentRecordAfterEvaluation(precalculatedMove, reducedHorizon, currentRecord, nextRecord)) {
-						precalculatedBetaCutoff = true;
-					}
-				}
-	
-				// If precalculated move didn't make beta cutoff try other moves
-				if (!precalculatedBetaCutoff) {
-					generateAndSortMoves(currentRecord, reducedHorizon, isQuiescenceSearch, isCheckSearch, isCheck);
-					
-					// First legal move
-					while (currentRecord.moveListEnd > currentRecord.moveListBegin) {
-						final int alpha = currentRecord.evaluation.getAlpha();
-						final int beta = currentRecord.evaluation.getBeta();
-	
-						final Move move = currentRecord.precreatedCurrentMove;
-						moveStack.getMove(currentRecord.moveListEnd - 1, move);
-						
-						if (!move.equals(precalculatedMove)) {
-							final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
-							currentPosition.makeMove(move);
-							
-							final int moveOrderReducedHorizon = calculateMoveOrderReducedHorizon(reducedHorizon, move, isCheck, pvNode, currentRecord);
-									
-							if (currentRecord.firstLegalMove.getMoveType() != MoveType.INVALID && (beta - alpha != 1 || moveOrderReducedHorizon != reducedHorizon)) {
-								evaluateMadeMove (move, moveOrderReducedHorizon, positionExtension, alpha, alpha + 1, currentRecord, beginMaterialEvaluation);
-								
-								final int childEvaluation = -nextRecord.evaluation.getEvaluation();
-								
-								if (childEvaluation > alpha)
-									evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, currentRecord, beginMaterialEvaluation);
-							}
-							else {
-								evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, currentRecord, beginMaterialEvaluation);
-							}
-							
-							currentPosition.undoMove(move);
-	
-							if (updateCurrentRecordAfterEvaluation(move, reducedHorizon, currentRecord, nextRecord))
-								break;
-						}
-						
-						currentRecord.moveListEnd--;
-					}
-				}
-				
-				final int mateEvaluation = Evaluation.getMateEvaluation(currentDepth);
-				
-				checkMate(onTurn, isCheck, reducedHorizon, currentRecord, mateEvaluation);
-			}
-		}
-		finally {
-			updateHashRecord(currentRecord, reducedHorizon);
-			updateBestMovePerIndexCounts(currentRecord);
-		}
-	}
-
-	private int calculateMoveOrderReducedHorizon(final int horizon, final Move move, final boolean isCheck, final boolean pvNode, final NodeRecord currentRecord) {
-		if (isCheck || pvNode || horizon < 3 * HORIZON_GRANULARITY || currentRecord.legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getPromotionPieceType() == PieceType.QUEEN)
-			return horizon;
-		
-		if (currentPosition.isCheck())
-			return horizon;
-		
-		if (currentRecord.legalMoveCount < 7)
-			return horizon - HORIZON_GRANULARITY;
-		else
-			return horizon - 2 * HORIZON_GRANULARITY;
-	}
-
-	private void updateBestMovePerIndexCounts(final NodeRecord currentRecord) {
-		if (GlobalSettings.isDebug()) {
-			final int index = currentRecord.bestLegalMoveIndex;
-			
-			if (index >= 0)
-				bestMovePerIndexCounts[index]++;
-		}
-	}
-
-	private boolean mateSearch(final NodeRecord currentRecord, final int onTurn, final int oppositeColor, final int horizon, final int alpha, final int beta, final boolean isCheck) {
-		mateFinder.setPosition(currentPosition);
-		mateFinder.setDepthAdvance(currentDepth);
-		
-		// Win
-		final int winEvaluation = mateFinder.findWin(WIN_MATE_DEPTH);
-		
-		if (winEvaluation >= Evaluation.MATE_MIN) {
-			currentRecord.evaluation.setEvaluation(winEvaluation);				
-			currentRecord.evaluation.setAlpha(Evaluation.MIN);
-			currentRecord.evaluation.setBeta(Evaluation.MAX);
-			currentRecord.principalVariation.clear();
-
-			return true;
-		}
-
-		// Lose
-		if (isCheck) {
-			final int loseEvaluation = mateFinder.findLose(LOSE_MATE_DEPTH);
-			
-			if (loseEvaluation <= -Evaluation.MATE_MIN) {
-				currentRecord.evaluation.setEvaluation(loseEvaluation);				
-				currentRecord.evaluation.setAlpha(Evaluation.MIN);
-				currentRecord.evaluation.setBeta(Evaluation.MAX);
-				currentRecord.principalVariation.clear();
-
-				return true;
-			}	
-			else {
-				if (mateFinder.getNonLosingMoveCount() == 1) {
-					currentRecord.moveListBegin = moveStackTop;
-					currentRecord.moveListEnd = moveStackTop;
-					currentRecord.evaluation.update(mateFinder.getLosingMovesEvaluation());
-					
-					final Move nonLosingMove = currentRecord.precreatedNonLosingMove;
-					mateFinder.getNonLosingMove(nonLosingMove);
-					evaluateMove(nonLosingMove, horizon, ISearchEngine.HORIZON_GRANULARITY, alpha, beta);
-					
-					updateCurrentRecordAfterEvaluation(nonLosingMove, horizon, currentRecord, nodeStack[currentDepth + 1]);
-					return true;
-				}
-			}
-		}
-		
-		return false;
-	}
-	
 	private int fixDrawByRepetitionEvaluation(final int evaluation) {
 		return (Evaluation.isDrawByRepetition(evaluation)) ? Evaluation.DRAW : evaluation;
-	}
-
-	private boolean checkFiniteEvaluation(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta) {
-		if (currentDepth > 0 && finiteEvaluator.evaluate(currentPosition, currentDepth, horizon, initialAlpha, initialBeta)) {
-			currentRecord.evaluation.setEvaluation(finiteEvaluator.getEvaluation());
-			
-			return true;
-		}
-		
-		return false;
-	}
-
-	/**
-	 * Checks if there is mate in the position.
-	 * At zero horizon method checks legal moves itself, otherwise it uses number of moves
-	 * stored in current node record.
-	 * @param horizon horizon
-	 * @param isCheck if there is check in the position
-	 * @param currentRecord current node record
-	 * @param mateEvaluation evaluation of the mate
-	 * @param isCheck if there is check in the position
-	 * @return if there is a mate
-	 */
-	private boolean checkMate(final int onTurn, final boolean isCheck, final int horizon, final NodeRecord currentRecord, final int mateEvaluation) {
-		boolean isMate = false;
-		
-		if (currentRecord.firstLegalMove.getMoveType() == MoveType.INVALID) {
-			if (currentRecord.allMovesGenerated) {
-				final int evaluation;
-
-				if (isCheck) {
-					evaluation = -mateEvaluation;
-					isMate = true;
-				}
-				else
-					evaluation = Evaluation.DRAW;
-
-				currentRecord.evaluation.setEvaluation(evaluation);
-			}
-
-			// If we are at horizon 0 not all moves was generated so we must
-			// check if there really isn't legal move. This is slow so we
-			// will detect only mate in case of check.
-			if (isCheck && !isMate && currentRecord.mobilityCalculator.canBeMate(currentPosition)) {
-				if (!legalMoveFinder.existsLegalMove(currentPosition)) {
-					currentRecord.evaluation.setEvaluation(-mateEvaluation);
-					
-					isMate = true;
-				}
-			}
-		}
-		
-		return isMate;
-	}
-
-	private boolean readHashRecord(final int horizon, final NodeRecord currentRecord, final HashRecord hashRecord) {
-		if (horizon <= 0)
-			return false;
-		
-		final boolean success = readHashRecordImpl(horizon, currentRecord, hashRecord);
-		
-		if (GlobalSettings.isDebug())
-			hashSuccessRatio.addInvocation(success);
-		
-		return success;
-	}
-
-	private boolean readHashRecordImpl(final int horizon, final NodeRecord currentRecord, final HashRecord hashRecord) {
-		if (!hashTable.getRecord(currentPosition, horizon, hashRecord))
-			return false;
-		
-		if (hashRecord.getCompressedBestMove() == Move.NONE_COMPRESSED_MOVE) {
-			currentRecord.hashBestMove.clear();
-			
-			if (GlobalSettings.isDebug())
-				hashPrimaryCollisionRate.addInvocation (false);
-			
-			return true;
-		}
-		
-		final boolean success = currentRecord.hashBestMove.uncompressMove(hashRecord.getCompressedBestMove(), currentPosition);
-		
-		if (GlobalSettings.isDebug())
-			hashPrimaryCollisionRate.addInvocation (!success);
-		
-		return success;
-	}
-	
-	/**
-	 * Updates currentRecord by hash table.
-	 * @param horizon current horizon
-	 * @param currentRecord (updated) current record
-	 * @param initialAlpha initial alpha of the alpha-beta
-	 * @param initialBeta initial beta of the alpha-beta
-	 * @param hashRecord target hash record
-	 * @return true if the position evaluation with enough horizon was obtained
-	 */
-	private boolean updateRecordByHash(final int horizon, final NodeRecord currentRecord, final int initialAlpha, final int initialBeta, final HashRecord hashRecord) {
-		if (!readHashRecord(horizon, currentRecord, hashRecord)) {
-			currentRecord.hashBestMove.clear();
-			
-			return false;
-		}
-			
-		if (currentDepth > 0 && hashRecord.getHorizon() >= horizon) {
-			final int hashEvaluation = hashRecord.getNormalizedEvaluation(currentDepth);
-			final int hashType = hashRecord.getType();
-
-			if (hashType == HashRecordType.VALUE || (hashType == HashRecordType.LOWER_BOUND && hashEvaluation > initialBeta) || (hashType == HashRecordType.UPPER_BOUND && hashEvaluation < initialAlpha)) {
-				currentRecord.evaluation.setEvaluation(hashEvaluation);
-				
-				return true;
-			}
-		}
-		
-		return false;
-	}
-
-	private void generateAndSortMoves(final NodeRecord currentRecord, final int horizon, final boolean isQuiescenceSearch, final boolean isCheckSearch, final boolean isCheck) {
-		currentRecord.moveListBegin = moveStackTop;
-		
-		final EvaluatedMoveList rootMoveList = task.getRootMoveList();
-		final int rootMoveSize = rootMoveList.getSize();
-		
-		if (currentDepth == 0 && rootMoveSize > 0) {
-			moveStack.copyRecords(rootMoveList, 0, 0, rootMoveSize);
-			moveStackTop += rootMoveSize;
-				
-			currentRecord.moveListEnd = moveStackTop;
-		}
-		else {
-			if (isQuiescenceSearch && !isCheckSearch) {
-				final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
-				
-				quiescenceLegalMoveGenerator.setGenerateChecks(horizon > -maxCheckSearchDepth);
-				quiescenceLegalMoveGenerator.setPosition(currentPosition);
-				quiescenceLegalMoveGenerator.generateMoves();
-			}
-			else {
-				pseudoLegalMoveGenerator.setPosition(currentPosition);
-				pseudoLegalMoveGenerator.setReduceMovesInCheck(isCheck);
-				pseudoLegalMoveGenerator.generateMoves();
-				
-				currentRecord.allMovesGenerated = true;
-			}
-			
-			currentRecord.moveListEnd = moveStackTop;
-			
-			moveStack.sortMoves (currentRecord.moveListBegin, currentRecord.moveListEnd);
-		}
-	}
-
-	/**
-	 * Evaluates given move.
-	 * @param move move to evaluate
-	 * @param horizon needed horizon
-	 * @param alpha alpha from current view
-	 * @param beta alpha from current view
-	 */
-	private ISearchResult evaluateMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta) {
-		final NodeRecord currentRecord = nodeStack[currentDepth];
-		final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
-		
-		currentPosition.makeMove(move);
-		
-		final ISearchResult result = evaluateMadeMove(move, horizon, positionExtension, alpha, beta, currentRecord, beginMaterialEvaluation);
-		currentPosition.undoMove(move);
-		
-		return result;
-	}
-
-	private ISearchResult evaluateMadeMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta, final NodeRecord currentRecord, final int beginMaterialEvaluation) {
-		final int moveExtension;
-		
-		if (horizon >= searchSettings.getMinExtensionHorizon())
-			moveExtension = moveExtensionEvaluator.getExtension(currentPosition, move, task.getRootMaterialEvaluation(), beginMaterialEvaluation);
-		else
-			moveExtension = 0;
-		
-		final int maxExtension = currentRecord.maxExtension;
-		final int totalExtension = Math.min(Math.min(positionExtension + moveExtension, ISearchEngine.HORIZON_GRANULARITY), maxExtension);
-		
-		int subHorizon = horizon + totalExtension - ISearchEngine.HORIZON_GRANULARITY;
-		subHorizon = matePrunning(currentDepth, subHorizon, alpha, beta, ISearchEngine.HORIZON_GRANULARITY);
-
-		repeatedPositionRegister.pushPosition (currentPosition, move);
-		currentRecord.currentMove.assign(move);
-		
-		moveStackTop = currentRecord.moveListEnd;
-
-		final NodeRecord nextRecord = nodeStack[currentDepth + 1];
-		nextRecord.openNode(-beta, -alpha);
-		nextRecord.maxExtension = maxExtension - totalExtension;
-
-		currentDepth++;
-		alphaBeta(subHorizon);
-		currentDepth--;
-		
-		final ISearchResult result = nextRecord;
-		
-		moveStackTop = currentRecord.moveListEnd;
-		
-		currentRecord.currentMove.clear();
-		repeatedPositionRegister.popPosition();
-		return result;
 	}
 
 	public static int matePrunning(final int currentDepth, int subHorizon, final int alpha, final int beta, final int granularity) {
@@ -686,54 +804,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		return subHorizon;
 	}
 
-	private boolean updateCurrentRecordAfterEvaluation(final Move move, final int horizon, final NodeRecord currentRecord, final ISearchResult result) {
-		final NodeEvaluation parentEvaluation = result.getNodeEvaluation().getParent(); 
-		final int evaluation = parentEvaluation.getEvaluation();
-		final boolean isLegalMove = move.getMoveType() != MoveType.NULL && evaluation > Evaluation.MIN;
-		boolean betaCutoff = false;
-		
-		if (isLegalMove && currentRecord.firstLegalMove.getMoveType() == MoveType.INVALID) {
-			currentRecord.firstLegalMove.assign(move);
-		}
-		
-		if (currentRecord.evaluation.update(parentEvaluation)) {
-			// Update principal variation
-			currentRecord.principalVariation.clear();
-			
-			if (currentRecord.evaluation.getEvaluation() != Evaluation.MIN) {   // Move where king is left attacked is not legal
-				
-				currentRecord.principalVariation.add(move);
-				currentRecord.principalVariation.addAll(result.getPrincipalVariation());
-			}
-			
-			// Update alpha and beta
-			if (currentRecord.evaluation.isBetaCutoff()) {
-				moveEstimator.addCutoff(currentRecord, currentPosition.getOnTurn(), move, horizon);
-
-				currentRecord.killerMove.assign(move);				
-
-				betaCutoff = true;
-			}
-			
-			currentRecord.bestLegalMoveIndex = currentRecord.legalMoveCount;
-			currentRecord.legalMoveCount++;
-		}
-		
-		// Send result and update root move list if depth = 0
-		if (currentDepth == 0) {
-			if (isLegalMove)
-				evaluatedMoveList.addRecord(move, evaluation);
-			
-			for (ISearchEngineHandler handler: handlerRegistrar.getHandlers()) {
-				final SearchResult partialResult = getResult(horizon);
-				
-				handler.onResultUpdate(partialResult);
-			}
-		}
-		
-		return betaCutoff;
-	}
-
 	private SearchResult searchOneTask() {
 		// Initialize
 		final MoveList principalVariation = task.getPrincipalVariation();
@@ -741,8 +811,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		nodeStack[0].openNode(task.getAlpha(), task.getBeta());
 		nodeStack[0].maxExtension = task.getMaxExtension();
-		
-		currentDepth = 0;
+
 		moveStackTop = 0;
 		evaluatedMoveList.clear();
 
@@ -763,14 +832,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 		
 		// Do the search
-		currentDepth = 0;
 		boolean terminated = false;
 		
 		try {
-			alphaBeta(task.getHorizon());
-			
-			if (currentDepth != 0)
-				throw new RuntimeException("Corrupted depth");
+			nodeStack[0].alphaBeta(task.getHorizon());
 		}
 		catch (SearchTerminatedException ex) {
 			terminated = true;
@@ -820,8 +885,16 @@ public final class SerialSearchEngine implements ISearchEngine {
 			this.nodeStack = new NodeRecord[maxTotalDepth];
 			this.moveStack = new MoveStack(maxTotalDepth * PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
 
-			for (int i = 0; i < nodeStack.length; i++)
-				this.nodeStack[i] = new NodeRecord(maxTotalDepth - i - 1);
+			NodeRecord nodeRecord = null;
+
+			for (int i = nodeStack.length - 1; i >= 0; i--) {
+				this.nodeStack[i] = new NodeRecord(i, maxTotalDepth - i - 1, nodeRecord);
+				nodeRecord = nodeStack[i];
+			}
+
+			for (int i = 1; i < nodeStack.length; i++) {
+				nodeStack[i].setPreviousRecord (nodeStack[i - 1]);
+			}
 			
 			mateFinder.setMaxDepth (MAX_MATE_DEPTH, maxTotalDepth, MAX_MATE_EXTENSION);
 		}
@@ -963,35 +1036,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		return result;
 	}
 
-	private void updateHashRecord(final NodeRecord currentRecord, final int horizon) {
-		final NodeEvaluation nodeEvaluation = currentRecord.evaluation;
-		final int evaluation = nodeEvaluation.getEvaluation();
-		
-		if (horizon > 0 && !Evaluation.isDrawByRepetition(evaluation)) {
-			final HashRecord record = nodeStack[currentDepth].precreatedHashRecord;
-			record.setEvaluationAndType(nodeEvaluation, currentDepth);			
-		
-			final int effectiveHorizon;
-			
-			if (evaluation >= Evaluation.MATE_MIN || evaluation <= -Evaluation.MATE_MIN) {
-				effectiveHorizon = ISearchEngine.MAX_HORIZON - 1;
-			}
-			else
-				effectiveHorizon = horizon;
-			
-			record.setHorizon(effectiveHorizon);
-	
-			if (currentRecord.principalVariation.getSize() > 0) {
-				record.setCompressedBestMove(currentRecord.principalVariation.getCompressedMove(0));
-			}
-			else {
-				record.setCompressedBestMove(Move.NONE_COMPRESSED_MOVE);
-			}
-			
-			hashTable.updateRecord(currentPosition, record);
-		}
-	}
-	
 	/**
 	 * Returns current state of the engine.
 	 * 
@@ -1065,7 +1109,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			final StringWriter result = new StringWriter();
 			final PrintWriter writer = new PrintWriter(result);
 			
-			for (int i = 0; i <= currentDepth; i++) {
+/*			for (int i = 0; i <= currentDepth; i++) {
 				final NodeRecord record = nodeStack[i];
 				
 				final Move move = new Move();
@@ -1074,7 +1118,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				writer.println("Current move: " + move);
 				writer.println("Evaluation: " + record.evaluation);
 				writer.println();
-			}
+			}*/
 			
 			writer.flush();
 			
