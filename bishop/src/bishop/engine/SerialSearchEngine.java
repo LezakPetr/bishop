@@ -214,7 +214,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		currentRecord.moveListBegin = moveStackTop;
 		
 		// Try to find position in hash table
-		final HashRecord hashRecord = nodeStack[currentDepth].hashRecord;
+		final HashRecord hashRecord = nodeStack[currentDepth].precreatedHashRecord;
 		
 		if (updateRecordByHash(horizon, currentRecord, initialAlpha, initialBeta, hashRecord))
 			return;
@@ -299,7 +299,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					if (nullReduction >= ISearchEngine.HORIZON_GRANULARITY) {
 						int nullHorizon = reducedHorizon - (nullReduction & ISearchEngine.HROZION_INTEGRAL_MASK);
 
-						final Move move = new Move();
+						final Move move = currentRecord.precreatedNullMove;
 						move.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
 
 						evaluateMove(move, nullHorizon, 0, initialBeta, initialBeta + 1);
@@ -314,7 +314,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				}
 
 				// Try P-var move first
-				final Move precalculatedMove = new Move();
+				final Move precalculatedMove = currentRecord.precreatedPrecalculatedMove;
 				final boolean precalculatedMoveFound;
 				boolean precalculatedBetaCutoff = false;
 				
@@ -346,7 +346,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 						final int alpha = currentRecord.evaluation.getAlpha();
 						final int beta = currentRecord.evaluation.getBeta();
 	
-						final Move move = new Move();
+						final Move move = currentRecord.precreatedCurrentMove;
 						moveStack.getMove(currentRecord.moveListEnd - 1, move);
 						
 						if (!move.equals(precalculatedMove)) {
@@ -444,7 +444,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 					currentRecord.moveListEnd = moveStackTop;
 					currentRecord.evaluation.update(mateFinder.getLosingMovesEvaluation());
 					
-					final Move nonLosingMove = mateFinder.getNonLosingMove();
+					final Move nonLosingMove = currentRecord.precreatedNonLosingMove;
+					mateFinder.getNonLosingMove(nonLosingMove);
 					evaluateMove(nonLosingMove, horizon, ISearchEngine.HORIZON_GRANULARITY, alpha, beta);
 					
 					updateCurrentRecordAfterEvaluation(nonLosingMove, horizon, currentRecord, nodeStack[currentDepth + 1]);
@@ -967,7 +968,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		final int evaluation = nodeEvaluation.getEvaluation();
 		
 		if (horizon > 0 && !Evaluation.isDrawByRepetition(evaluation)) {
-			final HashRecord record = new HashRecord();
+			final HashRecord record = nodeStack[currentDepth].precreatedHashRecord;
 			record.setEvaluationAndType(nodeEvaluation, currentDepth);			
 		
 			final int effectiveHorizon;
@@ -981,7 +982,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			record.setHorizon(effectiveHorizon);
 	
 			if (currentRecord.principalVariation.getSize() > 0) {
-				record.setCompressedBestMove(currentRecord.principalVariation.get(0).getCompressedMove());
+				record.setCompressedBestMove(currentRecord.principalVariation.getCompressedMove(0));
 			}
 			else {
 				record.setCompressedBestMove(Move.NONE_COMPRESSED_MOVE);

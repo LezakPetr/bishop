@@ -4,7 +4,6 @@ import java.util.Arrays;
 
 import bishop.base.Color;
 import bishop.base.IMoveWalker;
-import bishop.base.LegalMoveFinder;
 import bishop.base.MateChecker;
 import bishop.base.Move;
 import bishop.base.MoveList;
@@ -32,6 +31,10 @@ public class MateFinder {
 	private final MoveList nonLosingMoves;   // Single moves that does not lead to mate for given depth
 	private int depthAdvance;
 	private int attackerColor;   // Color of the side that gives mate
+
+	// Pre-created objects to prevent allocation
+	private Move[] precreatedKillerMoves;
+	private Move[] precreatedMoves;
 	
 	private final IMoveWalker walker = new IMoveWalker() {
 		public boolean processMove(final Move move) {
@@ -90,7 +93,7 @@ public class MateFinder {
 				mustBeCheck = true;
 		}
 		
-		final Move killerMove = new Move();
+		final Move killerMove = precreatedKillerMoves[depth];
 		boolean existLegalMove = false;
 		int updatedAlpha = alpha;
 		int effectiveAlpha = alpha;
@@ -120,7 +123,7 @@ public class MateFinder {
 
 		moveStack.sortMoves (moveStackBegin, moveStackEnd);
 		
-		final Move move = new Move();
+		final Move move = precreatedMoves[depth];
 		
 		while (moveStackEnd > moveStackBegin) {
 			moveStack.getMove(moveStackEnd - 1, move);
@@ -221,11 +224,16 @@ public class MateFinder {
 		this.killerMoves = new int[maxExtendedDepth + maxDepthAdvance + 1];
 		this.nonLosingMoveCounts = new int[maxExtendedDepth + 2];
 		this.losingMovesEvaluations = new int[maxExtendedDepth + 2];
+		this.precreatedKillerMoves = new Move[maxExtendedDepth + 1];
+		this.precreatedMoves = new Move[maxExtendedDepth + 1];
 		
 		this.nonLosingMoves.reserve(maxExtendedDepth + 1);
 		
-		for (int i = 0; i <= maxExtendedDepth; i++)
+		for (int i = 0; i <= maxExtendedDepth; i++) {
 			this.nonLosingMoves.add(new Move());
+			this.precreatedKillerMoves[i] = new Move();
+			this.precreatedMoves[i] = new Move();
+		}
 	}
 	
 	public void setDepthAdvance (final int depthAdvance) {
@@ -240,8 +248,8 @@ public class MateFinder {
 		return nonLosingMoveCounts[0];
 	}
 	
-	public Move getNonLosingMove() {
-		return nonLosingMoves.get(0);
+	public void getNonLosingMove(final Move move) {
+		nonLosingMoves.assignToMove(0, move);
 	}
 	
 	public int getLosingMovesEvaluation() {

@@ -36,7 +36,7 @@ public class PawnStructureEvaluator {
 			(whitePawnMask, blackPawnMask) -> {
 				assert whitePawnMask == structureData.getPawnMask(Color.WHITE);
 				assert blackPawnMask == structureData.getPawnMask(Color.BLACK);
-				
+
 				evaluatePawnStructure();
 
 				return CombinedEvaluation.combine(

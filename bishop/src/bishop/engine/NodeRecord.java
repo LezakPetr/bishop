@@ -1,7 +1,5 @@
 package bishop.engine;
 
-import java.util.function.Supplier;
-
 import bishop.base.Move;
 import bishop.base.MoveList;
 
@@ -21,7 +19,13 @@ public class NodeRecord implements ISearchResult {
 	public int legalMoveCount;
 	public int bestLegalMoveIndex;
 	public final MobilityCalculator mobilityCalculator;
-	public final HashRecord hashRecord;
+
+	// Precreated objects to prevent reallocation
+	public final HashRecord precreatedHashRecord;
+	public final Move precreatedNullMove;
+	public final Move precreatedPrecalculatedMove;
+	public final Move precreatedCurrentMove;
+	public final Move precreatedNonLosingMove;
 
 	public NodeRecord(final int maxPrincipalDepth) {
 		currentMove = new Move();
@@ -32,7 +36,11 @@ public class NodeRecord implements ISearchResult {
 		hashBestMove = new Move();
 		firstLegalMove = new Move();
 		mobilityCalculator = new MobilityCalculator();
-		hashRecord = new HashRecord();
+		precreatedHashRecord = new HashRecord();
+		precreatedNullMove = new Move();
+		precreatedPrecalculatedMove = new Move();
+		precreatedCurrentMove = new Move();
+		precreatedNonLosingMove = new Move();
 	}
 
 	public void openNode(final int alpha, final int beta) {
