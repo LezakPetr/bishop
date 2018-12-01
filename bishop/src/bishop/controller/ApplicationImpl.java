@@ -2,10 +2,7 @@ package bishop.controller;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Random;
-import java.util.TreeMap;
+import java.util.*;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -48,6 +45,7 @@ public class ApplicationImpl implements IApplication {
 	private RegimeAnalysis regimeAnalysis;
 	private RegimeEndingTraining regimeEndingTraining;
 	private IRegime actualRegime;
+	private final Deque<RegimeType> regimeTypeStack = new ArrayDeque<>();
 
 	private static final String SETTINGS_PATH = "settings.xml";
 	private static final String SETTINGS_ELEMENT = "settings";
@@ -149,9 +147,20 @@ public class ApplicationImpl implements IApplication {
 	 */
 	public void setRegimeType (final RegimeType regimeType) {
 		if (actualRegime != null) {
+			final RegimeType previousRegime = actualRegime.getRegimeType();
+
+			if (regimeType == RegimeType.EDIT_POSITION)
+				regimeTypeStack.push(previousRegime);
+		}
+
+		setRegimeTypeImpl(regimeType);
+	}
+
+	private void setRegimeTypeImpl(RegimeType regimeType) {
+		if (actualRegime != null) {
 			actualRegime.deactivateRegime();
 		}
-		
+
 		switch (regimeType) {
 			case PLAY:
 				actualRegime = regimePlay;
@@ -160,21 +169,28 @@ public class ApplicationImpl implements IApplication {
 			case EDIT_POSITION:
 				actualRegime = regimeEditPosition;
 				break;
-				
+
 			case ANALYSIS:
 				actualRegime = regimeAnalysis;
 				break;
-				
+
 			case ENDING_TRAINING:
 				actualRegime = regimeEndingTraining;
 				break;
 		}
-		
+
 		actualRegime.activateRegime();
-		
+
 		for (IApplicationListener listener: applicationListenerRegistrar.getHandlers()) {
 			listener.onRegimeChanged();
 		}
+	}
+
+	/**
+	 * Changes regime type to previous one.
+	 */
+	public void popRegimeType() {
+		setRegimeTypeImpl(regimeTypeStack.pop());
 	}
 
 	/**

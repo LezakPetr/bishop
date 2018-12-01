@@ -54,22 +54,22 @@ public class BoardConstants {
 
 			// Black
 			BitBoard.getSquareMask(Square.F8) | BitBoard.getSquareMask(Square.G8),
-			BitBoard.getSquareMask(Square.B8) | BitBoard.getSquareMask(Square.C8) | BitBoard.getSquareMask(Square.D8) };
+			BitBoard.getSquareMask(Square.B8) | BitBoard.getSquareMask(Square.C8) | BitBoard.getSquareMask(Square.D8)};
 
 	// Begin squares of rook in castling.
-	private static final int[] TABLE_CASTLING_ROOK_BEGIN_SQUARE = { Square.H1, Square.A1, Square.H8, Square.A8 };
+	private static final int[] TABLE_CASTLING_ROOK_BEGIN_SQUARE = {Square.H1, Square.A1, Square.H8, Square.A8};
 
 	// Target squares of rook in castling.
-	private static final int[] TABLE_CASTLING_ROOK_TARGET_SQUARE = { Square.F1, Square.D1, Square.F8, Square.D8 };
+	private static final int[] TABLE_CASTLING_ROOK_TARGET_SQUARE = {Square.F1, Square.D1, Square.F8, Square.D8};
 
 	// Begin squares of king in the castling.
-	private static final int[] TABLE_CASTLING_KING_BEGIN_SQUARE = { Square.E1, Square.E8 };
+	private static final int[] TABLE_CASTLING_KING_BEGIN_SQUARE = {Square.E1, Square.E8};
 
 	// Target squares of king in castling.
-	private static final int[] TABLE_CASTLING_KING_TARGET_SQUARE = { Square.G1, Square.C1, Square.G8, Square.C8 };
+	private static final int[] TABLE_CASTLING_KING_TARGET_SQUARE = {Square.G1, Square.C1, Square.G8, Square.C8};
 
 	// Middle squares of king in castling.
-	private static final int[] TABLE_CASTLING_KING_MIDDLE_SQUARE = { Square.F1, Square.D1, Square.F8, Square.D8 };
+	private static final int[] TABLE_CASTLING_KING_MIDDLE_SQUARE = {Square.F1, Square.D1, Square.F8, Square.D8};
 
 	// Contains changes of king mask for given type of castling.
 	private static final long[] TABLE_CASTLING_KING_CHANGE_MASK = {
@@ -77,7 +77,7 @@ public class BoardConstants {
 			BitBoard.getSquareMask(Square.E1) | BitBoard.getSquareMask(Square.C1),
 
 			BitBoard.getSquareMask(Square.E8) | BitBoard.getSquareMask(Square.G8),
-			BitBoard.getSquareMask(Square.E8) | BitBoard.getSquareMask(Square.C8) };
+			BitBoard.getSquareMask(Square.E8) | BitBoard.getSquareMask(Square.C8)};
 
 	// Contains changes of king mask for given type of castling.
 	private static final long[] TABLE_CASTLING_ROOK_CHANGE_MASK = {
@@ -85,10 +85,10 @@ public class BoardConstants {
 			BitBoard.getSquareMask(Square.A1) | BitBoard.getSquareMask(Square.D1),
 
 			BitBoard.getSquareMask(Square.H8) | BitBoard.getSquareMask(Square.F8),
-			BitBoard.getSquareMask(Square.A8) | BitBoard.getSquareMask(Square.D8) };
+			BitBoard.getSquareMask(Square.A8) | BitBoard.getSquareMask(Square.D8)};
 
 	// Contains ranks where pawns of given color moves by two squares.
-	private static final int[] TABLE_EP_RANKS = { Rank.R4, Rank.R5 };
+	private static final int[] TABLE_EP_RANKS = {Rank.R4, Rank.R5};
 
 	private static final long[] TABLE_EP_RANK_MASKS = initializeTableEpRankMasks();
 
@@ -110,11 +110,11 @@ public class BoardConstants {
 	}
 
 	// Distances of pawns with given color on given ranks from promotion
-	private static final int[] PAWN_PROMOTION_DISTANCES = { -1, 5, 5, 4, 3, 2, 1, 0, // White
+	private static final int[] PAWN_PROMOTION_DISTANCES = {-1, 5, 5, 4, 3, 2, 1, 0, // White
 			0, 1, 2, 3, 4, 5, 5, -1 // Black
 	};
 
-	private static long[][] initializeSquareMaskBySquareTable(final IntBiPredicate predicate) {
+	private static long[][] initializeSquareMaskBySquareTableBothColors(final IntBiPredicate predicate) {
 		final long[][] result = new long[Color.LAST][Square.LAST];
 
 		for (int drivingSquare = Square.FIRST; drivingSquare < Square.LAST; drivingSquare++) {
@@ -132,13 +132,31 @@ public class BoardConstants {
 		return result;
 	}
 
-	private static final long[][] FRONT_SQUARES_ON_THREE_FILES = initializeSquareMaskBySquareTable(
+	private static long[] initializeSquareMaskBySquareTableSingleColor(final IntBiPredicate predicate) {
+		final long[] result = new long[Square.LAST];
+
+		for (int drivingSquare = Square.FIRST; drivingSquare < Square.LAST; drivingSquare++) {
+			long mask = BitBoard.EMPTY;
+
+			for (int maskedSquare = Square.FIRST; maskedSquare < Square.LAST; maskedSquare++) {
+				if (predicate.test(drivingSquare, maskedSquare))
+					mask |= BitBoard.getSquareMask(maskedSquare);
+			}
+
+			result[drivingSquare] = mask;
+		}
+
+		return result;
+	}
+
+
+	private static final long[][] FRONT_SQUARES_ON_THREE_FILES = initializeSquareMaskBySquareTableBothColors(
 			(d, m) -> Square.getRank(m) > Square.getRank(d) && Math.abs(Square.getFile(m) - Square.getFile(d)) <= 1);
 
-	private static final long[][] FRONT_SQUARES_ON_NEIGHBOR_FILES = initializeSquareMaskBySquareTable(
+	private static final long[][] FRONT_SQUARES_ON_NEIGHBOR_FILES = initializeSquareMaskBySquareTableBothColors(
 			(d, m) -> Square.getRank(m) > Square.getRank(d) && Math.abs(Square.getFile(m) - Square.getFile(d)) == 1);
 
-	private static final long[][] PAWN_BLOCKING_SQUARES = initializeSquareMaskBySquareTable((d, m) -> {
+	private static final long[][] PAWN_BLOCKING_SQUARES = initializeSquareMaskBySquareTableBothColors((d, m) -> {
 		final int dRank = Square.getRank(d);
 		final int mRank = Square.getRank(m);
 		final int dFile = Square.getFile(d);
@@ -147,10 +165,19 @@ public class BoardConstants {
 		return (dFile == mFile && mRank > dRank) || (Math.abs(dFile - mFile) == 1 && mRank - dRank >= 2);
 	});
 
-	private static final long[][] SQUARES_IN_FRONT_INCLUSIVE = initializeSquareMaskBySquareTable(
+	private static final long[][] SQUARES_IN_FRONT_INCLUSIVE = initializeSquareMaskBySquareTableBothColors(
 			(d, m) -> Square.getFile(d) == Square.getFile(m) && Square.getRank(m) >= Square.getRank(d));
 
 	private static final long[] CONNECTED_PAWN_SQUARE_MASKS = initializeConnectedPawnSquareMasks();
+
+	private static final long[] KING_SAFETY_FAR_SQUARES = initializeSquareMaskBySquareTableSingleColor((d, m) -> {
+		final int dRank = Square.getRank(d);
+		final int mRank = Square.getRank(m);
+		final int dFile = Square.getFile(d);
+		final int mFile = Square.getFile(m);
+
+		return Math.abs(dFile - mFile) <= 1 && Math.abs(dRank - mRank) <= 2;
+	});
 
 	private static long[] initializeConnectedPawnSquareMasks() {
 		final long[] table = new long[Square.LAST];
@@ -223,7 +250,7 @@ public class BoardConstants {
 		return table;
 	}
 
-	private static final long[] SQUARE_COLOR_MASKS = { WHITE_SQUARE_MASK, BLACK_SQUARE_MASK };
+	private static final long[] SQUARE_COLOR_MASKS = {WHITE_SQUARE_MASK, BLACK_SQUARE_MASK};
 
 	public static long getSquareColorMask(final int squareColor) {
 		return SQUARE_COLOR_MASKS[squareColor];
@@ -231,8 +258,8 @@ public class BoardConstants {
 
 	/**
 	 * Returns mask of squares between king and rook before castling.
-	 * 
-	 * @param color color of player
+	 *
+	 * @param color        color of player
 	 * @param castlingType type of castling
 	 * @return required mask
 	 */
@@ -244,8 +271,8 @@ public class BoardConstants {
 
 	/**
 	 * Return begin square of rook in castling.
-	 * 
-	 * @param color color of player
+	 *
+	 * @param color        color of player
 	 * @param castlingType type of castling
 	 * @return begin square of rook
 	 */
@@ -257,8 +284,8 @@ public class BoardConstants {
 
 	/**
 	 * Return target square of rook in castling.
-	 * 
-	 * @param color color of player
+	 *
+	 * @param color        color of player
 	 * @param castlingType type of castling
 	 * @return target square of rook
 	 */
@@ -274,8 +301,8 @@ public class BoardConstants {
 
 	/**
 	 * Return target square of king in castling.
-	 * 
-	 * @param color color of player
+	 *
+	 * @param color        color of player
 	 * @param castlingType type of castling
 	 * @return target square of king
 	 */
@@ -287,11 +314,9 @@ public class BoardConstants {
 
 	/**
 	 * Return target square of king in castling.
-	 * 
-	 * @param color
-	 *            color of player
-	 * @param castlingType
-	 *            type of castling
+	 *
+	 * @param color        color of player
+	 * @param castlingType type of castling
 	 * @return target square of king
 	 */
 	public static int getCastlingKingMiddleSquare(final int color, final int castlingType) {
@@ -302,11 +327,9 @@ public class BoardConstants {
 
 	/**
 	 * Returns changes of king mask for given type of castling.
-	 * 
-	 * @param color
-	 *            color of player
-	 * @param castlingType
-	 *            type of castling
+	 *
+	 * @param color        color of player
+	 * @param castlingType type of castling
 	 * @return required mask
 	 */
 	public static long getCastlingKingChangeMask(final int color, final int castlingType) {
@@ -317,11 +340,9 @@ public class BoardConstants {
 
 	/**
 	 * Returns changes of king mask for given type of castling.
-	 * 
-	 * @param color
-	 *            color of player
-	 * @param castlingType
-	 *            type of castling
+	 *
+	 * @param color        color of player
+	 * @param castlingType type of castling
 	 * @return required mask
 	 */
 	public static long getCastlingRookChangeMask(final int color, final int castlingType) {
@@ -340,7 +361,7 @@ public class BoardConstants {
 
 	/**
 	 * Returns rank where pawns with given color moves by two squares.
-	 * 
+	 *
 	 * @param color pawn color
 	 * @return Rank.R4 for white or Rank.R5 for black
 	 */
@@ -350,9 +371,9 @@ public class BoardConstants {
 
 	/**
 	 * Returns square where pawn with given color moves by two squares.
-	 * 
+	 *
 	 * @param color pawn color
-	 * @param file file where is the pawn
+	 * @param file  file where is the pawn
 	 * @return EP square
 	 */
 	public static int getEpSquare(final int color, final int file) {
@@ -363,7 +384,8 @@ public class BoardConstants {
 
 	/**
 	 * Returns target square of the capturing pawn.
-	 * @param color color of the captured (opposite to capturing) pawn
+	 *
+	 * @param color  color of the captured (opposite to capturing) pawn
 	 * @param epFile file where the pawn has moved by 2 squares
 	 * @return EP target square
 	 */
@@ -392,7 +414,7 @@ public class BoardConstants {
 
 	/**
 	 * Returns promotion rank for given pawn color.
-	 * 
+	 *
 	 * @param color pawn color
 	 * @return promotion rank
 	 */
@@ -426,8 +448,8 @@ public class BoardConstants {
 	/**
 	 * Returns mask of squares in front of given square on same and neighbor
 	 * files.
-	 * 
-	 * @param color color of player
+	 *
+	 * @param color  color of player
 	 * @param square square
 	 * @return mask of squares in front of given square
 	 */
@@ -438,7 +460,7 @@ public class BoardConstants {
 	/**
 	 * Returns mask of squares in front of given square on neighbor files.
 	 *
-	 * @param color color of player
+	 * @param color  color of player
 	 * @param square square
 	 * @return mask of squares in front of given square
 	 */
@@ -449,8 +471,8 @@ public class BoardConstants {
 	/**
 	 * Returns mask of squares that if they would be occupied by opposite pawn
 	 * stops pawn on given square.
-	 * 
-	 * @param color color of pawn
+	 *
+	 * @param color  color of pawn
 	 * @param square square
 	 * @return mask of blocking squares
 	 */
@@ -464,7 +486,7 @@ public class BoardConstants {
 
 	/**
 	 * Returns one or two squares on same rank left and right to given square.
-	 * 
+	 *
 	 * @param square pawn square
 	 * @return mask of neighbor squares
 	 */
@@ -475,7 +497,7 @@ public class BoardConstants {
 	/**
 	 * Returns union of masks obtained by calling getConnectedPawnSquareMask for
 	 * every pawn in pawnMask.
-	 * 
+	 *
 	 * @param pawnMask mask of pawns
 	 * @return mask of neighbor squares
 	 */
@@ -489,7 +511,7 @@ public class BoardConstants {
 
 	/**
 	 * Returns mask of first rank of given side.
-	 * 
+	 *
 	 * @param color color of side
 	 * @return first rank
 	 */
@@ -499,7 +521,7 @@ public class BoardConstants {
 
 	/**
 	 * Returns mask of first rank of given side.
-	 * 
+	 *
 	 * @param color color of side
 	 * @return first rank
 	 */
@@ -527,7 +549,7 @@ public class BoardConstants {
 
 	/**
 	 * Returns distance of given square from board edge.
-	 * 
+	 *
 	 * @param square square
 	 * @return 0 <= distance <= 3
 	 */
@@ -569,8 +591,8 @@ public class BoardConstants {
 
 	/**
 	 * Returns all squares attacked by some pawn.
-	 * 
-	 * @param color color of the pawn
+	 *
+	 * @param color     color of the pawn
 	 * @param pawnsMask pawn mask
 	 * @return mask of attacked squares
 	 */
@@ -589,8 +611,8 @@ public class BoardConstants {
 
 	/**
 	 * Returns all squares where pawns can move by single step.
-	 * 
-	 * @param color color of the pawn
+	 *
+	 * @param color     color of the pawn
 	 * @param pawnsMask pawn mask
 	 * @return mask of target squares
 	 */
@@ -603,9 +625,9 @@ public class BoardConstants {
 
 	/**
 	 * Returns mask of square on file preceding EP file on EP rank.
-	 * 
+	 *
 	 * @param color color of the pawn that has moved by two squares
-	 * @param file EP file
+	 * @param file  EP file
 	 * @return mask of square on file preceding EP file on EP rank
 	 */
 	public static long getPrevEpFileMask(final int color, final int file) {
@@ -614,9 +636,9 @@ public class BoardConstants {
 
 	/**
 	 * Returns mask of square on file succeeding EP file on EP rank.
-	 * 
+	 *
 	 * @param color color of the pawn that has moved by two squares
-	 * @param file EP file
+	 * @param file  EP file
 	 * @return mask of square on file succeeding EP file on EP rank
 	 */
 	public static long getNextEpFileMask(final int color, final int file) {
@@ -625,7 +647,7 @@ public class BoardConstants {
 
 	/**
 	 * Returns mask of squares where given piece can be placed.
-	 * 
+	 *
 	 * @param pieceType type of piece
 	 * @return mask of allowed squares
 	 */
@@ -643,7 +665,7 @@ public class BoardConstants {
 			for (int file = File.FIRST; file < File.LAST; file++) {
 				double minDistance = File.LAST;
 				int islandBeginFile = File.NONE;
-				
+
 				// Loop thru all bits of fileMask. We splits the files into islands and calculates the distance
 				// to the middle of that islands. The trick with adding one more file ensures that
 				// we will always end with bit 0 and finish the last island.
@@ -651,8 +673,7 @@ public class BoardConstants {
 					if ((fileMask & (1 << testedFile)) != 0) {
 						if (islandBeginFile == File.NONE)
 							islandBeginFile = testedFile;
-					}
-					else {
+					} else {
 						if (islandBeginFile != File.NONE) {
 							final int islandEndFile = testedFile - 1;
 							final double islandMiddleFile = (islandBeginFile + islandEndFile) / 2.0;
@@ -672,7 +693,7 @@ public class BoardConstants {
 
 	/**
 	 * Returns distance from given file to the middle file of nearest pawn island in fileMask.
-	 * 
+	 *
 	 * @return distance
 	 */
 	public static int getMinFileDistance(final int fileMask, final int file) {
@@ -689,11 +710,15 @@ public class BoardConstants {
 
 	/**
 	 * Returns mask of squares attacked by king on given square plus given square.
+	 *
 	 * @param square king position
 	 * @return mask of squares with king distance <= 1 from given square
 	 */
-	public static long getKingNearSquares (final int square) {
+	public static long getKingNearSquares(final int square) {
 		return FigureAttackTable.getItem(PieceType.KING, square) | BitBoard.getSquareMask(square);
 	}
 
+	public static long getKingSafetyFarSquares(final int square) {
+		return KING_SAFETY_FAR_SQUARES[square];
+	}
 }

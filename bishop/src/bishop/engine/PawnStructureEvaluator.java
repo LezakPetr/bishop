@@ -33,8 +33,11 @@ public class PawnStructureEvaluator {
 		this.middleGamePositionDependentEvaluation = evaluationFactory.get();
 		this.endingPositionDependentEvaluation = evaluationFactory.get();
 		this.structureCache = new PawnStructureCache(
-			pawnStructure -> {
-				evaluatePawnStructure(pawnStructure);
+			(whitePawnMask, blackPawnMask) -> {
+				assert whitePawnMask == structureData.getPawnMask(Color.WHITE);
+				assert blackPawnMask == structureData.getPawnMask(Color.BLACK);
+
+				evaluatePawnStructure();
 
 				return CombinedEvaluation.combine(
 						openingCachedEvaluation.getEvaluation(),
@@ -46,10 +49,8 @@ public class PawnStructureEvaluator {
 	}
 
 	public IPositionEvaluation evaluate(final Position position, final int gameStage) {
-		final PawnStructure structure = position.getPawnStructure();
-
 		if (evaluation instanceof CoeffCountPositionEvaluation) {
-			evaluatePawnStructure(structure);
+			evaluatePawnStructure();
 
 			final int openingCount = CombinedEvaluation.getComponentMultiplicator (gameStage, CombinedEvaluation.COMPONENT_OPENING);
 			final int middleGameCount = CombinedEvaluation.getComponentMultiplicator (gameStage, CombinedEvaluation.COMPONENT_MIDDLE_GAME);
@@ -67,7 +68,7 @@ public class PawnStructureEvaluator {
 		}
 		else {
 			long combinedEvaluation = CombinedEvaluation.ACCUMULATOR_BASE;
-			combinedEvaluation += structureCache.getCombinedEvaluation(structure);
+			combinedEvaluation += structureCache.getCombinedEvaluation(position.getPiecesMask(Color.WHITE, PieceType.PAWN), position.getPiecesMask(Color.BLACK, PieceType.PAWN));
 
 			evaluatePositionDependent(position);
 			combinedEvaluation += CombinedEvaluation.combine(
@@ -83,15 +84,15 @@ public class PawnStructureEvaluator {
 		return evaluation;
 	}
 		
-	private void evaluatePawnStructure(final PawnStructure structure) {
+	private void evaluatePawnStructure() {
 		structureData.calculate();
 
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int oppositeColor = Color.getOppositeColor(color);
-			final long ownPawnMask = structure.getPawnMask(color);
+			final long ownPawnMask = structureData.getPawnMask(color);
 			final long passedPawnMask = structureData.getPassedPawnMask(color);
-			final long connectedPawnMask = structureData.getConnectedPawnMask(color);
-			final long protectedPawnMask = structureData.getProtectedPawnMask(color);
+			final long connectedPawnMask = ownPawnMask & BoardConstants.getAllConnectedPawnSquareMask(ownPawnMask);
+			final long protectedPawnMask = ownPawnMask & BoardConstants.getPawnsAttackedSquares(color, ownPawnMask);
 			final long singleDisadvantageAttackPawnMask = structureData.getSingleDisadvantageAttackPawnMask(color);
 			final long doubleDisadvantageAttackPawnMask = structureData.getDoubleDisadvantageAttackPawnMask(color);
 			final long blockedPawnMask = structureData.getBlockedPawnMask(color);
@@ -194,7 +195,7 @@ public class PawnStructureEvaluator {
 	}
 
 	public void calculate(final Position position) {
-		structureData.precalculate(position.getPawnStructure());
+		structureData.precalculate(position.getPiecesMask(Color.WHITE, PieceType.PAWN), position.getPiecesMask(Color.BLACK, PieceType.PAWN));
 	}
 
 	public void clear() {

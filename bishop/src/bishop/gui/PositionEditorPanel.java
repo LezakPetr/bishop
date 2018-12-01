@@ -400,7 +400,7 @@ public class PositionEditorPanel extends JPanel implements IDeskListener, ILocal
 	private ActionListener buttonOk_ActionListener = new ActionListener() {
 		public void actionPerformed(final ActionEvent event) {
 			if (storePosition()) {
-				application.setRegimeType(RegimeType.PLAY);
+				application.popRegimeType();
 			}
 		}
 	};

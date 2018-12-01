@@ -83,8 +83,7 @@ public class MoveList implements Iterable<Move> {
 	}
 
 	public void assignToMove(final int index, final Move move) {
-		if (index < 0 || index >= size)
-			throw new ArrayIndexOutOfBoundsException(index);
+		assert index >= 0 && index < size;
 
 		move.setData(data[index]);
 	}
@@ -94,6 +93,12 @@ public class MoveList implements Iterable<Move> {
 		assignToMove(index, move);
 
 		return move;
+	}
+
+	public int getCompressedMove(final int index) {
+		assert index >= 0 && index < size;
+
+		return data[index] & Move.COMPRESSED_MOVE_MASK;
 	}
 	
 	public void set (final int index, final Move move) {

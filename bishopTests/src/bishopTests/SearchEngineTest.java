@@ -42,11 +42,11 @@ public class SearchEngineTest {
 		new TestValue("3k1R2/8/3K4/8/8/8/8/8 b - - 0 1", 0, -Evaluation.getMateEvaluation(0), null),
 		new TestValue("k7/1R6/2K5/8/8/8/8/8 b - - 0 1", 1, Evaluation.DRAW, null),
 		new TestValue("2k5/8/2K1R3/8/8/8/8/8 w - - 0 1", 0, Evaluation.getMateEvaluation(1), "e6e8"),
-		new TestValue("7k/8/8/6RK/8/8/8/8 w - - 0 1", 4, Evaluation.getMateEvaluation(5), "h5g6"),
-		new TestValue("8/8/8/8/6rk/8/8/7K b - - 0 1", 4, Evaluation.getMateEvaluation(5), "h4g3"),
-		new TestValue("8/1k1KQ3/8/8/8/8/8/8 b - - 0 1", 5, -Evaluation.getMateEvaluation(6), "b7b6"),
+		new TestValue("7k/8/8/6RK/8/8/8/8 w - - 0 1", 5, Evaluation.getMateEvaluation(5), "h5g6"),
+		new TestValue("8/8/8/8/6rk/8/8/7K b - - 0 1", 5, Evaluation.getMateEvaluation(5), "h4g3"),
+		new TestValue("8/1k1KQ3/8/8/8/8/8/8 b - - 0 1", 6, -Evaluation.getMateEvaluation(6), "b7b6"),
 		new TestValue("QR6/7k/8/8/7q/8/6P1/6K1 b - - 0 1", 4, Evaluation.DRAW_BY_REPETITION, "h4e1"),
-		new TestValue("8/1k1K3R/8/8/8/8/8/8 w - - 0 1", 6, Evaluation.getMateEvaluation(7), "h7h6")
+		new TestValue("8/1k1K3R/8/8/8/8/8/8 w - - 0 1", 7, Evaluation.getMateEvaluation(7), "h7h6")
 	};
 
 
