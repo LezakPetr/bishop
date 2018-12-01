@@ -246,7 +246,7 @@ public class PawnStructureEvaluatorTest {
 			final MobilityCalculator mobilityCalculator = new MobilityCalculator();
 			mobilityCalculator.calculate(position);
 
-			attackCalculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP, mobilityCalculator);
+			attackCalculator.calculate(position, mobilityCalculator);
 			
 			evaluation.clear();
 			mobilityCalculator.calculate(position);

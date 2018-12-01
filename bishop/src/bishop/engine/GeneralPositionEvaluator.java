@@ -130,10 +130,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	}
 	
 	private void calculateAttacks(final MobilityCalculator mobilityCalculator) {
-		final int whiteKingSquare = position.getKingPosition(Color.WHITE);
-		final int blackKingSquare = position.getKingPosition(Color.BLACK);
-		
-		attackCalculator.calculate(position, settings.getAttackTableGroup(whiteKingSquare, blackKingSquare), mobilityCalculator);
+		attackCalculator.calculate(position, mobilityCalculator);
 	}
 	
 	private void evaluateSecureFigures() {

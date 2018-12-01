@@ -67,7 +67,7 @@ public class AttackCalculatorTest {
 			final MobilityCalculator mobilityCalculator = new MobilityCalculator();
 			mobilityCalculator.calculate(position);
 
-			calculator.calculate(position, AttackEvaluationTableGroup.ZERO_GROUP, mobilityCalculator);
+			calculator.calculate(position, mobilityCalculator);
 			
 			for (int color = Color.FIRST; color < Color.LAST; color++) {
 				final long attackedSquares = calculator.getDirectlyAttackedSquares(color);
