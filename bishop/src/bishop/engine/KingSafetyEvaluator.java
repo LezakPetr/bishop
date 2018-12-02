@@ -1,26 +1,14 @@
 package bishop.engine;
 
-import java.util.function.IntUnaryOperator;
-import java.util.function.Supplier;
-
-import bishop.base.BitBoard;
-import bishop.base.CastlingType;
-import bishop.base.Color;
-import bishop.base.File;
-import bishop.base.PieceType;
-import bishop.base.Position;
-import bishop.base.Square;
+import bishop.base.*;
 import bishop.tables.MainKingProtectionPawnsTable;
 import bishop.tables.SecondKingProtectionPawnsTable;
-import math.SampledIntFunction;
-import math.Sigmoid;
+
+import java.util.function.Supplier;
 
 public class KingSafetyEvaluator {
 	
-	private static final IntUnaryOperator attackTransformationFunction = new SampledIntFunction(
-			new Sigmoid(150, 300, 0, 50),
-			AttackCalculator.MIN_ATTACK_EVALUATION, AttackCalculator.MAX_REASONABLE_ATTACK_EVALUATION);
-			
+
 	private final GameStageCoeffs coeffs;
 	private final IPositionEvaluation evaluation;
 	
@@ -48,7 +36,7 @@ public class KingSafetyEvaluator {
 	}
 
 	private int transformAttackEvaluation(final int attackEvaluation) {
-		return attackTransformationFunction.applyAsInt(attackEvaluation);
+		return attackEvaluation;
 	}
 	
 	private void evaluateConcreteKingFiles (final Position position, final int color, final int castlingType, final int shift) {
