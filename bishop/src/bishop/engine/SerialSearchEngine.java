@@ -225,12 +225,17 @@ public final class SerialSearchEngine implements ISearchEngine {
 					final boolean precalculatedMoveFound;
 					boolean precalculatedBetaCutoff = false;
 
-					if (hashBestMove.getMoveType() != MoveType.INVALID) {
-						precalculatedMoveFound = true;
-						precalculatedMove.assign(hashBestMove);
+					if (isQuiescenceSearch) {
+						precalculatedMoveFound = false;
+						precalculatedMove.clear();
 					}
 					else {
-						precalculatedMoveFound = precalculatedMove.uncompressMove(principalMove.getCompressedMove(), currentPosition);
+						if (hashBestMove.getMoveType() != MoveType.INVALID) {
+							precalculatedMoveFound = true;
+							precalculatedMove.assign(hashBestMove);
+						} else {
+							precalculatedMoveFound = precalculatedMove.uncompressMove(principalMove.getCompressedMove(), currentPosition);
+						}
 					}
 
 					if (precalculatedMoveFound) {
@@ -527,19 +532,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			mateFinder.setPosition(currentPosition);
 			mateFinder.setDepthAdvance(depth);
 
-			// Win
-			final int winEvaluation = mateFinder.findWin(WIN_MATE_DEPTH);
-
-			if (winEvaluation >= Evaluation.MATE_MIN) {
-				evaluation.setEvaluation(winEvaluation);
-				evaluation.setAlpha(Evaluation.MIN);
-				evaluation.setBeta(Evaluation.MAX);
-				principalVariation.clear();
-
-				return true;
-			}
-
-			// Lose
+			// Lose; win is implemented by check search
 			if (isCheck) {
 				final int loseEvaluation = mateFinder.findLose(LOSE_MATE_DEPTH);
 
@@ -843,15 +836,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		final SearchResult result = getResult(task.getHorizon());
 		result.setSearchTerminated(terminated);
-		
-/*		System.out.println("Time in quiescence search: " + normalSearchTimeSpent + "ms");
-		
-		final double winPercent = 100.0 * winMateTask.timeSpent / normalSearchTimeSpent;
-		System.out.println("Time in win mate search: " + winMateTask.timeSpent + "ms = " + Math.round(winPercent) + "%");
-		
-		final double losePercent = 100.0 * loseMateTask.timeSpent / normalSearchTimeSpent;
-		System.out.println("Time in lose mate search: " + loseMateTask.timeSpent + "ms = " + Math.round(losePercent) + "%");
-		*/
+
 		return result;
 	}
 
