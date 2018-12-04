@@ -133,8 +133,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			if (updateRecordByHash(horizon, initialAlpha, initialBeta, hashRecord))
 				return;
 
-			final int reducedHorizon = (depth >= 2 && horizon >= ISearchEngine.HORIZON_GRANULARITY && horizon < 2 * ISearchEngine.HORIZON_GRANULARITY && mobilityCalculator.isStablePosition (currentPosition)) ?
-					horizon - ISearchEngine.HORIZON_GRANULARITY : horizon;
+			final int reducedHorizon = shouldReduceHorizon(horizon) ? horizon - ISearchEngine.HORIZON_GRANULARITY : horizon;
 
 			isQuiescenceSearch = (reducedHorizon < ISearchEngine.HORIZON_GRANULARITY);
 
@@ -143,11 +142,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, mobilityCalculator).getEvaluation();
 			final int ownKingSquare = currentPosition.getKingPosition(onTurn);
 			final boolean isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
-
-			if (depth > 0 && (!isQuiescenceSearch || isFirstQuiescence)) {
-				if (mateSearch(onTurn, oppositeColor, reducedHorizon, initialAlpha, initialBeta, isCheck))
-					return;
-			}
 
 			try {
 				// Evaluate position
@@ -298,6 +292,16 @@ public final class SerialSearchEngine implements ISearchEngine {
 				updateHashRecord(reducedHorizon);
 				updateBestMovePerIndexCounts();
 			}
+		}
+
+		private boolean shouldReduceHorizon(int horizon) {
+			return depth >= 2 &&
+					horizon >= ISearchEngine.HORIZON_GRANULARITY &&
+					horizon < 2 * ISearchEngine.HORIZON_GRANULARITY && (
+						mobilityCalculator.isStablePosition (currentPosition) ||
+						(currentPosition.getPiecesMask(Color.WHITE, PieceType.PAWN) & BoardConstants.RANK_7_MASK) != 0 ||
+						(currentPosition.getPiecesMask(Color.BLACK, PieceType.PAWN) & BoardConstants.RANK_2_MASK) != 0
+					);
 		}
 
 		private boolean isNullSearchPossible(final boolean isCheck) {
@@ -526,40 +530,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 				if (index >= 0)
 					bestMovePerIndexCounts[index]++;
 			}
-		}
-
-		private boolean mateSearch(final int onTurn, final int oppositeColor, final int horizon, final int alpha, final int beta, final boolean isCheck) {
-			mateFinder.setPosition(currentPosition);
-			mateFinder.setDepthAdvance(depth);
-
-			// Lose; win is implemented by check search
-			if (isCheck) {
-				final int loseEvaluation = mateFinder.findLose(LOSE_MATE_DEPTH);
-
-				if (loseEvaluation <= -Evaluation.MATE_MIN) {
-					evaluation.setEvaluation(loseEvaluation);
-					evaluation.setAlpha(Evaluation.MIN);
-					evaluation.setBeta(Evaluation.MAX);
-					principalVariation.clear();
-
-					return true;
-				}
-				else {
-					if (mateFinder.getNonLosingMoveCount() == 1) {
-						moveListBegin = moveStackTop;
-						moveListEnd = moveStackTop;
-						evaluation.update(mateFinder.getLosingMovesEvaluation());
-
-						mateFinder.getNonLosingMove(nonLosingMove);
-						evaluateMove(nonLosingMove, horizon, ISearchEngine.HORIZON_GRANULARITY, alpha, beta);
-
-						updateCurrentRecordAfterEvaluation(nonLosingMove, horizon, nextRecord);
-						return true;
-					}
-				}
-			}
-
-			return false;
 		}
 
 		/**
