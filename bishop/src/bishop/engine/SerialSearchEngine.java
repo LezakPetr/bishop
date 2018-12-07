@@ -296,12 +296,11 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		private boolean shouldReduceHorizon(int horizon) {
 			return depth >= 2 &&
-					horizon >= ISearchEngine.HORIZON_GRANULARITY &&
-					horizon < 2 * ISearchEngine.HORIZON_GRANULARITY && (
-						mobilityCalculator.isStablePosition (currentPosition) ||
-						(currentPosition.getPiecesMask(Color.WHITE, PieceType.PAWN) & BoardConstants.RANK_7_MASK) != 0 ||
-						(currentPosition.getPiecesMask(Color.BLACK, PieceType.PAWN) & BoardConstants.RANK_2_MASK) != 0
-					);
+			       horizon >= ISearchEngine.HORIZON_GRANULARITY &&
+			       horizon < 2 * ISearchEngine.HORIZON_GRANULARITY &&
+			       mobilityCalculator.isStablePosition (currentPosition) &&
+			       (currentPosition.getPiecesMask(Color.WHITE, PieceType.PAWN) & BoardConstants.RANK_7_MASK) == 0 &&
+			       (currentPosition.getPiecesMask(Color.BLACK, PieceType.PAWN) & BoardConstants.RANK_2_MASK) == 0;
 		}
 
 		private boolean isNullSearchPossible(final boolean isCheck) {
@@ -496,21 +495,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		private void updateHashRecord(final int horizon) {
 			final NodeEvaluation nodeEvaluation = evaluation;
-			final int evaluation = nodeEvaluation.getEvaluation();
+			final int currentEvaluation = nodeEvaluation.getEvaluation();
 
-			if (horizon > 0 && !Evaluation.isDrawByRepetition(evaluation)) {
+			if (horizon > 0 && !Evaluation.isDrawByRepetition(currentEvaluation)) {
 				final HashRecord record = hashRecord;
 				record.setEvaluationAndType(nodeEvaluation, depth);
-
-				final int effectiveHorizon;
-
-				if (evaluation >= Evaluation.MATE_MIN || evaluation <= -Evaluation.MATE_MIN) {
-					effectiveHorizon = ISearchEngine.MAX_HORIZON - 1;
-				}
-				else
-					effectiveHorizon = horizon;
-
-				record.setHorizon(effectiveHorizon);
+				record.setHorizon(horizon);
 
 				if (principalVariation.getSize() > 0) {
 					record.setCompressedBestMove(principalVariation.getCompressedMove(0));

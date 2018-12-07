@@ -6,21 +6,10 @@ import java.io.StringReader;
 import java.util.function.Supplier;
 
 import bishop.base.*;
+import bishop.engine.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-import bishop.engine.AlgebraicPositionEvaluation;
-import bishop.engine.Evaluation;
-import bishop.engine.HashTableImpl;
-import bishop.engine.IPositionEvaluation;
-import bishop.engine.ISearchEngine;
-import bishop.engine.ISearchManager;
-import bishop.engine.ISearchManagerHandler;
-import bishop.engine.MaterialPositionEvaluatorFactory;
-import bishop.engine.SearchInfo;
-import bishop.engine.SearchManagerImpl;
-import bishop.engine.SearchResult;
-import bishop.engine.SerialSearchEngineFactory;
 import utils.Holder;
 import utils.Logger;
 
