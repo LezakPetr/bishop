@@ -6,7 +6,7 @@ import bishop.tablebase.Classification;
 public final class FinitePositionEvaluator {
 
 	private static final int MAX_PAWN_ENDING_EVALUATOR_COMPLEXITY = 500;
-	private static final int MIN_PAWN_ENDING_EVALUATOR_HORIZON = 6 * ISearchEngine.HORIZON_GRANULARITY;
+	private static final int MIN_PAWN_ENDING_EVALUATOR_HORIZON = 6;
 	private static final int MIN_PAWN_EVALUATOR_DEPTH = 1;
 
 	private RepeatedPositionRegister repeatedPositionRegister;

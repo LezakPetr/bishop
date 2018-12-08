@@ -11,6 +11,8 @@ import utils.RatioCalculator;
 
 public final class SerialSearchEngine implements ISearchEngine {
 
+	private static final int EXTENSION_HASH_MASK = (1 << SearchSettings.EXTENSION_FRACTION_BITS) - 1;
+
 	public class NodeRecord implements ISearchResult {
 		private class MoveWalker implements IMoveWalker {
 			public boolean processMove(final Move move) {
@@ -133,9 +135,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 			if (updateRecordByHash(horizon, initialAlpha, initialBeta, hashRecord))
 				return;
 
-			final int reducedHorizon = shouldReduceHorizon(horizon) ? horizon - ISearchEngine.HORIZON_GRANULARITY : horizon;
+			final int reducedHorizon = shouldReduceHorizon(horizon) ? horizon - 1 : horizon;
 
-			isQuiescenceSearch = (reducedHorizon < ISearchEngine.HORIZON_GRANULARITY);
+			isQuiescenceSearch = (reducedHorizon <= 0);
 
 			final boolean isFirstQuiescence = isQuiescenceSearch && depth > 0 && !previousRecord.isQuiescenceSearch;
 
@@ -199,8 +201,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 					if (!isQuiescenceSearch && isNullSearchPossible(isCheck)) {
 						final int nullReduction = Math.min(searchSettings.getNullMoveReduction(), reducedHorizon / 2);
 
-						if (nullReduction >= ISearchEngine.HORIZON_GRANULARITY) {
-							int nullHorizon = reducedHorizon - (nullReduction & ISearchEngine.HROZION_INTEGRAL_MASK);
+						if (nullReduction > 0) {
+							int nullHorizon = reducedHorizon - nullReduction;
 
 							nullMove.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
 
@@ -296,8 +298,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		private boolean shouldReduceHorizon(int horizon) {
 			return depth >= 2 &&
-			       horizon >= ISearchEngine.HORIZON_GRANULARITY &&
-			       horizon < 2 * ISearchEngine.HORIZON_GRANULARITY &&
+			       horizon == 1 &&
 			       mobilityCalculator.isStablePosition (currentPosition) &&
 			       (currentPosition.getPiecesMask(Color.WHITE, PieceType.PAWN) & BoardConstants.RANK_7_MASK) == 0 &&
 			       (currentPosition.getPiecesMask(Color.BLACK, PieceType.PAWN) & BoardConstants.RANK_2_MASK) == 0;
@@ -421,10 +422,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 			else
 				moveExtension = 0;
 
-			final int totalExtension = Math.min(Math.min(positionExtension + moveExtension, ISearchEngine.HORIZON_GRANULARITY), maxExtension);
+			final long positionDependentRandomNumber = currentPosition.getHash() & EXTENSION_HASH_MASK;
+			final boolean shouldExtend = maxExtension >= 1 && positionDependentRandomNumber < positionExtension + moveExtension;
+			final int totalExtension = shouldExtend ? 1 : 0;
 
-			int subHorizon = horizon + totalExtension - ISearchEngine.HORIZON_GRANULARITY;
-			subHorizon = matePrunning(depth, subHorizon, alpha, beta, ISearchEngine.HORIZON_GRANULARITY);
+			int subHorizon = horizon + totalExtension - 1;
+			subHorizon = matePrunning(depth, subHorizon, alpha, beta);
 
 			repeatedPositionRegister.pushPosition (currentPosition, move);
 			currentMove.assign(move);
@@ -575,16 +578,16 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 
 		private int calculateMoveOrderReducedHorizon(final int horizon, final Move move, final boolean isCheck, final boolean pvNode) {
-			if (isCheck || pvNode || horizon < 3 * HORIZON_GRANULARITY || legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getPromotionPieceType() == PieceType.QUEEN)
+			if (isCheck || pvNode || horizon < 3 || legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getPromotionPieceType() == PieceType.QUEEN)
 				return horizon;
 
 			if (currentPosition.isCheck())
 				return horizon;
 
 			if (legalMoveCount < 7)
-				return horizon - HORIZON_GRANULARITY;
+				return horizon - 1;
 			else
-				return horizon - 2 * HORIZON_GRANULARITY;
+				return horizon - 2;
 		}
 
 		private boolean readHashRecord(final int horizon, final HashRecord hashRecord) {
@@ -737,21 +740,21 @@ public final class SerialSearchEngine implements ISearchEngine {
 		return (Evaluation.isDrawByRepetition(evaluation)) ? Evaluation.DRAW : evaluation;
 	}
 
-	public static int matePrunning(final int currentDepth, int subHorizon, final int alpha, final int beta, final int granularity) {
+	public static int matePrunning(final int currentDepth, int subHorizon, final int alpha, final int beta) {
 		final int subAdvancedDepth = currentDepth + 1;
 		final int subMateEvaluation = Evaluation.getMateEvaluation(subAdvancedDepth);
 		
 		if (Evaluation.isWinMateSearch(alpha)) {
 			// Alpha is set to mate evaluation - calculate the difference between mate evaluation
 			// in sub depth and alpha and this is the maximal horizon to search.
-			final int maxHorizon = (subMateEvaluation - alpha) * granularity;
+			final int maxHorizon = subMateEvaluation - alpha;
 			subHorizon = Math.min(subHorizon, maxHorizon);
 		}
 
 		if (Evaluation.isLoseMateSearch(beta)) {
 			// Beta is set to negative mate evaluation - calculate the difference between
 			// mate evaluation and negative beta and this is the maximal horizon to search.
-			final int maxHorizon = (subMateEvaluation + beta) * granularity;
+			final int maxHorizon = subMateEvaluation + beta;
 			subHorizon = Math.min(subHorizon, maxHorizon);
 		}
 		return subHorizon;

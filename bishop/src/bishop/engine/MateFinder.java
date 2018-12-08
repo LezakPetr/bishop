@@ -136,7 +136,7 @@ public class MateFinder {
 		private int evaluateMove(final int horizon, final int extension, int alpha, final int beta, final Move move) {
 			position.makeMove(move);
 
-			final int subHorizon = SerialSearchEngine.matePrunning(depth, horizon - 1, alpha, beta, 1);
+			final int subHorizon = SerialSearchEngine.matePrunning(depth, horizon - 1, alpha, beta);
 			final int subEvaluation = -nextRecord.findMate(subHorizon, extension, -beta, -alpha);
 			position.undoMove(move);
 
