@@ -14,13 +14,9 @@ public interface ISearchEngine {
 		STOPPING
 	};
 	
-	public static final int HORIZON_FRACTION_BITS = 2;
-	public static final int HORIZON_GRANULARITY = 1 << HORIZON_FRACTION_BITS;
-	public static final int INTEGRAL_HORIZON_BITS = 8;
-	public static final int MAX_INTEGRAL_HORIZON = 1 << INTEGRAL_HORIZON_BITS;
-	public static final int MAX_HORIZON = 1 << (INTEGRAL_HORIZON_BITS + HORIZON_FRACTION_BITS);
-	public static final int HROZION_INTEGRAL_MASK = (~0) << HORIZON_FRACTION_BITS;
-	
+	public static final int HORIZON_BITS = 8;
+	public static final int MAX_HORIZON = 1 << HORIZON_BITS;
+
 	/**
 	 * Sets maximal total depth of the search.
 	 * Engine must be in STOPPED state.

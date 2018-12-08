@@ -291,7 +291,7 @@ public class SearchInfoPanel extends JPanel implements ISearchManagerHandler, IL
 			fieldPrincipalVariation.setCaretPosition(0);
 			
 			fieldEvaluation.setText(Evaluation.toString(info.getEvaluation()));
-			fieldHorizon.setText(Integer.toString(info.getHorizon() / ISearchEngine.HORIZON_GRANULARITY));
+			fieldHorizon.setText(Integer.toString(info.getHorizon()));
 			
 			final long elapsedTime = info.getElapsedTime();
 			fieldElapsedTime.setText(Long.toString(elapsedTime / 1000));

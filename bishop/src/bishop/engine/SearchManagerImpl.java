@@ -22,7 +22,7 @@ public final class SearchManagerImpl implements ISearchManager {
 	private int maxHorizon;
 	private long maxTimeForMove;
 	private HandlerRegistrarImpl<ISearchManagerHandler> handlerRegistrar;
-	private int minHorizon = 3 * ISearchEngine.HORIZON_GRANULARITY;
+	private int minHorizon = 3;
 	private int threadCount = 1;
 	private CombinedPositionEvaluationTable combinedPositionEvaluationTable = CombinedPositionEvaluationTable.ZERO_TABLE;
 	private PieceTypeEvaluations pieceTypeEvaluations;
@@ -79,7 +79,7 @@ public final class SearchManagerImpl implements ISearchManager {
 		this.monitor = new Object();
 		this.handlerRegistrar = new HandlerRegistrarImpl<ISearchManagerHandler>();
 		
-		this.setMaxHorizon(256 * ISearchEngine.HORIZON_GRANULARITY);
+		this.setMaxHorizon(256);
 		this.maxTimeForMove = TIME_FOR_MOVE_INFINITY;
 		this.rootPosition = new Position();
 		
@@ -398,7 +398,7 @@ public final class SearchManagerImpl implements ISearchManager {
 				if (searchFinished || managerState != ManagerState.SEARCHING)
 					return;
 				
-				horizon += ISearchEngine.HORIZON_GRANULARITY;
+				horizon += 1;
 				initialSearch = false;
 				
 				this.searchResult = bestResult;

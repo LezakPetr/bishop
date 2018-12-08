@@ -106,7 +106,7 @@ public class SearchEngineTest {
 			fen.readFen(new PushbackReader(new StringReader(testValue.positionFen)));
 			
 			final SearchTask task = new SearchTask();
-			task.setHorizon(testValue.depth * ISearchEngine.HORIZON_GRANULARITY);
+			task.setHorizon(testValue.depth);
 			
 			final Position position = fen.getPosition();
 			final RepeatedPositionRegister register = new RepeatedPositionRegister();

@@ -62,47 +62,47 @@ public class SearchSettingOptimizer {
 		private void changeParameter (final int parameter, final Random random) {
 			switch (parameter) {
 				case 0:
-					searchSettings.setMaxQuiescenceDepth(ISearchEngine.HORIZON_GRANULARITY * getRandom(0, 10, random));
+					searchSettings.setMaxQuiescenceDepth(getRandom(0, 10, random));
 					break;
 					
 				case 1:
-					searchSettings.setNullMoveReduction(ISearchEngine.HORIZON_GRANULARITY * getRandom(0, 4, random));
+					searchSettings.setNullMoveReduction(getRandom(0, 4, random));
 					break;
 
 				case 2:
-					searchSettings.setMinExtensionHorizon(ISearchEngine.HORIZON_GRANULARITY * getRandom(0, 6, random));
+					searchSettings.setMinExtensionHorizon(SearchSettings.EXTENSION_GRANULARITY * getRandom(0, 6, random));
 					break;
 
 				case 3:
-					searchSettings.setMaxExtension(ISearchEngine.HORIZON_GRANULARITY * getRandom(0, 8, random));
+					searchSettings.setMaxExtension(SearchSettings.EXTENSION_GRANULARITY * getRandom(0, 8, random));
 					break;
 
 				case 4:
-					searchSettings.setSimpleCheckExtension(getRandom(0, ISearchEngine.HORIZON_GRANULARITY, random));
+					searchSettings.setSimpleCheckExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 					
 				case 5:
-					searchSettings.setAttackCheckExtension(getRandom(0, ISearchEngine.HORIZON_GRANULARITY, random));
+					searchSettings.setAttackCheckExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 
 				case 6:
-					searchSettings.setForcedMoveExtension(getRandom(0, ISearchEngine.HORIZON_GRANULARITY, random));
+					searchSettings.setForcedMoveExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 
 				case 7:
-					searchSettings.setMateExtension(getRandom(0, ISearchEngine.HORIZON_GRANULARITY, random));
+					searchSettings.setMateExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 
 				case 8:
-					searchSettings.setRankAttackExtension(getRandom(0, ISearchEngine.HORIZON_GRANULARITY, random));
+					searchSettings.setRankAttackExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 					
 				case 9:
-					searchSettings.setPawnOnSevenRankExtension (getRandom(0, ISearchEngine.HORIZON_GRANULARITY, random));
+					searchSettings.setPawnOnSevenRankExtension (getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 
 				case 10:
-					searchSettings.setRecaptureMaxExtension(getRandom(searchSettings.getRecaptureMinExtension() + 1, ISearchEngine.HORIZON_GRANULARITY, random));
+					searchSettings.setRecaptureMaxExtension(getRandom(searchSettings.getRecaptureMinExtension() + 1, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 
 				case 11:

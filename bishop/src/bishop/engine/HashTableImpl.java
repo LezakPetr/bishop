@@ -90,12 +90,12 @@ public final class HashTableImpl implements IHashTable {
 		}
 		
 		final int evaluation = (int) ((data & EVALUATION_MASK) >>> EVALUATION_SHIFT) + EVALUATION_OFFSET;
-		final int integralHorizon = (int) ((data & HORIZON_MASK) >>> HORIZON_SHIFT);
+		final int horizon = (int) ((data & HORIZON_MASK) >>> HORIZON_SHIFT);
 		final int type = (int) ((data & TYPE_MASK) >>> TYPE_SHIFT);
 		final int compressedBestMove = (int) ((data & COMPRESSED_BEST_MOVE_MASK) >>> COMPRESSED_BEST_MOVE_SHIFT);
 		
 		record.setEvaluation(evaluation);
-		record.setHorizon(integralHorizon << ISearchEngine.HORIZON_FRACTION_BITS);
+		record.setHorizon(horizon);
 		record.setType(type);
 		record.setCompressedBestMove(compressedBestMove);
 		
@@ -113,9 +113,7 @@ public final class HashTableImpl implements IHashTable {
 		final HashRecord record2 = new HashRecord();
 		readRecordFromIndex(index + 1, diffusedHash, record2);
 		
-		final int roundedHorizon = expectedHorizon & ISearchEngine.HROZION_INTEGRAL_MASK;
-		
-		if (record1.isBetterThan(record2, roundedHorizon))
+		if (record1.isBetterThan(record2, expectedHorizon))
 			record.assign(record1);
 		else
 			record.assign(record2);
@@ -132,13 +130,13 @@ public final class HashTableImpl implements IHashTable {
 			return;
 				
 		final int index = (int) (hash & indexMask);
-		final int integralHorizon = record.getHorizon() >> ISearchEngine.HORIZON_FRACTION_BITS;
+		final int horizon = record.getHorizon();
 
 		final long biasedEvaluation = record.getEvaluation() - EVALUATION_OFFSET;
 		
 		long data = 0;
 		data |= ((long) biasedEvaluation << EVALUATION_SHIFT) & EVALUATION_MASK;
-		data |= ((long) integralHorizon << HORIZON_SHIFT) & HORIZON_MASK;
+		data |= ((long) horizon << HORIZON_SHIFT) & HORIZON_MASK;
 		data |= ((long) record.getType() << TYPE_SHIFT) & TYPE_MASK;
 		data |= ((long) record.getCompressedBestMove() << COMPRESSED_BEST_MOVE_SHIFT) & COMPRESSED_BEST_MOVE_MASK;
 		
@@ -147,9 +145,9 @@ public final class HashTableImpl implements IHashTable {
 
 		while (true) {
 			final long oldTableItem = table.get(index);
-			final int oldIntegralHorizon = (int) ((oldTableItem & HORIZON_MASK) >> HORIZON_SHIFT);
+			final int oldHorizon = (int) ((oldTableItem & HORIZON_MASK) >> HORIZON_SHIFT);
 			
-			if (integralHorizon < oldIntegralHorizon)
+			if (horizon < oldHorizon)
 				break;
 			
 			if (table.compareAndSet(index, oldTableItem, newTableItem))

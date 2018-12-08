@@ -127,7 +127,7 @@ public class SearchManagerTest {
 			
 			utils.Logger.logMessage("Starting " + searchFinished.getValue());
 			
-			manager.setMaxHorizon(testValue.depth * ISearchEngine.HORIZON_GRANULARITY);
+			manager.setMaxHorizon(testValue.depth);
 			manager.startSearching(fen.getPosition());
 			
 			utils.Logger.logMessage("Waiting for result " + searchFinished.getValue());

@@ -7,12 +7,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
-import utils.DoubleArrayBuilder;
 
 
 public final class SearchSettings {
+
+	public static final int EXTENSION_FRACTION_BITS = 10;
+	public static final int EXTENSION_GRANULARITY = 1 << EXTENSION_FRACTION_BITS;
+	public static final int EXTENSION_TRESHOLD = makeExtension(0.8);
 	
 	private int maxQuiescenceDepth;
 	private int nullMoveReduction;
@@ -34,31 +36,31 @@ public final class SearchSettings {
 	private int maxCheckSearchDepth;
 
 	public SearchSettings() {
-		maxQuiescenceDepth = makeHorizon(5.0);
-		nullMoveReduction = makeHorizon(3.0);
-		minExtensionHorizon = makeHorizon(3.0);
-		maxExtension = makeHorizon(5.0);
-		simpleCheckExtension = makeHorizon(0.5);
-		attackCheckExtension = makeHorizon(1.0);
-		forcedMoveExtension = makeHorizon(0.75);
-		mateExtension = makeHorizon(1.0);
-		rankAttackExtension = makeHorizon(0.75);
-		pinExtension = makeHorizon(0.75);
+		maxQuiescenceDepth = 5;
+		nullMoveReduction = 3;
+		minExtensionHorizon = 3;
+		maxExtension = 3;
+		simpleCheckExtension = makeExtension(0.5);
+		attackCheckExtension = makeExtension(1.0);
+		forcedMoveExtension = makeExtension(0.75);
+		mateExtension = makeExtension(1.0);
+		rankAttackExtension = makeExtension(0.75);
+		pinExtension = makeExtension(0.75);
 		
-		pawnOnSevenRankExtension = makeHorizon(1.0);
-		protectingPawnOnSixRankExtension = makeHorizon(1.0);
+		pawnOnSevenRankExtension = makeExtension(1.0);
+		protectingPawnOnSixRankExtension = makeExtension(1.0);
 		
-		recaptureMinExtension = makeHorizon(0.0);
-		recaptureMaxExtension = makeHorizon(0.75);
+		recaptureMinExtension = makeExtension(0.0);
+		recaptureMaxExtension = makeExtension(0.75);
 
 		recaptureBeginMinTreshold = roundToInt (2.25 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureBeginMaxTreshold = roundToInt (5 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureTargetTreshold = roundToInt (0.5 * PieceTypeEvaluations.PAWN_EVALUATION);
-		maxCheckSearchDepth = makeHorizon(4.0);
+		maxCheckSearchDepth = 4;
 	}
 	
-	private static int makeHorizon (final double extension) {
-		return roundToInt(extension * ISearchEngine.HORIZON_GRANULARITY);
+	private static int makeExtension(final double extension) {
+		return roundToInt(extension * EXTENSION_GRANULARITY);
 	}
 	
 	public int getMaxQuiescenceDepth() {
@@ -200,8 +202,8 @@ public final class SearchSettings {
 		maxCheckSearchDepth = orig.maxCheckSearchDepth;
 	}
 
-	private static void printRelativeHorizon (final PrintWriter writer, final String name, final int value) {
-		final double relativeValue = (double) value / (double) ISearchEngine.HORIZON_GRANULARITY;
+	private static void printExtension(final PrintWriter writer, final String name, final int value) {
+		final double relativeValue = (double) value / (double) EXTENSION_GRANULARITY;
 		
 		writer.println(name + " = (int) Math.round (" + relativeValue + " * ISearchEngine.HORIZON_GRANULARITY);");
 	}
@@ -219,26 +221,26 @@ public final class SearchSettings {
 			final PrintWriter printWriter = new PrintWriter(stringWriter);
 		)
 		{
-			printRelativeHorizon(printWriter, "maxQuiescenceDepth", maxQuiescenceDepth);
-			printRelativeHorizon(printWriter, "nullMoveReduction", nullMoveReduction);
-			printRelativeHorizon(printWriter, "minExtensionHorizon", minExtensionHorizon);
-			printRelativeHorizon(printWriter, "maxExtension", maxExtension);
-			printRelativeHorizon(printWriter, "simpleCheckExtension", simpleCheckExtension);
-			printRelativeHorizon(printWriter, "attackCheckExtension", attackCheckExtension);
-			printRelativeHorizon(printWriter, "forcedMoveExtension", forcedMoveExtension);
-			printRelativeHorizon(printWriter, "mateExtension", mateExtension);
-			printRelativeHorizon(printWriter, "rankAttackExtension", rankAttackExtension);
+			printExtension(printWriter, "maxQuiescenceDepth", maxQuiescenceDepth);
+			printExtension(printWriter, "nullMoveReduction", nullMoveReduction);
+			printExtension(printWriter, "minExtensionHorizon", minExtensionHorizon);
+			printExtension(printWriter, "maxExtension", maxExtension);
+			printExtension(printWriter, "simpleCheckExtension", simpleCheckExtension);
+			printExtension(printWriter, "attackCheckExtension", attackCheckExtension);
+			printExtension(printWriter, "forcedMoveExtension", forcedMoveExtension);
+			printExtension(printWriter, "mateExtension", mateExtension);
+			printExtension(printWriter, "rankAttackExtension", rankAttackExtension);
 			
-			printRelativeHorizon(printWriter, "pawnOnSevenRankExtension", pawnOnSevenRankExtension);
+			printExtension(printWriter, "pawnOnSevenRankExtension", pawnOnSevenRankExtension);
 			
-			printRelativeHorizon(printWriter, "recaptureMinExtension", recaptureMinExtension);
-			printRelativeHorizon(printWriter, "recaptureMaxExtension", recaptureMaxExtension);
+			printExtension(printWriter, "recaptureMinExtension", recaptureMinExtension);
+			printExtension(printWriter, "recaptureMaxExtension", recaptureMaxExtension);
 
 			printRelativeEvaluation(printWriter, "recaptureBeginMinTreshold", recaptureBeginMinTreshold);
 			printRelativeEvaluation(printWriter, "recaptureBeginMaxTreshold", recaptureBeginMaxTreshold);
 			printRelativeEvaluation(printWriter, "recaptureTargetTreshold", recaptureTargetTreshold);
 
-			printRelativeHorizon(printWriter, "maxCheckSearchDepth", maxCheckSearchDepth);
+			printExtension(printWriter, "maxCheckSearchDepth", maxCheckSearchDepth);
 			
 			printWriter.flush();
 			return stringWriter.toString();

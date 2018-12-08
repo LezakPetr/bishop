@@ -52,7 +52,7 @@ public class SearchExtensionCalculator {
 	}
 
 	private boolean isNullMate(final Position position, final int horizon) {
-		final int optimalDepthInMoves = (horizon >> (ISearchEngine.HORIZON_FRACTION_BITS + 1)) - NULL_MATE_REDUCTION;
+		final int optimalDepthInMoves = (horizon >> 1) - NULL_MATE_REDUCTION;
 		final int depthInMoves = Math.min(Math.max(optimalDepthInMoves, MIN_NULL_MATE_DEPTH), MAX_NULL_MATE_DEPTH);
 		
 		final Move move = new Move();

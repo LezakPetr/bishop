@@ -145,7 +145,7 @@ public class BookCalculator implements IBook<EvaluatedBookRecord> {
 			record.addMove(bookMove);
 			
 			final HashRecord hashRecord = new HashRecord();
-			hashRecord.setHorizon(100 * ISearchEngine.HORIZON_GRANULARITY);
+			hashRecord.setHorizon(100);
 			hashRecord.setCompressedBestMove(bestMove.getCompressedMove());
 			hashRecord.setEvaluation(result.getNodeEvaluation().getEvaluation());
 			hashRecord.setType(HashRecordType.VALUE);
