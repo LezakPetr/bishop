@@ -141,13 +141,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			final boolean isFirstQuiescence = isQuiescenceSearch && depth > 0 && !previousRecord.isQuiescenceSearch;
 
-			final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, mobilityCalculator).getEvaluation();
 			final int ownKingSquare = currentPosition.getKingPosition(onTurn);
 			final boolean isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
 
 			try {
 				// Evaluate position
-				int whitePositionEvaluation = tacticalEvaluation;
+				int whitePositionEvaluation = positionEvaluator.evaluateTactical(currentPosition, mobilityCalculator).getEvaluation();
 
 				final int materialEvaluation = currentPosition.getMaterialEvaluation();
 				final int materialEvaluationShift = positionEvaluator.getMaterialEvaluationShift();
@@ -229,9 +228,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 						if (hashBestMove.getMoveType() != MoveType.INVALID) {
 							precalculatedMoveFound = true;
 							precalculatedMove.assign(hashBestMove);
-						} else {
-							precalculatedMoveFound = precalculatedMove.uncompressMove(principalMove.getCompressedMove(), currentPosition);
 						}
+						else
+							precalculatedMoveFound = precalculatedMove.uncompressMove(principalMove.getCompressedMove(), currentPosition);
 					}
 
 					if (precalculatedMoveFound) {
@@ -271,9 +270,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 									if (childEvaluation > alpha)
 										evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, beginMaterialEvaluation);
 								}
-								else {
+								else
 									evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, beginMaterialEvaluation);
-								}
 
 								currentPosition.undoMove(move);
 
