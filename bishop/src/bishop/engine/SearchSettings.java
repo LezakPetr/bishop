@@ -54,7 +54,7 @@ public final class SearchSettings {
 		recaptureBeginMinTreshold = roundToInt (2.25 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureBeginMaxTreshold = roundToInt (5 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureTargetTreshold = roundToInt (0.5 * PieceTypeEvaluations.PAWN_EVALUATION);
-		maxCheckSearchDepth = makeHorizon(3.0);
+		maxCheckSearchDepth = makeHorizon(4.0);
 	}
 	
 	private static int makeHorizon (final double extension) {

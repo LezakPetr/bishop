@@ -133,8 +133,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			if (updateRecordByHash(horizon, initialAlpha, initialBeta, hashRecord))
 				return;
 
-			final int reducedHorizon = (depth >= 2 && horizon >= ISearchEngine.HORIZON_GRANULARITY && horizon < 2 * ISearchEngine.HORIZON_GRANULARITY && mobilityCalculator.isStablePosition (currentPosition)) ?
-					horizon - ISearchEngine.HORIZON_GRANULARITY : horizon;
+			final int reducedHorizon = shouldReduceHorizon(horizon) ? horizon - ISearchEngine.HORIZON_GRANULARITY : horizon;
 
 			isQuiescenceSearch = (reducedHorizon < ISearchEngine.HORIZON_GRANULARITY);
 
@@ -143,11 +142,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, mobilityCalculator).getEvaluation();
 			final int ownKingSquare = currentPosition.getKingPosition(onTurn);
 			final boolean isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
-
-			if (depth > 0 && (!isQuiescenceSearch || isFirstQuiescence)) {
-				if (mateSearch(onTurn, oppositeColor, reducedHorizon, initialAlpha, initialBeta, isCheck))
-					return;
-			}
 
 			try {
 				// Evaluate position
@@ -225,12 +219,17 @@ public final class SerialSearchEngine implements ISearchEngine {
 					final boolean precalculatedMoveFound;
 					boolean precalculatedBetaCutoff = false;
 
-					if (hashBestMove.getMoveType() != MoveType.INVALID) {
-						precalculatedMoveFound = true;
-						precalculatedMove.assign(hashBestMove);
+					if (isQuiescenceSearch) {
+						precalculatedMoveFound = false;
+						precalculatedMove.clear();
 					}
 					else {
-						precalculatedMoveFound = precalculatedMove.uncompressMove(principalMove.getCompressedMove(), currentPosition);
+						if (hashBestMove.getMoveType() != MoveType.INVALID) {
+							precalculatedMoveFound = true;
+							precalculatedMove.assign(hashBestMove);
+						} else {
+							precalculatedMoveFound = precalculatedMove.uncompressMove(principalMove.getCompressedMove(), currentPosition);
+						}
 					}
 
 					if (precalculatedMoveFound) {
@@ -293,6 +292,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 				updateHashRecord(reducedHorizon);
 				updateBestMovePerIndexCounts();
 			}
+		}
+
+		private boolean shouldReduceHorizon(int horizon) {
+			return depth >= 2 &&
+			       horizon >= ISearchEngine.HORIZON_GRANULARITY &&
+			       horizon < 2 * ISearchEngine.HORIZON_GRANULARITY &&
+			       mobilityCalculator.isStablePosition (currentPosition) &&
+			       (currentPosition.getPiecesMask(Color.WHITE, PieceType.PAWN) & BoardConstants.RANK_7_MASK) == 0 &&
+			       (currentPosition.getPiecesMask(Color.BLACK, PieceType.PAWN) & BoardConstants.RANK_2_MASK) == 0;
 		}
 
 		private boolean isNullSearchPossible(final boolean isCheck) {
@@ -487,21 +495,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		private void updateHashRecord(final int horizon) {
 			final NodeEvaluation nodeEvaluation = evaluation;
-			final int evaluation = nodeEvaluation.getEvaluation();
+			final int currentEvaluation = nodeEvaluation.getEvaluation();
 
-			if (horizon > 0 && !Evaluation.isDrawByRepetition(evaluation)) {
+			if (horizon > 0 && !Evaluation.isDrawByRepetition(currentEvaluation)) {
 				final HashRecord record = hashRecord;
 				record.setEvaluationAndType(nodeEvaluation, depth);
-
-				final int effectiveHorizon;
-
-				if (evaluation >= Evaluation.MATE_MIN || evaluation <= -Evaluation.MATE_MIN) {
-					effectiveHorizon = ISearchEngine.MAX_HORIZON - 1;
-				}
-				else
-					effectiveHorizon = horizon;
-
-				record.setHorizon(effectiveHorizon);
+				record.setHorizon(horizon);
 
 				if (principalVariation.getSize() > 0) {
 					record.setCompressedBestMove(principalVariation.getCompressedMove(0));
@@ -521,52 +520,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 				if (index >= 0)
 					bestMovePerIndexCounts[index]++;
 			}
-		}
-
-		private boolean mateSearch(final int onTurn, final int oppositeColor, final int horizon, final int alpha, final int beta, final boolean isCheck) {
-			mateFinder.setPosition(currentPosition);
-			mateFinder.setDepthAdvance(depth);
-
-			// Win
-			final int winEvaluation = mateFinder.findWin(WIN_MATE_DEPTH);
-
-			if (winEvaluation >= Evaluation.MATE_MIN) {
-				evaluation.setEvaluation(winEvaluation);
-				evaluation.setAlpha(Evaluation.MIN);
-				evaluation.setBeta(Evaluation.MAX);
-				principalVariation.clear();
-
-				return true;
-			}
-
-			// Lose
-			if (isCheck) {
-				final int loseEvaluation = mateFinder.findLose(LOSE_MATE_DEPTH);
-
-				if (loseEvaluation <= -Evaluation.MATE_MIN) {
-					evaluation.setEvaluation(loseEvaluation);
-					evaluation.setAlpha(Evaluation.MIN);
-					evaluation.setBeta(Evaluation.MAX);
-					principalVariation.clear();
-
-					return true;
-				}
-				else {
-					if (mateFinder.getNonLosingMoveCount() == 1) {
-						moveListBegin = moveStackTop;
-						moveListEnd = moveStackTop;
-						evaluation.update(mateFinder.getLosingMovesEvaluation());
-
-						mateFinder.getNonLosingMove(nonLosingMove);
-						evaluateMove(nonLosingMove, horizon, ISearchEngine.HORIZON_GRANULARITY, alpha, beta);
-
-						updateCurrentRecordAfterEvaluation(nonLosingMove, horizon, nextRecord);
-						return true;
-					}
-				}
-			}
-
-			return false;
 		}
 
 		/**
@@ -843,15 +796,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		final SearchResult result = getResult(task.getHorizon());
 		result.setSearchTerminated(terminated);
-		
-/*		System.out.println("Time in quiescence search: " + normalSearchTimeSpent + "ms");
-		
-		final double winPercent = 100.0 * winMateTask.timeSpent / normalSearchTimeSpent;
-		System.out.println("Time in win mate search: " + winMateTask.timeSpent + "ms = " + Math.round(winPercent) + "%");
-		
-		final double losePercent = 100.0 * loseMateTask.timeSpent / normalSearchTimeSpent;
-		System.out.println("Time in lose mate search: " + loseMateTask.timeSpent + "ms = " + Math.round(losePercent) + "%");
-		*/
+
 		return result;
 	}
 
