@@ -36,10 +36,10 @@ public final class SearchSettings {
 	private int maxCheckSearchDepth;
 
 	public SearchSettings() {
-		maxQuiescenceDepth = 5;
-		nullMoveReduction = 3;
-		minExtensionHorizon = 3;
-		maxExtension = 3;
+		maxQuiescenceDepth = 10;
+		nullMoveReduction = 4;
+		minExtensionHorizon = 6;
+		maxExtension = 6;
 		simpleCheckExtension = makeExtension(0.5);
 		attackCheckExtension = makeExtension(1.0);
 		forcedMoveExtension = makeExtension(0.75);
@@ -56,7 +56,7 @@ public final class SearchSettings {
 		recaptureBeginMinTreshold = roundToInt (2.25 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureBeginMaxTreshold = roundToInt (5 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureTargetTreshold = roundToInt (0.5 * PieceTypeEvaluations.PAWN_EVALUATION);
-		maxCheckSearchDepth = 4;
+		maxCheckSearchDepth = 8;
 	}
 	
 	private static int makeExtension(final double extension) {

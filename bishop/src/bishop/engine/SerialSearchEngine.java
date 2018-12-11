@@ -11,6 +11,7 @@ import utils.RatioCalculator;
 
 public final class SerialSearchEngine implements ISearchEngine {
 
+	public static final int HORIZON_STEP_WITHOUT_EXTENSION = 2;
 	private static final int EXTENSION_HASH_MASK = (1 << SearchSettings.EXTENSION_FRACTION_BITS) - 1;
 
 	public class NodeRecord implements ISearchResult {
@@ -46,7 +47,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		private final Move hashBestMove = new Move();
 		private final Move firstLegalMove = new Move();
 		private boolean allMovesGenerated;
-		private int maxExtension;
 		private boolean isQuiescenceSearch;
 		private int legalMoveCount;
 		private int bestLegalMoveIndex;
@@ -57,7 +57,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		private final Move nullMove = new Move();
 		private final Move precalculatedMove = new Move();
 		private final Move precreatedCurrentMove = new Move();
-		private final Move nonLosingMove = new Move();
 
 		public NodeRecord(final int depth, final int maxPrincipalDepth, final NodeRecord nextRecord) {
 			this.depth = depth;
@@ -135,8 +134,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			if (updateRecordByHash(horizon, initialAlpha, initialBeta, hashRecord))
 				return;
 
-			final int reducedHorizon = shouldReduceHorizon(horizon) ? horizon - 1 : horizon;
-
+			final int reducedHorizon = shouldReduceHorizon(horizon) ? 0 : horizon;
 			isQuiescenceSearch = (reducedHorizon <= 0);
 
 			final boolean isFirstQuiescence = isQuiescenceSearch && depth > 0 && !previousRecord.isQuiescenceSearch;
@@ -284,8 +282,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					}
 
 					final int mateEvaluation = Evaluation.getMateEvaluation(depth);
-
-					checkMate(onTurn, isCheck, reducedHorizon, mateEvaluation);
+					checkMate(isCheck, mateEvaluation);
 				}
 			}
 			finally {
@@ -296,7 +293,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		private boolean shouldReduceHorizon(int horizon) {
 			return depth >= 2 &&
-			       horizon == 1 &&
+			       horizon >= 1 &&
+			       horizon <= HORIZON_STEP_WITHOUT_EXTENSION &&
 			       mobilityCalculator.isStablePosition (currentPosition) &&
 			       (currentPosition.getPiecesMask(Color.WHITE, PieceType.PAWN) & BoardConstants.RANK_7_MASK) == 0 &&
 			       (currentPosition.getPiecesMask(Color.BLACK, PieceType.PAWN) & BoardConstants.RANK_2_MASK) == 0;
@@ -421,10 +419,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 				moveExtension = 0;
 
 			final long positionDependentRandomNumber = currentPosition.getHash() & EXTENSION_HASH_MASK;
-			final boolean shouldExtend = maxExtension >= 1 && positionDependentRandomNumber < positionExtension + moveExtension;
+			final boolean shouldExtend = positionDependentRandomNumber < positionExtension + moveExtension;
 			final int totalExtension = shouldExtend ? 1 : 0;
 
-			int subHorizon = horizon + totalExtension - 1;
+			int subHorizon = horizon + totalExtension - HORIZON_STEP_WITHOUT_EXTENSION;
 			subHorizon = matePrunning(depth, subHorizon, alpha, beta);
 
 			repeatedPositionRegister.pushPosition (currentPosition, move);
@@ -433,8 +431,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			moveStackTop = moveListEnd;
 
 			nextRecord.openNode(-beta, -alpha);
-			nextRecord.maxExtension = maxExtension - totalExtension;
-
 			nextRecord.alphaBeta(subHorizon);
 
 			final ISearchResult result = nextRecord;
@@ -527,13 +523,11 @@ public final class SerialSearchEngine implements ISearchEngine {
 		 * Checks if there is mate in the position.
 		 * At zero horizon method checks legal moves itself, otherwise it uses number of moves
 		 * stored in current node record.
-		 * @param horizon horizon
 		 * @param isCheck if there is check in the position
 		 * @param mateEvaluation evaluation of the mate
-		 * @param isCheck if there is check in the position
 		 * @return if there is a mate
 		 */
-		private boolean checkMate(final int onTurn, final boolean isCheck, final int horizon, final int mateEvaluation) {
+		private boolean checkMate(final boolean isCheck, final int mateEvaluation) {
 			boolean isMate = false;
 
 			if (firstLegalMove.getMoveType() == MoveType.INVALID) {
@@ -576,7 +570,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 
 		private int calculateMoveOrderReducedHorizon(final int horizon, final Move move, final boolean isCheck, final boolean pvNode) {
-			if (isCheck || pvNode || horizon < 3 || legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getPromotionPieceType() == PieceType.QUEEN)
+			if (isCheck || pvNode || horizon < 6 || legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getPromotionPieceType() == PieceType.QUEEN)
 				return horizon;
 
 			if (currentPosition.isCheck())
@@ -745,14 +739,14 @@ public final class SerialSearchEngine implements ISearchEngine {
 		if (Evaluation.isWinMateSearch(alpha)) {
 			// Alpha is set to mate evaluation - calculate the difference between mate evaluation
 			// in sub depth and alpha and this is the maximal horizon to search.
-			final int maxHorizon = subMateEvaluation - alpha;
+			final int maxHorizon = HORIZON_STEP_WITHOUT_EXTENSION * (subMateEvaluation - alpha);
 			subHorizon = Math.min(subHorizon, maxHorizon);
 		}
 
 		if (Evaluation.isLoseMateSearch(beta)) {
 			// Beta is set to negative mate evaluation - calculate the difference between
 			// mate evaluation and negative beta and this is the maximal horizon to search.
-			final int maxHorizon = subMateEvaluation + beta;
+			final int maxHorizon = HORIZON_STEP_WITHOUT_EXTENSION * (subMateEvaluation + beta);
 			subHorizon = Math.min(subHorizon, maxHorizon);
 		}
 		return subHorizon;
@@ -764,7 +758,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		currentPosition.assign(task.getPosition());
 		
 		nodeStack[0].openNode(task.getAlpha(), task.getBeta());
-		nodeStack[0].maxExtension = task.getMaxExtension();
 
 		moveStackTop = 0;
 		evaluatedMoveList.clear();

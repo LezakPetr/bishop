@@ -12,7 +12,6 @@ import org.junit.Test;
 import bishop.engine.AlgebraicPositionEvaluation;
 import bishop.engine.Evaluation;
 import bishop.engine.IPositionEvaluation;
-import bishop.engine.ISearchEngine;
 import bishop.engine.MaterialPositionEvaluator;
 import bishop.engine.RepeatedPositionRegister;
 import bishop.engine.SearchResult;
@@ -44,24 +43,17 @@ public class SearchEngineTest {
 		new TestValue("2k5/8/2K1R3/8/8/8/8/8 w - - 0 1", 0, Evaluation.getMateEvaluation(1), "e6e8"),
 		new TestValue("7k/8/8/6RK/8/8/8/8 w - - 0 1", 5, Evaluation.getMateEvaluation(5), "h5g6"),
 		new TestValue("8/8/8/8/6rk/8/8/7K b - - 0 1", 5, Evaluation.getMateEvaluation(5), "h4g3"),
-		new TestValue("8/1k1KQ3/8/8/8/8/8/8 b - - 0 1", 6, -Evaluation.getMateEvaluation(6), "b7b6"),
+		new TestValue("8/1k1KQ3/8/8/8/8/8/8 b - - 0 1", 7, -Evaluation.getMateEvaluation(6), "b7b6"),
 		new TestValue("QR6/7k/8/8/7q/8/6P1/6K1 b - - 0 1", 4, Evaluation.DRAW_BY_REPETITION, "h4e1"),
 		new TestValue("8/1k1K3R/8/8/8/8/8/8 w - - 0 1", 7, Evaluation.getMateEvaluation(7), "h7h6")
 	};
 
-
-	
 	@Test
 	public void searchEngineTestSerial() throws Exception {
-		runTest(false);
+		runTest();
 	}
 
-	@Test
-	public void searchEngineTestParallel() throws Exception {
-		runTest(true);
-	}
-
-	public void runTest(final boolean runParallel) throws IOException, InterruptedException {
+	public void runTest() throws IOException, InterruptedException {
 		final SerialSearchEngine engine = new SerialSearchEngine();
 		engine.setEvaluationFactory(AlgebraicPositionEvaluation.getTestingFactory());
 		
@@ -106,7 +98,7 @@ public class SearchEngineTest {
 			fen.readFen(new PushbackReader(new StringReader(testValue.positionFen)));
 			
 			final SearchTask task = new SearchTask();
-			task.setHorizon(testValue.depth);
+			task.setHorizon(SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION * testValue.depth);
 			
 			final Position position = fen.getPosition();
 			final RepeatedPositionRegister register = new RepeatedPositionRegister();
