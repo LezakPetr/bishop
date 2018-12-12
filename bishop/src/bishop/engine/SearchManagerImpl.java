@@ -22,7 +22,7 @@ public final class SearchManagerImpl implements ISearchManager {
 	private int maxHorizon;
 	private long maxTimeForMove;
 	private HandlerRegistrarImpl<ISearchManagerHandler> handlerRegistrar;
-	private int minHorizon = 3;
+	private int minHorizon = 3 * SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION;
 	private int threadCount = 1;
 	private CombinedPositionEvaluationTable combinedPositionEvaluationTable = CombinedPositionEvaluationTable.ZERO_TABLE;
 	private PieceTypeEvaluations pieceTypeEvaluations;
@@ -398,7 +398,7 @@ public final class SearchManagerImpl implements ISearchManager {
 				if (searchFinished || managerState != ManagerState.SEARCHING)
 					return;
 				
-				horizon += 1;
+				horizon += SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION;
 				initialSearch = false;
 				
 				this.searchResult = bestResult;

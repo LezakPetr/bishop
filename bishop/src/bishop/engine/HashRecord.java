@@ -122,16 +122,19 @@ public final class HashRecord {
 		
 		if (this.type == HashRecordType.INVALID)
 			return false;
-		
-		// Compare by horizon
-		if (this.horizon < expectedHorizon || that.horizon < expectedHorizon)
+
+		// Different horizons
+		if (this.horizon != that.horizon) {
+			if (this.horizon == expectedHorizon)
+				return false;
+
+			if (that.horizon == expectedHorizon)
+				return true;
+
 			return this.horizon > that.horizon;
-			
-		// Compare by type
-		if ((this.type == HashRecordType.VALUE && that.type == HashRecordType.VALUE) ||
-			(this.type != HashRecordType.VALUE && that.type != HashRecordType.VALUE))
-			return this.horizon > that.horizon;
-			
+		}
+
+		// Same horizons
 		return this.type == HashRecordType.VALUE;
 	}
 }

@@ -207,6 +207,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 							final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
 
+
 							if (parentEvaluation.getEvaluation() > initialBeta) {
 								evaluation.update(parentEvaluation);
 								return;
@@ -311,22 +312,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 					return false;
 			}
 
-			final int beta = evaluation.getBeta();
-
-			if (beta > Evaluation.MATE_ZERO_DEPTH)
-				return false;
-
 			// Check position - at least two figures are needed
 			final int onTurn = currentPosition.getOnTurn();
-			long figureMask = BitBoard.EMPTY;
-
-			for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
-				figureMask |= currentPosition.getPiecesMask(onTurn, pieceType);
-			}
-
+			final long figureMask = currentPosition.getColorOccupancy(onTurn) & ~currentPosition.getBothColorPiecesMask(PieceType.PAWN);
 			final int figureCount = BitBoard.getSquareCount(figureMask);
 
-			return figureCount > 1;
+			return figureCount >= 3;   // At least two figures + king
 		}
 
 		/**
@@ -344,7 +335,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				return false;
 			}
 
-			if (depth > 0 && hashRecord.getHorizon() >= horizon) {
+			if (depth > 0 && hashRecord.getHorizon() == horizon) {
 				final int hashEvaluation = hashRecord.getNormalizedEvaluation(depth);
 				final int hashType = hashRecord.getType();
 
@@ -570,6 +561,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 
 		private int calculateMoveOrderReducedHorizon(final int horizon, final Move move, final boolean isCheck, final boolean pvNode) {
+			return horizon;
+			/*
 			if (isCheck || pvNode || horizon < 6 || legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getPromotionPieceType() == PieceType.QUEEN)
 				return horizon;
 
@@ -579,7 +572,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			if (legalMoveCount < 7)
 				return horizon - 1;
 			else
-				return horizon - 2;
+				return horizon - 2;*/
 		}
 
 		private boolean readHashRecord(final int horizon, final HashRecord hashRecord) {
@@ -614,7 +607,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			return success;
 		}
-
 	}
 
 	private static final int RECEIVE_UPDATES_COUNT = 8192;
