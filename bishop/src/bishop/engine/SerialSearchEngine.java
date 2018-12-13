@@ -203,13 +203,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 							nullMove.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
 
-							evaluateMove(nullMove, nullHorizon, 0, initialBeta, initialBeta + 1);
+							evaluateMove(nullMove, nullHorizon, 0, initialAlpha, initialBeta);
 
 							final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
 
+							evaluation.update(parentEvaluation);
 
 							if (parentEvaluation.getEvaluation() > initialBeta) {
-								evaluation.update(parentEvaluation);
 								return;
 							}
 						}
@@ -259,14 +259,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 								final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
 								currentPosition.makeMove(move);
 
-								final int moveOrderReducedHorizon = calculateMoveOrderReducedHorizon(reducedHorizon, move, isCheck, pvNode);
-
-								if (firstLegalMove.getMoveType() != MoveType.INVALID && (beta - alpha != 1 || moveOrderReducedHorizon != reducedHorizon)) {
-									evaluateMadeMove (move, moveOrderReducedHorizon, positionExtension, alpha, alpha + 1, beginMaterialEvaluation);
+								if (firstLegalMove.getMoveType() != MoveType.INVALID && beta - alpha != 1) {
+									evaluateMadeMove (move, reducedHorizon, positionExtension, alpha, alpha + 1, beginMaterialEvaluation);
 
 									final int childEvaluation = -nextRecord.evaluation.getEvaluation();
 
-									if (childEvaluation > alpha)
+									if (childEvaluation > alpha && childEvaluation <= beta)
 										evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, beginMaterialEvaluation);
 								}
 								else
@@ -302,15 +300,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 
 		private boolean isNullSearchPossible(final boolean isCheck) {
-			if (isCheck)
+			if (isCheck || depth == 0)
 				return false;
 
-			if (depth > 0) {
-				final Move lastMove = previousRecord.currentMove;
+			final Move lastMove = previousRecord.currentMove;
 
-				if (lastMove.getMoveType() == MoveType.NULL)
-					return false;
-			}
+			if (lastMove.getMoveType() == MoveType.NULL)
+				return false;
 
 			// Check position - at least two figures are needed
 			final int onTurn = currentPosition.getOnTurn();
@@ -558,21 +554,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			}
 
 			return false;
-		}
-
-		private int calculateMoveOrderReducedHorizon(final int horizon, final Move move, final boolean isCheck, final boolean pvNode) {
-			return horizon;
-			/*
-			if (isCheck || pvNode || horizon < 6 || legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getPromotionPieceType() == PieceType.QUEEN)
-				return horizon;
-
-			if (currentPosition.isCheck())
-				return horizon;
-
-			if (legalMoveCount < 7)
-				return horizon - 1;
-			else
-				return horizon - 2;*/
 		}
 
 		private boolean readHashRecord(final int horizon, final HashRecord hashRecord) {
