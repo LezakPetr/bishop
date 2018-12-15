@@ -123,7 +123,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			final int oppositeColor = Color.getOppositeColor(onTurn);
 			final int initialAlpha = evaluation.getAlpha();
 			final int initialBeta = evaluation.getBeta();
-			final boolean pvNode = initialBeta - initialAlpha > 1;
 
 			if (checkFiniteEvaluation(horizon, initialAlpha, initialBeta))
 				return;
@@ -181,16 +180,17 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					if (evaluation.updateBoundaries (positionEvaluation)) {
 						evaluation.setAlpha(positionEvaluation);
+
+						final int mateEvaluation = Evaluation.getMateEvaluation(depth);
+						checkMate(isCheck, mateEvaluation);
+
 						return;
 					}
 				}
 
 				final int maxQuiescenceDepth = searchSettings.getMaxQuiescenceDepth();
-				final boolean winMateRequired = Evaluation.isWinMateSearch(initialAlpha);
-				final boolean loseMateRequired = Evaluation.isLoseMateSearch(initialBeta);
-				final boolean mateRequired = winMateRequired || loseMateRequired;
 
-				if (!isMaxDepth && reducedHorizon > -maxQuiescenceDepth && (!isQuiescenceSearch || isCheckSearch || !mateRequired)) {
+				if (!isMaxDepth && reducedHorizon > -maxQuiescenceDepth) {
 					moveListBegin = moveStackTop;
 					moveListEnd = moveStackTop;
 
@@ -259,13 +259,16 @@ public final class SerialSearchEngine implements ISearchEngine {
 								final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
 								currentPosition.makeMove(move);
 
-								if (firstLegalMove.getMoveType() != MoveType.INVALID && beta - alpha != 1) {
-									evaluateMadeMove (move, reducedHorizon, positionExtension, alpha, alpha + 1, beginMaterialEvaluation);
-
+								if (firstLegalMove.getMoveType() != MoveType.INVALID && alpha != beta) {
+									evaluateMadeMove (move, reducedHorizon, positionExtension, alpha, alpha, beginMaterialEvaluation);
 									final int childEvaluation = -nextRecord.evaluation.getEvaluation();
 
-									if (childEvaluation > alpha && childEvaluation <= beta)
-										evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, beginMaterialEvaluation);
+									if (childEvaluation > alpha && childEvaluation <= beta) {
+										evaluateMadeMove(move, reducedHorizon, positionExtension, childEvaluation, beta, beginMaterialEvaluation);
+										final int updatedChildEvaluation = -nextRecord.evaluation.getEvaluation();
+
+										assert (updatedChildEvaluation >= childEvaluation);
+									}
 								}
 								else
 									evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, beginMaterialEvaluation);
@@ -408,9 +411,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			final long positionDependentRandomNumber = currentPosition.getHash() & EXTENSION_HASH_MASK;
 			final boolean shouldExtend = positionDependentRandomNumber < positionExtension + moveExtension;
 			final int totalExtension = shouldExtend ? 1 : 0;
-
-			int subHorizon = horizon + totalExtension - HORIZON_STEP_WITHOUT_EXTENSION;
-			subHorizon = matePrunning(depth, subHorizon, alpha, beta);
+			final int subHorizon = horizon + totalExtension - HORIZON_STEP_WITHOUT_EXTENSION;
 
 			repeatedPositionRegister.pushPosition (currentPosition, move);
 			currentMove.assign(move);
