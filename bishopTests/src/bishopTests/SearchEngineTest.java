@@ -39,6 +39,7 @@ public class SearchEngineTest {
 	private static final TestValue[] TEST_VALUES = {
 		new TestValue("3k4/8/3K4/8/8/8/8/8 w - - 0 1", 0, 0, null),
 		new TestValue("3k1R2/8/3K4/8/8/8/8/8 b - - 0 1", 0, -Evaluation.getMateEvaluation(0), null),
+		new TestValue("8/Q7/8/8/8/5kn1/5p2/5K2 w - - 0 1", 0, -Evaluation.getMateEvaluation(0), null),
 		new TestValue("k7/1R6/2K5/8/8/8/8/8 b - - 0 1", 1, Evaluation.DRAW, null),
 		new TestValue("2k5/8/2K1R3/8/8/8/8/8 w - - 0 1", 0, Evaluation.getMateEvaluation(1), "e6e8"),
 		new TestValue("7k/8/8/6RK/8/8/8/8 w - - 0 1", 5, Evaluation.getMateEvaluation(5), "h5g6"),
@@ -49,26 +50,63 @@ public class SearchEngineTest {
 	};
 
 	@Test
-	public void searchEngineTestSerial() throws Exception {
+	public void testExpectedResult() throws Exception {
 		runTest();
 	}
 
+	/**
+	 * Checks that the alpha-beta algorithm is behaving consistently with different alpha-beta
+	 * boundaries.
+	 */
+	@Test
+	public void testConsistentResults() throws Exception {
+		for (boolean withCheckSearch: new boolean[] {false, true}) {
+			final SerialSearchEngine engine = configureEngine(withCheckSearch);
+
+			for (TestValue testValue : TEST_VALUES) {
+				final Fen fen = new Fen();
+				fen.readFen(new PushbackReader(new StringReader(testValue.positionFen)));
+
+				for (int horizon = 0; horizon < 4 * SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION; horizon++) {
+					final SearchResult correctResult = search(engine, fen, horizon, Evaluation.MIN, Evaluation.MAX);
+					final int correctEvaluation = correctResult.getNodeEvaluation().getEvaluation();
+
+					final SearchResult nullWindowResult = search(engine, fen, horizon, correctEvaluation, correctEvaluation);
+					final int nullWindowEvaluation = nullWindowResult.getNodeEvaluation().getEvaluation();
+
+					Assert.assertEquals(correctEvaluation, nullWindowEvaluation);
+
+					final SearchResult drawWindowResult = search(engine, fen, horizon, Evaluation.DRAW, Evaluation.DRAW);
+					final int drawWindowEvaluation = drawWindowResult.getNodeEvaluation().getEvaluation();
+
+					Assert.assertTrue(correctEvaluation < 0 || correctEvaluation >= drawWindowEvaluation);
+					Assert.assertTrue(correctEvaluation > 0 || correctEvaluation <= drawWindowEvaluation);
+
+					final SearchResult lowerBoundResult = search(engine, fen, horizon, correctEvaluation + 100, Evaluation.MAX);
+					final int lowerBoundEvaluation = lowerBoundResult.getNodeEvaluation().getEvaluation();
+
+					Assert.assertTrue(correctEvaluation <= lowerBoundEvaluation);
+
+					final SearchResult upperBoundResult = search(engine, fen, horizon, Evaluation.MIN, correctEvaluation - 100);
+					final int upperBoundEvaluation = upperBoundResult.getNodeEvaluation().getEvaluation();
+
+					Assert.assertTrue(correctEvaluation >= upperBoundEvaluation);
+				}
+			}
+		}
+	}
+
 	public void runTest() throws IOException, InterruptedException {
-		final SerialSearchEngine engine = new SerialSearchEngine();
-		engine.setEvaluationFactory(AlgebraicPositionEvaluation.getTestingFactory());
-		
-		configureEngine(engine);
+		final SerialSearchEngine engine = configureEngine(true);
 		
 		// Prewarm
-		for (int i = 0; i < 3; i++)
-			doCalculation(engine);
+		doCalculation(engine);
 		
 		// Measure
 		final long beginTime = System.currentTimeMillis();
 		long nodeCount = 0;
-		
-		for (int i = 0; i < 3; i++)
-			nodeCount += doCalculation(engine);
+
+		nodeCount += doCalculation(engine);
 		
 		final long endTime = System.currentTimeMillis();
 				
@@ -79,16 +117,25 @@ public class SearchEngineTest {
 	}
 
 
-	public void configureEngine(final SerialSearchEngine engine) {
+	public SerialSearchEngine configureEngine(final boolean withCheckSearch) {
+		final SerialSearchEngine engine = new SerialSearchEngine();
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
 		final MaterialPositionEvaluator evaluator = new MaterialPositionEvaluator(evaluationFactory);
-		
+
+		engine.setEvaluationFactory(AlgebraicPositionEvaluation.getTestingFactory());
 		engine.setPositionEvaluator(evaluator);
 		engine.setMaximalDepth(20);
-		engine.setSearchSettings(new SearchSettings());
-		engine.setPieceTypeEvaluations(pte);
-	}
 
+		final SearchSettings settings = new SearchSettings();
+
+		if (!withCheckSearch)
+			settings.setMaxCheckSearchDepth(-1);
+
+		engine.setSearchSettings(settings);
+		engine.setPieceTypeEvaluations(pte);
+
+		return engine;
+	}
 
 	private long doCalculation(final SerialSearchEngine engine) throws IOException, InterruptedException {
 		long nodeCount = 0;
@@ -96,24 +143,8 @@ public class SearchEngineTest {
 		for (TestValue testValue: TEST_VALUES) {	
 			final Fen fen = new Fen();
 			fen.readFen(new PushbackReader(new StringReader(testValue.positionFen)));
-			
-			final SearchTask task = new SearchTask();
-			task.setHorizon(SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION * testValue.depth);
-			
-			final Position position = fen.getPosition();
-			final RepeatedPositionRegister register = new RepeatedPositionRegister();
-			
-			register.clearAnsReserve(1);
-			register.pushPosition(position, null);
-			
-			task.setRepeatedPositionRegister(register);
-			task.getPosition().assign(position);
 
-			final DefaultAdditiveMaterialEvaluator materialEvaluator = new DefaultAdditiveMaterialEvaluator(pte);
-			final int materialEvaluation = materialEvaluator.evaluateMaterial(position.getMaterialHash());
-			task.setRootMaterialEvaluation(materialEvaluation);
-			
-			final SearchResult result = engine.search(task);			
+			final SearchResult result = search(engine, fen, SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION * testValue.depth, Evaluation.MIN, Evaluation.MAX);
 			
 			final MoveList principalVariation = result.getPrincipalVariation();
 			System.out.println (principalVariation.toString());
@@ -127,6 +158,29 @@ public class SearchEngineTest {
 			
 			nodeCount += engine.getNodeCount();
 		}
+
 		return nodeCount;
+	}
+
+	private SearchResult search(final SerialSearchEngine engine, final Fen fen, final int horizon, final int alpha, final int beta) {
+		final SearchTask task = new SearchTask();
+		task.setHorizon(horizon);
+
+		final Position position = fen.getPosition();
+		final RepeatedPositionRegister register = new RepeatedPositionRegister();
+
+		register.clearAnsReserve(1);
+		register.pushPosition(position, null);
+
+		task.setRepeatedPositionRegister(register);
+		task.getPosition().assign(position);
+		task.setAlpha(alpha);
+		task.setBeta(beta);
+
+		final DefaultAdditiveMaterialEvaluator materialEvaluator = new DefaultAdditiveMaterialEvaluator(pte);
+		final int materialEvaluation = materialEvaluator.evaluateMaterial(position.getMaterialHash());
+		task.setRootMaterialEvaluation(materialEvaluation);
+
+		return engine.search(task);
 	}
 }
