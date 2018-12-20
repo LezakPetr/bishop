@@ -15,8 +15,6 @@ import parallel.Parallel;
 
 public final class SearchManagerImpl implements ISearchManager {
 	
-	private final static long SEARCH_INFO_TIMEOUT = 500;   // [ms] 
-	
 	// Settings
 	private ISearchEngineFactory engineFactory;
 	private int maxHorizon;
@@ -26,6 +24,7 @@ public final class SearchManagerImpl implements ISearchManager {
 	private int threadCount = 1;
 	private CombinedPositionEvaluationTable combinedPositionEvaluationTable = CombinedPositionEvaluationTable.ZERO_TABLE;
 	private PieceTypeEvaluations pieceTypeEvaluations;
+	private long searchInfoTimeout = 500; // ms
 	
 	private final List<ISearchEngine> searchEngineList = new ArrayList<>();
 	
@@ -311,12 +310,12 @@ public final class SearchManagerImpl implements ISearchManager {
 				
 				if (managerState == ManagerState.SEARCHING && isSearchRunning)
 				{
-					final long timeout = lastSearchInfoTime + SEARCH_INFO_TIMEOUT - System.currentTimeMillis();
+					final long timeout = lastSearchInfoTime + searchInfoTimeout - System.currentTimeMillis();
 					
 					if (timeout > 0)
 						monitor.wait(timeout);
 					
-					if (System.currentTimeMillis() > lastSearchInfoTime + SEARCH_INFO_TIMEOUT) {
+					if (System.currentTimeMillis() > lastSearchInfoTime + searchInfoTimeout) {
 						updateSearchInfo();
 					}
 					
@@ -515,6 +514,19 @@ public final class SearchManagerImpl implements ISearchManager {
 		synchronized (monitor) {
 			checkManagerState (ManagerState.STOPPED, ManagerState.WAITING);
 			this.maxHorizon = maxHorizon;
+		}
+	}
+
+	/**
+	 * Sets timeout for updating search info.
+	 * Manager must be in STOPPED or WAITING state.
+	 * @param timeout timeout [ms]
+	 */
+	@Override
+	public void setSearchInfoTimeout (final long timeout) {
+		synchronized (monitor) {
+			checkManagerState (ManagerState.STOPPED, ManagerState.WAITING);
+			this.searchInfoTimeout = timeout;
 		}
 	}
 	

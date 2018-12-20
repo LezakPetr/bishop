@@ -17,8 +17,9 @@ import utils.Holder;
 public class SearchPerformanceTest {
 
 	private static final int HASH_TABLE_EXPONENT = 27;
-	private static final int MAX_DEPTH = 25;
-	
+	private static final int MAX_DEPTH = 25 * SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION;
+	private static final long SEARCH_INFO_TIMEOUT = 200;
+
 	private final ISearchManager manager = new SearchManagerImpl();
 	private final Holder<Boolean> searchFinished = new Holder<Boolean>();
 	private final Holder<Long> endTimeHolder = new Holder<Long>();
@@ -63,6 +64,7 @@ public class SearchPerformanceTest {
 		manager.setHashTable(hashTable);
 		manager.setThreadCount(threadCount);
 		manager.setPieceTypeEvaluations(pieceTypeEvaluations);
+		manager.setSearchInfoTimeout(SEARCH_INFO_TIMEOUT);
 
 		System.out.println (threadCount);
 		

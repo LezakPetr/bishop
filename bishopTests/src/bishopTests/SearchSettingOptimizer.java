@@ -15,11 +15,11 @@ import optimization.SimulatedAnnealing;
 
 public class SearchSettingOptimizer {
 	
-	private static final int PARAMETER_COUNT = 15;
-	private static final long MAX_TIME_FOR_POSITION = 20000;
+	private static final int PARAMETER_COUNT = 14;
+	private static final long MAX_TIME_FOR_POSITION = 2000;
 	
-	private static final int FINALIZATION_STEP_COUNT = 	0;
-	private static final int OPTIMIZATION_STEP_COUNT = 250;
+	private static final int FINALIZATION_STEP_COUNT = 0;
+	private static final int OPTIMIZATION_STEP_COUNT = 500;
 	private static final double MAX_TEMPERATURE_COEFF = 0.5;
 	private static final double MIN_TEMPERATURE_COEFF = 0.02;
 	
@@ -54,7 +54,7 @@ public class SearchSettingOptimizer {
 			
 			changeParameter(parameter, random);
 		}
-		
+
 		private static int getRandom (final int min, final int max, final Random rnd) {
 			return min + rnd.nextInt(max - min);
 		}
@@ -66,7 +66,7 @@ public class SearchSettingOptimizer {
 					break;
 					
 				case 1:
-					searchSettings.setNullMoveReduction(getRandom(0, 4, random));
+					searchSettings.setNullMoveReduction(getRandom(0, 8, random));
 					break;
 
 				case 2:
@@ -74,50 +74,46 @@ public class SearchSettingOptimizer {
 					break;
 
 				case 3:
-					searchSettings.setMaxExtension(SearchSettings.EXTENSION_GRANULARITY * getRandom(0, 8, random));
-					break;
-
-				case 4:
 					searchSettings.setSimpleCheckExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 					
-				case 5:
+				case 4:
 					searchSettings.setAttackCheckExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 
-				case 6:
+				case 5:
 					searchSettings.setForcedMoveExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 
-				case 7:
+				case 6:
 					searchSettings.setMateExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 
-				case 8:
+				case 7:
 					searchSettings.setRankAttackExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 					
-				case 9:
+				case 8:
 					searchSettings.setPawnOnSevenRankExtension (getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 
-				case 10:
+				case 9:
 					searchSettings.setRecaptureMaxExtension(getRandom(searchSettings.getRecaptureMinExtension() + 1, SearchSettings.EXTENSION_GRANULARITY, random));
 					break;
 
-				case 11:
+				case 10:
 					searchSettings.setRecaptureMinExtension(getRandom(0, searchSettings.getRecaptureMaxExtension(), random));
 					break;
 
-				case 12:
+				case 11:
 					searchSettings.setRecaptureBeginMaxTreshold(getRandom(searchSettings.getRecaptureBeginMinTreshold() + 1, PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(PieceType.QUEEN), random));
 					break;
 
-				case 13:
+				case 12:
 					searchSettings.setRecaptureBeginMinTreshold(getRandom(0, searchSettings.getRecaptureBeginMaxTreshold(), random));
 					break;
 
-				case 14:
+				case 13:
 					searchSettings.setRecaptureTargetTreshold(getRandom(0, PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(PieceType.QUEEN), random));
 					break;
 			}

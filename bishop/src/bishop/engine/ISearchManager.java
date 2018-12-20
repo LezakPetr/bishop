@@ -31,7 +31,14 @@ public interface ISearchManager {
 	 * @param maxHorizon maximal horizon
 	 */
 	public void setMaxHorizon (final int maxHorizon);
-	
+
+	/**
+	 * Sets timeout for updating search info.
+	 * Manager must be in STOPPED or WAITING state.
+	 * @param timeout timeout [ms]
+	 */
+	public void setSearchInfoTimeout (final long timeout);
+
 	/**
 	 * Sets maximal time for move.
 	 * @param time maximal time for search of one move
