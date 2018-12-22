@@ -15,7 +15,14 @@ public final class SearchSettings {
 	public static final int EXTENSION_FRACTION_BITS = 10;
 	public static final int EXTENSION_GRANULARITY = 1 << EXTENSION_FRACTION_BITS;
 	public static final int EXTENSION_TRESHOLD = makeExtension(0.8);
-	
+
+	public static final String CSV_HEADER = "maxQuiescenceDepth, nullMoveReduction, minExtensionHorizon, " +
+			"simpleCheckExtension, attackCheckExtension, forcedMoveExtension, mateExtension, rankAttackExtension, " +
+			"pawnOnSevenRankExtension, protectingPawnOnSixRankExtension, " +
+			"recaptureMinExtension, recaptureMaxExtension, " +
+			"recaptureBeginMinTreshold, recaptureBeginMaxTreshold, recaptureTargetTreshold, " +
+			"maxCheckSearchDepth";
+
 	private int maxQuiescenceDepth;
 	private int nullMoveReduction;
 	private int minExtensionHorizon;

@@ -16,6 +16,24 @@ import utils.Holder;
 
 public class SearchPerformanceTest {
 
+	public static class SearchStatictics {
+		private final long time;
+		private final long nodeCount;
+
+		public SearchStatictics(final long time, final long nodeCount) {
+			this.time = time;
+			this.nodeCount = nodeCount;
+		}
+
+		public long getTime() {
+			return time;
+		}
+
+		public long getNodeCount() {
+			return nodeCount;
+		}
+	}
+
 	private static final int HASH_TABLE_EXPONENT = 27;
 	private static final int MAX_DEPTH = 25 * SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION;
 	private static final long SEARCH_INFO_TIMEOUT = 200;
@@ -23,10 +41,15 @@ public class SearchPerformanceTest {
 	private final ISearchManager manager = new SearchManagerImpl();
 	private final Holder<Boolean> searchFinished = new Holder<Boolean>();
 	private final Holder<Long> endTimeHolder = new Holder<Long>();
+	private final Holder<Long> nodeCountHolder = new Holder<Long>();
 	
 	private final Move expectedMove = new Move();
 	private final MoveList lastPrincipalVariation = new MoveList();
+	private int threadCount = Runtime.getRuntime().availableProcessors();
 
+	public void setThreadCount (final int threadCount) {
+		this.threadCount = threadCount;
+	}
 	
 	protected void initializeSearchManager(final TablebasePositionEvaluator tablebaseEvaluator, final long maxTimeForPosition) {
 		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
@@ -47,7 +70,6 @@ public class SearchPerformanceTest {
 		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, positionEvaluationFactory);
 
 		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
-		final int threadCount = Runtime.getRuntime().availableProcessors();
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
 		
 		engineFactory.setPositionEvaluatorFactory(evaluatorFactory);
@@ -94,9 +116,13 @@ public class SearchPerformanceTest {
 						if (bestMove.equals(expectedMove)) {
 							if (endTimeHolder.getValue() == null)
 								endTimeHolder.setValue(System.currentTimeMillis());
+
+							if (nodeCountHolder.getValue() == null)
+								nodeCountHolder.setValue(info.getNodeCount());
 						}
 						else {
 							endTimeHolder.setValue(null);
+							nodeCountHolder.setValue(null);
 						}
 					}
 				}
@@ -112,7 +138,7 @@ public class SearchPerformanceTest {
 		manager.stop();
 	}
 	
-	protected long testPosition(final Position position, final Move expectedMove) throws InterruptedException {
+	protected SearchStatictics testPosition(final Position position, final Move expectedMove) throws InterruptedException {
 		this.expectedMove.assign(expectedMove);
 		
 		lastPrincipalVariation.clear();
@@ -139,32 +165,38 @@ public class SearchPerformanceTest {
 		manager.stopSearching();
 		
 		final long elapsedTime;
+		final long nodeCount;
 		
 		synchronized (endTimeHolder) {
 			if (endTimeHolder.getValue() == null) {
 				elapsedTime = Long.MAX_VALUE;
 			}
 			else {
-				elapsedTime = endTimeHolder.getValue() - beginTime;	
+				elapsedTime = endTimeHolder.getValue() - beginTime;
 			}
+
+			if (nodeCountHolder.getValue() == null)
+				nodeCount = Long.MAX_VALUE;
+			else
+				nodeCount = nodeCountHolder.getValue();
 		}
 		
-		return elapsedTime;
+		return new SearchStatictics(elapsedTime, nodeCount);
 	}
 	
-	public long testGame(final Game game) throws InterruptedException {
+	public SearchStatictics testGame(final Game game) throws InterruptedException {
 		final ITreeIterator<IGameNode> iterator = game.getRootIterator();
 		final Position position = iterator.getItem().getTargetPosition();
 		
 		iterator.moveFirstChild();
 		
 		final Move expectedMove = iterator.getItem().getMove();
-		final long elapsedTime = testPosition(position, expectedMove);
+		final SearchStatictics statictics = testPosition(position, expectedMove);
 		
-		return elapsedTime;
+		return statictics;
 	}
 	
-	public static List<Game> readGameList(final String testFile) throws IOException, FileNotFoundException {
+	public static List<Game> readGameList(final String testFile) throws IOException {
 		final PgnReader pgn = new PgnReader();
 		
 		try (final FileInputStream stream = new FileInputStream(testFile)) {

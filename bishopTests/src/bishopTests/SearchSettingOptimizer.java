@@ -1,5 +1,7 @@
 package bishopTests;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Random;
 
@@ -17,6 +19,7 @@ public class SearchSettingOptimizer {
 
 	private static final int ROW_COUNT = 50;
 	private static final long MAX_TIME_FOR_POSITION = 2000;
+	private static final long MAX_NODE_COUNT = 10000000;
 
 	private static int getRandom (final int min, final int max, final Random rnd) {
 		return min + rnd.nextInt(max - min);
@@ -40,28 +43,40 @@ public class SearchSettingOptimizer {
 	}
 
 	public static void main(final String[] main) {
-		try {
+		final File outputFile = new File(main[1]);
+
+		try (PrintWriter outputWriter = new PrintWriter(outputFile)){
 			final String testFile = main[0];
 			final List<Game> gameList = SearchPerformanceTest.readGameList(testFile);
 			final Random rng = new Random(12345);
-			final SearchPerformanceTest performanceTest = new SearchPerformanceTest();
 
-			final SearchSettings settings = new SearchSettings();
+			final SearchPerformanceTest performanceTest = new SearchPerformanceTest();
+			performanceTest.setThreadCount (1);
 			performanceTest.initializeSearchManager(null, MAX_TIME_FOR_POSITION);
 
+			final SearchSettings settings = new SearchSettings();
+
 			try {
+				outputWriter.print(SearchSettings.CSV_HEADER);
+				outputWriter.println(", totalTime, totalNodeCount");
+
 				for (int i = 0; i < ROW_COUNT; i++) {
 					long totalTime = 0;
+					long totalNodeCount = 0;
 
-					for (Game game : gameList) {
-						final long time = performanceTest.testGame(game);
+					for (Game game: gameList) {
+						final SearchPerformanceTest.SearchStatictics statictics = performanceTest.testGame(game);
 
-						totalTime += Math.min(time, MAX_TIME_FOR_POSITION);
+						totalTime += Math.min(statictics.getTime(), MAX_TIME_FOR_POSITION);
+						totalNodeCount += Math.min(statictics.getNodeCount(), MAX_NODE_COUNT);
 					}
 
-					System.out.print(settings.toString());
-					System.out.print(", ");
-					System.out.println(totalTime);
+					outputWriter.print(settings.toString());
+					outputWriter.print(", ");
+					outputWriter.println(totalTime);
+					outputWriter.print(", ");
+					outputWriter.println(totalNodeCount);
+					outputWriter.flush();
 
 					randomizeSettings(settings, rng);
 				}
@@ -69,7 +84,6 @@ public class SearchSettingOptimizer {
 			finally {
 				performanceTest.stopSearchManager();
 			}
-
 		}
 		catch (Exception ex) {
 			ex.printStackTrace();
