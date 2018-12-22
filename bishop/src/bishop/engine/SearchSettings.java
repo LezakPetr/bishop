@@ -197,16 +197,16 @@ public final class SearchSettings {
 		maxCheckSearchDepth = orig.maxCheckSearchDepth;
 	}
 
-	private static void printExtension(final PrintWriter writer, final String name, final int value) {
+	private static void printExtension(final PrintWriter writer, final int value) {
 		final double relativeValue = (double) value / (double) EXTENSION_GRANULARITY;
 		
-		writer.println(name + " = makeExtension (" + relativeValue + ");");
+		writer.print(relativeValue + ", ");
 	}
 
-	private static void printRelativeEvaluation (final PrintWriter writer, final String name, final int value) {
+	private static void printRelativeEvaluation (final PrintWriter writer, final int value) {
 		final double relativeValue = (double) value / (double) PieceTypeEvaluations.PAWN_EVALUATION;
 		
-		writer.println(name + " = (int) Math.round (" + relativeValue + " * PieceTypeEvaluations.PAWN_EVALUATION);");
+		writer.print(relativeValue + ", ");
 	}
 
 	@Override
@@ -216,27 +216,27 @@ public final class SearchSettings {
 			final PrintWriter printWriter = new PrintWriter(stringWriter);
 		)
 		{
-			printWriter.println("maxQuiescenceDepth = " + maxQuiescenceDepth + ";");
-			printWriter.println("nullMoveReduction = " + nullMoveReduction + ";");
-			printWriter.println("minExtensionHorizon = " + minExtensionHorizon + ";");
+			printWriter.print(maxQuiescenceDepth + ", ");
+			printWriter.print(nullMoveReduction + ", ");
+			printWriter.print(minExtensionHorizon + ", ");
 
-			printExtension(printWriter, "simpleCheckExtension", simpleCheckExtension);
-			printExtension(printWriter, "attackCheckExtension", attackCheckExtension);
-			printExtension(printWriter, "forcedMoveExtension", forcedMoveExtension);
-			printExtension(printWriter, "mateExtension", mateExtension);
-			printExtension(printWriter, "rankAttackExtension", rankAttackExtension);
+			printExtension(printWriter, simpleCheckExtension);
+			printExtension(printWriter, attackCheckExtension);
+			printExtension(printWriter, forcedMoveExtension);
+			printExtension(printWriter, mateExtension);
+			printExtension(printWriter, rankAttackExtension);
 			
-			printExtension(printWriter, "pawnOnSevenRankExtension", pawnOnSevenRankExtension);
-			printExtension(printWriter, "protectingPawnOnSixRankExtension", protectingPawnOnSixRankExtension);
+			printExtension(printWriter, pawnOnSevenRankExtension);
+			printExtension(printWriter, protectingPawnOnSixRankExtension);
 			
-			printExtension(printWriter, "recaptureMinExtension", recaptureMinExtension);
-			printExtension(printWriter, "recaptureMaxExtension", recaptureMaxExtension);
+			printExtension(printWriter, recaptureMinExtension);
+			printExtension(printWriter, recaptureMaxExtension);
 
-			printRelativeEvaluation(printWriter, "recaptureBeginMinTreshold", recaptureBeginMinTreshold);
-			printRelativeEvaluation(printWriter, "recaptureBeginMaxTreshold", recaptureBeginMaxTreshold);
-			printRelativeEvaluation(printWriter, "recaptureTargetTreshold", recaptureTargetTreshold);
+			printRelativeEvaluation(printWriter, recaptureBeginMinTreshold);
+			printRelativeEvaluation(printWriter, recaptureBeginMaxTreshold);
+			printRelativeEvaluation(printWriter, recaptureTargetTreshold);
 
-			printWriter.println("maxCheckSearchDepth = " + maxCheckSearchDepth + ";");
+			printWriter.print(maxCheckSearchDepth);
 			
 			printWriter.flush();
 			return stringWriter.toString();
