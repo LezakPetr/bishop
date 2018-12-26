@@ -1,0 +1,19 @@
+---
+title: "Optimal SearchSettings"
+author: "Petr Lezak"
+date: "23 prosince 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+data <- read.csv('statistics.csv');
+minNodeCount <- min(data$totalNodeCount);
+minRow <- data[data$totalNodeCount == minNodeCount, ];
+
+minRow
+```
+

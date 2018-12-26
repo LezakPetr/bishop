@@ -105,6 +105,10 @@ public class PawnEndingTerminalPositionEvaluator {
         final long whitePawnMask = key.getWhitePawns() & mask;
         final long blackPawnMask = key.getBlackPawns() & mask;
         final PawnEndingKey subKey = new PawnEndingKey(whitePawnMask, blackPawnMask);
+
+        if (key.equals(subKey))
+        	return Classification.DRAW;   // We are already calculating ending queen against pawn. This can happen in case that we don't have the ending in tablebases.
+
         final PawnEndingTable subTable = register.getTable(subKey);
 
         return subTable.getClassification(defendantKingSquare, attackerKingSquare, onTurn);
