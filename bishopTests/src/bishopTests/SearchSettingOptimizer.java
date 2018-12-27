@@ -24,7 +24,7 @@ public class SearchSettingOptimizer {
 	private static final long MAX_NODE_COUNT = 10000000;
 
 	private static int getRandom (final int min, final int max, final int mean, final Random rnd) {
-		final double sd = (max - min) / 2;
+		final double sd = (max - min) / 3;
 		final double boundedMean = Math.max(Math.min(mean, max), min);
 		final double value = boundedMean + sd * rnd.nextGaussian();
 
