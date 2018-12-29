@@ -75,7 +75,7 @@ public final class HashRecord {
 		evaluation = normalizeMateEvaluation (evaluation, currentDepth);
 	}
 	
-	private static final int normalizeMateEvaluation(final int evaluation, final int currentDepth) {
+	private static int normalizeMateEvaluation(final int evaluation, final int currentDepth) {
 		if (evaluation > Evaluation.MATE_MIN)
 			return evaluation + currentDepth;
 
@@ -113,6 +113,13 @@ public final class HashRecord {
 		this.evaluation = orig.evaluation;
 		this.type = orig.type;
 		this.compressedBestMove = orig.compressedBestMove;
+	}
+
+	public void clear() {
+		this.horizon = 0;
+		this.evaluation = 0;
+		this.type = HashRecordType.INVALID;
+		this.compressedBestMove = Move.NONE_COMPRESSED_MOVE;
 	}
 	
 	public boolean isBetterThan (final HashRecord that, final int expectedHorizon) {

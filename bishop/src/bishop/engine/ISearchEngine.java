@@ -119,4 +119,9 @@ public interface ISearchEngine {
 	 */
 	public long getNodeCount();
 
+	/**
+	 * Clears the engine.
+	 * Engine must be in STOPPED state.
+	 */
+	public void clear();
 }

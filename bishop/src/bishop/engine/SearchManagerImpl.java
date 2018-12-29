@@ -429,6 +429,9 @@ public final class SearchManagerImpl implements ISearchManager {
 			return bookMove;
 
 		hashTable.clear();
+
+		for (ISearchEngine engine: searchEngineList)
+			engine.clear();
 		
 		return null;
 	}

@@ -94,6 +94,27 @@ public final class SerialSearchEngine implements ISearchEngine {
 			this.bestLegalMoveIndex = -1;
 		}
 
+		public void clear() {
+			evaluation.clear();
+			currentMove.clear();
+			moveListBegin = 0;
+			moveListEnd = 0;
+			principalVariation.clear();
+			evaluation.clear();
+			killerMove.clear();
+			principalMove.clear();
+			hashBestMove.clear();
+			firstLegalMove.clear();
+			allMovesGenerated = false;
+			isQuiescenceSearch = false;
+			legalMoveCount = 0;
+			bestLegalMoveIndex = 0;
+			hashRecord.clear();
+			nullMove.clear();
+			precalculatedMove.clear();
+			precreatedCurrentMove.clear();
+		}
+
 		public NodeEvaluation getNodeEvaluation() {
 			return evaluation;
 		}
@@ -747,10 +768,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			nodeStack[i].principalMove.clear();
 
 		nodeCount = 0;
-
-		if (task.isInitialSearch()) {
-			moveEstimator.clear();
-		}
 		
 		// Do the search
 		boolean terminated = false;
@@ -1038,7 +1055,22 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return result.toString();
 		}
 	}
-	
+
+	/**
+	 * Clears the engine.
+	 * Engine must be in STOPPED state.
+	 */
+	@Override
+	public void clear() {
+		checkEngineState(EngineState.STOPPED);
+
+		for (NodeRecord nodeRecord: nodeStack)
+			nodeRecord.clear();
+
+		moveEstimator.clear();
+	}
+
+
 	/**
 	 * Returns registrar for search engine handlers.
 	 * @return registrar

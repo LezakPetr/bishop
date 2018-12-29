@@ -71,4 +71,14 @@ public class SimpleLinearModel {
 		coeffA = (sumXd * sumYd - countd * sumXYd) / (sumXd * sumXd - countd * sumX2d);
 		coeffB = (sumYd - coeffA * sumXd) / countd;
 	}
+
+	public void clear() {
+		sumX = 0;
+		sumY = 0;
+		sumXY = 0;
+		sumX2 = 0;
+		count = 0;
+		coeffA = 0.0;
+		coeffB = 0.0;
+	}
 }

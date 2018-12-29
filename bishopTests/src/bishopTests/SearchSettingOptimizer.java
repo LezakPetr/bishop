@@ -19,64 +19,168 @@ import utils.IntUtils;
 
 public class SearchSettingOptimizer {
 
+	private static final int PREWARM_COUNT = 2;
 	private static final int ROW_COUNT = 5000;
 	private static final long MAX_TIME_FOR_POSITION = 5000;
 	private static final long MAX_NODE_COUNT = 10000000;
+	private static final double SD_RANGE_RATIO = 0.2;
 
-	private static int getRandom (final int min, final int max, final int mean, final Random rnd) {
-		final double sd = (max - min) / 3;
+	private final Random random = new Random(12345);
+
+	private int getRandom (final int min, final int max, final int mean) {
+		final double sd = (max - min) * SD_RANGE_RATIO;
 		final double boundedMean = Math.max(Math.min(mean, max), min);
-		final double value = boundedMean + sd * rnd.nextGaussian();
+		final double value = boundedMean + sd * random.nextGaussian();
 
 		if (value <= min)
 			return min;
 
-		if (value >= max - 1)
-			return max - 1;
+		if (value >= max)
+			return max;
 
 		return Utils.roundToInt(value);
 	}
 
-	private static void randomizeSettings(final SearchSettings searchSettings, final SearchSettings currentSettings, final Random random) {
-		searchSettings.setMaxQuiescenceDepth(getRandom(1, 20, currentSettings.getMaxQuiescenceDepth(), random));
-		searchSettings.setMaxCheckSearchDepth(getRandom(0, searchSettings.getMaxQuiescenceDepth(), currentSettings.getMaxCheckSearchDepth(), random));
-		searchSettings.setNullMoveReduction(getRandom(0, 6, currentSettings.getNullMoveReduction(), random));
-		searchSettings.setMinExtensionHorizon(getRandom(0, 8, currentSettings.getMinExtensionHorizon(), random));
+	private void randomizeSettings(final SearchSettings searchSettings, final SearchSettings optimalSettings) {
+		searchSettings.setMaxQuiescenceDepth(
+				getRandom(
+						1, 20,
+						optimalSettings.getMaxQuiescenceDepth()
+				)
 
-		searchSettings.setSimpleCheckExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, currentSettings.getSimpleCheckExtension(), random));
-		searchSettings.setAttackCheckExtension(getRandom(searchSettings.getSimpleCheckExtension(), SearchSettings.EXTENSION_GRANULARITY, currentSettings.getAttackCheckExtension(), random));
-		searchSettings.setForcedMoveExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, currentSettings.getForcedMoveExtension(), random));
-		searchSettings.setMateExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, currentSettings.getMateExtension(), random));
-		searchSettings.setRankAttackExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, currentSettings.getRankAttackExtension(), random));
+		);
 
-		searchSettings.setPawnOnSevenRankExtension (getRandom(0, SearchSettings.EXTENSION_GRANULARITY, currentSettings.getPawnOnSevenRankExtension(), random));
-		searchSettings.setProtectingPawnOnSixRankExtension (getRandom(0, SearchSettings.EXTENSION_GRANULARITY, currentSettings.getProtectingPawnOnSixRankExtension(), random));
+		searchSettings.setMaxCheckSearchDepth(
+				getRandom(
+						0, searchSettings.getMaxQuiescenceDepth() - 1,
+						optimalSettings.getMaxCheckSearchDepth()
+				)
+		);
 
-		searchSettings.setRecaptureMinExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY - 1, currentSettings.getRecaptureMinExtension(), random));
-		searchSettings.setRecaptureMaxExtension(getRandom(searchSettings.getRecaptureMinExtension() + 1, SearchSettings.EXTENSION_GRANULARITY, currentSettings.getRecaptureMaxExtension(), random));
+		searchSettings.setNullMoveReduction(
+				getRandom(
+						0, 6,
+						optimalSettings.getNullMoveReduction()
+				)
+		);
+
+		searchSettings.setMinExtensionHorizon(
+				getRandom(
+						0, 8,
+						optimalSettings.getMinExtensionHorizon()
+				)
+		);
+
+		searchSettings.setSimpleCheckExtension(
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY - 1,
+						optimalSettings.getSimpleCheckExtension()
+				)
+		);
+
+		searchSettings.setAttackCheckExtension(
+				getRandom(
+						searchSettings.getSimpleCheckExtension() + 1, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getAttackCheckExtension()
+				)
+		);
+
+		searchSettings.setForcedMoveExtension(
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getForcedMoveExtension()
+				)
+		);
+
+		searchSettings.setMateExtension(
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getMateExtension()
+				)
+		);
+
+		searchSettings.setRankAttackExtension(
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getRankAttackExtension()
+				)
+		);
+
+		searchSettings.setPawnOnSevenRankExtension (
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getPawnOnSevenRankExtension()
+				)
+		);
+
+		searchSettings.setProtectingPawnOnSixRankExtension (
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getProtectingPawnOnSixRankExtension()
+				)
+		);
+
+		searchSettings.setRecaptureMinExtension(
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY - 1,
+						optimalSettings.getRecaptureMinExtension()
+				)
+		);
+
+		searchSettings.setRecaptureMaxExtension(
+				getRandom(
+						searchSettings.getRecaptureMinExtension() + 1, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getRecaptureMaxExtension()
+				)
+		);
 
 		final int queenEvaluation = PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(PieceType.QUEEN);
-		searchSettings.setRecaptureBeginMinTreshold(getRandom(0, queenEvaluation - 1, currentSettings.getRecaptureBeginMinTreshold(), random));
-		searchSettings.setRecaptureBeginMaxTreshold(getRandom(searchSettings.getRecaptureBeginMinTreshold() + 1, queenEvaluation, currentSettings.getRecaptureBeginMaxTreshold(), random));
-		searchSettings.setRecaptureTargetTreshold(getRandom(0, queenEvaluation, currentSettings.getRecaptureTargetTreshold(), random));
+
+		searchSettings.setRecaptureBeginMinTreshold(
+				getRandom(
+						0, queenEvaluation - 1,
+						optimalSettings.getRecaptureBeginMinTreshold()
+				)
+		);
+
+		searchSettings.setRecaptureBeginMaxTreshold(
+				getRandom(
+						searchSettings.getRecaptureBeginMinTreshold() + 1, queenEvaluation,
+						optimalSettings.getRecaptureBeginMaxTreshold()
+				)
+		);
+
+		searchSettings.setRecaptureTargetTreshold(
+				getRandom(
+						0, queenEvaluation,
+						optimalSettings.getRecaptureTargetTreshold()
+				)
+		);
 	}
 
-	public static void main(final String[] main) {
+	private void optimize(final String[] main) {
 		final File outputFile = new File(main[1]);
 
 		try (PrintWriter outputWriter = new PrintWriter(outputFile)){
 			final String testFile = main[0];
 			final List<Game> gameList = SearchPerformanceTest.readGameList(testFile);
-			final Random rng = new Random(12345);
 
 			final SearchPerformanceTest performanceTest = new SearchPerformanceTest();
 			performanceTest.setThreadCount (1);
 			performanceTest.initializeSearchManager(null, MAX_TIME_FOR_POSITION);
 
 			final SearchSettings settings = new SearchSettings();
-			final SearchSettings currentSettings = new SearchSettings();
+			final SearchSettings optimalSettings = new SearchSettings();
+			long optimalNodeCount = Long.MAX_VALUE;
 
 			try {
+				// Prewarm
+				for (int i = 0; i < PREWARM_COUNT; i++) {
+					for (Game game: gameList)
+						performanceTest.testGame(game);
+				}
+
+				// Run
 				outputWriter.print(SearchSettings.CSV_HEADER);
 				outputWriter.println(", totalTime, totalNodeCount");
 
@@ -98,7 +202,14 @@ public class SearchSettingOptimizer {
 					outputWriter.println(totalNodeCount);
 					outputWriter.flush();
 
-					randomizeSettings(settings, currentSettings, rng);
+					if (totalNodeCount < optimalNodeCount) {
+						optimalNodeCount = totalNodeCount;
+						optimalSettings.assign(settings);
+
+						System.out.println ("Iteration " + i + " - new optimum " + totalNodeCount);
+					}
+
+					randomizeSettings(settings, optimalSettings);
 				}
 			}
 			finally {
@@ -108,5 +219,10 @@ public class SearchSettingOptimizer {
 		catch (Exception ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	public static void main(final String[] main) {
+		final SearchSettingOptimizer optimizer = new SearchSettingOptimizer();
+		optimizer.optimize(main);
 	}
 }

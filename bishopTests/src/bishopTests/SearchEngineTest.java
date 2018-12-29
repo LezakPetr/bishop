@@ -100,20 +100,19 @@ public class SearchEngineTest {
 		final SerialSearchEngine engine = configureEngine(true);
 		
 		// Prewarm
-		doCalculation(engine);
+		final long prewarmNodeCount = doCalculation(engine);
 		
 		// Measure
 		final long beginTime = System.currentTimeMillis();
-		long nodeCount = 0;
-
-		nodeCount += doCalculation(engine);
-		
+		final long measureNodeCount = doCalculation(engine);
 		final long endTime = System.currentTimeMillis();
 				
 		final long time = endTime - beginTime;
-		final long nodesPerSec = 1000 * nodeCount / time;
+		final long nodesPerSec = 1000 * measureNodeCount / time;
 		
-		System.out.println ("Node count: " + nodeCount + ", Time: " + time + "ms, Nodes per second: " + nodesPerSec);
+		System.out.println ("Node count: " + measureNodeCount + ", Time: " + time + "ms, Nodes per second: " + nodesPerSec);
+
+		Assert.assertEquals("SerialSearchEngine is not deterministic", prewarmNodeCount, measureNodeCount);
 	}
 
 
@@ -138,6 +137,8 @@ public class SearchEngineTest {
 	}
 
 	private long doCalculation(final SerialSearchEngine engine) throws IOException, InterruptedException {
+		engine.clear();
+
 		long nodeCount = 0;
 		
 		for (TestValue testValue: TEST_VALUES) {	

@@ -117,6 +117,7 @@ public class MoveEstimator {
 	
 	public void clear() {
 		historyTable.clear();
+		forEachModel(SimpleLinearModel::clear);
 		
 		sampleCounter = 0;
 		reductionCounter = 0;
