@@ -311,11 +311,11 @@ public final class SearchManagerImpl implements ISearchManager {
 				if (managerState == ManagerState.SEARCHING && isSearchRunning)
 				{
 					final long timeout = lastSearchInfoTime + searchInfoTimeout - System.currentTimeMillis();
-					
+
 					if (timeout > 0)
 						monitor.wait(timeout);
 					
-					if (System.currentTimeMillis() > lastSearchInfoTime + searchInfoTimeout) {
+					if (System.currentTimeMillis() >= lastSearchInfoTime + searchInfoTimeout) {
 						updateSearchInfo();
 					}
 					

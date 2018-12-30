@@ -54,8 +54,8 @@ public class SimpleLinearModel {
 	 * @param x x
 	 * @return f(x)
 	 */
-	public int estimate (final int x) {
-		return Utils.roundToInt (coeffA * x + coeffB);
+	public int estimate (final double x) {
+		return (int) (coeffA * x + coeffB);
 	}
 	
 	/**
