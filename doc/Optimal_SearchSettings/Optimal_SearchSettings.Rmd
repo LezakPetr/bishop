@@ -6,14 +6,45 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+library(ggplot2);
 ```
 
 ```{r}
-data <- read.csv('statistics.csv');
+rawData <- read.csv('statistics.csv');
+rawDataCount <- nrow(rawData);
+droppedRows = round(0.02 * rawDataCount);
+
+data <- rawData[order(rawData$totalNodeCount), ][droppedRows:rawDataCount, ];
+
 minNodeCount <- min(data$totalNodeCount);
 minRow <- data[data$totalNodeCount == minNodeCount, ];
 
 minRow
+```
+
+```{r}
+hist(data$totalNodeCount)
+```
+
+```{r}
+geom = 'smooth';
+
+ggplot(data, aes (x = maxQuiescenceDepth, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$maxQuiescenceDepth) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = maxCheckSearchDepth, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$maxCheckSearchDepth) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = nullMoveReduction, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$nullMoveReduction) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = minExtensionHorizon, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$minExtensionHorizon) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = simpleCheckExtension, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$simpleCheckExtension) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = attackCheckExtension, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$attackCheckExtension) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = forcedMoveExtension, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$forcedMoveExtension) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = mateExtension, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$mateExtension) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = rankAttackExtension, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$rankAttackExtension) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = pawnOnSevenRankExtension, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$pawnOnSevenRankExtension) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = protectingPawnOnSixRankExtension, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$protectingPawnOnSixRankExtension) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = recaptureMinExtension, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$recaptureMinExtension) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = recaptureMaxExtension, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$recaptureMaxExtension) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = recaptureBeginMinTreshold, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$recaptureBeginMinTreshold) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = recaptureBeginMaxTreshold, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$recaptureBeginMaxTreshold) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = recaptureTargetTreshold, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$recaptureTargetTreshold) + geom_hline(yintercept = minRow$totalNodeCount);
 ```
 
