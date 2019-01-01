@@ -369,10 +369,30 @@ public final class SerialSearchEngine implements ISearchEngine {
 				final int hashEvaluation = hashRecord.getNormalizedEvaluation(depth);
 				final int hashType = hashRecord.getType();
 
-				if (hashType == HashRecordType.VALUE || (hashType == HashRecordType.LOWER_BOUND && hashEvaluation > beta) || (hashType == HashRecordType.UPPER_BOUND && hashEvaluation < alpha)) {
-					evaluation = hashEvaluation;
+				switch (hashType) {
+					case HashRecordType.VALUE:
+						evaluation = hashEvaluation;
+						return true;
 
-					return true;
+					case HashRecordType.LOWER_BOUND:
+						if (hashEvaluation > beta) {
+							evaluation = hashEvaluation;
+							return true;
+						}
+						else
+							alpha = Math.max(alpha, hashEvaluation);
+
+						break;
+
+					case HashRecordType.UPPER_BOUND:
+						if (hashEvaluation < alpha) {
+							evaluation = hashEvaluation;
+							return true;
+						}
+						else
+							beta = Math.min(beta, hashEvaluation);
+
+						break;
 				}
 			}
 
