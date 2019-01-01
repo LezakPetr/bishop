@@ -35,7 +35,7 @@ public abstract class EloTest extends SearchPerformanceTest {
 	
 	private void testGameList(final List<Game> gameList) throws InterruptedException {
 		for (Game game: gameList) {
-			final long elapsedTime = testGame(game);
+			final long elapsedTime = testGame(game).getTime();
 			
 			System.out.println ("Time: " + elapsedTime + "ms");
 			System.out.println();

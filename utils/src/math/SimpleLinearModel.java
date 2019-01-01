@@ -54,8 +54,8 @@ public class SimpleLinearModel {
 	 * @param x x
 	 * @return f(x)
 	 */
-	public int estimate (final int x) {
-		return Utils.roundToInt (coeffA * x + coeffB);
+	public int estimate (final double x) {
+		return (int) (coeffA * x + coeffB);
 	}
 	
 	/**
@@ -70,5 +70,15 @@ public class SimpleLinearModel {
 		
 		coeffA = (sumXd * sumYd - countd * sumXYd) / (sumXd * sumXd - countd * sumX2d);
 		coeffB = (sumYd - coeffA * sumXd) / countd;
+	}
+
+	public void clear() {
+		sumX = 0;
+		sumY = 0;
+		sumXY = 0;
+		sumX2 = 0;
+		count = 0;
+		coeffA = 0.0;
+		coeffB = 0.0;
 	}
 }

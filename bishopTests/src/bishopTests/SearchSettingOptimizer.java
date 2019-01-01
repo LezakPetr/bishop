@@ -1,5 +1,7 @@
 package bishopTests;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Random;
 
@@ -9,193 +11,218 @@ import bishop.base.PieceTypeEvaluations;
 import bishop.engine.ISearchEngine;
 import bishop.engine.SearchSettings;
 
+import math.Utils;
 import optimization.IEvaluator;
 import optimization.IState;
 import optimization.SimulatedAnnealing;
+import utils.IntUtils;
 
 public class SearchSettingOptimizer {
-	
-	private static final int PARAMETER_COUNT = 15;
-	private static final long MAX_TIME_FOR_POSITION = 20000;
-	
-	private static final int FINALIZATION_STEP_COUNT = 	0;
-	private static final int OPTIMIZATION_STEP_COUNT = 250;
-	private static final double MAX_TEMPERATURE_COEFF = 0.5;
-	private static final double MIN_TEMPERATURE_COEFF = 0.02;
-	
-	
-	private static class Settings {
-		private final List<Game> gameList;
-		
-		public Settings(final List<Game> gameList) {
-			this.gameList = gameList;
-		}
-		
-		public List<Game> getGameList() {
-			return gameList;
-		}
+
+	private static final int PREWARM_COUNT = 2;
+	private static final int ROW_COUNT = 5000;
+	private static final long MAX_TIME_FOR_POSITION = 5000;
+	private static final long MAX_NODE_COUNT = 10000000;
+	private static final double SD_RANGE_RATIO = 0.2;
+
+	private final Random random = new Random(12345);
+
+	private int getRandom (final int min, final int max, final int mean) {
+		final double sd = (max - min) * SD_RANGE_RATIO;
+		final double boundedMean = Math.max(Math.min(mean, max), min);
+		final double value = boundedMean + sd * random.nextGaussian();
+
+		if (value <= min)
+			return min;
+
+		if (value >= max)
+			return max;
+
+		return Utils.roundToInt(value);
 	}
-	
 
-	public static class State implements IState<State, Settings> {
+	private void randomizeSettings(final SearchSettings searchSettings, final SearchSettings optimalSettings) {
+		searchSettings.setMaxQuiescenceDepth(
+				getRandom(
+						1, 20,
+						optimalSettings.getMaxQuiescenceDepth()
+				)
 
-		private final SearchSettings searchSettings = new SearchSettings();
+		);
 
-		
-		@Override
-		public void randomInitialize(final Random random, final Settings optimizerSettings) {
-			for (int i = 0; i < PARAMETER_COUNT; i++)
-				changeParameter(i, random);
-		}
+		searchSettings.setMaxCheckSearchDepth(
+				getRandom(
+						0, searchSettings.getMaxQuiescenceDepth() - 1,
+						optimalSettings.getMaxCheckSearchDepth()
+				)
+		);
 
-		@Override
-		public void randomChange(final Random random, final Settings optimizerSettings) {
-			final int parameter = getRandom(0, PARAMETER_COUNT, random);
-			
-			changeParameter(parameter, random);
-		}
-		
-		private static int getRandom (final int min, final int max, final Random rnd) {
-			return min + rnd.nextInt(max - min);
-		}
-		
-		private void changeParameter (final int parameter, final Random random) {
-			switch (parameter) {
-				case 0:
-					searchSettings.setMaxQuiescenceDepth(getRandom(0, 10, random));
-					break;
-					
-				case 1:
-					searchSettings.setNullMoveReduction(getRandom(0, 4, random));
-					break;
+		searchSettings.setNullMoveReduction(
+				getRandom(
+						0, 6,
+						optimalSettings.getNullMoveReduction()
+				)
+		);
 
-				case 2:
-					searchSettings.setMinExtensionHorizon(SearchSettings.EXTENSION_GRANULARITY * getRandom(0, 6, random));
-					break;
+		searchSettings.setMinExtensionHorizon(
+				getRandom(
+						0, 8,
+						optimalSettings.getMinExtensionHorizon()
+				)
+		);
 
-				case 3:
-					searchSettings.setMaxExtension(SearchSettings.EXTENSION_GRANULARITY * getRandom(0, 8, random));
-					break;
+		searchSettings.setSimpleCheckExtension(
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY - 1,
+						optimalSettings.getSimpleCheckExtension()
+				)
+		);
 
-				case 4:
-					searchSettings.setSimpleCheckExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
-					break;
-					
-				case 5:
-					searchSettings.setAttackCheckExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
-					break;
+		searchSettings.setAttackCheckExtension(
+				getRandom(
+						searchSettings.getSimpleCheckExtension() + 1, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getAttackCheckExtension()
+				)
+		);
 
-				case 6:
-					searchSettings.setForcedMoveExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
-					break;
+		searchSettings.setForcedMoveExtension(
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getForcedMoveExtension()
+				)
+		);
 
-				case 7:
-					searchSettings.setMateExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
-					break;
+		searchSettings.setMateExtension(
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getMateExtension()
+				)
+		);
 
-				case 8:
-					searchSettings.setRankAttackExtension(getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
-					break;
-					
-				case 9:
-					searchSettings.setPawnOnSevenRankExtension (getRandom(0, SearchSettings.EXTENSION_GRANULARITY, random));
-					break;
+		searchSettings.setRankAttackExtension(
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getRankAttackExtension()
+				)
+		);
 
-				case 10:
-					searchSettings.setRecaptureMaxExtension(getRandom(searchSettings.getRecaptureMinExtension() + 1, SearchSettings.EXTENSION_GRANULARITY, random));
-					break;
+		searchSettings.setPawnOnSevenRankExtension (
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getPawnOnSevenRankExtension()
+				)
+		);
 
-				case 11:
-					searchSettings.setRecaptureMinExtension(getRandom(0, searchSettings.getRecaptureMaxExtension(), random));
-					break;
+		searchSettings.setProtectingPawnOnSixRankExtension (
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getProtectingPawnOnSixRankExtension()
+				)
+		);
 
-				case 12:
-					searchSettings.setRecaptureBeginMaxTreshold(getRandom(searchSettings.getRecaptureBeginMinTreshold() + 1, PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(PieceType.QUEEN), random));
-					break;
+		searchSettings.setRecaptureMinExtension(
+				getRandom(
+						0, SearchSettings.EXTENSION_GRANULARITY - 1,
+						optimalSettings.getRecaptureMinExtension()
+				)
+		);
 
-				case 13:
-					searchSettings.setRecaptureBeginMinTreshold(getRandom(0, searchSettings.getRecaptureBeginMaxTreshold(), random));
-					break;
+		searchSettings.setRecaptureMaxExtension(
+				getRandom(
+						searchSettings.getRecaptureMinExtension() + 1, SearchSettings.EXTENSION_GRANULARITY,
+						optimalSettings.getRecaptureMaxExtension()
+				)
+		);
 
-				case 14:
-					searchSettings.setRecaptureTargetTreshold(getRandom(0, PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(PieceType.QUEEN), random));
-					break;
-			}
-		}
+		final int queenEvaluation = PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(PieceType.QUEEN);
 
-		@Override
-		public State copy() {
-			final State state = new State();
-			state.searchSettings.assign (this.searchSettings);
-			
-			return state;
-		}
-		
-		@Override
-		public String toString() {
-			return searchSettings.toString();
-		}
+		searchSettings.setRecaptureBeginMinTreshold(
+				getRandom(
+						0, queenEvaluation - 1,
+						optimalSettings.getRecaptureBeginMinTreshold()
+				)
+		);
+
+		searchSettings.setRecaptureBeginMaxTreshold(
+				getRandom(
+						searchSettings.getRecaptureBeginMinTreshold() + 1, queenEvaluation,
+						optimalSettings.getRecaptureBeginMaxTreshold()
+				)
+		);
+
+		searchSettings.setRecaptureTargetTreshold(
+				getRandom(
+						0, queenEvaluation,
+						optimalSettings.getRecaptureTargetTreshold()
+				)
+		);
 	}
-	
-	public static class Evaluator implements IEvaluator<State, Settings> {
 
-		private final SearchPerformanceTest performanceTest;
-		private Settings optimizerSettings;
-		
-		public Evaluator() {
-			performanceTest = new SearchPerformanceTest();
-		}
-		
-		@Override
-		public double evaluateState(final State state) {
+	private void optimize(final String[] main) {
+		final File outputFile = new File(main[1]);
+
+		try (PrintWriter outputWriter = new PrintWriter(outputFile)){
+			final String testFile = main[0];
+			final List<Game> gameList = SearchPerformanceTest.readGameList(testFile);
+
+			final SearchPerformanceTest performanceTest = new SearchPerformanceTest();
+			performanceTest.setThreadCount (1);
 			performanceTest.initializeSearchManager(null, MAX_TIME_FOR_POSITION);
-			
+
+			final SearchSettings settings = new SearchSettings();
+			final SearchSettings optimalSettings = new SearchSettings();
+			long optimalNodeCount = Long.MAX_VALUE;
+
 			try {
-				long totalTime = 0;
-				
-				for (Game game: optimizerSettings.getGameList()) {
-					final long time = performanceTest.testGame(game);
-					
-					totalTime += Math.min(time, MAX_TIME_FOR_POSITION);
+				// Prewarm
+				for (int i = 0; i < PREWARM_COUNT; i++) {
+					for (Game game: gameList)
+						performanceTest.testGame(game);
 				}
-				
-				System.out.println ("Time: " + totalTime);
-				
-				return totalTime;
-			}
-			catch (Exception ex) {
-				ex.printStackTrace();
-				return Long.MAX_VALUE;
+
+				// Run
+				outputWriter.print(SearchSettings.CSV_HEADER);
+				outputWriter.println(", totalTime, totalNodeCount");
+
+				for (int i = 0; i < ROW_COUNT; i++) {
+					long totalTime = 0;
+					long totalNodeCount = 0;
+
+					for (Game game: gameList) {
+						final SearchPerformanceTest.SearchStatictics statictics = performanceTest.testGame(game);
+
+						totalTime += Math.min(statictics.getTime(), MAX_TIME_FOR_POSITION);
+						totalNodeCount += Math.min(statictics.getNodeCount(), MAX_NODE_COUNT);
+					}
+
+					outputWriter.print(settings.toString());
+					outputWriter.print(", ");
+					outputWriter.print(totalTime);
+					outputWriter.print(", ");
+					outputWriter.println(totalNodeCount);
+					outputWriter.flush();
+
+					if (totalNodeCount < optimalNodeCount) {
+						optimalNodeCount = totalNodeCount;
+						optimalSettings.assign(settings);
+
+						System.out.println ("Iteration " + i + " - new optimum " + totalNodeCount);
+					}
+
+					randomizeSettings(settings, optimalSettings);
+				}
 			}
 			finally {
 				performanceTest.stopSearchManager();
 			}
 		}
-
-		@Override
-		public void setSettings(final Settings optimizerSettings) {
-			this.optimizerSettings = optimizerSettings;
-		}
-		
-	}
-
-	public static void main(final String[] main) {
-		try {
-			final String testFile = main[0];
-			final SimulatedAnnealing<State, Settings> annealing = new SimulatedAnnealing<State, Settings>(State.class, Evaluator.class);
-			final List<Game> gameList = SearchPerformanceTest.readGameList(testFile);
-			final int positionCount = gameList.size();
-			
-			annealing.setFinalizationStepCount(FINALIZATION_STEP_COUNT);
-			annealing.setOptimizationStepCount(OPTIMIZATION_STEP_COUNT);
-			annealing.setTemperatureRange(MIN_TEMPERATURE_COEFF * MAX_TIME_FOR_POSITION * positionCount, MAX_TEMPERATURE_COEFF * MAX_TIME_FOR_POSITION * positionCount);
-			annealing.setSettings(new Settings(gameList));
-			
-			final State optimalState = annealing.optimize();
-			System.out.println (optimalState);
-		}
 		catch (Exception ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	public static void main(final String[] main) {
+		final SearchSettingOptimizer optimizer = new SearchSettingOptimizer();
+		optimizer.optimize(main);
 	}
 }

@@ -33,7 +33,7 @@ public class MoveEstimator {
 			.put(PieceType.KING, 3)
 			.build();
 	
-	private static final int MAX_KILLER = 16;
+	private static final int MAX_KILLER = 2;
 	private static final int MAX_CAPTURE_ESTIMATION = 16;
 	
 
@@ -117,6 +117,7 @@ public class MoveEstimator {
 	
 	public void clear() {
 		historyTable.clear();
+		forEachModel(SimpleLinearModel::clear);
 		
 		sampleCounter = 0;
 		reductionCounter = 0;

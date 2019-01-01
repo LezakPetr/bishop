@@ -15,48 +15,53 @@ public final class SearchSettings {
 	public static final int EXTENSION_FRACTION_BITS = 10;
 	public static final int EXTENSION_GRANULARITY = 1 << EXTENSION_FRACTION_BITS;
 	public static final int EXTENSION_TRESHOLD = makeExtension(0.8);
-	
+
+	public static final String CSV_HEADER = "maxQuiescenceDepth, maxCheckSearchDepth, nullMoveReduction, minExtensionHorizon, " +
+			"simpleCheckExtension, attackCheckExtension, forcedMoveExtension, mateExtension, rankAttackExtension, " +
+			"pawnOnSevenRankExtension, protectingPawnOnSixRankExtension, " +
+			"recaptureMinExtension, recaptureMaxExtension, " +
+			"recaptureBeginMinTreshold, recaptureBeginMaxTreshold, recaptureTargetTreshold";
+
 	private int maxQuiescenceDepth;
 	private int nullMoveReduction;
 	private int minExtensionHorizon;
-	private int maxExtension;
 	private int simpleCheckExtension;
 	private int attackCheckExtension;
 	private int forcedMoveExtension;
 	private int mateExtension;
 	private int rankAttackExtension;
+
 	private int pawnOnSevenRankExtension;
 	private int protectingPawnOnSixRankExtension;
+
 	private int recaptureMinExtension;
 	private int recaptureMaxExtension;
 	private int recaptureBeginMinTreshold;
 	private int recaptureBeginMaxTreshold;
 	private int recaptureTargetTreshold;
-	private int pinExtension;
 	private int maxCheckSearchDepth;
 
 	public SearchSettings() {
-		maxQuiescenceDepth = 5;
-		nullMoveReduction = 3;
-		minExtensionHorizon = 3;
-		maxExtension = 3;
-		simpleCheckExtension = makeExtension(0.5);
-		attackCheckExtension = makeExtension(1.0);
-		forcedMoveExtension = makeExtension(0.75);
+		maxQuiescenceDepth = 9;
+		maxCheckSearchDepth = 8;
+		nullMoveReduction = 5;
+		minExtensionHorizon = 5;
+
+		simpleCheckExtension = makeExtension(0.2558594);
+		attackCheckExtension = makeExtension(0.8964844);
+		forcedMoveExtension = makeExtension(0.5947266);
 		mateExtension = makeExtension(1.0);
-		rankAttackExtension = makeExtension(0.75);
-		pinExtension = makeExtension(0.75);
+		rankAttackExtension = makeExtension(0.6328125);
 		
 		pawnOnSevenRankExtension = makeExtension(1.0);
 		protectingPawnOnSixRankExtension = makeExtension(1.0);
 		
 		recaptureMinExtension = makeExtension(0.0);
-		recaptureMaxExtension = makeExtension(0.75);
+		recaptureMaxExtension = makeExtension(0.5351562);
 
-		recaptureBeginMinTreshold = roundToInt (2.25 * PieceTypeEvaluations.PAWN_EVALUATION);
-		recaptureBeginMaxTreshold = roundToInt (5 * PieceTypeEvaluations.PAWN_EVALUATION);
-		recaptureTargetTreshold = roundToInt (0.5 * PieceTypeEvaluations.PAWN_EVALUATION);
-		maxCheckSearchDepth = 4;
+		recaptureBeginMinTreshold = roundToInt (4.478 * PieceTypeEvaluations.PAWN_EVALUATION);
+		recaptureBeginMaxTreshold = roundToInt (5.597 * PieceTypeEvaluations.PAWN_EVALUATION);
+		recaptureTargetTreshold = roundToInt (0.074 * PieceTypeEvaluations.PAWN_EVALUATION);
 	}
 	
 	private static int makeExtension(final double extension) {
@@ -85,14 +90,6 @@ public final class SearchSettings {
 
 	public void setMinExtensionHorizon(final int minExtensionHorizon) {
 		this.minExtensionHorizon = minExtensionHorizon;
-	}
-
-	public int getMaxExtension() {
-		return maxExtension;
-	}
-
-	public void setMaxExtension(int maxExtension) {
-		this.maxExtension = maxExtension;
 	}
 
 	public int getSimpleCheckExtension() {
@@ -185,33 +182,44 @@ public final class SearchSettings {
 
 	public void assign(final SearchSettings orig) {
 		maxQuiescenceDepth = orig.maxQuiescenceDepth;
+		maxCheckSearchDepth = orig.maxCheckSearchDepth;
 		nullMoveReduction = orig.nullMoveReduction;
 		minExtensionHorizon = orig.minExtensionHorizon;
-		maxExtension = orig.maxExtension;
+
 		simpleCheckExtension = orig.simpleCheckExtension;
 		attackCheckExtension = orig.attackCheckExtension;
 		forcedMoveExtension = orig.forcedMoveExtension;
 		mateExtension = orig.mateExtension;
 		rankAttackExtension = orig.rankAttackExtension;
+
 		pawnOnSevenRankExtension = orig.pawnOnSevenRankExtension;
+		protectingPawnOnSixRankExtension = orig.protectingPawnOnSixRankExtension;
+
 		recaptureMinExtension = orig.recaptureMinExtension;
 		recaptureMaxExtension = orig.recaptureMaxExtension;
+
 		recaptureBeginMinTreshold = orig.recaptureBeginMinTreshold;
 		recaptureBeginMaxTreshold = orig.recaptureBeginMaxTreshold;
 		recaptureTargetTreshold = orig.recaptureTargetTreshold;
-		maxCheckSearchDepth = orig.maxCheckSearchDepth;
 	}
 
-	private static void printExtension(final PrintWriter writer, final String name, final int value) {
+	private static void printExtension(final PrintWriter writer, final int value) {
 		final double relativeValue = (double) value / (double) EXTENSION_GRANULARITY;
 		
-		writer.println(name + " = (int) Math.round (" + relativeValue + " * ISearchEngine.HORIZON_GRANULARITY);");
+		writer.print(relativeValue + ", ");
 	}
 
-	private static void printRelativeEvaluation (final PrintWriter writer, final String name, final int value) {
+	private static void printRelativeEvaluation (final PrintWriter writer, final int value) {
+		printRelativeEvaluation(writer, value, true);
+	}
+
+	private static void printRelativeEvaluation (final PrintWriter writer, final int value, final boolean withComma) {
 		final double relativeValue = (double) value / (double) PieceTypeEvaluations.PAWN_EVALUATION;
 		
-		writer.println(name + " = (int) Math.round (" + relativeValue + " * PieceTypeEvaluations.PAWN_EVALUATION);");
+		writer.print(relativeValue);
+
+		if (withComma)
+			writer.print(", ");
 	}
 
 	@Override
@@ -221,27 +229,27 @@ public final class SearchSettings {
 			final PrintWriter printWriter = new PrintWriter(stringWriter);
 		)
 		{
-			printExtension(printWriter, "maxQuiescenceDepth", maxQuiescenceDepth);
-			printExtension(printWriter, "nullMoveReduction", nullMoveReduction);
-			printExtension(printWriter, "minExtensionHorizon", minExtensionHorizon);
-			printExtension(printWriter, "maxExtension", maxExtension);
-			printExtension(printWriter, "simpleCheckExtension", simpleCheckExtension);
-			printExtension(printWriter, "attackCheckExtension", attackCheckExtension);
-			printExtension(printWriter, "forcedMoveExtension", forcedMoveExtension);
-			printExtension(printWriter, "mateExtension", mateExtension);
-			printExtension(printWriter, "rankAttackExtension", rankAttackExtension);
-			
-			printExtension(printWriter, "pawnOnSevenRankExtension", pawnOnSevenRankExtension);
-			
-			printExtension(printWriter, "recaptureMinExtension", recaptureMinExtension);
-			printExtension(printWriter, "recaptureMaxExtension", recaptureMaxExtension);
+			printWriter.print(maxQuiescenceDepth + ", ");
+			printWriter.print(maxCheckSearchDepth + ", ");
+			printWriter.print(nullMoveReduction + ", ");
+			printWriter.print(minExtensionHorizon + ", ");
 
-			printRelativeEvaluation(printWriter, "recaptureBeginMinTreshold", recaptureBeginMinTreshold);
-			printRelativeEvaluation(printWriter, "recaptureBeginMaxTreshold", recaptureBeginMaxTreshold);
-			printRelativeEvaluation(printWriter, "recaptureTargetTreshold", recaptureTargetTreshold);
-
-			printExtension(printWriter, "maxCheckSearchDepth", maxCheckSearchDepth);
+			printExtension(printWriter, simpleCheckExtension);
+			printExtension(printWriter, attackCheckExtension);
+			printExtension(printWriter, forcedMoveExtension);
+			printExtension(printWriter, mateExtension);
+			printExtension(printWriter, rankAttackExtension);
 			
+			printExtension(printWriter, pawnOnSevenRankExtension);
+			printExtension(printWriter, protectingPawnOnSixRankExtension);
+			
+			printExtension(printWriter, recaptureMinExtension);
+			printExtension(printWriter, recaptureMaxExtension);
+
+			printRelativeEvaluation(printWriter, recaptureBeginMinTreshold);
+			printRelativeEvaluation(printWriter, recaptureBeginMaxTreshold);
+			printRelativeEvaluation(printWriter, recaptureTargetTreshold, false);
+
 			printWriter.flush();
 			return stringWriter.toString();
 		}
@@ -250,16 +258,12 @@ public final class SearchSettings {
 		}
 	}
 
-	public int getPinExtension() {
-		return pinExtension;
-	}
-
-	public void setPinExtension(final int pinExtension) {
-		this.pinExtension = pinExtension;
-	}
-	
 	public int getProtectingPawnOnSixRankExtension() {
 		return protectingPawnOnSixRankExtension;
+	}
+
+	public void setProtectingPawnOnSixRankExtension(int protectingPawnOnSixRankExtension) {
+		this.protectingPawnOnSixRankExtension = protectingPawnOnSixRankExtension;
 	}
 
 	public int getMaxCheckSearchDepth() {

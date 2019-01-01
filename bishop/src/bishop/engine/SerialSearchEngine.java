@@ -11,6 +11,7 @@ import utils.RatioCalculator;
 
 public final class SerialSearchEngine implements ISearchEngine {
 
+	public static final int HORIZON_STEP_WITHOUT_EXTENSION = 2;
 	private static final int EXTENSION_HASH_MASK = (1 << SearchSettings.EXTENSION_FRACTION_BITS) - 1;
 
 	public class NodeRecord implements ISearchResult {
@@ -40,24 +41,24 @@ public final class SerialSearchEngine implements ISearchEngine {
 		private int moveListBegin;
 		private int moveListEnd;
 		private final MoveList principalVariation;
-		private final NodeEvaluation evaluation = new NodeEvaluation();
 		private final Move killerMove = new Move();
 		private final Move principalMove = new Move();
 		private final Move hashBestMove = new Move();
 		private final Move firstLegalMove = new Move();
 		private boolean allMovesGenerated;
-		private int maxExtension;
 		private boolean isQuiescenceSearch;
 		private int legalMoveCount;
 		private int bestLegalMoveIndex;
 		private final MobilityCalculator mobilityCalculator = new MobilityCalculator();
+		private int evaluation;
+		private int alpha;
+		private int beta;
 
 		// Precreated objects to prevent reallocation
 		private final HashRecord hashRecord = new HashRecord();
 		private final Move nullMove = new Move();
 		private final Move precalculatedMove = new Move();
 		private final Move precreatedCurrentMove = new Move();
-		private final Move nonLosingMove = new Move();
 
 		public NodeRecord(final int depth, final int maxPrincipalDepth, final NodeRecord nextRecord) {
 			this.depth = depth;
@@ -85,17 +86,43 @@ public final class SerialSearchEngine implements ISearchEngine {
 			this.previousRecord = previousRecord;
 		}
 
+		public NodeRecord getPreviousRecord() {
+			return previousRecord;
+		}
+
 		public void openNode(final int alpha, final int beta) {
-			this.evaluation.setEvaluation(Evaluation.MIN);
-			this.evaluation.setAlpha(alpha);
-			this.evaluation.setBeta(beta);
+			this.evaluation = Evaluation.MIN;
+			this.alpha = alpha;
+			this.beta = beta;
 			this.firstLegalMove.clear();
 			this.allMovesGenerated = false;
 			this.legalMoveCount = 0;
 			this.bestLegalMoveIndex = -1;
 		}
 
-		public NodeEvaluation getNodeEvaluation() {
+		public void clear() {
+			evaluation = Evaluation.MIN;
+			alpha = Evaluation.MIN;
+			beta = Evaluation.MAX;
+			currentMove.clear();
+			moveListBegin = 0;
+			moveListEnd = 0;
+			principalVariation.clear();
+			killerMove.clear();
+			principalMove.clear();
+			hashBestMove.clear();
+			firstLegalMove.clear();
+			allMovesGenerated = false;
+			isQuiescenceSearch = false;
+			legalMoveCount = 0;
+			bestLegalMoveIndex = 0;
+			hashRecord.clear();
+			nullMove.clear();
+			precalculatedMove.clear();
+			precreatedCurrentMove.clear();
+		}
+
+		public int getEvaluation() {
 			return evaluation;
 		}
 
@@ -116,38 +143,33 @@ public final class SerialSearchEngine implements ISearchEngine {
 			if (isLegalPosition)
 				alphaBetaInLegalPosition(horizon);
 			else
-				evaluation.setEvaluation(Evaluation.MAX);
+				evaluation = Evaluation.MAX;
 		}
 
 		public void alphaBetaInLegalPosition(final int horizon) {
 			final int onTurn = currentPosition.getOnTurn();
 			final int oppositeColor = Color.getOppositeColor(onTurn);
-			final int initialAlpha = evaluation.getAlpha();
-			final int initialBeta = evaluation.getBeta();
-			final boolean pvNode = initialBeta - initialAlpha > 1;
 
-			if (checkFiniteEvaluation(horizon, initialAlpha, initialBeta))
+			if (checkFiniteEvaluation(horizon))
 				return;
 
 			moveListBegin = moveStackTop;
 
 			// Try to find position in hash table
-			if (updateRecordByHash(horizon, initialAlpha, initialBeta, hashRecord))
+			if (updateRecordByHash(horizon, hashRecord))
 				return;
 
-			final int reducedHorizon = shouldReduceHorizon(horizon) ? horizon - 1 : horizon;
-
+			final int reducedHorizon = shouldReduceHorizon(horizon) ? 0 : horizon;
 			isQuiescenceSearch = (reducedHorizon <= 0);
 
 			final boolean isFirstQuiescence = isQuiescenceSearch && depth > 0 && !previousRecord.isQuiescenceSearch;
 
-			final int tacticalEvaluation = positionEvaluator.evaluateTactical(currentPosition, mobilityCalculator).getEvaluation();
 			final int ownKingSquare = currentPosition.getKingPosition(onTurn);
 			final boolean isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
 
 			try {
 				// Evaluate position
-				int whitePositionEvaluation = tacticalEvaluation;
+				int whitePositionEvaluation = positionEvaluator.evaluateTactical(currentPosition, mobilityCalculator).getEvaluation();
 
 				final int materialEvaluation = currentPosition.getMaterialEvaluation();
 				final int materialEvaluationShift = positionEvaluator.getMaterialEvaluationShift();
@@ -178,22 +200,22 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 				// Use position evaluation as initial evaluation
 				if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
-					evaluation.setEvaluation(positionEvaluation);
+					evaluation = positionEvaluation;
+					alpha = Math.max(alpha, evaluation);
 
 					nodeCount++;
 
-					if (evaluation.updateBoundaries (positionEvaluation)) {
-						evaluation.setAlpha(positionEvaluation);
+					if (evaluation > beta) {
+						final int mateEvaluation = Evaluation.getMateEvaluation(depth);
+						checkMate(isCheck, mateEvaluation);
+
 						return;
 					}
 				}
 
 				final int maxQuiescenceDepth = searchSettings.getMaxQuiescenceDepth();
-				final boolean winMateRequired = Evaluation.isWinMateSearch(initialAlpha);
-				final boolean loseMateRequired = Evaluation.isLoseMateSearch(initialBeta);
-				final boolean mateRequired = winMateRequired || loseMateRequired;
 
-				if (!isMaxDepth && reducedHorizon > -maxQuiescenceDepth && (!isQuiescenceSearch || isCheckSearch || !mateRequired)) {
+				if (!isMaxDepth && reducedHorizon > -maxQuiescenceDepth) {
 					moveListBegin = moveStackTop;
 					moveListEnd = moveStackTop;
 
@@ -203,17 +225,32 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 						if (nullReduction > 0) {
 							int nullHorizon = reducedHorizon - nullReduction;
-
 							nullMove.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
 
-							evaluateMove(nullMove, nullHorizon, 0, initialBeta, initialBeta + 1);
+							final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
+							currentPosition.makeMove(nullMove);
 
-							final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
+							if (beta < Evaluation.MIN) {
+								evaluateMadeMove (nullMove, nullHorizon, 0, beta, beta, beginMaterialEvaluation);
+								final int childEvaluation = -nextRecord.evaluation;
 
-							if (parentEvaluation.getEvaluation() > initialBeta) {
-								evaluation.update(parentEvaluation);
-								return;
+								if (childEvaluation < beta) {
+									evaluateMadeMove(nullMove, nullHorizon, 0, alpha, childEvaluation, beginMaterialEvaluation);
+									final int updatedChildEvaluation = -nextRecord.evaluation;
+
+									assert (updatedChildEvaluation <= childEvaluation);
+								}
 							}
+							else
+								evaluateMadeMove(nullMove, nullHorizon, 0, alpha, beta, beginMaterialEvaluation);
+
+							currentPosition.undoMove(nullMove);
+
+							evaluation = Math.max(evaluation, -nextRecord.evaluation);
+							alpha = Math.max(alpha, evaluation);
+
+							if (evaluation > beta)
+								return;
 						}
 					}
 
@@ -229,15 +266,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 						if (hashBestMove.getMoveType() != MoveType.INVALID) {
 							precalculatedMoveFound = true;
 							precalculatedMove.assign(hashBestMove);
-						} else {
-							precalculatedMoveFound = precalculatedMove.uncompressMove(principalMove.getCompressedMove(), currentPosition);
 						}
+						else
+							precalculatedMoveFound = precalculatedMove.uncompressMove(principalMove.getCompressedMove(), currentPosition);
 					}
 
 					if (precalculatedMoveFound) {
-						final int alpha = evaluation.getAlpha();
-						final int beta = evaluation.getBeta();
-
 						evaluateMove(precalculatedMove, reducedHorizon, positionExtension, alpha, beta);
 
 						if (updateCurrentRecordAfterEvaluation(precalculatedMove, reducedHorizon, nextRecord)) {
@@ -251,9 +285,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 						// First legal move
 						while (moveListEnd > moveListBegin) {
-							final int alpha = evaluation.getAlpha();
-							final int beta = evaluation.getBeta();
-
 							final Move move = precreatedCurrentMove;
 							moveStack.getMove(moveListEnd - 1, move);
 
@@ -261,19 +292,19 @@ public final class SerialSearchEngine implements ISearchEngine {
 								final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
 								currentPosition.makeMove(move);
 
-								final int moveOrderReducedHorizon = calculateMoveOrderReducedHorizon(reducedHorizon, move, isCheck, pvNode);
+								if (firstLegalMove.getMoveType() != MoveType.INVALID && alpha != beta) {
+									evaluateMadeMove (move, reducedHorizon, positionExtension, alpha, alpha, beginMaterialEvaluation);
+									final int childEvaluation = -nextRecord.evaluation;
 
-								if (firstLegalMove.getMoveType() != MoveType.INVALID && (beta - alpha != 1 || moveOrderReducedHorizon != reducedHorizon)) {
-									evaluateMadeMove (move, moveOrderReducedHorizon, positionExtension, alpha, alpha + 1, beginMaterialEvaluation);
+									if (childEvaluation > alpha && childEvaluation <= beta) {
+										evaluateMadeMove(move, reducedHorizon, positionExtension, childEvaluation, beta, beginMaterialEvaluation);
+										final int updatedChildEvaluation = -nextRecord.evaluation;
 
-									final int childEvaluation = -nextRecord.evaluation.getEvaluation();
-
-									if (childEvaluation > alpha)
-										evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, beginMaterialEvaluation);
+										assert (updatedChildEvaluation >= childEvaluation);
+									}
 								}
-								else {
+								else
 									evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, beginMaterialEvaluation);
-								}
 
 								currentPosition.undoMove(move);
 
@@ -286,8 +317,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					}
 
 					final int mateEvaluation = Evaluation.getMateEvaluation(depth);
-
-					checkMate(onTurn, isCheck, reducedHorizon, mateEvaluation);
+					checkMate(isCheck, mateEvaluation);
 				}
 			}
 			finally {
@@ -298,64 +328,71 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		private boolean shouldReduceHorizon(int horizon) {
 			return depth >= 2 &&
-			       horizon == 1 &&
+			       horizon >= 1 &&
+			       horizon <= HORIZON_STEP_WITHOUT_EXTENSION &&
 			       mobilityCalculator.isStablePosition (currentPosition) &&
 			       (currentPosition.getPiecesMask(Color.WHITE, PieceType.PAWN) & BoardConstants.RANK_7_MASK) == 0 &&
 			       (currentPosition.getPiecesMask(Color.BLACK, PieceType.PAWN) & BoardConstants.RANK_2_MASK) == 0;
 		}
 
 		private boolean isNullSearchPossible(final boolean isCheck) {
-			if (isCheck)
+			if (isCheck || depth == 0)
 				return false;
 
-			if (depth > 0) {
-				final Move lastMove = previousRecord.currentMove;
+			final Move lastMove = previousRecord.currentMove;
 
-				if (lastMove.getMoveType() == MoveType.NULL)
-					return false;
-			}
-
-			final int beta = evaluation.getBeta();
-
-			if (beta > Evaluation.MATE_ZERO_DEPTH)
+			if (lastMove.getMoveType() == MoveType.NULL)
 				return false;
 
 			// Check position - at least two figures are needed
 			final int onTurn = currentPosition.getOnTurn();
-			long figureMask = BitBoard.EMPTY;
-
-			for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
-				figureMask |= currentPosition.getPiecesMask(onTurn, pieceType);
-			}
-
+			final long figureMask = currentPosition.getColorOccupancy(onTurn) & ~currentPosition.getBothColorPiecesMask(PieceType.PAWN);
 			final int figureCount = BitBoard.getSquareCount(figureMask);
 
-			return figureCount > 1;
+			return figureCount >= 3;   // At least two figures + king
 		}
 
 		/**
 		 * Updates currentRecord by hash table.
 		 * @param horizon current horizon
-		 * @param initialAlpha initial alpha of the alpha-beta
-		 * @param initialBeta initial beta of the alpha-beta
 		 * @param hashRecord target hash record
 		 * @return true if the position evaluation with enough horizon was obtained
 		 */
-		private boolean updateRecordByHash(final int horizon, final int initialAlpha, final int initialBeta, final HashRecord hashRecord) {
+		private boolean updateRecordByHash(final int horizon, final HashRecord hashRecord) {
 			if (!readHashRecord(horizon, hashRecord)) {
 				hashBestMove.clear();
 
 				return false;
 			}
 
-			if (depth > 0 && hashRecord.getHorizon() >= horizon) {
+			if (depth > 0 && hashRecord.getHorizon() == horizon) {
 				final int hashEvaluation = hashRecord.getNormalizedEvaluation(depth);
 				final int hashType = hashRecord.getType();
 
-				if (hashType == HashRecordType.VALUE || (hashType == HashRecordType.LOWER_BOUND && hashEvaluation > initialBeta) || (hashType == HashRecordType.UPPER_BOUND && hashEvaluation < initialAlpha)) {
-					evaluation.setEvaluation(hashEvaluation);
+				switch (hashType) {
+					case HashRecordType.VALUE:
+						evaluation = hashEvaluation;
+						return true;
 
-					return true;
+					case HashRecordType.LOWER_BOUND:
+						if (hashEvaluation > beta) {
+							evaluation = hashEvaluation;
+							return true;
+						}
+						else
+							alpha = Math.max(alpha, hashEvaluation);
+
+						break;
+
+					case HashRecordType.UPPER_BOUND:
+						if (hashEvaluation < alpha) {
+							evaluation = hashEvaluation;
+							return true;
+						}
+						else
+							beta = Math.min(beta, hashEvaluation);
+
+						break;
 				}
 			}
 
@@ -423,11 +460,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 				moveExtension = 0;
 
 			final long positionDependentRandomNumber = currentPosition.getHash() & EXTENSION_HASH_MASK;
-			final boolean shouldExtend = maxExtension >= 1 && positionDependentRandomNumber < positionExtension + moveExtension;
+			final boolean shouldExtend = positionDependentRandomNumber < positionExtension + moveExtension;
 			final int totalExtension = shouldExtend ? 1 : 0;
-
-			int subHorizon = horizon + totalExtension - 1;
-			subHorizon = matePrunning(depth, subHorizon, alpha, beta);
+			final int subHorizon = horizon + totalExtension - HORIZON_STEP_WITHOUT_EXTENSION;
 
 			repeatedPositionRegister.pushPosition (currentPosition, move);
 			currentMove.assign(move);
@@ -435,8 +470,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			moveStackTop = moveListEnd;
 
 			nextRecord.openNode(-beta, -alpha);
-			nextRecord.maxExtension = maxExtension - totalExtension;
-
 			nextRecord.alphaBeta(subHorizon);
 
 			final ISearchResult result = nextRecord;
@@ -450,26 +483,28 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 
 		private boolean updateCurrentRecordAfterEvaluation(final Move move, final int horizon, final ISearchResult result) {
-			final NodeEvaluation parentEvaluation = result.getNodeEvaluation().getParent();
-			final int evaluation = parentEvaluation.getEvaluation();
-			final boolean isLegalMove = move.getMoveType() != MoveType.NULL && evaluation > Evaluation.MIN;
+			final int parentEvaluation = -result.getEvaluation();
+			final boolean isLegalMove = move.getMoveType() != MoveType.NULL && parentEvaluation > Evaluation.MIN;
 			boolean betaCutoff = false;
 
 			if (isLegalMove && firstLegalMove.getMoveType() == MoveType.INVALID) {
 				firstLegalMove.assign(move);
 			}
 
-			if (this.evaluation.update(parentEvaluation)) {
+			if (parentEvaluation > evaluation) {
+				evaluation = parentEvaluation;
+				alpha = Math.max(alpha, evaluation);
+
 				// Update principal variation
 				principalVariation.clear();
 
-				if (this.evaluation.getEvaluation() != Evaluation.MIN) {   // Move where king is left attacked is not legal
+				if (this.evaluation != Evaluation.MIN) {   // Move where king is left attacked is not legal
 					principalVariation.add(move);
 					principalVariation.addAll(result.getPrincipalVariation());
 				}
 
 				// Update alpha and beta
-				if (this.evaluation.isBetaCutoff()) {
+				if (evaluation > beta) {
 					moveEstimator.addCutoff(this, currentPosition.getOnTurn(), move, horizon);
 
 					killerMove.assign(move);
@@ -497,12 +532,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 
 		private void updateHashRecord(final int horizon) {
-			final NodeEvaluation nodeEvaluation = evaluation;
-			final int currentEvaluation = nodeEvaluation.getEvaluation();
-
-			if (horizon > 0 && !Evaluation.isDrawByRepetition(currentEvaluation)) {
+			if (horizon > 0 && !Evaluation.isDrawByRepetition(evaluation)) {
 				final HashRecord record = hashRecord;
-				record.setEvaluationAndType(nodeEvaluation, depth);
+				record.setEvaluationAndType(evaluation, alpha, beta, depth);
 				record.setHorizon(horizon);
 
 				if (principalVariation.getSize() > 0) {
@@ -529,27 +561,21 @@ public final class SerialSearchEngine implements ISearchEngine {
 		 * Checks if there is mate in the position.
 		 * At zero horizon method checks legal moves itself, otherwise it uses number of moves
 		 * stored in current node record.
-		 * @param horizon horizon
 		 * @param isCheck if there is check in the position
 		 * @param mateEvaluation evaluation of the mate
-		 * @param isCheck if there is check in the position
 		 * @return if there is a mate
 		 */
-		private boolean checkMate(final int onTurn, final boolean isCheck, final int horizon, final int mateEvaluation) {
+		private boolean checkMate(final boolean isCheck, final int mateEvaluation) {
 			boolean isMate = false;
 
 			if (firstLegalMove.getMoveType() == MoveType.INVALID) {
 				if (allMovesGenerated) {
-					final int evaluation;
-
 					if (isCheck) {
 						evaluation = -mateEvaluation;
 						isMate = true;
 					}
 					else
 						evaluation = Evaluation.DRAW;
-
-					this.evaluation.setEvaluation(evaluation);
 				}
 
 				// If we are at horizon 0 not all moves was generated so we must
@@ -557,7 +583,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				// will detect only mate in case of check.
 				if (isCheck && !isMate && mobilityCalculator.canBeMate(currentPosition)) {
 					if (!legalMoveFinder.existsLegalMove(currentPosition)) {
-						this.evaluation.setEvaluation(-mateEvaluation);
+						this.evaluation = -mateEvaluation;
 
 						isMate = true;
 					}
@@ -567,27 +593,14 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return isMate;
 		}
 
-		private boolean checkFiniteEvaluation(final int horizon, final int initialAlpha, final int initialBeta) {
-			if (depth > 0 && finiteEvaluator.evaluate(currentPosition, depth, horizon, initialAlpha, initialBeta)) {
-				evaluation.setEvaluation(finiteEvaluator.getEvaluation());
+		private boolean checkFiniteEvaluation(final int horizon) {
+			if (depth > 0 && finiteEvaluator.evaluate(currentPosition, depth, horizon, alpha, beta)) {
+				evaluation = finiteEvaluator.getEvaluation();
 
 				return true;
 			}
 
 			return false;
-		}
-
-		private int calculateMoveOrderReducedHorizon(final int horizon, final Move move, final boolean isCheck, final boolean pvNode) {
-			if (isCheck || pvNode || horizon < 3 || legalMoveCount < 2 || move.getCapturedPieceType() != PieceType.NONE || move.getPromotionPieceType() == PieceType.QUEEN)
-				return horizon;
-
-			if (currentPosition.isCheck())
-				return horizon;
-
-			if (legalMoveCount < 7)
-				return horizon - 1;
-			else
-				return horizon - 2;
 		}
 
 		private boolean readHashRecord(final int horizon, final HashRecord hashRecord) {
@@ -622,7 +635,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			return success;
 		}
-
 	}
 
 	private static final int RECEIVE_UPDATES_COUNT = 8192;
@@ -747,14 +759,14 @@ public final class SerialSearchEngine implements ISearchEngine {
 		if (Evaluation.isWinMateSearch(alpha)) {
 			// Alpha is set to mate evaluation - calculate the difference between mate evaluation
 			// in sub depth and alpha and this is the maximal horizon to search.
-			final int maxHorizon = subMateEvaluation - alpha;
+			final int maxHorizon = HORIZON_STEP_WITHOUT_EXTENSION * (subMateEvaluation - alpha);
 			subHorizon = Math.min(subHorizon, maxHorizon);
 		}
 
 		if (Evaluation.isLoseMateSearch(beta)) {
 			// Beta is set to negative mate evaluation - calculate the difference between
 			// mate evaluation and negative beta and this is the maximal horizon to search.
-			final int maxHorizon = subMateEvaluation + beta;
+			final int maxHorizon = HORIZON_STEP_WITHOUT_EXTENSION * (subMateEvaluation + beta);
 			subHorizon = Math.min(subHorizon, maxHorizon);
 		}
 		return subHorizon;
@@ -766,7 +778,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		currentPosition.assign(task.getPosition());
 		
 		nodeStack[0].openNode(task.getAlpha(), task.getBeta());
-		nodeStack[0].maxExtension = task.getMaxExtension();
 
 		moveStackTop = 0;
 		evaluatedMoveList.clear();
@@ -782,10 +793,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			nodeStack[i].principalMove.clear();
 
 		nodeCount = 0;
-
-		if (task.isInitialSearch()) {
-			moveEstimator.clear();
-		}
 		
 		// Do the search
 		boolean terminated = false;
@@ -975,7 +982,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private SearchResult getResult(final int horizon) {
 		final SearchResult result = new SearchResult();
 
-		result.getNodeEvaluation().assign(nodeStack[0].evaluation.copy());
+		result.setEvaluation(nodeStack[0].evaluation);
 		result.getPrincipalVariation().assign(nodeStack[0].principalVariation);
 		result.setNodeCount(nodeCount);
 		result.getRootMoveList().assign(evaluatedMoveList);
@@ -1073,7 +1080,22 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return result.toString();
 		}
 	}
-	
+
+	/**
+	 * Clears the engine.
+	 * Engine must be in STOPPED state.
+	 */
+	@Override
+	public void clear() {
+		checkEngineState(EngineState.STOPPED);
+
+		for (NodeRecord nodeRecord: nodeStack)
+			nodeRecord.clear();
+
+		moveEstimator.clear();
+	}
+
+
 	/**
 	 * Returns registrar for search engine handlers.
 	 * @return registrar

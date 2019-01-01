@@ -39,17 +39,17 @@ public class KingSafetyEvaluator {
 		return attackEvaluation;
 	}
 	
-	private void evaluateConcreteKingFiles (final Position position, final int color, final int castlingType, final int shift) {
+	private void evaluateConcreteKingFiles (final Position position, final int color, final int castlingType) {
 		final long pawnMask = position.getPiecesMask(color, PieceType.PAWN);
 		
 		final long mainPawnMask = pawnMask & MainKingProtectionPawnsTable.getItem(color, castlingType);
 		final int mainPawnCount = BitBoard.getSquareCount(mainPawnMask);
-		evaluation.addCoeff(coeffs.kingMainProtectionPawnBonus, color, mainPawnCount << shift);
+		evaluation.addCoeff(coeffs.kingMainProtectionPawnBonus, color, mainPawnCount);
 		
 		final long alreadyProtected = (mainPawnMask << File.COUNT) | (mainPawnMask >>> File.COUNT);
 		final long secondPawnMask = pawnMask & SecondKingProtectionPawnsTable.getItem(color, castlingType) & ~alreadyProtected;
 		final int secondPawnCount = BitBoard.getSquareCount(secondPawnMask);
-		evaluation.addCoeff(coeffs.kingSecondProtectionPawnBonus, color, secondPawnCount << shift);
+		evaluation.addCoeff(coeffs.kingSecondProtectionPawnBonus, color, secondPawnCount);
 	}
 	
 	private void evaluateKingFiles(final Position position) {
@@ -57,13 +57,10 @@ public class KingSafetyEvaluator {
 			final int kingSquare = position.getKingPosition(color);
 			final int kingFile = Square.getFile(kingSquare);
 			
-			final int shift = (kingFile == File.FD || kingFile == File.FE) ? 0 : 1;
-			
-			if (kingFile >= File.FD)
-				evaluateConcreteKingFiles (position, color, CastlingType.SHORT, shift);
-
-			if (kingFile <= File.FE)
-				evaluateConcreteKingFiles (position, color, CastlingType.LONG, shift);
+			if (kingFile >= File.FE)
+				evaluateConcreteKingFiles (position, color, CastlingType.SHORT);
+			else
+				evaluateConcreteKingFiles (position, color, CastlingType.LONG);
 		}
 	}
 

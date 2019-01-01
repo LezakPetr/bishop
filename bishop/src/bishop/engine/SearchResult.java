@@ -5,7 +5,7 @@ import bishop.base.PseudoLegalMoveGenerator;
 
 public final class SearchResult implements ISearchResult {
 
-	private final NodeEvaluation nodeEvaluation;
+	private int evaluation;
 	private final MoveList principalVariation;
 	private long nodeCount;
 	private int horizon;
@@ -13,17 +13,20 @@ public final class SearchResult implements ISearchResult {
 	private final EvaluatedMoveList rootMoveList;   // List of evaluated moves in the root
 	
 	public SearchResult() {
-		this.nodeEvaluation = new NodeEvaluation();
 		this.principalVariation = new MoveList();
 		this.nodeCount = 0;
 		this.searchTerminated = false;
 		this.rootMoveList = new EvaluatedMoveList(PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION);
 	}
 	
-	public NodeEvaluation getNodeEvaluation() {
-		return nodeEvaluation;
+	public int getEvaluation() {
+		return evaluation;
 	}
-	
+
+	public void setEvaluation(final int evaluation) {
+		this.evaluation = evaluation;
+	}
+
 	public MoveList getPrincipalVariation() {
 		return principalVariation;
 	}
@@ -39,7 +42,7 @@ public final class SearchResult implements ISearchResult {
 	public SearchResult copy() {
 		final SearchResult result = new SearchResult();
 		
-		result.getNodeEvaluation().assign(this.nodeEvaluation.copy());
+		result.evaluation = this.evaluation;
 		result.getPrincipalVariation().assign(this.principalVariation);
 		result.nodeCount = this.nodeCount;
 		result.horizon = horizon;
@@ -49,7 +52,7 @@ public final class SearchResult implements ISearchResult {
 	}
 
 	public void clear() {
-		this.nodeEvaluation.clear();
+		this.evaluation = 0;
 		this.principalVariation.clear();
 		this.nodeCount = 0;
 	}

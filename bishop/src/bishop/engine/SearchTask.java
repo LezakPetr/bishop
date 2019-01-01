@@ -16,7 +16,6 @@ public final class SearchTask {
 	private RepeatedPositionRegister positionRegister;
 	private boolean terminated;
 	private int rootMaterialEvaluation;
-	private int maxExtension = 3;
 	private final Move move;
 	private final EvaluatedMoveList rootMoveList;   // Optional moves in the root sorted from worst to best ones
 	
@@ -104,14 +103,6 @@ public final class SearchTask {
 		this.rootMaterialEvaluation = rootMaterialEvaluation;
 	}
 
-	public int getMaxExtension() {
-		return maxExtension;
-	}
-
-	public void setMaxExtension(int maxExtension) {
-		this.maxExtension = maxExtension;
-	}
-	
 	public Move getMove() {
 		return move;
 	}

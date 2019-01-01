@@ -58,24 +58,23 @@ public final class HashRecord {
 		this.compressedBestMove = compressedBestMove;
 	}
 		
-	public void setEvaluationAndType (final NodeEvaluation nodeEvaluation, final int currentDepth) {
-		evaluation = nodeEvaluation.getEvaluation();
+	public void setEvaluationAndType (final int evaluation, final int alpha, final int beta, final int currentDepth) {
 		assert (evaluation >= Evaluation.MIN && evaluation <= Evaluation.MAX);
 		
-		if (evaluation > nodeEvaluation.getBeta())
+		if (evaluation > beta)
 			type = HashRecordType.LOWER_BOUND;
 		else {
-			if (evaluation < nodeEvaluation.getAlpha())
+			if (evaluation < alpha)
 				type = HashRecordType.UPPER_BOUND;
 			else
 				type = HashRecordType.VALUE;
 		}
 		
 		// Normalize mate evaluation to current position
-		evaluation = normalizeMateEvaluation (evaluation, currentDepth);
+		this.evaluation = normalizeMateEvaluation (evaluation, currentDepth);
 	}
 	
-	private static final int normalizeMateEvaluation(final int evaluation, final int currentDepth) {
+	private static int normalizeMateEvaluation(final int evaluation, final int currentDepth) {
 		if (evaluation > Evaluation.MATE_MIN)
 			return evaluation + currentDepth;
 
@@ -114,6 +113,13 @@ public final class HashRecord {
 		this.type = orig.type;
 		this.compressedBestMove = orig.compressedBestMove;
 	}
+
+	public void clear() {
+		this.horizon = 0;
+		this.evaluation = 0;
+		this.type = HashRecordType.INVALID;
+		this.compressedBestMove = Move.NONE_COMPRESSED_MOVE;
+	}
 	
 	public boolean isBetterThan (final HashRecord that, final int expectedHorizon) {
 		// Compare by validity
@@ -122,16 +128,19 @@ public final class HashRecord {
 		
 		if (this.type == HashRecordType.INVALID)
 			return false;
-		
-		// Compare by horizon
-		if (this.horizon < expectedHorizon || that.horizon < expectedHorizon)
+
+		// Different horizons
+		if (this.horizon != that.horizon) {
+			if (this.horizon == expectedHorizon)
+				return false;
+
+			if (that.horizon == expectedHorizon)
+				return true;
+
 			return this.horizon > that.horizon;
-			
-		// Compare by type
-		if ((this.type == HashRecordType.VALUE && that.type == HashRecordType.VALUE) ||
-			(this.type != HashRecordType.VALUE && that.type != HashRecordType.VALUE))
-			return this.horizon > that.horizon;
-			
+		}
+
+		// Same horizons
 		return this.type == HashRecordType.VALUE;
 	}
 }

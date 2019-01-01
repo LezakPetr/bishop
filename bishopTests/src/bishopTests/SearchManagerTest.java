@@ -127,7 +127,7 @@ public class SearchManagerTest {
 			
 			utils.Logger.logMessage("Starting " + searchFinished.getValue());
 			
-			manager.setMaxHorizon(testValue.depth);
+			manager.setMaxHorizon(SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION * testValue.depth);
 			manager.startSearching(fen.getPosition());
 			
 			utils.Logger.logMessage("Waiting for result " + searchFinished.getValue());
@@ -143,7 +143,7 @@ public class SearchManagerTest {
 			
 			final SearchResult result = manager.getResult();
 			System.out.println (result.getPrincipalVariation());
-			Assert.assertEquals(testValue.positionFen, testValue.evaluation, result.getNodeEvaluation().getEvaluation());
+			Assert.assertEquals(testValue.positionFen, testValue.evaluation, result.getEvaluation());
 			
 			final MoveList principalVariation = result.getPrincipalVariation();
 			Assert.assertEquals(testValue.positionFen, testValue.moveString, principalVariation.get(0).toString());

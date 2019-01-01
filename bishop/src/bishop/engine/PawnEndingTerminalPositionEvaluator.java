@@ -99,12 +99,16 @@ public class PawnEndingTerminalPositionEvaluator {
         if (BitBoard.getSquareCount(pawnOnSevenRankMask) > 1)
             return Classification.DRAW;   // More pawns on the seventh rank - draw
 
-        // There is exactly pawn on 7 rank. Reduce the ending to queen against pawn.
+        // There is exactly 1 pawn on 7 rank. Reduce the ending to queen against pawn.
         final long promotedPawnMask = key.getPawnOccupancy() & ~BoardConstants.PAWN_ALLOWED_SQUARES;
         final long mask = pawnOnSevenRankMask | promotedPawnMask;
         final long whitePawnMask = key.getWhitePawns() & mask;
         final long blackPawnMask = key.getBlackPawns() & mask;
         final PawnEndingKey subKey = new PawnEndingKey(whitePawnMask, blackPawnMask);
+
+        if (key.equals(subKey) && (tablebaseEvaluator == null || !tablebaseEvaluator.canEvaluateMaterial(subKey.getMaterialHash())))
+        	return Classification.LOSE;   // We are already calculating ending queen against pawn. This can happen in case that we don't have the ending in tablebases.
+
         final PawnEndingTable subTable = register.getTable(subKey);
 
         return subTable.getClassification(defendantKingSquare, attackerKingSquare, onTurn);
