@@ -31,8 +31,7 @@ public class PawnEndingEvaluatorTest {
         ),
         new TestCase(
             "a5", "a6, a7"
-        )
-        ,
+        ),
         new TestCase(
             "b5", ""
         ),
@@ -43,13 +42,6 @@ public class PawnEndingEvaluatorTest {
                 "", "d5"
         ),
         new TestCase(
-                "b7", "d1"
-        ),
-        new TestCase(
-                "b8", "d2"
-        ),
-
-        new TestCase(
             "b7", "d2"
         ),
         new TestCase(
@@ -59,7 +51,7 @@ public class PawnEndingEvaluatorTest {
         "b7", "d5"
         ),
         new TestCase(
-                "b7, c7", ""
+        "b7, c7", ""
 		)
     };
 
