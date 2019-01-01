@@ -58,21 +58,20 @@ public final class HashRecord {
 		this.compressedBestMove = compressedBestMove;
 	}
 		
-	public void setEvaluationAndType (final NodeEvaluation nodeEvaluation, final int currentDepth) {
-		evaluation = nodeEvaluation.getEvaluation();
+	public void setEvaluationAndType (final int evaluation, final int alpha, final int beta, final int currentDepth) {
 		assert (evaluation >= Evaluation.MIN && evaluation <= Evaluation.MAX);
 		
-		if (evaluation > nodeEvaluation.getBeta())
+		if (evaluation > beta)
 			type = HashRecordType.LOWER_BOUND;
 		else {
-			if (evaluation < nodeEvaluation.getAlpha())
+			if (evaluation < alpha)
 				type = HashRecordType.UPPER_BOUND;
 			else
 				type = HashRecordType.VALUE;
 		}
 		
 		// Normalize mate evaluation to current position
-		evaluation = normalizeMateEvaluation (evaluation, currentDepth);
+		this.evaluation = normalizeMateEvaluation (evaluation, currentDepth);
 	}
 	
 	private static int normalizeMateEvaluation(final int evaluation, final int currentDepth) {

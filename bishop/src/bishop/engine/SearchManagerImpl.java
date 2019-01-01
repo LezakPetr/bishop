@@ -165,7 +165,7 @@ public final class SearchManagerImpl implements ISearchManager {
 			info.setHorizon(searchResult.getHorizon());
 			info.setNodeCount(totalNodeCount + searchResult.getNodeCount());
 			info.setPrincipalVariation(searchResult.getPrincipalVariation());
-			info.setEvaluation(searchResult.getNodeEvaluation().getEvaluation());
+			info.setEvaluation(searchResult.getEvaluation());
 			info.getAdditionalInfo().addAll(additionalInfo);
 			
 			for (ISearchManagerHandler handler: handlerRegistrar.getHandlers())
@@ -385,7 +385,7 @@ public final class SearchManagerImpl implements ISearchManager {
 			for (Future<SearchResult> future: futureList) {
 				final SearchResult result = future.get();
 				
-				if (bestResult == null || result.getNodeEvaluation().getEvaluation() > bestResult.getNodeEvaluation().getEvaluation())
+				if (bestResult == null || result.getEvaluation() > bestResult.getEvaluation())
 					bestResult = result;
 			}
 			

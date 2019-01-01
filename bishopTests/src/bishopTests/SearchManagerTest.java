@@ -143,7 +143,7 @@ public class SearchManagerTest {
 			
 			final SearchResult result = manager.getResult();
 			System.out.println (result.getPrincipalVariation());
-			Assert.assertEquals(testValue.positionFen, testValue.evaluation, result.getNodeEvaluation().getEvaluation());
+			Assert.assertEquals(testValue.positionFen, testValue.evaluation, result.getEvaluation());
 			
 			final MoveList principalVariation = result.getPrincipalVariation();
 			Assert.assertEquals(testValue.positionFen, testValue.moveString, principalVariation.get(0).toString());

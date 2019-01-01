@@ -69,26 +69,26 @@ public class SearchEngineTest {
 
 				for (int horizon = 0; horizon < 4 * SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION; horizon++) {
 					final SearchResult correctResult = search(engine, fen, horizon, Evaluation.MIN, Evaluation.MAX);
-					final int correctEvaluation = correctResult.getNodeEvaluation().getEvaluation();
+					final int correctEvaluation = correctResult.getEvaluation();
 
 					final SearchResult nullWindowResult = search(engine, fen, horizon, correctEvaluation, correctEvaluation);
-					final int nullWindowEvaluation = nullWindowResult.getNodeEvaluation().getEvaluation();
+					final int nullWindowEvaluation = nullWindowResult.getEvaluation();
 
 					Assert.assertEquals(correctEvaluation, nullWindowEvaluation);
 
 					final SearchResult drawWindowResult = search(engine, fen, horizon, Evaluation.DRAW, Evaluation.DRAW);
-					final int drawWindowEvaluation = drawWindowResult.getNodeEvaluation().getEvaluation();
+					final int drawWindowEvaluation = drawWindowResult.getEvaluation();
 
 					Assert.assertTrue(correctEvaluation < 0 || correctEvaluation >= drawWindowEvaluation);
 					Assert.assertTrue(correctEvaluation > 0 || correctEvaluation <= drawWindowEvaluation);
 
 					final SearchResult lowerBoundResult = search(engine, fen, horizon, correctEvaluation + 100, Evaluation.MAX);
-					final int lowerBoundEvaluation = lowerBoundResult.getNodeEvaluation().getEvaluation();
+					final int lowerBoundEvaluation = lowerBoundResult.getEvaluation();
 
 					Assert.assertTrue(correctEvaluation <= lowerBoundEvaluation);
 
 					final SearchResult upperBoundResult = search(engine, fen, horizon, Evaluation.MIN, correctEvaluation - 100);
-					final int upperBoundEvaluation = upperBoundResult.getNodeEvaluation().getEvaluation();
+					final int upperBoundEvaluation = upperBoundResult.getEvaluation();
 
 					Assert.assertTrue(correctEvaluation >= upperBoundEvaluation);
 				}
@@ -150,7 +150,7 @@ public class SearchEngineTest {
 			final MoveList principalVariation = result.getPrincipalVariation();
 			System.out.println (principalVariation.toString());
 			
-			Assert.assertEquals(testValue.positionFen, testValue.evaluation, result.getNodeEvaluation().getEvaluation());
+			Assert.assertEquals(testValue.positionFen, testValue.evaluation, result.getEvaluation());
 			
 			if (testValue.moveString != null)
 				Assert.assertEquals(testValue.positionFen, testValue.moveString, principalVariation.get(0).toString());

@@ -135,7 +135,7 @@ public class BookCalculator implements IBook<EvaluatedBookRecord> {
 			searchManager.stopSearching();
 			
 			final SearchResult result = searchManager.getResult();
-			record.setEvaluation(result.getNodeEvaluation().getEvaluation());
+			record.setEvaluation(result.getEvaluation());
 			
 			final Move bestMove = result.getPrincipalVariation().get(0);
 			record.removeAllMoves();
@@ -147,7 +147,7 @@ public class BookCalculator implements IBook<EvaluatedBookRecord> {
 			final HashRecord hashRecord = new HashRecord();
 			hashRecord.setHorizon(100);
 			hashRecord.setCompressedBestMove(bestMove.getCompressedMove());
-			hashRecord.setEvaluation(result.getNodeEvaluation().getEvaluation());
+			hashRecord.setEvaluation(result.getEvaluation());
 			hashRecord.setType(HashRecordType.VALUE);
 			
 			searchManager.getHashTable().updateRecord(position, hashRecord);
