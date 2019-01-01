@@ -84,6 +84,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 			this.previousRecord = previousRecord;
 		}
 
+		public NodeRecord getPreviousRecord() {
+			return previousRecord;
+		}
+
 		public void openNode(final int alpha, final int beta) {
 			this.evaluation.setEvaluation(Evaluation.MIN);
 			this.evaluation.setAlpha(alpha);
@@ -221,10 +225,26 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 						if (nullReduction > 0) {
 							int nullHorizon = reducedHorizon - nullReduction;
-
 							nullMove.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
 
-							evaluateMove(nullMove, nullHorizon, 0, initialAlpha, initialBeta);
+							final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
+							currentPosition.makeMove(nullMove);
+
+							if (initialBeta < Evaluation.MIN) {
+								evaluateMadeMove (nullMove, nullHorizon, 0, initialBeta, initialBeta, beginMaterialEvaluation);
+								final int childEvaluation = -nextRecord.evaluation.getEvaluation();
+
+								if (childEvaluation < initialBeta) {
+									evaluateMadeMove(nullMove, nullHorizon, 0, initialAlpha, childEvaluation, beginMaterialEvaluation);
+									final int updatedChildEvaluation = -nextRecord.evaluation.getEvaluation();
+
+									assert (updatedChildEvaluation <= childEvaluation);
+								}
+							}
+							else
+								evaluateMadeMove(nullMove, nullHorizon, 0, initialAlpha, initialBeta, beginMaterialEvaluation);
+
+							currentPosition.undoMove(nullMove);
 
 							final NodeEvaluation parentEvaluation = nextRecord.evaluation.getParent();
 

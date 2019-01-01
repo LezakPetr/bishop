@@ -33,7 +33,7 @@ public class MoveEstimator {
 			.put(PieceType.KING, 3)
 			.build();
 	
-	private static final int MAX_KILLER = 16;
+	private static final int MAX_KILLER = 2;
 	private static final int MAX_CAPTURE_ESTIMATION = 16;
 	
 
