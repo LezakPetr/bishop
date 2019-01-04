@@ -18,6 +18,8 @@ public class PieceType {
 	public static final int PAWN = 5;
 	
 	public static final int LAST = 6;
+	public static final int COUNT = LAST - FIRST;
+
 	public static final int NONE = 6;   // I must use value that fits into 3 bits because Move needs it
 	
 	// Subinterval of figures (pieces without pawn)

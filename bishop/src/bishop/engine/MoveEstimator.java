@@ -24,17 +24,8 @@ public class MoveEstimator {
 	private static final int REDUCTION_FREQUENCY = 256;
 	private static final int MOVE_ESTIMATE = 1000;
 	
-	private static final int[] PIECE_TYPE_ESTIMATIONS = new IntArrayBuilder(PieceType.LAST)
-			.put(PieceType.PAWN, 0)
-			.put(PieceType.KNIGHT, 1)
-			.put(PieceType.BISHOP, 1)
-			.put(PieceType.ROOK, 2)
-			.put(PieceType.QUEEN, 3)
-			.put(PieceType.KING, 3)
-			.build();
-	
 	private static final int MAX_KILLER = 2;
-	private static final int MAX_CAPTURE_ESTIMATION = 16;
+	private static final int MAX_CAPTURE_ESTIMATION = PieceType.COUNT * PieceType.COUNT;
 	
 
 	private final HistoryTable historyTable = new HistoryTable();
@@ -124,14 +115,10 @@ public class MoveEstimator {
 	}
 		
 	private static int estimateCapture (final int movingPieceType, final int capturedPieceType) {
-		if (capturedPieceType == PieceType.NONE)
-			return 0;
-		else {
-			final int movingPieceEvaluation = PIECE_TYPE_ESTIMATIONS[movingPieceType];
-			final int capturedPieceEvaluation = PIECE_TYPE_ESTIMATIONS[capturedPieceType];
-			
-			return 4 * capturedPieceEvaluation + movingPieceEvaluation;
-		}
+		// King cannot be captured so we changes none to king to have continuous indices.
+		final int updatedCapturedPieceType = (capturedPieceType == PieceType.NONE) ? PieceType.KING : capturedPieceType;
+
+		return PieceType.COUNT * movingPieceType + updatedCapturedPieceType;
 	}
 		
 

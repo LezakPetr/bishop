@@ -16,13 +16,26 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 	public class NodeRecord implements ISearchResult {
 		private class MoveWalker implements IMoveWalker {
+			private final HashRecord estimateHashRecord = new HashRecord();
+
 			public boolean processMove(final Move move) {
 				int estimate;
 
 				if (move.equals(hashBestMove))
 					estimate = HASH_BEST_MOVE_ESTIMATE;
-				else
+				else {
 					estimate = moveEstimator.getMoveEstimate(NodeRecord.this, currentPosition.getOnTurn(), move);
+
+					// Sort moves by hash table in depth 0.
+					if (depth == 0) {
+						currentPosition.makeMove(move);
+
+						if (hashTable.getRecord(currentPosition, -1, estimateHashRecord))
+							estimate = -estimateHashRecord.getEvaluation();
+
+						currentPosition.undoMove(move);
+					}
+				}
 
 				moveStack.setRecord(moveStackTop, move, estimate);
 				moveStackTop++;
