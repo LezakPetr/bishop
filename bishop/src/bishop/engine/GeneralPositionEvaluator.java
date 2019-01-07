@@ -20,6 +20,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 
 	// Supplementary
 	private Position position;
+	private MobilityCalculator mobilityCalculator;
 	
 	private final PawnStructureEvaluator pawnStructureEvaluator;
 	private final IPositionEvaluation tacticalEvaluation;
@@ -77,32 +78,34 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	private void evaluatePawns() {
 		// Rule of square
 		if (gameStage == GameStage.PAWNS_ONLY) {
-			tacticalEvaluation.addSubEvaluation(pawnRaceEvaluator.evaluate(position));
+			positionalEvaluation.addSubEvaluation(pawnRaceEvaluator.evaluate(position));
 		}
 	}
 	
 	@Override
 	public IPositionEvaluation evaluateTactical(final Position position, final MobilityCalculator mobilityCalculator) {
 		this.position = position;
+		this.mobilityCalculator = mobilityCalculator;
 		
 		selectGameStage();
-		
 		clear();
-		calculateAttacks(mobilityCalculator);
-		evaluatePawns();
-		
-		if (gameStage != GameStage.PAWNS_ONLY) {
-			final KingSafetyEvaluator kingSafetyEvaluator = kingSafetyEvaluators[gameStage];
-			tacticalEvaluation.addSubEvaluation(kingSafetyEvaluator.evaluate(position, attackCalculator));
-		}
-		
+
+		tacticalEvaluation.addSubEvaluation(tablePositionEvaluator.evaluate(position, gameStage));
+
 		return tacticalEvaluation;
 	}
 
 	@Override
 	public IPositionEvaluation evaluatePositional() {
+		calculateAttacks(mobilityCalculator);
+		evaluatePawns();
+
+		if (gameStage != GameStage.PAWNS_ONLY) {
+			final KingSafetyEvaluator kingSafetyEvaluator = kingSafetyEvaluators[gameStage];
+			positionalEvaluation.addSubEvaluation(kingSafetyEvaluator.evaluate(position, attackCalculator));
+		}
+
 		pawnStructureEvaluator.calculate(position);
-		positionalEvaluation.addSubEvaluation(tablePositionEvaluator.evaluate(position, gameStage));
 		
 		if (gameStage != GameStage.PAWNS_ONLY) {
 			final BishopColorPositionEvaluator bishopColorPositionEvaluator = bishopColorPositionEvaluators[gameStage];
