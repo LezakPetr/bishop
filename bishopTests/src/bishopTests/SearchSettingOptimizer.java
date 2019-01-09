@@ -21,7 +21,7 @@ public class SearchSettingOptimizer {
 
 	private static final int PREWARM_COUNT = 2;
 	private static final int ROW_COUNT = 5000;
-	private static final long MAX_TIME_FOR_POSITION = 5000;
+	private static final long MAX_TIME_FOR_POSITION = 10000;
 	private static final long MAX_NODE_COUNT = 10000000;
 	private static final double SD_RANGE_RATIO = 0.2;
 
@@ -158,11 +158,11 @@ public class SearchSettingOptimizer {
 		);
 	}
 
-	private void optimize(final String[] main) {
-		final File outputFile = new File(main[1]);
+	private void optimize(final String[] args) {
+		final File outputFile = new File(args[1]);
 
 		try (PrintWriter outputWriter = new PrintWriter(outputFile)){
-			final String testFile = main[0];
+			final String testFile = args[0];
 			final List<Game> gameList = SearchPerformanceTest.readGameList(testFile);
 
 			final SearchPerformanceTest performanceTest = new SearchPerformanceTest();
@@ -221,8 +221,8 @@ public class SearchSettingOptimizer {
 		}
 	}
 
-	public static void main(final String[] main) {
+	public static void main(final String[] args) {
 		final SearchSettingOptimizer optimizer = new SearchSettingOptimizer();
-		optimizer.optimize(main);
+		optimizer.optimize(args);
 	}
 }
