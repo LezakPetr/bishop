@@ -660,7 +660,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 	}
 
-	private static final int RECEIVE_UPDATES_COUNT = 65536;
+	private static final int RECEIVE_UPDATES_COUNT = 16768;
 
 	private static final int HASH_BEST_MOVE_ESTIMATE = Integer.MAX_VALUE;
 	
