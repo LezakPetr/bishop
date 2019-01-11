@@ -10,8 +10,8 @@ import utils.IoUtils;
 
 public class BitBoard {
 	
-	public static final long EMPTY = 0l;
-	public static final long FULL = 0xFFFFFFFFFFFFFFFFl;
+	public static final long EMPTY = 0L;
+	public static final long FULL = 0xFFFFFFFFFFFFFFFFL;
 	
 
 	/**
@@ -124,7 +124,12 @@ public class BitBoard {
 	public static int getSquareCount (final long board) {
 		return Long.bitCount(board);
 	}
-	
+
+	/**
+	 * Returns first set square on the board.
+	 * @param board board
+	 * @return first set square or Square.NONE
+	 */
 	public static int getFirstSquare(final long board) {
 		if (board != 0)
 			return Long.numberOfTrailingZeros(board);
@@ -132,6 +137,11 @@ public class BitBoard {
 			return Square.NONE;
 	}
 
+	/**
+	 * Returns last set square on the board.
+	 * @param board board
+	 * @return last set square or Square.NONE
+	 */
 	public static int getLastSquare(final long board) {
 		if (board != 0)
 			return 63 - Long.numberOfLeadingZeros(board);
@@ -139,6 +149,11 @@ public class BitBoard {
 			return Square.NONE;
 	}
 
+	/**
+	 * Returns board with mirrored ranks.
+	 * @param board board to mirror
+	 * @return mirrored board
+	 */
 	public static long getMirrorBoard(final long board) {
 		return Long.reverseBytes(board);
 /*		long result = board;
@@ -149,7 +164,13 @@ public class BitBoard {
 		
 		return result;*/
 	}
-	
+
+	/**
+	 * Returns n-th lowest set square.
+	 * @param possibleSquares mask with squares
+	 * @param index index of the square
+	 * @return square
+	 */
 	public static int getNthSquare(final long possibleSquares, final int index) {
 		long mask = possibleSquares;
 
@@ -159,6 +180,12 @@ public class BitBoard {
 		return getFirstSquare(mask);
 	}
 
+	/**
+	 * Returns index of given square. In is the index of the square if set squares would be sorted.
+	 * @param possibleSquares mask of square
+	 * @param square square, it must be set in possibleSquares
+	 * @return index of given square
+	 */
 	public static int getSquareIndex(final long possibleSquares, final int square) {
 		final long squareMask = getSquareMask(square);
 		final long preSquareMask = squareMask - 1;   // Contains 1 on squares lower than given square

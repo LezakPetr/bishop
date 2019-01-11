@@ -19,6 +19,7 @@ import java.util.List;
 public class AllTests {
 	
 	private static final Class<?>[] classArray = {
+		ColorTest.class,
 		ImmutableOrdinalMapTest.class,
 		IntUtilsTest.class,
 		MixerTest.class,
