@@ -49,7 +49,7 @@ public class Color {
 	 * @return opposite color
 	 */
 	public static int getOppositeColor (final int color) {
-		return 1 - color; 
+		return color ^ 0x01;
 	}
 	
 	public static char getNotation (final int color) {
