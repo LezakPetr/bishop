@@ -60,7 +60,7 @@ public class Mixer {
 	 * - it is non-linear
 	 * - it mixes the bits of the original value to all bits of the result so good hash code is generated
 	 * - for random input with uniform probability distribution we gets random output with uniform probability distribution 
-	 * @param value input
+	 * @param input input
 	 * @return outout
 	 */
 	public static int mixLongToInt (final long input) {

@@ -42,26 +42,26 @@ public final class SearchSettings {
 	private int maxCheckSearchDepth;
 
 	public SearchSettings() {
-		maxQuiescenceDepth = 9;
-		maxCheckSearchDepth = 8;
-		nullMoveReduction = 5;
-		minExtensionHorizon = 5;
+		maxQuiescenceDepth = 13;
+		maxCheckSearchDepth = 11;
+		nullMoveReduction = 4;
+		minExtensionHorizon = 2;
 
-		simpleCheckExtension = makeExtension(0.2558594);
-		attackCheckExtension = makeExtension(0.8964844);
-		forcedMoveExtension = makeExtension(0.5947266);
-		mateExtension = makeExtension(1.0);
-		rankAttackExtension = makeExtension(0.6328125);
+		simpleCheckExtension = makeExtension(0.0);
+		attackCheckExtension = makeExtension(0.7509766);
+		forcedMoveExtension = makeExtension(0.6708984);
+		mateExtension = makeExtension(0.5);
+		rankAttackExtension = makeExtension(0.9521484);
 		
-		pawnOnSevenRankExtension = makeExtension(1.0);
+		pawnOnSevenRankExtension = makeExtension(0.9853516);
 		protectingPawnOnSixRankExtension = makeExtension(1.0);
 		
-		recaptureMinExtension = makeExtension(0.0);
-		recaptureMaxExtension = makeExtension(0.5351562);
+		recaptureMinExtension = makeExtension(0.171875);
+		recaptureMaxExtension = makeExtension(0.9580078);
 
-		recaptureBeginMinTreshold = roundToInt (4.478 * PieceTypeEvaluations.PAWN_EVALUATION);
-		recaptureBeginMaxTreshold = roundToInt (5.597 * PieceTypeEvaluations.PAWN_EVALUATION);
-		recaptureTargetTreshold = roundToInt (0.074 * PieceTypeEvaluations.PAWN_EVALUATION);
+		recaptureBeginMinTreshold = roundToInt (7.381 * PieceTypeEvaluations.PAWN_EVALUATION);
+		recaptureBeginMaxTreshold = roundToInt (8.317 * PieceTypeEvaluations.PAWN_EVALUATION);
+		recaptureTargetTreshold = roundToInt (6.029 * PieceTypeEvaluations.PAWN_EVALUATION);
 	}
 	
 	private static int makeExtension(final double extension) {

@@ -128,8 +128,14 @@ public class PawnStructureData {
 	}
 
 	private void fillSecureSquares() {
+		final long notPawnsSquares = ~(whitePawnMask | blackPawnMask);
 
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			final int oppositeColor = Color.getOppositeColor(color);
+			final long pawnsMask = getPawnMask(color);
+			final long attackedSquares = BoardConstants.getPawnsAttackedSquares(color, pawnsMask);
+
+			data[SECURE_SQUARES_OFFSET + color] = attackedSquares & notPawnsSquares & ~data[NEIGHBOR_FRONT_SQUARES_OFFSET + oppositeColor];
 		}
 	}
 

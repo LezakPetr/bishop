@@ -14,7 +14,7 @@ import utils.Mixer;
  * If more records belongs to the same item in array the item with
  * greater horizon wins because it is more important.
  * When the record is read we verify that it contains searched position by:
- * - verifying hash stored in REST_MASK - it contains 19 bits just with the diffused hash, without data
+ * - verifying hash stored in HASH_MASK - it contains 19 bits just with the diffused hash, without data
  * - verifying evaluation - we allow 105542 / 1048576 combination = 3.31 bits
  * - verifying type - we allow 3 / 4 combination = 0.42 bits
  * In total we verifies 22.73 bits which is not enough. The caller should try to uncompress the best move.
@@ -41,9 +41,9 @@ public final class HashTableImpl implements IHashTable {
 	private static final long EVALUATION_MASK           = 0x000000000FFFFF00L;
 	private static final long TYPE_MASK                 = 0x0000000030000000L;
 	private static final long COMPRESSED_BEST_MOVE_MASK = 0x00001FFFC0000000L;
-	private static final long REST_MASK                 = 0xFFFFE00000000000L;
+	private static final long HASH_MASK                 = 0xFFFFE00000000000L;
 	
-	private static final long HASH_MASK = ~HORIZON_MASK;
+	private static final long DIFFUSED_HASH_MASK = ~(HORIZON_MASK | HASH_MASK);
 	private static final int EVALUATION_OFFSET = Evaluation.MIN;
 	
 	public static final int MIN_EXPONENT = 0;
@@ -76,49 +76,74 @@ public final class HashTableImpl implements IHashTable {
 	}
 	
 	private static long diffuseHash(final long hash) {
-		return Mixer.mixLong(hash) & HASH_MASK;
+		return Mixer.mixLong(hash) & DIFFUSED_HASH_MASK;
 	}
-	
-	private void readRecordFromIndex (final int index, final long diffusedHash, final HashRecord record) {
-		final long tableItem = table.get(index);
-		final long data = tableItem ^ diffusedHash;
-		
-		if ((data & REST_MASK) != 0) {
-			record.setType(HashRecordType.INVALID);
-			
-			return;
-		}
-		
-		final int evaluation = (int) ((data & EVALUATION_MASK) >>> EVALUATION_SHIFT) + EVALUATION_OFFSET;
-		final int horizon = (int) ((data & HORIZON_MASK) >>> HORIZON_SHIFT);
-		final int type = (int) ((data & TYPE_MASK) >>> TYPE_SHIFT);
-		final int compressedBestMove = (int) ((data & COMPRESSED_BEST_MOVE_MASK) >>> COMPRESSED_BEST_MOVE_SHIFT);
-		
-		record.setEvaluation(evaluation);
-		record.setHorizon(horizon);
-		record.setType(type);
-		record.setCompressedBestMove(compressedBestMove);
-		
-		if (!record.canBeStored())
-			record.setType(HashRecordType.INVALID);
+
+	private boolean isFirstBetter(final boolean correctHash1, final int horizon1, final boolean correctHash2, final int horizon2, final int expectedHorizon) {
+		if (!correctHash1)
+			return false;
+
+		if (!correctHash2)
+			return true;
+
+		if (horizon2 == expectedHorizon)
+			return false;
+
+		if (horizon1 == expectedHorizon)
+			return true;
+
+		return horizon1 > horizon2;
 	}
-	
+
 	public boolean getRecord (final long hash, final int expectedHorizon, final HashRecord record) {
 		final int index = (int) (hash & indexMask);
-		final long diffusedHash = diffuseHash (hash);
-		
-		final HashRecord record1 = new HashRecord();
-		readRecordFromIndex(index, diffusedHash, record1);
-		
-		final HashRecord record2 = new HashRecord();
-		readRecordFromIndex(index + 1, diffusedHash, record2);
-		
-		if (record1.isBetterThan(record2, expectedHorizon))
-			record.assign(record1);
-		else
-			record.assign(record2);
 
-		return record.getType() != HashRecordType.INVALID;
+		final long tableItem1 = table.get(index);
+		final long tableItem2 = table.get(index + 1);
+
+		final boolean correctHash1 = ((tableItem1 ^ hash) & HASH_MASK) == 0;
+		final boolean correctHash2 = ((tableItem2 ^ hash) & HASH_MASK) == 0;
+
+		if (correctHash1 || correctHash2) {
+			final int horizon1 = (int) ((tableItem1 & HORIZON_MASK) >>> HORIZON_SHIFT);
+			final int horizon2 = (int) ((tableItem2 & HORIZON_MASK) >>> HORIZON_SHIFT);
+			final long tableItem;
+			final int horizon;
+
+			if (isFirstBetter (correctHash1, horizon1, correctHash2, horizon2, expectedHorizon)) {
+				tableItem = tableItem1;
+				horizon = horizon1;
+			}
+			else {
+				tableItem = tableItem2;
+				horizon = horizon2;
+			}
+
+			final long diffusedHash = diffuseHash(hash);
+			final long data = tableItem ^ diffusedHash;
+
+			final int evaluation = (int) ((data & EVALUATION_MASK) >>> EVALUATION_SHIFT) + EVALUATION_OFFSET;
+			final int type = (int) ((data & TYPE_MASK) >>> TYPE_SHIFT);
+			final int compressedBestMove = (int) ((data & COMPRESSED_BEST_MOVE_MASK) >>> COMPRESSED_BEST_MOVE_SHIFT);
+
+			record.setEvaluation(evaluation);
+			record.setHorizon(horizon);
+			record.setType(type);
+			record.setCompressedBestMove(compressedBestMove);
+
+			if (record.canBeStored())
+				return true;
+			else {
+				record.setType(HashRecordType.INVALID);
+
+				return false;
+			}
+		}
+		else {
+			record.setType(HashRecordType.INVALID);
+
+			return false;
+		}
 	}
 	
 	public void updateRecord (final Position position, final HashRecord record) {
@@ -141,7 +166,7 @@ public final class HashTableImpl implements IHashTable {
 		data |= ((long) record.getCompressedBestMove() << COMPRESSED_BEST_MOVE_SHIFT) & COMPRESSED_BEST_MOVE_MASK;
 		
 		final long diffusedHash = diffuseHash(hash);
-		final long newTableItem = data ^ diffusedHash;
+		final long newTableItem = data ^ diffusedHash ^ (hash & HASH_MASK);
 
 		while (true) {
 			final long oldTableItem = table.get(index);

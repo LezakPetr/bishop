@@ -14,15 +14,30 @@ public final class SerialSearchEngine implements ISearchEngine {
 	public static final int HORIZON_STEP_WITHOUT_EXTENSION = 2;
 	private static final int EXTENSION_HASH_MASK = (1 << SearchSettings.EXTENSION_FRACTION_BITS) - 1;
 
+	private static final int MAX_POSITIONAL_EVALUATION = 3 * PieceTypeEvaluations.PAWN_EVALUATION;
+
 	public class NodeRecord implements ISearchResult {
 		private class MoveWalker implements IMoveWalker {
+			private final HashRecord estimateHashRecord = new HashRecord();
+
 			public boolean processMove(final Move move) {
 				int estimate;
 
 				if (move.equals(hashBestMove))
 					estimate = HASH_BEST_MOVE_ESTIMATE;
-				else
+				else {
 					estimate = moveEstimator.getMoveEstimate(NodeRecord.this, currentPosition.getOnTurn(), move);
+
+					// Sort moves by hash table in depth 0.
+					if (depth == 0) {
+						currentPosition.makeMove(move);
+
+						if (hashTable.getRecord(currentPosition, -1, estimateHashRecord))
+							estimate = -estimateHashRecord.getEvaluation();
+
+						currentPosition.undoMove(move);
+					}
+				}
 
 				moveStack.setRecord(moveStackTop, move, estimate);
 				moveStackTop++;
@@ -169,22 +184,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			try {
 				// Evaluate position
-				int whitePositionEvaluation = positionEvaluator.evaluateTactical(currentPosition, mobilityCalculator).getEvaluation();
-
-				final int materialEvaluation = currentPosition.getMaterialEvaluation();
-				final int materialEvaluationShift = positionEvaluator.getMaterialEvaluationShift();
-
-				whitePositionEvaluation += materialEvaluation >> materialEvaluationShift;
-
-				if (!isQuiescenceSearch || isFirstQuiescence) {
-					// Calculate positional evaluation in normal search and first depth of quiescence search.
-					// So it will remain cached for the quiescence search,
-					lastPositionalEvaluation = positionEvaluator.evaluatePositional().getEvaluation();
-				}
-
-				whitePositionEvaluation += lastPositionalEvaluation;
-
-				final int positionEvaluation = Evaluation.getRelative(fixDrawByRepetitionEvaluation(whitePositionEvaluation), onTurn);
+				final int positionEvaluation = getPositionEvaluation(onTurn);
 				final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
 
 				final boolean isCheckSearch = isQuiescenceSearch && reducedHorizon > -maxCheckSearchDepth && isCheck;
@@ -324,6 +324,29 @@ public final class SerialSearchEngine implements ISearchEngine {
 				updateHashRecord(reducedHorizon);
 				updateBestMovePerIndexCounts();
 			}
+		}
+
+		private int getPositionEvaluation(int onTurn) {
+			int whitePositionEvaluation = positionEvaluator.evaluateTactical(currentPosition, mobilityCalculator).getEvaluation();
+
+			final int materialEvaluation = currentPosition.getMaterialEvaluation();
+			final int materialEvaluationShift = positionEvaluator.getMaterialEvaluationShift();
+
+			whitePositionEvaluation += materialEvaluation >> materialEvaluationShift;
+
+			int relativeEvaluation = Evaluation.getRelative(whitePositionEvaluation, onTurn);
+
+			if (relativeEvaluation + MAX_POSITIONAL_EVALUATION < alpha)
+				relativeEvaluation += MAX_POSITIONAL_EVALUATION;
+			else if (relativeEvaluation - MAX_POSITIONAL_EVALUATION > beta)
+				relativeEvaluation -= MAX_POSITIONAL_EVALUATION;
+			else {
+				final int positionalEvaluation = positionEvaluator.evaluatePositional().getEvaluation();
+				final int boundedPositionalEvaluation = Math.max(Math.min(positionalEvaluation, MAX_POSITIONAL_EVALUATION), -MAX_POSITIONAL_EVALUATION);
+				relativeEvaluation += Evaluation.getRelative(boundedPositionalEvaluation, onTurn);
+			}
+
+			return fixDrawByRepetitionEvaluation(relativeEvaluation);
 		}
 
 		private boolean shouldReduceHorizon(int horizon) {
@@ -637,7 +660,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 	}
 
-	private static final int RECEIVE_UPDATES_COUNT = 8192;
+	private static final int RECEIVE_UPDATES_COUNT = 16768;
 
 	private static final int HASH_BEST_MOVE_ESTIMATE = Integer.MAX_VALUE;
 	
@@ -671,7 +694,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private PieceTypeEvaluations pieceTypeEvaluations;
 	private IPositionEvaluator positionEvaluator;
 	private final HandlerRegistrarImpl<ISearchEngineHandler> handlerRegistrar;
-	private int lastPositionalEvaluation;
 	private final MateFinder mateFinder;
 	
 	private static final long[] bestMovePerIndexCounts = new long[PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION];

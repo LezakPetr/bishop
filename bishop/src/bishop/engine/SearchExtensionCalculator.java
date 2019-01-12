@@ -18,7 +18,8 @@ public class SearchExtensionCalculator {
 	
 	private static final int MIN_KING_ESCAPE_SQUARE_COUNT = 1;
 	private static final int MAX_KING_ESCAPE_SQUARE_COUNT = 3;
-	
+
+	private final Move nullmove = new Move();
 	private final MateFinder finder;
 	private SearchSettings settings;
 	
@@ -54,16 +55,15 @@ public class SearchExtensionCalculator {
 	private boolean isNullMate(final Position position, final int horizon) {
 		final int optimalDepthInMoves = (horizon >> 1) - NULL_MATE_REDUCTION;
 		final int depthInMoves = Math.min(Math.max(optimalDepthInMoves, MIN_NULL_MATE_DEPTH), MAX_NULL_MATE_DEPTH);
+
+		nullmove.createNull(position.getCastlingRights().getIndex(), position.getEpFile());
 		
-		final Move move = new Move();
-		move.createNull(position.getCastlingRights().getIndex(), position.getEpFile());
-		
-		position.makeMove(move);
+		position.makeMove(nullmove);
 		
 		finder.setPosition(position);
 		final boolean isWin = finder.findWin(depthInMoves) >= Evaluation.MATE_MIN;
 		
-		position.undoMove(move);
+		position.undoMove(nullmove);
 		
 		return isWin;
 	}
