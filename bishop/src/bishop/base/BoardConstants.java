@@ -59,9 +59,6 @@ public class BoardConstants {
 	// Begin squares of rook in castling.
 	private static final int[] TABLE_CASTLING_ROOK_BEGIN_SQUARE = {Square.H1, Square.A1, Square.H8, Square.A8};
 
-	// Target squares of rook in castling.
-	private static final int[] TABLE_CASTLING_ROOK_TARGET_SQUARE = {Square.F1, Square.D1, Square.F8, Square.D8};
-
 	// Begin squares of king in the castling.
 	private static final int[] TABLE_CASTLING_KING_BEGIN_SQUARE = {Square.E1, Square.E8};
 
@@ -292,7 +289,7 @@ public class BoardConstants {
 	public static int getCastlingRookTargetSquare(final int color, final int castlingType) {
 		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
 
-		return TABLE_CASTLING_ROOK_TARGET_SQUARE[index];
+		return TABLE_CASTLING_KING_MIDDLE_SQUARE[index];   // Same as rook target square
 	}
 
 	public static int getCastlingKingBeginSquare(final int color) {

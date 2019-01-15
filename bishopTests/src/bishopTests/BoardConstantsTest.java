@@ -1,9 +1,6 @@
 package bishopTests;
 
-import bishop.base.BoardConstants;
-import bishop.base.CastlingType;
-import bishop.base.Color;
-import bishop.base.Square;
+import bishop.base.*;
 import bishop.tables.BetweenTable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,4 +27,59 @@ public class BoardConstantsTest {
 		Assert.assertEquals(Square.H8, BoardConstants.getCastlingRookBeginSquare(Color.BLACK, CastlingType.SHORT));
 		Assert.assertEquals(Square.A8, BoardConstants.getCastlingRookBeginSquare(Color.BLACK, CastlingType.LONG));
 	}
+
+	@Test
+	public void getCastlingRookTargetSquareTest() {
+		Assert.assertEquals(Square.F1, BoardConstants.getCastlingRookTargetSquare(Color.WHITE, CastlingType.SHORT));
+		Assert.assertEquals(Square.D1, BoardConstants.getCastlingRookTargetSquare(Color.WHITE, CastlingType.LONG));
+		Assert.assertEquals(Square.F8, BoardConstants.getCastlingRookTargetSquare(Color.BLACK, CastlingType.SHORT));
+		Assert.assertEquals(Square.D8, BoardConstants.getCastlingRookTargetSquare(Color.BLACK, CastlingType.LONG));
+	}
+
+	@Test
+	public void getCastlingKingTargetSquareTest() {
+		Assert.assertEquals(Square.G1, BoardConstants.getCastlingKingTargetSquare(Color.WHITE, CastlingType.SHORT));
+		Assert.assertEquals(Square.C1, BoardConstants.getCastlingKingTargetSquare(Color.WHITE, CastlingType.LONG));
+		Assert.assertEquals(Square.G8, BoardConstants.getCastlingKingTargetSquare(Color.BLACK, CastlingType.SHORT));
+		Assert.assertEquals(Square.C8, BoardConstants.getCastlingKingTargetSquare(Color.BLACK, CastlingType.LONG));
+	}
+
+	@Test
+	public void getCastlingKingMiddleSquareTest() {
+		Assert.assertEquals(Square.F1, BoardConstants.getCastlingKingMiddleSquare(Color.WHITE, CastlingType.SHORT));
+		Assert.assertEquals(Square.D1, BoardConstants.getCastlingKingMiddleSquare(Color.WHITE, CastlingType.LONG));
+		Assert.assertEquals(Square.F8, BoardConstants.getCastlingKingMiddleSquare(Color.BLACK, CastlingType.SHORT));
+		Assert.assertEquals(Square.D8, BoardConstants.getCastlingKingMiddleSquare(Color.BLACK, CastlingType.LONG));
+	}
+
+	@Test
+	public void getCastlingKingChangeMaskTest() {
+		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			for (int castlingType = CastlingType.FIRST; castlingType < CastlingType.LAST; castlingType++) {
+				Assert.assertEquals(
+						BitBoard.of(
+								BoardConstants.getCastlingKingBeginSquare(color),
+								BoardConstants.getCastlingKingTargetSquare(color, castlingType)
+						),
+						BoardConstants.getCastlingKingChangeMask(color, castlingType)
+				);
+			}
+		}
+	}
+
+	@Test
+	public void getCastlingRookChangeMaskTest() {
+		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			for (int castlingType = CastlingType.FIRST; castlingType < CastlingType.LAST; castlingType++) {
+				Assert.assertEquals(
+						BitBoard.of(
+								BoardConstants.getCastlingRookBeginSquare(color, castlingType),
+								BoardConstants.getCastlingRookTargetSquare(color, castlingType)
+						),
+						BoardConstants.getCastlingRookChangeMask(color, castlingType)
+				);
+			}
+		}
+	}
+
 }
