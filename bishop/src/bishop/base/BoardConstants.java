@@ -84,16 +84,13 @@ public class BoardConstants {
 			BitBoard.getSquareMask(Square.H8) | BitBoard.getSquareMask(Square.F8),
 			BitBoard.getSquareMask(Square.A8) | BitBoard.getSquareMask(Square.D8)};
 
-	// Contains ranks where pawns of given color moves by two squares.
-	private static final int[] TABLE_EP_RANKS = {Rank.R4, Rank.R5};
-
 	private static final long[] TABLE_EP_RANK_MASKS = initializeTableEpRankMasks();
 
 	private static long[] initializeTableEpRankMasks() {
 		final long[] table = new long[Color.LAST];
 
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int rank = TABLE_EP_RANKS[color];
+			final int rank = getEpRank(color);
 			long mask = 0;
 
 			for (int file = File.FIRST; file < File.LAST; file++) {
@@ -363,7 +360,7 @@ public class BoardConstants {
 	 * @return Rank.R4 for white or Rank.R5 for black
 	 */
 	public static int getEpRank(final int color) {
-		return TABLE_EP_RANKS[color];
+		return Rank.R4 + color;
 	}
 
 	/**
@@ -416,7 +413,7 @@ public class BoardConstants {
 	 * @return promotion rank
 	 */
 	public static int getPawnPromotionRank(final int color) {
-		return (color == Color.WHITE) ? Rank.R8 : Rank.R1;
+		return (color - 1) & 0x07;
 	}
 
 	public static int getPawnPromotionSquare(final int color, final int pawnSquare) {
@@ -436,10 +433,6 @@ public class BoardConstants {
 
 	public static int getPawnRankOffset(final int color) {
 		return (color == Color.WHITE) ? 1 : -1;
-	}
-
-	public static int getPawnSquareOffset(final int color) {
-		return (color == Color.WHITE) ? File.COUNT : -File.COUNT;
 	}
 
 	/**

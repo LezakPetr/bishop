@@ -82,4 +82,151 @@ public class BoardConstantsTest {
 		}
 	}
 
+	@Test
+	public void getRankMaskTest() {
+		Assert.assertEquals(BoardConstants.RANK_1_MASK, BoardConstants.getRankMask(Rank.R1));
+		Assert.assertEquals(BoardConstants.RANK_2_MASK, BoardConstants.getRankMask(Rank.R2));
+		Assert.assertEquals(BoardConstants.RANK_3_MASK, BoardConstants.getRankMask(Rank.R3));
+		Assert.assertEquals(BoardConstants.RANK_4_MASK, BoardConstants.getRankMask(Rank.R4));
+		Assert.assertEquals(BoardConstants.RANK_5_MASK, BoardConstants.getRankMask(Rank.R5));
+		Assert.assertEquals(BoardConstants.RANK_6_MASK, BoardConstants.getRankMask(Rank.R6));
+		Assert.assertEquals(BoardConstants.RANK_7_MASK, BoardConstants.getRankMask(Rank.R7));
+		Assert.assertEquals(BoardConstants.RANK_8_MASK, BoardConstants.getRankMask(Rank.R8));
+	}
+
+	@Test
+	public void getFileMaskTest() {
+		Assert.assertEquals(BoardConstants.FILE_A_MASK, BoardConstants.getFileMask(File.FA));
+		Assert.assertEquals(BoardConstants.FILE_B_MASK, BoardConstants.getFileMask(File.FB));
+		Assert.assertEquals(BoardConstants.FILE_C_MASK, BoardConstants.getFileMask(File.FC));
+		Assert.assertEquals(BoardConstants.FILE_D_MASK, BoardConstants.getFileMask(File.FD));
+		Assert.assertEquals(BoardConstants.FILE_E_MASK, BoardConstants.getFileMask(File.FE));
+		Assert.assertEquals(BoardConstants.FILE_F_MASK, BoardConstants.getFileMask(File.FF));
+		Assert.assertEquals(BoardConstants.FILE_G_MASK, BoardConstants.getFileMask(File.FG));
+		Assert.assertEquals(BoardConstants.FILE_H_MASK, BoardConstants.getFileMask(File.FH));
+	}
+
+	@Test
+	public void getEpRankTest() {
+		Assert.assertEquals(Rank.R4, BoardConstants.getEpRank(Color.WHITE));
+		Assert.assertEquals(Rank.R5, BoardConstants.getEpRank(Color.BLACK));
+	}
+
+	@Test
+	public void getEpSquareTest() {
+		for (int file = File.FIRST; file < File.LAST; file++) {
+			Assert.assertEquals(Square.onFileRank(file, Rank.R4), BoardConstants.getEpSquare(Color.WHITE, file));
+			Assert.assertEquals(Square.onFileRank(file, Rank.R5), BoardConstants.getEpSquare(Color.BLACK, file));
+		}
+	}
+
+	@Test
+	public void getEpTargetSquareTest() {
+		for (int file = File.FIRST; file < File.LAST; file++) {
+			Assert.assertEquals(Square.onFileRank(file, Rank.R3), BoardConstants.getEpTargetSquare(Color.WHITE, file));
+			Assert.assertEquals(Square.onFileRank(file, Rank.R6), BoardConstants.getEpTargetSquare(Color.BLACK, file));
+		}
+	}
+
+	@Test
+	public void getEpRankMaskTest() {
+		Assert.assertEquals(BoardConstants.RANK_4_MASK, BoardConstants.getEpRankMask(Color.WHITE));
+		Assert.assertEquals(BoardConstants.RANK_5_MASK, BoardConstants.getEpRankMask(Color.BLACK));
+	}
+
+	@Test
+	public void getPawnInitialSquare() {
+		Assert.assertEquals(Square.A2, BoardConstants.getPawnInitialSquare(Color.WHITE, File.FA));
+		Assert.assertEquals(Square.B2, BoardConstants.getPawnInitialSquare(Color.WHITE, File.FB));
+		Assert.assertEquals(Square.C2, BoardConstants.getPawnInitialSquare(Color.WHITE, File.FC));
+		Assert.assertEquals(Square.D2, BoardConstants.getPawnInitialSquare(Color.WHITE, File.FD));
+		Assert.assertEquals(Square.E2, BoardConstants.getPawnInitialSquare(Color.WHITE, File.FE));
+		Assert.assertEquals(Square.F2, BoardConstants.getPawnInitialSquare(Color.WHITE, File.FF));
+		Assert.assertEquals(Square.G2, BoardConstants.getPawnInitialSquare(Color.WHITE, File.FG));
+		Assert.assertEquals(Square.H2, BoardConstants.getPawnInitialSquare(Color.WHITE, File.FH));
+
+		Assert.assertEquals(Square.A7, BoardConstants.getPawnInitialSquare(Color.BLACK, File.FA));
+		Assert.assertEquals(Square.B7, BoardConstants.getPawnInitialSquare(Color.BLACK, File.FB));
+		Assert.assertEquals(Square.C7, BoardConstants.getPawnInitialSquare(Color.BLACK, File.FC));
+		Assert.assertEquals(Square.D7, BoardConstants.getPawnInitialSquare(Color.BLACK, File.FD));
+		Assert.assertEquals(Square.E7, BoardConstants.getPawnInitialSquare(Color.BLACK, File.FE));
+		Assert.assertEquals(Square.F7, BoardConstants.getPawnInitialSquare(Color.BLACK, File.FF));
+		Assert.assertEquals(Square.G7, BoardConstants.getPawnInitialSquare(Color.BLACK, File.FG));
+		Assert.assertEquals(Square.H7, BoardConstants.getPawnInitialSquare(Color.BLACK, File.FH));
+	}
+
+	@Test
+	public void getKingSquareDistanceTest() {
+		for (int rank1 = Rank.FIRST; rank1 < Rank.LAST; rank1++) {
+			for (int file1 = File.FIRST; file1 < File.LAST; file1++) {
+				for (int rank2 = Rank.FIRST; rank2 < Rank.LAST; rank2++) {
+					for (int file2 = File.FIRST; file2 < File.LAST; file2++) {
+						final int dFile = Math.abs(file2 - file1);
+						final int dRank = Math.abs(rank2 - rank1);
+						final int distance = Math.max(dFile, dRank);
+
+						Assert.assertEquals(
+								distance,
+								BoardConstants.getKingSquareDistance(
+										Square.onFileRank(file1, rank1),
+										Square.onFileRank(file2, rank2)
+								)
+						);
+					}
+				}
+			}
+		}
+	}
+
+	@Test
+	public void getPawnPromotionRank() {
+		Assert.assertEquals(Rank.R8, BoardConstants.getPawnPromotionRank(Color.WHITE));
+		Assert.assertEquals(Rank.R1, BoardConstants.getPawnPromotionRank(Color.BLACK));
+	}
+
+	@Test
+	public void getPawnPromotionSquare() {
+		for (int square = Square.FIRST; square < Square.LAST; square++) {
+			final int file = Square.getFile(square);
+			final int rank = Square.getRank(square);
+
+			Assert.assertEquals(
+					Square.onFileRank(file, Rank.R8),
+					BoardConstants.getPawnPromotionSquare(
+							Color.WHITE,
+							Square.onFileRank(file, rank)
+					)
+			);
+
+			Assert.assertEquals(
+					Square.onFileRank(file, Rank.R1),
+					BoardConstants.getPawnPromotionSquare(
+							Color.BLACK,
+							Square.onFileRank(file, rank)
+					)
+			);
+		}
+	}
+
+	@Test
+	public void getPawnPromotionDistanceTest() {
+		for (int file = File.FIRST; file < File.LAST; file++) {
+			Assert.assertEquals(0, BoardConstants.getPawnPromotionDistance(Color.WHITE, Square.onFileRank(file, Rank.R8)));
+			Assert.assertEquals(1, BoardConstants.getPawnPromotionDistance(Color.WHITE, Square.onFileRank(file, Rank.R7)));
+			Assert.assertEquals(2, BoardConstants.getPawnPromotionDistance(Color.WHITE, Square.onFileRank(file, Rank.R6)));
+			Assert.assertEquals(3, BoardConstants.getPawnPromotionDistance(Color.WHITE, Square.onFileRank(file, Rank.R5)));
+			Assert.assertEquals(4, BoardConstants.getPawnPromotionDistance(Color.WHITE, Square.onFileRank(file, Rank.R4)));
+			Assert.assertEquals(5, BoardConstants.getPawnPromotionDistance(Color.WHITE, Square.onFileRank(file, Rank.R3)));
+			Assert.assertEquals(5, BoardConstants.getPawnPromotionDistance(Color.WHITE, Square.onFileRank(file, Rank.R2)));
+
+			Assert.assertEquals(0, BoardConstants.getPawnPromotionDistance(Color.BLACK, Square.onFileRank(file, Rank.R1)));
+			Assert.assertEquals(1, BoardConstants.getPawnPromotionDistance(Color.BLACK, Square.onFileRank(file, Rank.R2)));
+			Assert.assertEquals(2, BoardConstants.getPawnPromotionDistance(Color.BLACK, Square.onFileRank(file, Rank.R3)));
+			Assert.assertEquals(3, BoardConstants.getPawnPromotionDistance(Color.BLACK, Square.onFileRank(file, Rank.R4)));
+			Assert.assertEquals(4, BoardConstants.getPawnPromotionDistance(Color.BLACK, Square.onFileRank(file, Rank.R5)));
+			Assert.assertEquals(5, BoardConstants.getPawnPromotionDistance(Color.BLACK, Square.onFileRank(file, Rank.R6)));
+			Assert.assertEquals(5, BoardConstants.getPawnPromotionDistance(Color.BLACK, Square.onFileRank(file, Rank.R7)));
+		}
+
+	}
 }
