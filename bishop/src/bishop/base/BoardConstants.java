@@ -528,7 +528,7 @@ public class BoardConstants {
 		return SECOND_RANK_MASKS[color];
 	}
 
-	public static long[] inititalizeFirstRankMasks() {
+	private static long[] inititalizeFirstRankMasks() {
 		final long[] table = new long[Color.LAST];
 
 		table[Color.WHITE] = RANK_1_MASK;
@@ -537,37 +537,13 @@ public class BoardConstants {
 		return table;
 	}
 
-	public static long[] inititalizeSecondRankMasks() {
+	private static long[] inititalizeSecondRankMasks() {
 		final long[] table = new long[Color.LAST];
 
 		table[Color.WHITE] = RANK_2_MASK;
 		table[Color.BLACK] = RANK_7_MASK;
 
 		return table;
-	}
-
-	/**
-	 * Returns distance of given square from board edge.
-	 *
-	 * @param square square
-	 * @return 0 <= distance <= 3
-	 */
-	public static int getSquareEdgeDistance(final int square) {
-		final int file = Square.getFile(square);
-		final int rank = Square.getRank(square);
-		final int minFileDistance = file - File.FA;
-		final int maxFileDistance = File.FH - file;
-		final int minRankDistance = rank - Rank.R1;
-		final int maxRankDistance = Rank.R8 - rank;
-
-		final int fileDistance = Math.min(minFileDistance, maxFileDistance);
-		final int rankDistance = Math.min(minRankDistance, maxRankDistance);
-
-		return Math.min(fileDistance, rankDistance);
-	}
-
-	public static int getSourceEpSquare(final int color, final int file) {
-		return getEpSquare(color, file);
 	}
 
 	public static long getPawnsAttackedSquaresFromLeft(final int color, final long pawnsMask) {

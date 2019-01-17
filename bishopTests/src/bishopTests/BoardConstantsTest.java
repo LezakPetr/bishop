@@ -5,6 +5,8 @@ import bishop.tables.BetweenTable;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.SplittableRandom;
+
 public class BoardConstantsTest {
 	@Test
 	public void getSquareColorMaskTest() {
@@ -235,55 +237,214 @@ public class BoardConstantsTest {
 		Assert.assertEquals(-1, BoardConstants.getPawnRankOffset(Color.BLACK));
 	}
 
-	@Test
-	public void getFrontSquaresOnThreeFilesTest() {
+	private void testGetFrontSquaresOnThreeFiles(final int color, final int square, final String expectedBoard) {
 		Assert.assertEquals(
-				BitBoard.of(
-						Square.A5, Square.A6, Square.A7, Square.A8,
-						Square.B5, Square.B6, Square.B7, Square.B8
-				),
-				BoardConstants.getFrontSquaresOnThreeFiles(Color.WHITE, Square.A4)
-		);
-
-		Assert.assertEquals(
-				BitBoard.of(
-						Square.G6, Square.G7, Square.G8,
-						Square.H6, Square.H7, Square.H8
-				),
-				BoardConstants.getFrontSquaresOnThreeFiles(Color.WHITE, Square.H5)
-		);
-
-		Assert.assertEquals(
-				BitBoard.of(
-						Square.B7, Square.B8,
-						Square.C7, Square.C8,
-						Square.D7, Square.D8
-				),
-				BoardConstants.getFrontSquaresOnThreeFiles(Color.WHITE, Square.C6)
-		);
-
-		Assert.assertEquals(
-				BitBoard.of(
-						Square.A3, Square.A2, Square.A1,
-						Square.B3, Square.B2, Square.B1
-				),
-				BoardConstants.getFrontSquaresOnThreeFiles(Color.BLACK, Square.A4)
-		);
-
-		Assert.assertEquals(
-				BitBoard.of(
-						Square.G4, Square.G3, Square.G2, Square.G1,
-						Square.H4, Square.H3, Square.H2, Square.H1
-				),
-				BoardConstants.getFrontSquaresOnThreeFiles(Color.BLACK, Square.H5)
-		);
-
-		Assert.assertEquals(
-				BitBoard.of(
-						Square.D1, Square.E1, Square.F1
-				),
-				BoardConstants.getFrontSquaresOnThreeFiles(Color.BLACK, Square.E2)
+				BitBoard.fromString(expectedBoard),
+				BoardConstants.getFrontSquaresOnThreeFiles(color, square)
 		);
 	}
 
+	@Test
+	public void getFrontSquaresOnThreeFilesTest() {
+		testGetFrontSquaresOnThreeFiles(Color.WHITE, Square.A4, "a5, a6, a7, a8, b5, b6, b7, b8");
+		testGetFrontSquaresOnThreeFiles(Color.WHITE, Square.H5, "g6, g7, g8, h6, h7, h8");
+		testGetFrontSquaresOnThreeFiles(Color.WHITE, Square.C6, "b7, b8, c7, c8, d7, d8");
+		testGetFrontSquaresOnThreeFiles(Color.BLACK, Square.A4, "a3, a2, a1, b3, b2, b1");
+		testGetFrontSquaresOnThreeFiles(Color.BLACK, Square.H5, "g4, g3, g2, g1, h4, h3, h2, h1");
+		testGetFrontSquaresOnThreeFiles(Color.BLACK, Square.E2, "d1, e1, f1");
+	}
+
+	private void testGetFrontSquaresOnNeighborFiles(final int color, final int square, final String expectedBoard) {
+		Assert.assertEquals(
+				BitBoard.fromString(expectedBoard),
+				BoardConstants.getFrontSquaresOnNeighborFiles(color, square)
+		);
+	}
+
+	@Test
+	public void getFrontSquaresOnNeighborFilesTest() {
+		testGetFrontSquaresOnNeighborFiles(Color.WHITE, Square.A4, "b5, b6, b7, b8");
+		testGetFrontSquaresOnNeighborFiles(Color.WHITE, Square.H5, "g6, g7, g8");
+		testGetFrontSquaresOnNeighborFiles(Color.WHITE, Square.C6, "b7, b8, d7, d8");
+		testGetFrontSquaresOnNeighborFiles(Color.BLACK, Square.A4, "b3, b2, b1");
+		testGetFrontSquaresOnNeighborFiles(Color.BLACK, Square.H5, "g4, g3, g2, g1");
+		testGetFrontSquaresOnNeighborFiles(Color.BLACK, Square.E2, "d1, f1");
+	}
+
+	private void testGetPawnBlockingSquares(final int color, final int square, final String expectedBoard) {
+		Assert.assertEquals(
+				BitBoard.fromString(expectedBoard),
+				BoardConstants.getPawnBlockingSquares(color, square)
+		);
+	}
+
+	@Test
+	public void getPawnBlockingSquaresTest() {
+		testGetPawnBlockingSquares(Color.WHITE, Square.A4, "a5, a6, a7, a8, b6, b7, b8");
+		testGetPawnBlockingSquares(Color.WHITE, Square.H5, "g7, g8, h6, h7, h8");
+		testGetPawnBlockingSquares(Color.WHITE, Square.C6, "b8, c7, c8, d8");
+		testGetPawnBlockingSquares(Color.BLACK, Square.A4, "a3, a2, a1, b2, b1");
+		testGetPawnBlockingSquares(Color.BLACK, Square.H5, "g3, g2, g1, h4, h3, h2, h1");
+		testGetPawnBlockingSquares(Color.BLACK, Square.E2, "e1");
+	}
+
+	private void testGetSquaresInFrontInclusive(final int color, final int square, final String expectedBoard) {
+		Assert.assertEquals(
+				BitBoard.fromString(expectedBoard),
+				BoardConstants.getSquaresInFrontInclusive(color, square)
+		);
+	}
+
+	@Test
+	public void getSquaresInFrontInclusiveTest() {
+		testGetSquaresInFrontInclusive(Color.WHITE, Square.A4, "a4, a5, a6, a7, a8");
+		testGetSquaresInFrontInclusive(Color.WHITE, Square.H5, "h5, h6, h7, h8");
+		testGetSquaresInFrontInclusive(Color.WHITE, Square.C6, "c6, c7, c8");
+		testGetSquaresInFrontInclusive(Color.BLACK, Square.A4, "a4, a3, a2, a1");
+		testGetSquaresInFrontInclusive(Color.BLACK, Square.H5, "h5, h4, h3, h2, h1");
+		testGetSquaresInFrontInclusive(Color.BLACK, Square.E2, "e2, e1");
+	}
+
+	@Test
+	public void getConnectedPawnSquareMaskTest() {
+		for (int file = File.FIRST; file < File.LAST; file++) {
+			for (int rank = Rank.FIRST; rank < Rank.LAST; rank++) {
+				final int square = Square.onFileRank(file, rank);
+
+				long expectedMask = BitBoard.EMPTY;
+
+				if (file > File.FA)
+					expectedMask |= BitBoard.of(Square.onFileRank(file - 1, rank));
+
+				if (file < File.FH)
+					expectedMask |= BitBoard.of(Square.onFileRank(file + 1, rank));
+
+				Assert.assertEquals(expectedMask, BoardConstants.getConnectedPawnSquareMask(square));
+			}
+		}
+	}
+
+	@Test
+	public void getAllConnectedPawnSquareMaskTest() {
+		final SplittableRandom rng = new SplittableRandom();
+
+		for (int i = 0; i < 100000; i++) {
+			long sourceMask = BitBoard.EMPTY;
+			long expectedMask = BitBoard.EMPTY;
+
+			for (int square = Square.FIRST; square < Square.LAST; square++) {
+				if (rng.nextBoolean()) {
+					sourceMask |= BitBoard.of(square);
+					expectedMask |= BoardConstants.getConnectedPawnSquareMask(square);
+				}
+			}
+
+			Assert.assertEquals(expectedMask, BoardConstants.getAllConnectedPawnSquareMask(sourceMask));
+		}
+	}
+
+	@Test
+	public void getFirstRankMaskTest() {
+		Assert.assertEquals(BoardConstants.RANK_1_MASK, BoardConstants.getFirstRankMask(Color.WHITE));
+		Assert.assertEquals(BoardConstants.RANK_8_MASK, BoardConstants.getFirstRankMask(Color.BLACK));
+	}
+
+	@Test
+	public void getSecondRankMaskTest() {
+		Assert.assertEquals(BoardConstants.RANK_2_MASK, BoardConstants.getSecondRankMask(Color.WHITE));
+		Assert.assertEquals(BoardConstants.RANK_7_MASK, BoardConstants.getSecondRankMask(Color.BLACK));
+	}
+
+	@Test
+	public void getPawnsAttackedSquaresFromLeftTest() {
+		final SplittableRandom rng = new SplittableRandom();
+
+		for (int i = 0; i < 100000; i++) {
+			long sourceMask = BitBoard.EMPTY;
+			long expectedWhiteMask = BitBoard.EMPTY;
+			long expectedBlackMask = BitBoard.EMPTY;
+
+			for (int square = Square.FIRST; square < Square.LAST; square++) {
+				final int file = Square.getFile(square);
+				final int rank = Square.getRank(square);
+
+				if (rng.nextBoolean()) {
+					sourceMask |= BitBoard.of(square);
+
+					if (file < File.FH && rank < Rank.R8)
+						expectedWhiteMask |= BitBoard.of(Square.onFileRank(file + 1, rank + 1));
+
+					if (file < File.FH && rank > Rank.R1)
+						expectedBlackMask |= BitBoard.of(Square.onFileRank(file + 1, rank - 1));
+				}
+			}
+
+			Assert.assertEquals(expectedWhiteMask, BoardConstants.getPawnsAttackedSquaresFromLeft(Color.WHITE, sourceMask));
+			Assert.assertEquals(expectedBlackMask, BoardConstants.getPawnsAttackedSquaresFromLeft(Color.BLACK, sourceMask));
+		}
+	}
+
+	@Test
+	public void getPawnsAttackedSquaresFromRightTest() {
+		final SplittableRandom rng = new SplittableRandom();
+
+		for (int i = 0; i < 100000; i++) {
+			long sourceMask = BitBoard.EMPTY;
+			long expectedWhiteMask = BitBoard.EMPTY;
+			long expectedBlackMask = BitBoard.EMPTY;
+
+			for (int square = Square.FIRST; square < Square.LAST; square++) {
+				final int file = Square.getFile(square);
+				final int rank = Square.getRank(square);
+
+				if (rng.nextBoolean()) {
+					sourceMask |= BitBoard.of(square);
+
+					if (file > File.FA && rank < Rank.R8)
+						expectedWhiteMask |= BitBoard.of(Square.onFileRank(file - 1, rank + 1));
+
+					if (file > File.FA && rank > Rank.R1)
+						expectedBlackMask |= BitBoard.of(Square.onFileRank(file - 1, rank - 1));
+				}
+			}
+
+			Assert.assertEquals(expectedWhiteMask, BoardConstants.getPawnsAttackedSquaresFromRight(Color.WHITE, sourceMask));
+			Assert.assertEquals(expectedBlackMask, BoardConstants.getPawnsAttackedSquaresFromRight(Color.BLACK, sourceMask));
+		}
+	}
+
+	@Test
+	public void getPawnsAttackedSquaresTest() {
+		final SplittableRandom rng = new SplittableRandom();
+
+		for (int i = 0; i < 100000; i++) {
+			long sourceMask = BitBoard.EMPTY;
+			long expectedWhiteMask = BitBoard.EMPTY;
+			long expectedBlackMask = BitBoard.EMPTY;
+
+			for (int square = Square.FIRST; square < Square.LAST; square++) {
+				final int file = Square.getFile(square);
+				final int rank = Square.getRank(square);
+
+				if (rng.nextBoolean()) {
+					sourceMask |= BitBoard.of(square);
+
+					if (file < File.FH && rank < Rank.R8)
+						expectedWhiteMask |= BitBoard.of(Square.onFileRank(file + 1, rank + 1));
+
+					if (file < File.FH && rank > Rank.R1)
+						expectedBlackMask |= BitBoard.of(Square.onFileRank(file + 1, rank - 1));
+
+					if (file > File.FA && rank < Rank.R8)
+						expectedWhiteMask |= BitBoard.of(Square.onFileRank(file - 1, rank + 1));
+
+					if (file > File.FA && rank > Rank.R1)
+						expectedBlackMask |= BitBoard.of(Square.onFileRank(file - 1, rank - 1));
+				}
+			}
+
+			Assert.assertEquals(expectedWhiteMask, BoardConstants.getPawnsAttackedSquares(Color.WHITE, sourceMask));
+			Assert.assertEquals(expectedBlackMask, BoardConstants.getPawnsAttackedSquares(Color.BLACK, sourceMask));
+		}
+	}
 }
