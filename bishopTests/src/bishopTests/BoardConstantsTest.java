@@ -227,6 +227,63 @@ public class BoardConstantsTest {
 			Assert.assertEquals(5, BoardConstants.getPawnPromotionDistance(Color.BLACK, Square.onFileRank(file, Rank.R6)));
 			Assert.assertEquals(5, BoardConstants.getPawnPromotionDistance(Color.BLACK, Square.onFileRank(file, Rank.R7)));
 		}
-
 	}
+
+	@Test
+	public void getPawnRankOffsetTest() {
+		Assert.assertEquals(+1, BoardConstants.getPawnRankOffset(Color.WHITE));
+		Assert.assertEquals(-1, BoardConstants.getPawnRankOffset(Color.BLACK));
+	}
+
+	@Test
+	public void getFrontSquaresOnThreeFilesTest() {
+		Assert.assertEquals(
+				BitBoard.of(
+						Square.A5, Square.A6, Square.A7, Square.A8,
+						Square.B5, Square.B6, Square.B7, Square.B8
+				),
+				BoardConstants.getFrontSquaresOnThreeFiles(Color.WHITE, Square.A4)
+		);
+
+		Assert.assertEquals(
+				BitBoard.of(
+						Square.G6, Square.G7, Square.G8,
+						Square.H6, Square.H7, Square.H8
+				),
+				BoardConstants.getFrontSquaresOnThreeFiles(Color.WHITE, Square.H5)
+		);
+
+		Assert.assertEquals(
+				BitBoard.of(
+						Square.B7, Square.B8,
+						Square.C7, Square.C8,
+						Square.D7, Square.D8
+				),
+				BoardConstants.getFrontSquaresOnThreeFiles(Color.WHITE, Square.C6)
+		);
+
+		Assert.assertEquals(
+				BitBoard.of(
+						Square.A3, Square.A2, Square.A1,
+						Square.B3, Square.B2, Square.B1
+				),
+				BoardConstants.getFrontSquaresOnThreeFiles(Color.BLACK, Square.A4)
+		);
+
+		Assert.assertEquals(
+				BitBoard.of(
+						Square.G4, Square.G3, Square.G2, Square.G1,
+						Square.H4, Square.H3, Square.H2, Square.H1
+				),
+				BoardConstants.getFrontSquaresOnThreeFiles(Color.BLACK, Square.H5)
+		);
+
+		Assert.assertEquals(
+				BitBoard.of(
+						Square.D1, Square.E1, Square.F1
+				),
+				BoardConstants.getFrontSquaresOnThreeFiles(Color.BLACK, Square.E2)
+		);
+	}
+
 }

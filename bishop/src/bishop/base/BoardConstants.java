@@ -417,11 +417,15 @@ public class BoardConstants {
 	}
 
 	public static int getPawnPromotionSquare(final int color, final int pawnSquare) {
-		final int rank = getPawnPromotionRank(color);
-		final int file = Square.getFile(pawnSquare);
-		final int promotionSquare = Square.onFileRank(file, rank);
+		// Rank part of promotion square.
+		//   0x38 ( = Rank.R8 << File.BIT_COUNT) for white
+		//   0x00 ( = Rank.R1 << File.BIT_COUNT) for black
+		final int rankPart = (color - 1) & 0x38;
 
-		return promotionSquare;
+		// File part of promotion square
+		final int filePart = pawnSquare & 0x07;
+
+		return rankPart | filePart;
 	}
 
 	public static int getPawnPromotionDistance(final int color, final int pawnSquare) {
@@ -431,8 +435,13 @@ public class BoardConstants {
 		return PAWN_PROMOTION_DISTANCES[index];
 	}
 
+	/**
+	 * Returns offset of rank for move of pawn with given color.
+	 * @param color color of the pawn
+	 * @return the offset (+1 for white, -1 for black)
+	 */
 	public static int getPawnRankOffset(final int color) {
-		return (color == Color.WHITE) ? 1 : -1;
+		return 1 - (color << 1);
 	}
 
 	/**
