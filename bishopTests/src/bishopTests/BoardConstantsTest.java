@@ -2,6 +2,7 @@ package bishopTests;
 
 import bishop.base.*;
 import bishop.tables.BetweenTable;
+import bishop.tables.FigureAttackTable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -368,7 +369,7 @@ public class BoardConstantsTest {
 				final int file = Square.getFile(square);
 				final int rank = Square.getRank(square);
 
-				if (rng.nextBoolean()) {
+				if (rng.nextInt(16) < 2) {
 					sourceMask |= BitBoard.of(square);
 
 					if (file < File.FH && rank < Rank.R8)
@@ -397,7 +398,7 @@ public class BoardConstantsTest {
 				final int file = Square.getFile(square);
 				final int rank = Square.getRank(square);
 
-				if (rng.nextBoolean()) {
+				if (rng.nextInt(16) < 2) {
 					sourceMask |= BitBoard.of(square);
 
 					if (file > File.FA && rank < Rank.R8)
@@ -426,7 +427,7 @@ public class BoardConstantsTest {
 				final int file = Square.getFile(square);
 				final int rank = Square.getRank(square);
 
-				if (rng.nextBoolean()) {
+				if (rng.nextInt(16) < 2) {
 					sourceMask |= BitBoard.of(square);
 
 					if (file < File.FH && rank < Rank.R8)
@@ -445,6 +446,25 @@ public class BoardConstantsTest {
 
 			Assert.assertEquals(expectedWhiteMask, BoardConstants.getPawnsAttackedSquares(Color.WHITE, sourceMask));
 			Assert.assertEquals(expectedBlackMask, BoardConstants.getPawnsAttackedSquares(Color.BLACK, sourceMask));
+		}
+	}
+
+	@Test
+	public void getKingsAttackedSquaresTest() {
+		final SplittableRandom rng = new SplittableRandom();
+
+		for (int i = 0; i < 100000; i++) {
+			long sourceMask = BitBoard.EMPTY;
+			long expectedMask = BitBoard.EMPTY;
+
+			for (int square = Square.FIRST; square < Square.LAST; square++) {
+				if (rng.nextInt(16) < 2) {
+					sourceMask |= BitBoard.of(square);
+					expectedMask |= FigureAttackTable.getItem(PieceType.KING, square);
+				}
+			}
+
+			Assert.assertEquals(expectedMask, BoardConstants.getKingsAttackedSquares(sourceMask));
 		}
 	}
 }

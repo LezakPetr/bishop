@@ -244,10 +244,8 @@ public class BoardConstants {
 		return table;
 	}
 
-	private static final long[] SQUARE_COLOR_MASKS = {WHITE_SQUARE_MASK, BLACK_SQUARE_MASK};
-
 	public static long getSquareColorMask(final int squareColor) {
-		return SQUARE_COLOR_MASKS[squareColor];
+		return WHITE_SQUARE_MASK ^ (-(long) squareColor);
 	}
 
 	/**
@@ -572,7 +570,14 @@ public class BoardConstants {
 	 * @return mask of attacked squares
 	 */
 	public static long getPawnsAttackedSquares(final int color, final long pawnsMask) {
-		return getPawnsAttackedSquaresFromLeft(color, pawnsMask) | getPawnsAttackedSquaresFromRight(color, pawnsMask);
+		final long blackMask = (long) -color;
+		final long whiteMask = ~blackMask;
+
+		final long leftPawnMask = (pawnsMask & LEFT_PAWN_CAPTURE_MASK) >>> 1;
+		final long rightPawnMask = (pawnsMask & RIGHT_PAWN_CAPTURE_MASK) << 1;
+		final long combinedMask = leftPawnMask | rightPawnMask;
+
+		return (whiteMask & (combinedMask << File.COUNT)) | (blackMask & (combinedMask >>> File.COUNT));
 	}
 
 	public static long getKingsAttackedSquares(final long kingsMask) {
