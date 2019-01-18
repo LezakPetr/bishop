@@ -3,6 +3,7 @@ package bishopTests;
 import bishop.base.*;
 import bishop.tables.BetweenTable;
 import bishop.tables.FigureAttackTable;
+import bishop.tables.PawnMoveTable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -466,5 +467,119 @@ public class BoardConstantsTest {
 
 			Assert.assertEquals(expectedMask, BoardConstants.getKingsAttackedSquares(sourceMask));
 		}
+	}
+
+	@Test
+	public void getPawnSingleMoveSquaresTest() {
+		final SplittableRandom rng = new SplittableRandom();
+
+		for (int i = 0; i < 100000; i++) {
+			final int color = rng.nextInt(Color.LAST);
+
+			long sourceMask = BitBoard.EMPTY;
+			long expectedMask = BitBoard.EMPTY;
+
+			for (int square = Square.FIRST; square < Square.LAST; square++) {
+				if (rng.nextInt(16) < 2) {
+					sourceMask |= BitBoard.of(square);
+
+					final int targetSquare = square + File.COUNT * BoardConstants.getPawnRankOffset(color);
+
+					if (Square.isValid(targetSquare))
+						expectedMask |= BitBoard.of(targetSquare);
+				}
+			}
+
+			Assert.assertEquals(expectedMask, BoardConstants.getPawnSingleMoveSquares(color, sourceMask));
+		}
+	}
+
+	@Test
+	public void getPrevEpFileMaskTest() {
+		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			for (int file = File.FIRST; file < File.LAST; file++) {
+				final long epSquareMask = BoardConstants.getPrevEpFileMask(color, file);
+
+				if (file == File.FA) {
+					Assert.assertEquals(BitBoard.EMPTY, epSquareMask);
+				} else {
+					Assert.assertEquals(1, BitBoard.getSquareCount(epSquareMask));
+
+					final int epSquare = BitBoard.getFirstSquare(epSquareMask);
+					Assert.assertEquals(file - 1, Square.getFile(epSquare));
+					Assert.assertEquals(BoardConstants.getEpRank(color), Square.getRank(epSquare));
+				}
+			}
+		}
+	}
+
+	@Test
+	public void getNextEpFileMaskTest() {
+		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			for (int file = File.FIRST; file < File.LAST; file++) {
+				final long epSquareMask = BoardConstants.getNextEpFileMask(color, file);
+
+				if (file == File.FH) {
+					Assert.assertEquals(BitBoard.EMPTY, epSquareMask);
+				} else {
+					Assert.assertEquals(1, BitBoard.getSquareCount(epSquareMask));
+
+					final int epSquare = BitBoard.getFirstSquare(epSquareMask);
+					Assert.assertEquals(file + 1, Square.getFile(epSquare));
+					Assert.assertEquals(BoardConstants.getEpRank(color), Square.getRank(epSquare));
+				}
+			}
+		}
+	}
+
+	@Test
+	public void getPieceAllowedSquaresTest() {
+		Assert.assertEquals(BoardConstants.PAWN_ALLOWED_SQUARES, BoardConstants.getPieceAllowedSquares(PieceType.PAWN));
+
+		for (int pieceType = PieceType.FIGURE_FIRST; pieceType < PieceType.FIGURE_LAST; pieceType++)
+			Assert.assertEquals(BitBoard.FULL, BoardConstants.getPieceAllowedSquares(pieceType));
+	}
+
+	@Test
+	public void getMinFileDistanceTest() {
+		Assert.assertEquals(File.LAST, BoardConstants.getMinFileDistance(0, File.FB));
+
+		final int fileMask = (1 << File.FB) | (1 << File.FC) | (1 << File.FD) | (1 << File.FH);
+		Assert.assertEquals(2, BoardConstants.getMinFileDistance(fileMask, File.FA));
+		Assert.assertEquals(1, BoardConstants.getMinFileDistance(fileMask, File.FB));
+		Assert.assertEquals(0, BoardConstants.getMinFileDistance(fileMask, File.FC));
+		Assert.assertEquals(1, BoardConstants.getMinFileDistance(fileMask, File.FD));
+		Assert.assertEquals(2, BoardConstants.getMinFileDistance(fileMask, File.FE));
+		Assert.assertEquals(2, BoardConstants.getMinFileDistance(fileMask, File.FF));
+		Assert.assertEquals(1, BoardConstants.getMinFileDistance(fileMask, File.FG));
+		Assert.assertEquals(0, BoardConstants.getMinFileDistance(fileMask, File.FH));
+	}
+
+	@Test
+	public void getKingNearSquaresTest() {
+		for (int kingSquare = Square.FIRST; kingSquare < Square.LAST; kingSquare++) {
+			long expectedMask = BitBoard.EMPTY;
+
+			for (int square = Square.FIRST; square < Square.LAST; square++) {
+				if (BoardConstants.getKingSquareDistance(kingSquare, square) <= 1)
+					expectedMask |= BitBoard.of(square);
+			}
+
+			Assert.assertEquals(expectedMask, BoardConstants.getKingNearSquares(kingSquare));
+		}
+	}
+
+	@Test
+	public void getKingSafetyFarSquaresTest() {
+		Assert.assertEquals(
+				BitBoard.fromString("f8, g8, h8, f7, g7, h7, f6, g6, h6"),
+				BoardConstants.getKingSafetyFarSquares(Square.G8)
+		);
+
+		Assert.assertEquals(
+				BitBoard.fromString("a1, b1, a2, b2, a3, b3"),
+				BoardConstants.getKingSafetyFarSquares(Square.A1)
+		);
+
 	}
 }

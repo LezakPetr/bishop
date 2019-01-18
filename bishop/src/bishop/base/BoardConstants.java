@@ -637,7 +637,7 @@ public class BoardConstants {
 
 	private static final byte[] MIN_FILE_DISTANCE_TABLE = initializeMinFileDistance();
 
-	private static final byte[] initializeMinFileDistance() {
+	private static byte[] initializeMinFileDistance() {
 		final int maxFileMask = 1 << File.LAST;
 		final byte[] table = new byte[maxFileMask * File.LAST];
 
@@ -653,7 +653,8 @@ public class BoardConstants {
 					if ((fileMask & (1 << testedFile)) != 0) {
 						if (islandBeginFile == File.NONE)
 							islandBeginFile = testedFile;
-					} else {
+					}
+					else {
 						if (islandBeginFile != File.NONE) {
 							final int islandEndFile = testedFile - 1;
 							final double islandMiddleFile = (islandBeginFile + islandEndFile) / 2.0;
