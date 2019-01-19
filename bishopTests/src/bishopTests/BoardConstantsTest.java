@@ -580,6 +580,5 @@ public class BoardConstantsTest {
 				BitBoard.fromString("a1, b1, a2, b2, a3, b3"),
 				BoardConstants.getKingSafetyFarSquares(Square.A1)
 		);
-
 	}
 }

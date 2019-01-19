@@ -1,7 +1,9 @@
 package bishop.base;
 
 import bishop.tables.FigureAttackTable;
+import utils.IntArrayBuilder;
 import utils.IntBiPredicate;
+import utils.LongArrayBuilder;
 
 /**
  * This class contains some constants related to the board.
@@ -689,6 +691,10 @@ public class BoardConstants {
 		return index;
 	}
 
+	private static long[] KING_NEAR_SQUARES = LongArrayBuilder.create(Square.LAST)
+			.fill(s -> FigureAttackTable.getItem(PieceType.KING, s) | BitBoard.getSquareMask(s))
+			.build();
+
 	/**
 	 * Returns mask of squares attacked by king on given square plus given square.
 	 *
@@ -696,7 +702,7 @@ public class BoardConstants {
 	 * @return mask of squares with king distance <= 1 from given square
 	 */
 	public static long getKingNearSquares(final int square) {
-		return FigureAttackTable.getItem(PieceType.KING, square) | BitBoard.getSquareMask(square);
+		return KING_NEAR_SQUARES[square];
 	}
 
 	public static long getKingSafetyFarSquares(final int square) {
