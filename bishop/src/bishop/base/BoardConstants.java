@@ -1,7 +1,6 @@
 package bishop.base;
 
 import bishop.tables.FigureAttackTable;
-import utils.IntArrayBuilder;
 import utils.IntBiPredicate;
 import utils.LongArrayBuilder;
 
@@ -257,18 +256,37 @@ public class BoardConstants {
 	}
 
 	public static int getPawnInitialSquare(final int color, final int file) {
-		final int rank = (color == Color.WHITE) ? Rank.R2 : Rank.R7;
+		return Square.onFileRank(file, Rank.getAbsolute(Rank.R2, color));
+	}
 
-		return Square.onFileRank(file, rank);
+	private static final byte[] KING_SQUARE_DISTANCES = initializeKingSquareDistances();
+
+	private static byte[] initializeKingSquareDistances() {
+		final byte[] table = new byte[Square.LAST * Square.LAST];
+
+		for (int beginSquare = Square.FIRST; beginSquare < Square.LAST; beginSquare++) {
+			for (int endSquare = Square.FIRST; endSquare < Square.LAST; endSquare++) {
+				final int beginFile = Square.getFile(beginSquare);
+				final int beginRank = Square.getRank(beginSquare);
+				final int endFile = Square.getFile(endSquare);
+				final int endRank = Square.getRank(endSquare);
+
+				final int index = getTwoSquaresIndex(beginSquare, endSquare);
+				table[index] = (byte) Math.max(Math.abs(beginFile - endFile), Math.abs(beginRank - endRank));
+			}
+		}
+
+		return table;
 	}
 
 	public static int getKingSquareDistance(final int beginSquare, final int endSquare) {
-		final int beginFile = Square.getFile(beginSquare);
-		final int beginRank = Square.getRank(beginSquare);
-		final int endFile = Square.getFile(endSquare);
-		final int endRank = Square.getRank(endSquare);
+		final int index = getTwoSquaresIndex(beginSquare, endSquare);
 
-		return Math.max(Math.abs(beginFile - endFile), Math.abs(beginRank - endRank));
+		return KING_SQUARE_DISTANCES[index];
+	}
+
+	private static int getTwoSquaresIndex(int beginSquare, int endSquare) {
+		return (beginSquare << Square.BIT_COUNT) + endSquare;
 	}
 
 	/**
