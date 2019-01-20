@@ -271,12 +271,14 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 
 		final int castlingType = (beginSquare > targetSquare) ? CastlingType.LONG : CastlingType.SHORT;
 
-		final long kingChanges = CastlingConstants.getCastlingKingChangeMask(onTurn, castlingType);
-		final long rookChanges = CastlingConstants.getCastlingRookChangeMask(onTurn, castlingType);
+		final CastlingConstants castlingConstants = CastlingConstants.of(onTurn, castlingType);
+
+		final long kingChanges = castlingConstants.getKingChangeMask();
+		final long rookChanges = castlingConstants.getRookChangeMask();
 		final long occupancyChanges = kingChanges ^ rookChanges;
-		
-		final int rookBeginSquare = CastlingConstants.getCastlingRookBeginSquare(onTurn, castlingType);
-		final int rookTargetSquare = CastlingConstants.getCastlingRookTargetSquare(onTurn, castlingType);
+
+		final int rookBeginSquare = castlingConstants.getRookBeginSquare();
+		final int rookTargetSquare = castlingConstants.getRookTargetSquare();
 		
 		caching.movePiece(onTurn, PieceType.KING, beginSquare, targetSquare);
 		caching.movePiece(onTurn, PieceType.ROOK, rookBeginSquare, rookTargetSquare);
@@ -316,12 +318,14 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		// Piece masks
 		final int castlingType = (beginSquare > targetSquare) ? CastlingType.LONG : CastlingType.SHORT;
 
-		final long kingChanges = CastlingConstants.getCastlingKingChangeMask(onTurn, castlingType);
-		final long rookChanges = CastlingConstants.getCastlingRookChangeMask(onTurn, castlingType);
+		final CastlingConstants castlingConstants = CastlingConstants.of(onTurn, castlingType);
+
+		final long kingChanges = castlingConstants.getKingChangeMask();
+		final long rookChanges = castlingConstants.getRookChangeMask();
 		final long occupancyChanges = kingChanges ^ rookChanges;
-		
-		final int rookBeginSquare = CastlingConstants.getCastlingRookBeginSquare(onTurn, castlingType);
-		final int rookTargetSquare = CastlingConstants.getCastlingRookTargetSquare(onTurn, castlingType);
+
+		final int rookBeginSquare = castlingConstants.getRookBeginSquare();
+		final int rookTargetSquare = castlingConstants.getRookTargetSquare();
 		
 		caching.movePiece(onTurn, PieceType.KING, targetSquare, beginSquare);
 		caching.movePiece(onTurn, PieceType.ROOK, rookTargetSquare, rookBeginSquare);
