@@ -335,7 +335,7 @@ public final class Move implements Comparable<Move> {
 			if (castlingRights.isRightForColor(onTurn) && !position.isCheck()) {
 				// Now it is verified that the beginSquare == E1 or E8 (movingPieceType is king and king has not dropped castling rights)
 				for (int castlingType = CastlingType.FIRST; castlingType < CastlingType.LAST; castlingType++) {
-					if (targetSquare == BoardConstants.getCastlingKingTargetSquare(onTurn, castlingType) &&
+					if (targetSquare == CastlingConstants.getCastlingKingTargetSquare(onTurn, castlingType) &&
 					    PseudoLegalMoveGenerator.isCastlingPossible(position, castlingType)) {
 						
 						initialize(position.getCastlingRights().getIndex(), epFile);

@@ -40,51 +40,11 @@ public class BoardConstants {
 	private static final long[] FIRST_RANK_MASKS = inititalizeFirstRankMasks();
 	private static final long[] SECOND_RANK_MASKS = inititalizeSecondRankMasks();
 
-	public static final int MAX_KING_SQUARE_DISTANCE = 7;
-
 	// Mask of squares where pawn can capture to the left and to the right.
 	// First and eight rank must be preserved to be able to calculate reverse
 	// attacks.
 	public static final long LEFT_PAWN_CAPTURE_MASK = ~FILE_A_MASK;
 	public static final long RIGHT_PAWN_CAPTURE_MASK = ~FILE_H_MASK;
-
-	// Mask of squares between king and rook before castling.
-	private static final long[] TABLE_CASTLING_MIDDLE_SQUARE_MASK = {
-			// White
-			BitBoard.getSquareMask(Square.F1) | BitBoard.getSquareMask(Square.G1),
-			BitBoard.getSquareMask(Square.B1) | BitBoard.getSquareMask(Square.C1) | BitBoard.getSquareMask(Square.D1),
-
-			// Black
-			BitBoard.getSquareMask(Square.F8) | BitBoard.getSquareMask(Square.G8),
-			BitBoard.getSquareMask(Square.B8) | BitBoard.getSquareMask(Square.C8) | BitBoard.getSquareMask(Square.D8)};
-
-	// Begin squares of rook in castling.
-	private static final int[] TABLE_CASTLING_ROOK_BEGIN_SQUARE = {Square.H1, Square.A1, Square.H8, Square.A8};
-
-	// Begin squares of king in the castling.
-	private static final int[] TABLE_CASTLING_KING_BEGIN_SQUARE = {Square.E1, Square.E8};
-
-	// Target squares of king in castling.
-	private static final int[] TABLE_CASTLING_KING_TARGET_SQUARE = {Square.G1, Square.C1, Square.G8, Square.C8};
-
-	// Middle squares of king in castling.
-	private static final int[] TABLE_CASTLING_KING_MIDDLE_SQUARE = {Square.F1, Square.D1, Square.F8, Square.D8};
-
-	// Contains changes of king mask for given type of castling.
-	private static final long[] TABLE_CASTLING_KING_CHANGE_MASK = {
-			BitBoard.getSquareMask(Square.E1) | BitBoard.getSquareMask(Square.G1),
-			BitBoard.getSquareMask(Square.E1) | BitBoard.getSquareMask(Square.C1),
-
-			BitBoard.getSquareMask(Square.E8) | BitBoard.getSquareMask(Square.G8),
-			BitBoard.getSquareMask(Square.E8) | BitBoard.getSquareMask(Square.C8)};
-
-	// Contains changes of king mask for given type of castling.
-	private static final long[] TABLE_CASTLING_ROOK_CHANGE_MASK = {
-			BitBoard.getSquareMask(Square.H1) | BitBoard.getSquareMask(Square.F1),
-			BitBoard.getSquareMask(Square.A1) | BitBoard.getSquareMask(Square.D1),
-
-			BitBoard.getSquareMask(Square.H8) | BitBoard.getSquareMask(Square.F8),
-			BitBoard.getSquareMask(Square.A8) | BitBoard.getSquareMask(Square.D8)};
 
 	private static final long[] TABLE_EP_RANK_MASKS = initializeTableEpRankMasks();
 
@@ -248,101 +208,6 @@ public class BoardConstants {
 
 	public static long getSquareColorMask(final int squareColor) {
 		return WHITE_SQUARE_MASK ^ (-(long) squareColor);
-	}
-
-	/**
-	 * Returns mask of squares between king and rook before castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return required mask
-	 */
-	public static long getCastlingMiddleSquareMask(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_MIDDLE_SQUARE_MASK[index];
-	}
-
-	/**
-	 * Return begin square of rook in castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return begin square of rook
-	 */
-	public static int getCastlingRookBeginSquare(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_ROOK_BEGIN_SQUARE[index];
-	}
-
-	/**
-	 * Return target square of rook in castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return target square of rook
-	 */
-	public static int getCastlingRookTargetSquare(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_KING_MIDDLE_SQUARE[index];   // Same as rook target square
-	}
-
-	public static int getCastlingKingBeginSquare(final int color) {
-		return TABLE_CASTLING_KING_BEGIN_SQUARE[color];
-	}
-
-	/**
-	 * Return target square of king in castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return target square of king
-	 */
-	public static int getCastlingKingTargetSquare(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_KING_TARGET_SQUARE[index];
-	}
-
-	/**
-	 * Return target square of king in castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return target square of king
-	 */
-	public static int getCastlingKingMiddleSquare(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_KING_MIDDLE_SQUARE[index];
-	}
-
-	/**
-	 * Returns changes of king mask for given type of castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return required mask
-	 */
-	public static long getCastlingKingChangeMask(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_KING_CHANGE_MASK[index];
-	}
-
-	/**
-	 * Returns changes of king mask for given type of castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return required mask
-	 */
-	public static long getCastlingRookChangeMask(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_ROOK_CHANGE_MASK[index];
 	}
 
 	public static long getRankMask(final int rank) {

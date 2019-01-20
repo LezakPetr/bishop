@@ -294,7 +294,7 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
 
     	for (int castlingType = CastlingType.FIRST; castlingType < CastlingType.LAST; castlingType++) {
     		if (isCastlingPossible(position, castlingType)) {
-  				final int kingTargetSquare = BoardConstants.getCastlingKingTargetSquare(onTurn, castlingType);
+  				final int kingTargetSquare = CastlingConstants.getCastlingKingTargetSquare(onTurn, castlingType);
   				move.finishCastling(kingTargetSquare);
 
   				if (!walker.processMove(move))
@@ -320,9 +320,9 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     	final long occupancy = position.getOccupancy();
     	final int onTurn = position.getOnTurn();
 
-  		if (castlingRights.isRight(onTurn, castlingType) && (occupancy & BoardConstants.getCastlingMiddleSquareMask(onTurn, castlingType)) == 0) {
+  		if (castlingRights.isRight(onTurn, castlingType) && (occupancy & CastlingConstants.getCastlingMiddleSquareMask(onTurn, castlingType)) == 0) {
   			// We should test square that king goes across. This is same square as rook destination square.
-  			final int testSquare = BoardConstants.getCastlingKingMiddleSquare(onTurn, castlingType);
+  			final int testSquare = CastlingConstants.getCastlingKingMiddleSquare(onTurn, castlingType);
   			final int oppositeColor = Color.getOppositeColor(onTurn);
   			
   			if (!position.isSquareAttacked (oppositeColor, testSquare))

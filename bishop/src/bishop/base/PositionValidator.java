@@ -93,8 +93,8 @@ public class PositionValidator {
 		final long kingMask = position.getPiecesMask(color, PieceType.KING);
 		final long rookMask = position.getPiecesMask(color, PieceType.ROOK);
 
-		final int rookBeginSquare = BoardConstants.getCastlingRookBeginSquare(color, type);
-		final int kingBeginSquare = BoardConstants.getCastlingKingBeginSquare(color);
+		final int rookBeginSquare = CastlingConstants.getCastlingRookBeginSquare(color, type);
+		final int kingBeginSquare = CastlingConstants.getCastlingKingBeginSquare(color);
 		
 		final boolean rookOk = (rookMask & BitBoard.getSquareMask(rookBeginSquare)) != 0;
 		final boolean kingOk = (kingMask & BitBoard.getSquareMask(kingBeginSquare)) != 0;

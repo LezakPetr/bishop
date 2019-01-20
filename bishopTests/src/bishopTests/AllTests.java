@@ -24,6 +24,7 @@ public class AllTests {
 		RankTest.class,
 		SquareTest.class,
 		BoardConstantsTest.class,
+		CastlingConstantsTest.class,
 		ImmutableOrdinalMapTest.class,
 		IntUtilsTest.class,
 		MixerTest.class,

@@ -145,7 +145,7 @@ public class StandardAlgebraicNotationReader extends StandardAlgebraicNotationBa
 		parser.filterByMoveType (MoveType.CASTLING);
 		
 		final int onTurn = position.getOnTurn();
-		final int targetSquare = BoardConstants.getCastlingKingTargetSquare(onTurn, castlingType);
+		final int targetSquare = CastlingConstants.getCastlingKingTargetSquare(onTurn, castlingType);
 		
 		parser.filterByTargetSquare(targetSquare);
 	}
