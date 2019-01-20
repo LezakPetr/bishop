@@ -20,6 +20,11 @@ public class AllTests {
 	
 	private static final Class<?>[] classArray = {
 		ColorTest.class,
+		FileTest.class,
+		RankTest.class,
+		SquareTest.class,
+		BoardConstantsTest.class,
+		CastlingConstantsTest.class,
 		ImmutableOrdinalMapTest.class,
 		IntUtilsTest.class,
 		MixerTest.class,

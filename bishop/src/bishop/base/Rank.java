@@ -70,7 +70,7 @@ public class Rank {
 	}
 
 	public static int getAbsolute(final int relativeRank, final int color) {
-		return (color == Color.WHITE) ? relativeRank : getOppositeRank(relativeRank);
+		return (relativeRank ^ (-color)) & 0x07;
 	}
 	
 	public static int getRelative(final int absoluteRank, final int color) {

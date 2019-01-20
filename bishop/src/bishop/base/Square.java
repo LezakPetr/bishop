@@ -117,7 +117,7 @@ public class Square {
 	 * @return rank of square
 	 */
 	public static int getRank (final int square) {
-		return square >> 3;
+		return square >>> 3;
 	}
 	
 	/**
@@ -136,11 +136,20 @@ public class Square {
 	 * @return opposite square
 	 */
 	public static int getOppositeSquare (final int square) {
-		final int rank = Square.getRank(square);
-		final int file = Square.getFile(square);
-		final int oppositeSquare = Square.onFileRank(file, Rank.getOppositeRank (rank));
-		
-		return oppositeSquare;
+		// We need to reverse rank:
+		// oppositeSquare = ((7 - rank) << 3) | file
+
+		// Replace negation of rank with bit inverse and add one
+		// oppositeSquare = ((7 + ~rank + 1) << 3) | file
+
+		// Replace file and rank with parts of square
+		// oppositeSquare = ((~(square >>> 3) + 8) << 3) | (square & 0x07)
+		// oppositeSquare = (~square & ~0x07) + 64) | (square & 0x07)
+		// oppositeSquare = ((~square & ~0x07) | (square & 0x07)) + 64
+
+		// We are inverting all bits of square except lower 3. We can achieve this by single XOR.
+		// oppositeSquare = (square ^ ~0x07) + 64
+		return (square ^ ~0x7) + 64;
 	}
 	
 	/**
@@ -163,7 +172,7 @@ public class Square {
 		return Square.onFileRank(file, rank);
 	}
 	
-	public static final String toString (final int square) {
+	public static String toString (final int square) {
 		final StringWriter stringWriter = new StringWriter();
 		final PrintWriter printWriter = new PrintWriter(stringWriter);
 		write(printWriter, square);

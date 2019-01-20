@@ -1,7 +1,9 @@
 package bishop.base;
 
 import bishop.tables.FigureAttackTable;
+import utils.IntArrayBuilder;
 import utils.IntBiPredicate;
+import utils.LongArrayBuilder;
 
 /**
  * This class contains some constants related to the board.
@@ -38,57 +40,11 @@ public class BoardConstants {
 	private static final long[] FIRST_RANK_MASKS = inititalizeFirstRankMasks();
 	private static final long[] SECOND_RANK_MASKS = inititalizeSecondRankMasks();
 
-	public static final int MAX_KING_SQUARE_DISTANCE = 7;
-
 	// Mask of squares where pawn can capture to the left and to the right.
 	// First and eight rank must be preserved to be able to calculate reverse
 	// attacks.
 	public static final long LEFT_PAWN_CAPTURE_MASK = ~FILE_A_MASK;
 	public static final long RIGHT_PAWN_CAPTURE_MASK = ~FILE_H_MASK;
-
-	// Mask of squares between king and rook before castling.
-	private static final long[] TABLE_CASTLING_MIDDLE_SQUARE_MASK = {
-			// White
-			BitBoard.getSquareMask(Square.F1) | BitBoard.getSquareMask(Square.G1),
-			BitBoard.getSquareMask(Square.B1) | BitBoard.getSquareMask(Square.C1) | BitBoard.getSquareMask(Square.D1),
-
-			// Black
-			BitBoard.getSquareMask(Square.F8) | BitBoard.getSquareMask(Square.G8),
-			BitBoard.getSquareMask(Square.B8) | BitBoard.getSquareMask(Square.C8) | BitBoard.getSquareMask(Square.D8)};
-
-	// Begin squares of rook in castling.
-	private static final int[] TABLE_CASTLING_ROOK_BEGIN_SQUARE = {Square.H1, Square.A1, Square.H8, Square.A8};
-
-	// Target squares of rook in castling.
-	private static final int[] TABLE_CASTLING_ROOK_TARGET_SQUARE = {Square.F1, Square.D1, Square.F8, Square.D8};
-
-	// Begin squares of king in the castling.
-	private static final int[] TABLE_CASTLING_KING_BEGIN_SQUARE = {Square.E1, Square.E8};
-
-	// Target squares of king in castling.
-	private static final int[] TABLE_CASTLING_KING_TARGET_SQUARE = {Square.G1, Square.C1, Square.G8, Square.C8};
-
-	// Middle squares of king in castling.
-	private static final int[] TABLE_CASTLING_KING_MIDDLE_SQUARE = {Square.F1, Square.D1, Square.F8, Square.D8};
-
-	// Contains changes of king mask for given type of castling.
-	private static final long[] TABLE_CASTLING_KING_CHANGE_MASK = {
-			BitBoard.getSquareMask(Square.E1) | BitBoard.getSquareMask(Square.G1),
-			BitBoard.getSquareMask(Square.E1) | BitBoard.getSquareMask(Square.C1),
-
-			BitBoard.getSquareMask(Square.E8) | BitBoard.getSquareMask(Square.G8),
-			BitBoard.getSquareMask(Square.E8) | BitBoard.getSquareMask(Square.C8)};
-
-	// Contains changes of king mask for given type of castling.
-	private static final long[] TABLE_CASTLING_ROOK_CHANGE_MASK = {
-			BitBoard.getSquareMask(Square.H1) | BitBoard.getSquareMask(Square.F1),
-			BitBoard.getSquareMask(Square.A1) | BitBoard.getSquareMask(Square.D1),
-
-			BitBoard.getSquareMask(Square.H8) | BitBoard.getSquareMask(Square.F8),
-			BitBoard.getSquareMask(Square.A8) | BitBoard.getSquareMask(Square.D8)};
-
-	// Contains ranks where pawns of given color moves by two squares.
-	private static final int[] TABLE_EP_RANKS = {Rank.R4, Rank.R5};
 
 	private static final long[] TABLE_EP_RANK_MASKS = initializeTableEpRankMasks();
 
@@ -96,7 +52,7 @@ public class BoardConstants {
 		final long[] table = new long[Color.LAST];
 
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final int rank = TABLE_EP_RANKS[color];
+			final int rank = getEpRank(color);
 			long mask = 0;
 
 			for (int file = File.FIRST; file < File.LAST; file++) {
@@ -250,105 +206,8 @@ public class BoardConstants {
 		return table;
 	}
 
-	private static final long[] SQUARE_COLOR_MASKS = {WHITE_SQUARE_MASK, BLACK_SQUARE_MASK};
-
 	public static long getSquareColorMask(final int squareColor) {
-		return SQUARE_COLOR_MASKS[squareColor];
-	}
-
-	/**
-	 * Returns mask of squares between king and rook before castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return required mask
-	 */
-	public static long getCastlingMiddleSquareMask(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_MIDDLE_SQUARE_MASK[index];
-	}
-
-	/**
-	 * Return begin square of rook in castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return begin square of rook
-	 */
-	public static int getCastlingRookBeginSquare(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_ROOK_BEGIN_SQUARE[index];
-	}
-
-	/**
-	 * Return target square of rook in castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return target square of rook
-	 */
-	public static int getCastlingRookTargetSquare(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_ROOK_TARGET_SQUARE[index];
-	}
-
-	public static int getCastlingKingBeginSquare(final int color) {
-		return TABLE_CASTLING_KING_BEGIN_SQUARE[color];
-	}
-
-	/**
-	 * Return target square of king in castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return target square of king
-	 */
-	public static int getCastlingKingTargetSquare(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_KING_TARGET_SQUARE[index];
-	}
-
-	/**
-	 * Return target square of king in castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return target square of king
-	 */
-	public static int getCastlingKingMiddleSquare(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_KING_MIDDLE_SQUARE[index];
-	}
-
-	/**
-	 * Returns changes of king mask for given type of castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return required mask
-	 */
-	public static long getCastlingKingChangeMask(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_KING_CHANGE_MASK[index];
-	}
-
-	/**
-	 * Returns changes of king mask for given type of castling.
-	 *
-	 * @param color        color of player
-	 * @param castlingType type of castling
-	 * @return required mask
-	 */
-	public static long getCastlingRookChangeMask(final int color, final int castlingType) {
-		final int index = (color << CastlingType.BIT_COUNT) + castlingType;
-
-		return TABLE_CASTLING_ROOK_CHANGE_MASK[index];
+		return WHITE_SQUARE_MASK ^ (-(long) squareColor);
 	}
 
 	public static long getRankMask(final int rank) {
@@ -366,7 +225,7 @@ public class BoardConstants {
 	 * @return Rank.R4 for white or Rank.R5 for black
 	 */
 	public static int getEpRank(final int color) {
-		return TABLE_EP_RANKS[color];
+		return Rank.R4 + color;
 	}
 
 	/**
@@ -419,15 +278,19 @@ public class BoardConstants {
 	 * @return promotion rank
 	 */
 	public static int getPawnPromotionRank(final int color) {
-		return (color == Color.WHITE) ? Rank.R8 : Rank.R1;
+		return (color - 1) & 0x07;
 	}
 
 	public static int getPawnPromotionSquare(final int color, final int pawnSquare) {
-		final int rank = getPawnPromotionRank(color);
-		final int file = Square.getFile(pawnSquare);
-		final int promotionSquare = Square.onFileRank(file, rank);
+		// Rank part of promotion square.
+		//   0x38 ( = Rank.R8 << File.BIT_COUNT) for white
+		//   0x00 ( = Rank.R1 << File.BIT_COUNT) for black
+		final int rankPart = (color - 1) & 0x38;
 
-		return promotionSquare;
+		// File part of promotion square
+		final int filePart = pawnSquare & 0x07;
+
+		return rankPart | filePart;
 	}
 
 	public static int getPawnPromotionDistance(final int color, final int pawnSquare) {
@@ -437,12 +300,13 @@ public class BoardConstants {
 		return PAWN_PROMOTION_DISTANCES[index];
 	}
 
+	/**
+	 * Returns offset of rank for move of pawn with given color.
+	 * @param color color of the pawn
+	 * @return the offset (+1 for white, -1 for black)
+	 */
 	public static int getPawnRankOffset(final int color) {
-		return (color == Color.WHITE) ? 1 : -1;
-	}
-
-	public static int getPawnSquareOffset(final int color) {
-		return (color == Color.WHITE) ? File.COUNT : -File.COUNT;
+		return 1 - (color << 1);
 	}
 
 	/**
@@ -529,7 +393,7 @@ public class BoardConstants {
 		return SECOND_RANK_MASKS[color];
 	}
 
-	public static long[] inititalizeFirstRankMasks() {
+	private static long[] inititalizeFirstRankMasks() {
 		final long[] table = new long[Color.LAST];
 
 		table[Color.WHITE] = RANK_1_MASK;
@@ -538,37 +402,13 @@ public class BoardConstants {
 		return table;
 	}
 
-	public static long[] inititalizeSecondRankMasks() {
+	private static long[] inititalizeSecondRankMasks() {
 		final long[] table = new long[Color.LAST];
 
 		table[Color.WHITE] = RANK_2_MASK;
 		table[Color.BLACK] = RANK_7_MASK;
 
 		return table;
-	}
-
-	/**
-	 * Returns distance of given square from board edge.
-	 *
-	 * @param square square
-	 * @return 0 <= distance <= 3
-	 */
-	public static int getSquareEdgeDistance(final int square) {
-		final int file = Square.getFile(square);
-		final int rank = Square.getRank(square);
-		final int minFileDistance = file - File.FA;
-		final int maxFileDistance = File.FH - file;
-		final int minRankDistance = rank - Rank.R1;
-		final int maxRankDistance = Rank.R8 - rank;
-
-		final int fileDistance = Math.min(minFileDistance, maxFileDistance);
-		final int rankDistance = Math.min(minRankDistance, maxRankDistance);
-
-		return Math.min(fileDistance, rankDistance);
-	}
-
-	public static int getSourceEpSquare(final int color, final int file) {
-		return getEpSquare(color, file);
 	}
 
 	public static long getPawnsAttackedSquaresFromLeft(final int color, final long pawnsMask) {
@@ -597,7 +437,14 @@ public class BoardConstants {
 	 * @return mask of attacked squares
 	 */
 	public static long getPawnsAttackedSquares(final int color, final long pawnsMask) {
-		return getPawnsAttackedSquaresFromLeft(color, pawnsMask) | getPawnsAttackedSquaresFromRight(color, pawnsMask);
+		final long blackMask = (long) -color;
+		final long whiteMask = ~blackMask;
+
+		final long leftPawnMask = (pawnsMask & LEFT_PAWN_CAPTURE_MASK) >>> 1;
+		final long rightPawnMask = (pawnsMask & RIGHT_PAWN_CAPTURE_MASK) << 1;
+		final long combinedMask = leftPawnMask | rightPawnMask;
+
+		return (whiteMask & (combinedMask << File.COUNT)) | (blackMask & (combinedMask >>> File.COUNT));
 	}
 
 	public static long getKingsAttackedSquares(final long kingsMask) {
@@ -657,7 +504,7 @@ public class BoardConstants {
 
 	private static final byte[] MIN_FILE_DISTANCE_TABLE = initializeMinFileDistance();
 
-	private static final byte[] initializeMinFileDistance() {
+	private static byte[] initializeMinFileDistance() {
 		final int maxFileMask = 1 << File.LAST;
 		final byte[] table = new byte[maxFileMask * File.LAST];
 
@@ -673,7 +520,8 @@ public class BoardConstants {
 					if ((fileMask & (1 << testedFile)) != 0) {
 						if (islandBeginFile == File.NONE)
 							islandBeginFile = testedFile;
-					} else {
+					}
+					else {
 						if (islandBeginFile != File.NONE) {
 							final int islandEndFile = testedFile - 1;
 							final double islandMiddleFile = (islandBeginFile + islandEndFile) / 2.0;
@@ -708,6 +556,10 @@ public class BoardConstants {
 		return index;
 	}
 
+	private static long[] KING_NEAR_SQUARES = LongArrayBuilder.create(Square.LAST)
+			.fill(s -> FigureAttackTable.getItem(PieceType.KING, s) | BitBoard.getSquareMask(s))
+			.build();
+
 	/**
 	 * Returns mask of squares attacked by king on given square plus given square.
 	 *
@@ -715,7 +567,7 @@ public class BoardConstants {
 	 * @return mask of squares with king distance <= 1 from given square
 	 */
 	public static long getKingNearSquares(final int square) {
-		return FigureAttackTable.getItem(PieceType.KING, square) | BitBoard.getSquareMask(square);
+		return KING_NEAR_SQUARES[square];
 	}
 
 	public static long getKingSafetyFarSquares(final int square) {

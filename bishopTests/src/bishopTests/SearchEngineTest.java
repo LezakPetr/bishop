@@ -6,18 +6,9 @@ import java.io.StringReader;
 import java.util.function.Supplier;
 
 import bishop.base.*;
+import bishop.engine.*;
 import org.junit.Assert;
 import org.junit.Test;
-
-import bishop.engine.AlgebraicPositionEvaluation;
-import bishop.engine.Evaluation;
-import bishop.engine.IPositionEvaluation;
-import bishop.engine.MaterialPositionEvaluator;
-import bishop.engine.RepeatedPositionRegister;
-import bishop.engine.SearchResult;
-import bishop.engine.SearchSettings;
-import bishop.engine.SearchTask;
-import bishop.engine.SerialSearchEngine;
 
 public class SearchEngineTest {
 	private static final PieceTypeEvaluations pte = PieceTypeEvaluations.DEFAULT;
@@ -44,9 +35,7 @@ public class SearchEngineTest {
 		new TestValue("2k5/8/2K1R3/8/8/8/8/8 w - - 0 1", 0, Evaluation.getMateEvaluation(1), "e6e8"),
 		new TestValue("7k/8/8/6RK/8/8/8/8 w - - 0 1", 5, Evaluation.getMateEvaluation(5), "h5g6"),
 		new TestValue("8/8/8/8/6rk/8/8/7K b - - 0 1", 5, Evaluation.getMateEvaluation(5), "h4g3"),
-		new TestValue("8/1k1KQ3/8/8/8/8/8/8 b - - 0 1", 7, -Evaluation.getMateEvaluation(6), "b7b6"),
-		new TestValue("QR6/7k/8/8/7q/8/6P1/6K1 b - - 0 1", 4, Evaluation.DRAW_BY_REPETITION, "h4e1"),
-		new TestValue("8/1k1K3R/8/8/8/8/8/8 w - - 0 1", 7, Evaluation.getMateEvaluation(7), "h7h6")
+		new TestValue("QR6/7k/8/8/7q/8/6P1/6K1 b - - 0 1", 4, Evaluation.DRAW_BY_REPETITION, "h4e1")
 	};
 
 	@Test
@@ -98,10 +87,10 @@ public class SearchEngineTest {
 
 	public void runTest() throws IOException, InterruptedException {
 		final SerialSearchEngine engine = configureEngine(true);
-		
+
 		// Prewarm
 		final long prewarmNodeCount = doCalculation(engine);
-		
+
 		// Measure
 		final long beginTime = System.currentTimeMillis();
 		final long measureNodeCount = doCalculation(engine);
