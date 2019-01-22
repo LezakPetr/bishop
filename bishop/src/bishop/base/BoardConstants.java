@@ -36,8 +36,15 @@ public class BoardConstants {
 	public static final long WHITE_SQUARE_MASK = 0x55AA55AA55AA55AAL;
 	public static final long BLACK_SQUARE_MASK = 0xAA55AA55AA55AA55L;
 
-	private static final long[] FIRST_RANK_MASKS = inititalizeFirstRankMasks();
-	private static final long[] SECOND_RANK_MASKS = inititalizeSecondRankMasks();
+	private static final long[] FIRST_RANK_MASKS = LongArrayBuilder.create(Color.LAST)
+			.put(Color.WHITE, RANK_1_MASK)
+			.put(Color.BLACK, RANK_8_MASK)
+			.build();
+
+	private static final long[] SECOND_RANK_MASKS = LongArrayBuilder.create(Color.LAST)
+			.put(Color.WHITE, RANK_2_MASK)
+			.put(Color.BLACK, RANK_7_MASK)
+			.build();
 
 	// Mask of squares where pawn can capture to the left and to the right.
 	// First and eight rank must be preserved to be able to calculate reverse
@@ -235,9 +242,7 @@ public class BoardConstants {
 	 * @return EP square
 	 */
 	public static int getEpSquare(final int color, final int file) {
-		final int rank = getEpRank(color);
-
-		return Square.onFileRank(file, rank);
+		return Square.A4 + (color << File.BIT_COUNT) + file;
 	}
 
 	/**
@@ -248,7 +253,9 @@ public class BoardConstants {
 	 * @return EP target square
 	 */
 	public static int getEpTargetSquare(final int color, final int epFile) {
-		return Square.onFileRank(epFile, Rank.getAbsolute(Rank.R3, color));
+		final int colorComponent = (-color) & 24;   // White = 0; Black = 24
+
+		return Square.A3 + colorComponent + epFile;
 	}
 
 	public static long getEpRankMask(final int color) {
@@ -409,24 +416,6 @@ public class BoardConstants {
 	 */
 	public static long getSecondRankMask(final int color) {
 		return SECOND_RANK_MASKS[color];
-	}
-
-	private static long[] inititalizeFirstRankMasks() {
-		final long[] table = new long[Color.LAST];
-
-		table[Color.WHITE] = RANK_1_MASK;
-		table[Color.BLACK] = RANK_8_MASK;
-
-		return table;
-	}
-
-	private static long[] inititalizeSecondRankMasks() {
-		final long[] table = new long[Color.LAST];
-
-		table[Color.WHITE] = RANK_2_MASK;
-		table[Color.BLACK] = RANK_7_MASK;
-
-		return table;
 	}
 
 	public static long getPawnsAttackedSquaresFromLeft(final int color, final long pawnsMask) {

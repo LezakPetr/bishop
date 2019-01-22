@@ -10,7 +10,7 @@ public class LongArrayBuilder {
 		array = new long[size];
 	}
 
-	public LongArrayBuilder put (final int index, final int value) {
+	public LongArrayBuilder put (final int index, final long value) {
 		array[index] = value;
 
 		return this;
