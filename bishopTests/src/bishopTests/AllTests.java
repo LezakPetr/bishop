@@ -26,6 +26,7 @@ public class AllTests {
 		BoardConstantsTest.class,
 		CastlingConstantsTest.class,
 		BitLoopTest.class,
+		MaxKingDistanceCalculatorTest.class,
 		ImmutableOrdinalMapTest.class,
 		IntUtilsTest.class,
 		MixerTest.class,
