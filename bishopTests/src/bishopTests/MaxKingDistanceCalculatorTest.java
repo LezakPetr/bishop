@@ -17,5 +17,13 @@ public class MaxKingDistanceCalculatorTest {
 	@Test
 	public void getMaxKingDistanceTest() {
 		testGetMaxKingDistance(Square.E4, "a1, a8, h1, h8", 4);
+		testGetMaxKingDistance(Square.E5, "a1, a8, h1, h8", 4);
+		testGetMaxKingDistance(Square.F3, "a1, a8, h1, h8", 5);
+		testGetMaxKingDistance(Square.G2, "a1, a8, h1, h8", 6);
+		testGetMaxKingDistance(Square.H1, "a1, a8, h1, h8", 7);
+		testGetMaxKingDistance(Square.D1, "d1", 0);
+		testGetMaxKingDistance(Square.D2, "d1, e1", 1);
+		testGetMaxKingDistance(Square.E3, "d1, e1", 2);
+		testGetMaxKingDistance(Square.B4, "d1, e1", 3);
 	}
 }
