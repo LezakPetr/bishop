@@ -80,6 +80,16 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		if (gameStage == GameStage.PAWNS_ONLY) {
 			positionalEvaluation.addSubEvaluation(pawnRaceEvaluator.evaluate(position));
 		}
+
+		// Max king-pawn distance
+		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			final int kingSquare = position.getKingPosition(color);
+			final int oppositeColor = Color.getOppositeColor(color);
+			final long oppositePawnMask = position.getPiecesMask(oppositeColor, PieceType.PAWN);
+			final int maxDistance = MaxKingDistanceCalculator.getMaxKingDistance(kingSquare, oppositePawnMask);
+
+			positionalEvaluation.addCoeff(gameStageCoeffs.maxKingPawnDistance, color, maxDistance);
+		}
 	}
 	
 	@Override
