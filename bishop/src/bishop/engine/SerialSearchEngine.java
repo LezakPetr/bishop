@@ -161,7 +161,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				evaluation = Evaluation.MAX;
 		}
 
-		public void alphaBetaInLegalPosition(final int horizon) {
+		private void alphaBetaInLegalPosition(final int horizon) {
 			final int onTurn = currentPosition.getOnTurn();
 			final int oppositeColor = Color.getOppositeColor(onTurn);
 
@@ -176,8 +176,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			final int reducedHorizon = shouldReduceHorizon(horizon) ? 0 : horizon;
 			isQuiescenceSearch = (reducedHorizon <= 0);
-
-			final boolean isFirstQuiescence = isQuiescenceSearch && depth > 0 && !previousRecord.isQuiescenceSearch;
 
 			final int ownKingSquare = currentPosition.getKingPosition(onTurn);
 			final boolean isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
@@ -207,7 +205,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					if (evaluation > beta) {
 						final int mateEvaluation = Evaluation.getMateEvaluation(depth);
-						checkMate(isCheck, mateEvaluation);
+						checkMateAndStalemate(isCheck, mateEvaluation);
 
 						return;
 					}
@@ -317,7 +315,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					}
 
 					final int mateEvaluation = Evaluation.getMateEvaluation(depth);
-					checkMate(isCheck, mateEvaluation);
+					checkMateAndStalemate(isCheck, mateEvaluation);
 				}
 			}
 			finally {
@@ -463,18 +461,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 		 * @param alpha alpha from current view
 		 * @param beta alpha from current view
 		 */
-		private ISearchResult evaluateMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta) {
+		private void evaluateMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta) {
 			final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
 
 			currentPosition.makeMove(move);
-
-			final ISearchResult result = evaluateMadeMove(move, horizon, positionExtension, alpha, beta, beginMaterialEvaluation);
+			evaluateMadeMove(move, horizon, positionExtension, alpha, beta, beginMaterialEvaluation);
 			currentPosition.undoMove(move);
-
-			return result;
 		}
 
-		private ISearchResult evaluateMadeMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta, final int beginMaterialEvaluation) {
+		private void evaluateMadeMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta, final int beginMaterialEvaluation) {
 			final int moveExtension;
 
 			if (horizon >= searchSettings.getMinExtensionHorizon())
@@ -495,14 +490,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 			nextRecord.openNode(-beta, -alpha);
 			nextRecord.alphaBeta(subHorizon);
 
-			final ISearchResult result = nextRecord;
-
 			moveStackTop = moveListEnd;
 
 			currentMove.clear();
 			repeatedPositionRegister.popPosition();
-
-			return result;
 		}
 
 		private boolean updateCurrentRecordAfterEvaluation(final Move move, final int horizon, final ISearchResult result) {
@@ -586,34 +577,21 @@ public final class SerialSearchEngine implements ISearchEngine {
 		 * stored in current node record.
 		 * @param isCheck if there is check in the position
 		 * @param mateEvaluation evaluation of the mate
-		 * @return if there is a mate
 		 */
-		private boolean checkMate(final boolean isCheck, final int mateEvaluation) {
-			boolean isMate = false;
-
+		private void checkMateAndStalemate(final boolean isCheck, final int mateEvaluation) {
 			if (firstLegalMove.getMoveType() == MoveType.INVALID) {
-				if (allMovesGenerated) {
-					if (isCheck) {
-						evaluation = -mateEvaluation;
-						isMate = true;
-					}
-					else
-						evaluation = Evaluation.DRAW;
-				}
-
-				// If we are at horizon 0 not all moves was generated so we must
-				// check if there really isn't legal move. This is slow so we
-				// will detect only mate in case of check.
-				if (isCheck && !isMate && mobilityCalculator.canBeMate(currentPosition)) {
-					if (!legalMoveFinder.existsLegalMove(currentPosition)) {
-						this.evaluation = -mateEvaluation;
-
-						isMate = true;
+				if (allMovesGenerated)
+					evaluation = (isCheck) ? -mateEvaluation : Evaluation.DRAW;
+				else {
+					// If we are at horizon 0 not all moves was generated so we must
+					// check if there really isn't legal move. This is slow so we
+					// will detect only mate in case of check.
+					if (isCheck && mobilityCalculator.canBeMate(currentPosition)) {
+						if (!legalMoveFinder.existsLegalMove(currentPosition))
+							this.evaluation = -mateEvaluation;
 					}
 				}
 			}
-
-			return isMate;
 		}
 
 		private boolean checkFiniteEvaluation(final int horizon) {
@@ -660,7 +638,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 	}
 
-	private static final int RECEIVE_UPDATES_COUNT = 16768;
+	private static final int RECEIVE_UPDATES_COUNT = 8192;
 
 	private static final int HASH_BEST_MOVE_ESTIMATE = Integer.MAX_VALUE;
 	
@@ -668,7 +646,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private int maxTotalDepth;
 	private SearchSettings searchSettings;
 	private IHashTable hashTable;
-	private Supplier<IPositionEvaluation> evaluationFactory;
 
 	// Actual task
 	private NodeRecord[] nodeStack;
@@ -691,7 +668,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final SearchExtensionCalculator extensionCalculator;
 	private final MoveExtensionEvaluator moveExtensionEvaluator;
 	private SearchTask task;
-	private PieceTypeEvaluations pieceTypeEvaluations;
 	private IPositionEvaluator positionEvaluator;
 	private final HandlerRegistrarImpl<ISearchEngineHandler> handlerRegistrar;
 	private final MateFinder mateFinder;
@@ -886,7 +862,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		synchronized (monitor) {
 			checkEngineState(EngineState.STOPPED);
 
-			this.pieceTypeEvaluations = pieceTypeEvaluations;
 			moveExtensionEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
 			finiteEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
 			currentPosition.setPieceTypeEvaluations(pieceTypeEvaluations);
@@ -904,20 +879,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			checkEngineState(EngineState.STOPPED);
 
 			this.positionEvaluator = evaluator;
-		}
-	}
-	
-	/**
-	 * Sets evaluation factory
-	 * Engine must be in STOPPED state.
-	 * @param evaluationFactory factory
-	 */
-	@Override
-	public void setEvaluationFactory(final Supplier<IPositionEvaluation> evaluationFactory) {
-		synchronized (monitor) {
-			checkEngineState(EngineState.STOPPED);
-
-			this.evaluationFactory = evaluationFactory;
 		}
 	}
 

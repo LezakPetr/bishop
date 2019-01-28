@@ -110,7 +110,6 @@ public class SearchEngineTest {
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
 		final MaterialPositionEvaluator evaluator = new MaterialPositionEvaluator(evaluationFactory);
 
-		engine.setEvaluationFactory(AlgebraicPositionEvaluation.getTestingFactory());
 		engine.setPositionEvaluator(evaluator);
 		engine.setMaximalDepth(20);
 
@@ -125,7 +124,7 @@ public class SearchEngineTest {
 		return engine;
 	}
 
-	private long doCalculation(final SerialSearchEngine engine) throws IOException, InterruptedException {
+	private long doCalculation(final SerialSearchEngine engine) throws IOException {
 		engine.clear();
 
 		long nodeCount = 0;

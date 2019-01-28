@@ -64,8 +64,7 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 	private SerialSearchEngine createSingleEngine() {
 		final IPositionEvaluator evaluator = createPositionEvaluator();
 		final SerialSearchEngine searchEngine = new SerialSearchEngine();
-		
-		searchEngine.setEvaluationFactory(evaluationFactory);
+
 		searchEngine.setPositionEvaluator(evaluator);
 		searchEngine.setPieceTypeEvaluations(pieceTypeEvaluations);
 		searchEngine.setMaximalDepth(maximalDepth);

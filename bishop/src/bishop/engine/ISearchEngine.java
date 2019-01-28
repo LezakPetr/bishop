@@ -91,14 +91,7 @@ public interface ISearchEngine {
 	 * @param searchSettings search settings
 	 */
 	public void setSearchSettings(final SearchSettings searchSettings);
-	
-	/**
-	 * Sets evaluation factory
-	 * Engine must be in STOPPED state.
-	 * @param evaluationFactory factory
-	 */
-	public void setEvaluationFactory(final Supplier<IPositionEvaluation> evaluationFactory);
-	
+
 	/**
 	 * Sets tablebase evaluator.
 	 * Engine must be in STOPPED state.
