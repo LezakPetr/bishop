@@ -651,7 +651,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private MoveStack moveStack;
 	private final Position currentPosition;
 	private int moveStackTop;
-	private volatile long nodeCount;
+	private long nodeCount;
+	private volatile long reportedNodeCount;
 	private final RepeatedPositionRegister repeatedPositionRegister;
 	private final EvaluatedMoveList evaluatedMoveList;
 
@@ -735,6 +736,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		if (receiveUpdatesCounter >= RECEIVE_UPDATES_COUNT) {
 			synchronized (monitor) {
+				reportedNodeCount = nodeCount;
+				
 				if (task.isTerminated()) {
 					Logger.logMessage("SerialSearchEngine task termination received");
 					throw new SearchTerminatedException();
@@ -790,6 +793,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			nodeStack[i].principalMove.clear();
 
 		nodeCount = 0;
+		reportedNodeCount = nodeCount;
 		
 		// Do the search
 		boolean terminated = false;
@@ -962,11 +966,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 * @return result of the search
 	 */
 	private SearchResult getResult(final int horizon) {
+		reportedNodeCount = nodeCount;
+
 		final SearchResult result = new SearchResult();
 
 		result.setEvaluation(nodeStack[0].evaluation);
 		result.getPrincipalVariation().assign(nodeStack[0].principalVariation);
-		result.setNodeCount(nodeCount);
+		result.setNodeCount(reportedNodeCount);
 		result.getRootMoveList().assign(evaluatedMoveList);
 		result.setHorizon(horizon);
 
@@ -990,7 +996,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 * @return number of searched nodes
 	 */
 	public long getNodeCount() {
-		return nodeCount;
+		return reportedNodeCount;
 	}
 
 	/**
