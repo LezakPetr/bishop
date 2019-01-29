@@ -19,8 +19,8 @@ public final class SearchManagerImpl implements ISearchManager {
 	private ISearchEngineFactory engineFactory;
 	private int maxHorizon;
 	private long maxTimeForMove;
-	private HandlerRegistrarImpl<ISearchManagerHandler> handlerRegistrar;
-	private int minHorizon = 3 * SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION;
+	private final HandlerRegistrarImpl<ISearchManagerHandler> handlerRegistrar;
+	private final int minHorizon = 3 * SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION;
 	private int threadCount = 1;
 	private CombinedPositionEvaluationTable combinedPositionEvaluationTable = CombinedPositionEvaluationTable.ZERO_TABLE;
 	private PieceTypeEvaluations pieceTypeEvaluations;
@@ -55,9 +55,9 @@ public final class SearchManagerImpl implements ISearchManager {
 	private boolean searchInfoChanged;
 	private long lastSearchInfoTime;
 	private final List<String> additionalInfo = new ArrayList<>();
-	private Random random = new Random();
+	private final Random random = new Random();
 	
-	private ISearchEngineHandler engineHandler = new ISearchEngineHandler() {
+	private final ISearchEngineHandler engineHandler = new ISearchEngineHandler() {
 		@Override
 		public void onResultUpdate(final SearchResult result) {
 			synchronized (monitor) {
@@ -76,7 +76,7 @@ public final class SearchManagerImpl implements ISearchManager {
 	public SearchManagerImpl() {
 		this.managerState = ManagerState.STOPPED;
 		this.monitor = new Object();
-		this.handlerRegistrar = new HandlerRegistrarImpl<ISearchManagerHandler>();
+		this.handlerRegistrar = new HandlerRegistrarImpl<>();
 		
 		this.setMaxHorizon(256);
 		this.maxTimeForMove = TIME_FOR_MOVE_INFINITY;
@@ -230,14 +230,12 @@ public final class SearchManagerImpl implements ISearchManager {
 	}
 
 	private void createCheckingThread() {
-		checkingThread = new Thread(new Runnable() {
-			public void run() {
-				try {
-					doChecking();
-				}
-				catch (Throwable ex) {
-					ex.printStackTrace();
-				}
+		checkingThread = new Thread(() -> {
+			try {
+				doChecking();
+			}
+			catch (Throwable ex) {
+				ex.printStackTrace();
 			}
 		});
 		
@@ -247,14 +245,12 @@ public final class SearchManagerImpl implements ISearchManager {
 	}
 
 	private void createSearchingThread() {
-		searchingThread = new Thread(new Runnable() {
-			public void run() {
-				try {
-					doSearching();
-				}
-				catch (Throwable ex) {
-					ex.printStackTrace();
-				}
+		searchingThread = new Thread(() -> {
+			try {
+				doSearching();
+			}
+			catch (Throwable ex) {
+				ex.printStackTrace();
 			}
 		});
 			
@@ -463,16 +459,13 @@ public final class SearchManagerImpl implements ISearchManager {
 		final Move lastMove = new Move();
 		final Holder<Integer> moveCount = new Holder<>(0);
 		
-		generator.setWalker(new IMoveWalker() {
-			@Override
-			public boolean processMove(final Move move) {
-				lastMove.assign(move);
-				
-				final int newCount = moveCount.getValue() + 1;
-				moveCount.setValue(newCount);
-				
-				return newCount > 1;
-			}
+		generator.setWalker(move -> {
+			lastMove.assign(move);
+
+			final int newCount = moveCount.getValue() + 1;
+			moveCount.setValue(newCount);
+
+			return newCount > 1;
 		});
 		
 		if ((int) moveCount.getValue() == 1)

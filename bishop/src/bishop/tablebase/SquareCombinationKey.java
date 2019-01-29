@@ -27,7 +27,7 @@ public final class SquareCombinationKey implements ICopyable<SquareCombinationKe
 	
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj == null || !(obj instanceof SquareCombinationKey))
+		if (!(obj instanceof SquareCombinationKey))
 			return false;
 		
 		final SquareCombinationKey cmp = (SquareCombinationKey) obj;

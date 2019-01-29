@@ -1,7 +1,5 @@
 package bishop.tablebase;
 
-import java.io.IOException;
-
 public class TablePageIterator extends TableIteratorBase implements IClosableTableIterator {
 	
 	private final ITablePage page;
@@ -28,7 +26,7 @@ public class TablePageIterator extends TableIteratorBase implements IClosableTab
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		// No operation
 	}
 

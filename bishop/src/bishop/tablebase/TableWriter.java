@@ -38,7 +38,7 @@ public class TableWriter extends TableIo {
 		symbolToResultMap = statistics.getSymbolToResultMap();
 		symbolProbabilities = statistics.getSymbolProbabilities();
 		
-		probabilityModelMap = new HashMap<Integer, IProbabilityModel>();
+		probabilityModelMap = new HashMap<>();
 		
 		for (Entry<Integer, int[]> entry: symbolProbabilities.entrySet()) {
 			final IProbabilityModel model = ProbabilityModelFactory.fromProbabilities(entry.getValue());
@@ -60,38 +60,25 @@ public class TableWriter extends TableIo {
 	}
 	
 	public void writeTable (final ITable table, final File file) throws IOException {
-		final OutputStream outputStream = new FileOutputStream(file);
-		
-		try {
+
+		try (OutputStream outputStream = new FileOutputStream(file)) {
 			writeTable(table, outputStream);
-		}
-		finally {
-			outputStream.close();
 		}
 	}
 	
 	private void writeSymbolsToTempFile() throws IOException {
 		tempFile = File.createTempFile("bishop", ".tbbs");
 		tempFile.deleteOnExit();
-		
-		final OutputStream tempStream = new FileOutputStream(tempFile);
-		
-		try {
-			writeSymbolsToStream (tempStream);
-		}
-		finally {
-			tempStream.close();
+
+		try (OutputStream tempStream = new FileOutputStream(tempFile)) {
+			writeSymbolsToStream(tempStream);
 		}
 	}
 	
 	private void copyTempFileToStream(final OutputStream stream) throws IOException {
-		final FileInputStream tempStream = new FileInputStream(tempFile);
-		
-		try {
+
+		try (FileInputStream tempStream = new FileInputStream(tempFile)) {
 			IoUtils.copyStream(tempStream, stream);
-		}
-		finally {
-			tempStream.close();
 		}
 	}
 	

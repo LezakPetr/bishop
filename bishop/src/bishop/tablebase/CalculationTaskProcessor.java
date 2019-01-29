@@ -2,7 +2,6 @@ package bishop.tablebase;
 
 import java.util.concurrent.Callable;
 
-import bishop.base.CombinedPositionEvaluationTable;
 import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
 import bishop.base.ReverseMoveGenerator;
@@ -67,7 +66,7 @@ public class CalculationTaskProcessor implements Callable<Throwable> {
 	}
 
 	@Override
-	public Throwable call() throws Exception {
+	public Throwable call() {
 		try {
 			while (true) {
 				try (

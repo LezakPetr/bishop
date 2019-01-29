@@ -1,10 +1,7 @@
 package bishop.engine;
 
-import java.util.function.Supplier;
-
 import bishop.base.CombinedPositionEvaluationTable;
 import bishop.base.IHandlerRegistrar;
-import bishop.base.IMaterialEvaluator;
 import bishop.base.PieceTypeEvaluations;
 
 public interface ISearchEngine {

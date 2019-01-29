@@ -16,7 +16,7 @@ public class CompressedTablePage implements ITablePage {
 	private int sliceCount;
 	private final LongBuffer[] slices;
 	private short[] symbolToResultMap;
-	private Map<Short, Short> resultToSymbolMap;
+	private final Map<Short, Short> resultToSymbolMap;
 	private int nextSymbol;
 	
 	private static final short SYMBOL_ILLEGAL = 0;

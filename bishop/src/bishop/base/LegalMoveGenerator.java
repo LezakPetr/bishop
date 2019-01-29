@@ -1,7 +1,7 @@
 package bishop.base;
 
 public class LegalMoveGenerator implements IMoveGenerator {
-	private PseudoLegalMoveGenerator backgroundGenerator;
+	private final PseudoLegalMoveGenerator backgroundGenerator;
 	private Position beginPosition;
 	private IMoveWalker userWalker;
 	
@@ -9,7 +9,7 @@ public class LegalMoveGenerator implements IMoveGenerator {
 		return MoveGeneratorType.DIRECT;
 	}
 
-	private IMoveWalker backgroundWalker = new IMoveWalker() {
+	private final IMoveWalker backgroundWalker = new IMoveWalker() {
 		public boolean processMove(final Move move) {
 			final boolean isLegal = beginPosition.isLegalMove(move);
 

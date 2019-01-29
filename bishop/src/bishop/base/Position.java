@@ -1144,9 +1144,8 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	public boolean isKingNotOnTurnAttacked() {
 		final int oppositeColor = Color.getOppositeColor(onTurn);
 		final int kingPos = getKingPosition(oppositeColor);
-		final boolean isCheck = isSquareAttacked(onTurn, kingPos);
-		
-		return isCheck;
+
+		return isSquareAttacked(onTurn, kingPos);
 	}
 	
 	public int getCheapestAttacker (final int color, final int square) {

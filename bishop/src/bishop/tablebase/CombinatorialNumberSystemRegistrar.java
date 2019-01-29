@@ -9,22 +9,19 @@ import utils.KeyValueMapping;
  */
 public class CombinatorialNumberSystemRegistrar {
 
-	private final KeyValueMapping<CombinatorialNumberSystemDefinition, ICombinatorialNumberSystem> creator = new KeyValueMapping<CombinatorialNumberSystemDefinition, ICombinatorialNumberSystem>() {
-		@Override
-		public ICombinatorialNumberSystem getValue(final CombinatorialNumberSystemDefinition key) {
-			switch (key.getK()) {
-				case 0:
-					return new ZeroCombinatorialNumberSystem(key.getN());
-					
-				case 1:
-					return new OneCombinatorialNumberSystem(key.getN());
+	private final KeyValueMapping<CombinatorialNumberSystemDefinition, ICombinatorialNumberSystem> creator = key -> {
+		switch (key.getK()) {
+			case 0:
+				return new ZeroCombinatorialNumberSystem(key.getN());
 
-				case 2:
-					return new TwoCombinatorialNumberSystem(key.getN());
+			case 1:
+				return new OneCombinatorialNumberSystem(key.getN());
 
-				default:
-					return new GeneralCombinatorialNumberSystem(key.getN(), key.getK());
-			}
+			case 2:
+				return new TwoCombinatorialNumberSystem(key.getN());
+
+			default:
+				return new GeneralCombinatorialNumberSystem(key.getN(), key.getK());
 		}
 	};
 	
@@ -34,7 +31,7 @@ public class CombinatorialNumberSystemRegistrar {
 	 * Private constructor.
 	 */
 	private CombinatorialNumberSystemRegistrar() {
-		mapping = new KeyValueCache<CombinatorialNumberSystemDefinition, ICombinatorialNumberSystem>(creator);
+		mapping = new KeyValueCache<>(creator);
 	}
 	
 	/**
@@ -47,7 +44,7 @@ public class CombinatorialNumberSystemRegistrar {
 	}
 	
 	
-	private static CombinatorialNumberSystemRegistrar instance = new CombinatorialNumberSystemRegistrar();
+	private static final CombinatorialNumberSystemRegistrar instance = new CombinatorialNumberSystemRegistrar();
 	
 	/**
 	 * Returns instance of this registrar.

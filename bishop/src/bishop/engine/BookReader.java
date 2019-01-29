@@ -140,9 +140,8 @@ public class BookReader extends BookIo implements IBook<BookRecord> {
 			IoUtils.skip(stream, recordListBegin - stream.getPosition());
 			
 			final int size = (int) (recordListEnd - recordListBegin);
-			final byte[] data = IoUtils.readByteArray(stream, size);
-			
-			return data;
+
+			return IoUtils.readByteArray(stream, size);
 		}
 		else
 			return null;

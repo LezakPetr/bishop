@@ -35,6 +35,6 @@ public interface IStagedTable extends ITable {
 	 * Switches table to read mode.
 	 * @param parallel parallel utility object
 	 */
-	public void switchToModeRead(final Parallel parallel) throws IOException, InterruptedException, ExecutionException;
+	public void switchToModeRead(final Parallel parallel) throws InterruptedException, ExecutionException;
 
 }

@@ -6,7 +6,7 @@ import java.util.List;
 
 public class MoveParser {
 
-	private IMoveWalker walker = new IMoveWalker() {
+	private final IMoveWalker walker = new IMoveWalker() {
 		public boolean processMove (final Move move) {
 			final Move moveCopy = new Move();
 			moveCopy.assign(move);
@@ -17,14 +17,14 @@ public class MoveParser {
 		}
 	};
 	
-	private LegalMoveGenerator generator;
-	private List<Move> moveList;
+	private final LegalMoveGenerator generator;
+	private final List<Move> moveList;
 	
 	public MoveParser() {
 		generator = new LegalMoveGenerator();
 		generator.setWalker(walker);
 		
-		moveList = new LinkedList<Move>();
+		moveList = new LinkedList<>();
 	}
 	
 	/**
@@ -43,12 +43,7 @@ public class MoveParser {
 	 * @param movingPieceType type of moving piece
 	 */
 	public void filterByMovingPieceType (final int movingPieceType) {
-		for (Iterator<Move> it = moveList.iterator(); it.hasNext(); ) {
-			final Move move = it.next();
-			
-			if (move.getMovingPieceType() != movingPieceType)
-				it.remove();
-		}
+		moveList.removeIf(move -> move.getMovingPieceType() != movingPieceType);
 	}
 	
 	/**
@@ -56,12 +51,7 @@ public class MoveParser {
 	 * @param square begin square
 	 */
 	public void filterByBeginSquare (final int square) {
-		for (Iterator<Move> it = moveList.iterator(); it.hasNext(); ) {
-			final Move move = it.next();
-			
-			if (move.getBeginSquare() != square)
-				it.remove();
-		}
+		moveList.removeIf(move -> move.getBeginSquare() != square);
 	}
 
 	/**
@@ -69,12 +59,7 @@ public class MoveParser {
 	 * @param file begin file
 	 */
 	public void filterByBeginFile (final int file) {
-		for (Iterator<Move> it = moveList.iterator(); it.hasNext(); ) {
-			final Move move = it.next();
-			
-			if (Square.getFile(move.getBeginSquare()) != file)
-				it.remove();
-		}
+		moveList.removeIf(move -> Square.getFile(move.getBeginSquare()) != file);
 	}
 
 	/**
@@ -82,12 +67,7 @@ public class MoveParser {
 	 * @param rank begin rank
 	 */
 	public void filterByBeginRank (final int rank) {
-		for (Iterator<Move> it = moveList.iterator(); it.hasNext(); ) {
-			final Move move = it.next();
-			
-			if (Square.getRank(move.getBeginSquare()) != rank)
-				it.remove();
-		}
+		moveList.removeIf(move -> Square.getRank(move.getBeginSquare()) != rank);
 	}
 
 	/**
@@ -95,12 +75,7 @@ public class MoveParser {
 	 * @param square target square
 	 */
 	public void filterByTargetSquare (final int square) {
-		for (Iterator<Move> it = moveList.iterator(); it.hasNext(); ) {
-			final Move move = it.next();
-			
-			if (move.getTargetSquare() != square)
-				it.remove();
-		}
+		moveList.removeIf(move -> move.getTargetSquare() != square);
 	}
 
 	/**
@@ -108,21 +83,11 @@ public class MoveParser {
 	 * @param promotionPieceType type of promotion piece
 	 */
 	public void filterByPromotionPieceType (final int promotionPieceType) {
-		for (Iterator<Move> it = moveList.iterator(); it.hasNext(); ) {
-			final Move move = it.next();
-			
-			if (move.getPromotionPieceType() != promotionPieceType)
-				it.remove();
-		}
+		moveList.removeIf(move -> move.getPromotionPieceType() != promotionPieceType);
 	}
 	
 	public void filterByMoveType(final int moveType) {
-		for (Iterator<Move> it = moveList.iterator(); it.hasNext(); ) {
-			final Move move = it.next();
-			
-			if (move.getMoveType() != moveType)
-				it.remove();
-		}
+		moveList.removeIf(move -> move.getMoveType() != moveType);
 	}
 	
 	/**

@@ -55,7 +55,7 @@ public enum FileTableIteratorMode {
 	},
 	DRAW (128, 192) {
 		@Override
-		public short read (final InputStream stream) throws IOException {
+		public short read (final InputStream stream) {
 			return TableResult.DRAW;
 		}
 
@@ -68,7 +68,7 @@ public enum FileTableIteratorMode {
 	},
 	ILLEGAL (192, 256) {
 		@Override
-		public short read (final InputStream stream) throws IOException {
+		public short read (final InputStream stream) {
 			return TableResult.ILLEGAL;
 		}
 

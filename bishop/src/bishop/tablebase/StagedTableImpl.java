@@ -27,7 +27,7 @@ public abstract class StagedTableImpl implements IStagedTable {
 	protected final int pageCount; 
 	protected Mode mode;
 	protected int nextWritePageIndex;
-	private boolean compressedPages;
+	private final boolean compressedPages;
 	
 	public StagedTableImpl(final TableDefinition definition, final boolean compressedPages) {
 		this.definition = definition;
@@ -63,9 +63,8 @@ public abstract class StagedTableImpl implements IStagedTable {
 	
 	private int getPageCount() {
 		final long tableIndexCount = definition.getTableIndexCount();
-		final int pageCount = (int) ((tableIndexCount + PAGE_SIZE - 1) >> PAGE_SHIFT);
-		
-		return pageCount;
+
+		return (int) ((tableIndexCount + PAGE_SIZE - 1) >> PAGE_SHIFT);
 	}
 
 	@Override
@@ -118,7 +117,7 @@ public abstract class StagedTableImpl implements IStagedTable {
 	}
 	
 	@Override
-	public abstract void switchToModeRead(final Parallel parallel) throws IOException, InterruptedException, ExecutionException;
+	public abstract void switchToModeRead(final Parallel parallel) throws InterruptedException, ExecutionException;
 
 	protected abstract IClosableTableIterator getOutputPageIterator(final int pageIndex) throws IOException;
 

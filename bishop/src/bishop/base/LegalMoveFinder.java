@@ -9,7 +9,7 @@ public class LegalMoveFinder {
 		}
 	};
 	
-	private LegalMoveGenerator generator;
+	private final LegalMoveGenerator generator;
 	private boolean legalMoveFound;
 
 	public LegalMoveFinder() {

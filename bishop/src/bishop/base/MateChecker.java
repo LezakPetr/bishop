@@ -12,7 +12,7 @@ public class MateChecker {
 		}
 	};
 	
-	private LegalMoveGenerator generator;
+	private final LegalMoveGenerator generator;
 	private boolean legalMoveFound;
 
 	public MateChecker() {

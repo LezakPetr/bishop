@@ -2,7 +2,6 @@ package bishop.engine;
 
 import java.util.function.Supplier;
 
-import bishop.base.IMaterialEvaluator;
 import bishop.base.PieceTypeEvaluations;
 
 public final class SerialSearchEngineFactory implements ISearchEngineFactory {
@@ -52,9 +51,7 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 	 */
 	public ISearchEngine createEngine() {
 		try {
-			final SerialSearchEngine searchEngine = createSingleEngine();
-			
-			return searchEngine;
+			return createSingleEngine();
 		}
 		catch (Throwable th) {
 			throw new RuntimeException("Cannot create instance of search engine", th);

@@ -66,7 +66,7 @@ public abstract class PieceSetBase implements IPieceSet {
 
 	/**
 	 * Reads dimensions of pieces.
-	 * @param dimensionElement element with dimensions
+	 * @param dimensionsElement element with dimensions
 	 */
 	private void readPieceDimensions (final Element dimensionsElement) {
 		final Element centerElement = Utils.getElementByName(dimensionsElement, DIMENSIONS_CENTER_ELEMENT);
@@ -117,7 +117,7 @@ public abstract class PieceSetBase implements IPieceSet {
 	
 	/**
 	 * Reads piece set from given file.
-	 * @param file path to zip with piece set
+	 * @param stream stream with piece set
 	 */
 	public void readPieceSet (final InputStream stream) {
 		try {

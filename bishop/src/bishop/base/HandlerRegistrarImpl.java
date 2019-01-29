@@ -6,11 +6,11 @@ import java.util.Set;
 
 public class HandlerRegistrarImpl<H> implements IHandlerRegistrar<H> {
 	
-	private Set<H> handlerSet;
+	private final Set<H> handlerSet;
 	private boolean changesEnabled;
 	
 	public HandlerRegistrarImpl() {
-		handlerSet = new HashSet<H>();
+		handlerSet = new HashSet<>();
 		changesEnabled = true;
 	}
 	

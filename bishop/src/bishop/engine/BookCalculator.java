@@ -73,20 +73,17 @@ public class BookCalculator implements IBook<EvaluatedBookRecord> {
 		final Position currentPosition = new Position();
 		moveGenerator.setPosition(currentPosition);
 		
-		moveGenerator.setWalker(new IMoveWalker() {
-			@Override
-			public boolean processMove(final Move move) {
-				currentPosition.makeMove(move);
-				
-				if (recordMap.containsKey(currentPosition) && !walkedSet.contains(currentPosition)) {
-					final EvaluatedBookRecord record = recordMap.get(currentPosition);
-					walkedSet.add(record.getPosition());
-					positionOrder.add(0, record.getPosition());
-				}
-				
-				currentPosition.undoMove(move);
-				return true;
+		moveGenerator.setWalker(move -> {
+			currentPosition.makeMove(move);
+
+			if (recordMap.containsKey(currentPosition) && !walkedSet.contains(currentPosition)) {
+				final EvaluatedBookRecord record = recordMap.get(currentPosition);
+				walkedSet.add(record.getPosition());
+				positionOrder.add(0, record.getPosition());
 			}
+
+			currentPosition.undoMove(move);
+			return true;
 		});
 		
 		while (!openQueue.isEmpty()) {

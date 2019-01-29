@@ -3,7 +3,6 @@ package bishop.engine;
 import bishop.base.Color;
 import bishop.base.PieceTypeEvaluations;
 import bishop.tablebase.Classification;
-import utils.IntUtils;
 
 public class Evaluation {
 

@@ -26,7 +26,7 @@ public class FileNameCalculator {
 	
 
 	public static String getFileName(final MaterialHash materialHash) {
-		final StringBuffer definitionBuffer = new StringBuffer();
+		final StringBuilder definitionBuffer = new StringBuilder();
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			for (int pieceType = PieceType.VARIABLE_FIRST; pieceType < PieceType.VARIABLE_LAST; pieceType++) {
@@ -37,10 +37,8 @@ public class FileNameCalculator {
 			
 			definitionBuffer.append(MATERIAL_SEPARATOR);
 		}
-		
-		final String fileName = definitionBuffer.toString() + Color.getNotation(materialHash.getOnTurn()) + SUFFIX;
-		
-		return fileName;
+
+		return definitionBuffer.toString() + Color.getNotation(materialHash.getOnTurn()) + SUFFIX;
 	}
 		
 	public static MaterialHash parseFileName(final String fileName) {
@@ -50,9 +48,7 @@ public class FileNameCalculator {
 		final char colorChar = fileName.charAt(ON_TURN_POS);
 		final int onTurn = Color.parseNotation(colorChar);
 
-		final MaterialHash materialHash = new MaterialHash(fileName.substring(MATERIAL_BEGIN, MATERIAL_END), onTurn);
-				
-		return materialHash; 
+		return new MaterialHash(fileName.substring(MATERIAL_BEGIN, MATERIAL_END), onTurn);
 	}
 	
 	private static final boolean isDigitString(final String str) {

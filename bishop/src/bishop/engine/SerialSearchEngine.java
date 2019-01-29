@@ -2,7 +2,6 @@ package bishop.engine;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import bishop.base.*;

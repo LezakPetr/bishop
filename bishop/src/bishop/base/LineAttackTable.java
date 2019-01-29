@@ -8,8 +8,8 @@ import bishop.tables.BetweenTable;
  */
 public class LineAttackTable {
 	
-	private static long[] attackTable = initializeTable(0);
-	private static long[] pinTable = initializeTable(1);
+	private static final long[] attackTable = initializeTable(0);
+	private static final long[] pinTable = initializeTable(1);
 	
 	/**
 	 * Returns mask of attacked squares.

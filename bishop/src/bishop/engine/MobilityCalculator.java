@@ -21,7 +21,6 @@ public class MobilityCalculator {
 	private final long[] queenAttackedSquares = new long[Color.LAST];
 
 	private final long[] pawnAttackedSquares = new long[Color.LAST];
-	private final long[] kingAttackedSquares = new long[Color.LAST];
 
 	private final long[] attackedSquares = new long[Color.LAST];
 
@@ -195,10 +194,6 @@ public class MobilityCalculator {
 
 	public long getQueenAttackedSquares(final int color) {
 		return queenAttackedSquares[color];
-	}
-
-	public long getKingAttackedSquares(final int color) {
-		return kingAttackedSquares[color];
 	}
 
 	public long getPawnAttackedSquares(final int color) {

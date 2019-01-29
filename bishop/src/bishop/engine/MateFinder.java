@@ -6,7 +6,6 @@ import bishop.base.Color;
 import bishop.base.IMoveWalker;
 import bishop.base.MateChecker;
 import bishop.base.Move;
-import bishop.base.MoveList;
 import bishop.base.MoveStack;
 import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
@@ -64,7 +63,7 @@ public class MateFinder {
 			if (killerMove.uncompressMove(killerMoves[depth + depthAdvance], position)) {
 				final int subEvaluation = evaluateMove(horizon, extension, effectiveAlpha, beta, killerMove);
 
-				existLegalMove |= (subEvaluation > Evaluation.MIN);
+				existLegalMove = (subEvaluation > Evaluation.MIN);
 				updatedAlpha = Math.max(updatedAlpha, subEvaluation);
 				evaluation = Math.max(evaluation, subEvaluation);
 

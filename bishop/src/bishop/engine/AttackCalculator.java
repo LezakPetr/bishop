@@ -3,11 +3,8 @@ package bishop.engine;
 import java.util.Arrays;
 
 import bishop.base.BitBoard;
-import bishop.base.BitLoop;
 import bishop.base.BoardConstants;
 import bishop.base.Color;
-import bishop.base.CrossDirection;
-import bishop.base.LineIndexer;
 import bishop.base.PieceType;
 import bishop.base.Position;
 

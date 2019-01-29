@@ -36,7 +36,7 @@ public final class CombinatorialNumberSystemDefinition implements ICopyable<Comb
 	
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj == null || !(obj instanceof CombinatorialNumberSystemDefinition))
+		if (!(obj instanceof CombinatorialNumberSystemDefinition))
 			return false;
 		
 		final CombinatorialNumberSystemDefinition cmp = (CombinatorialNumberSystemDefinition) obj;

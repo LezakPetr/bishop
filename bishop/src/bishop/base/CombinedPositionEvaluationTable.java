@@ -11,7 +11,7 @@ public class CombinedPositionEvaluationTable {
 
 	private final long[] combinedEvaluations;
 
-	public static CombinedPositionEvaluationTable ZERO_TABLE = new CombinedPositionEvaluationTable();
+	public static final CombinedPositionEvaluationTable ZERO_TABLE = new CombinedPositionEvaluationTable();
 
 	private static int getIndex (final int color, final int pieceType, final int square) {
 		return (color << COLOR_SHIFT) + (pieceType << PIECE_TYPE_SHIFT) + square;

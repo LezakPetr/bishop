@@ -334,7 +334,7 @@ public class ApplicationViewImpl extends JPanel implements IApplicationView, ILo
 	
 	/**
 	 * Sets regime-dependent component.
-	 * @param component regime-dependent component or null to unset
+	 * @param newComponent regime-dependent component or null to unset
 	 */
 	public void setRegimeComponent (final JComponent newComponent) {
 		if (regimeComponent != null) {

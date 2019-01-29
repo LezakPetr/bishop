@@ -18,7 +18,7 @@ public final class BookSource implements IBook<BookRecord> {
 	
 	
 	public BookSource() {
-		positionMap = new HashMap<Position, BookRecord>();
+		positionMap = new HashMap<>();
 	}
 	
 	/**
@@ -40,12 +40,12 @@ public final class BookSource implements IBook<BookRecord> {
 	}
 	
 	public void addGame (final Game game) {
-		final Stack<ITreeIterator<IGameNode>> nodeStack = new Stack<ITreeIterator<IGameNode>>();
+		final Stack<ITreeIterator<IGameNode>> nodeStack = new Stack<>();
 		nodeStack.add(game.getRootIterator());
 		
 		while (!nodeStack.isEmpty()) {
 			final ITreeIterator<IGameNode> currentNode = nodeStack.pop();
-			final List<BookMove> moveList = new LinkedList<BookMove>();
+			final List<BookMove> moveList = new LinkedList<>();
 			
 			if (currentNode.hasChild()) {
 				final ITreeIterator<IGameNode> child = currentNode.copy();

@@ -1,7 +1,6 @@
 package bishop.engine;
 
 import bishop.base.Color;
-import bishop.base.IMaterialHashRead;
 import bishop.base.IPieceCounts;
 import bishop.base.PieceType;
 import utils.IntArrayBuilder;

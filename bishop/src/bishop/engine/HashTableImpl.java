@@ -51,7 +51,7 @@ public final class HashTableImpl implements IHashTable {
 	public static final int ITEM_SIZE = Long.BYTES;   // Size of hash item [B]
 		
 	// Probability that the collision will be detected by the hash table itself (without uncompressing move)
-	public static double PRIMARY_COLLISION_RATE = Math.pow(2, -(19 + 3.31 + 0.42));
+	public static final double PRIMARY_COLLISION_RATE = Math.pow(2, -(19 + 3.31 + 0.42));
 	
 	public HashTableImpl(final int exponent) {
 		resize(exponent);

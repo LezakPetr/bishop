@@ -6,7 +6,6 @@ import bishop.base.Color;
 import bishop.base.Move;
 import bishop.base.PieceType;
 import math.SimpleLinearModel;
-import utils.IntArrayBuilder;
 
 /**
  * Estimator that estimates the moves to order them in alpha-beta search.
@@ -56,9 +55,8 @@ public class MoveEstimator {
 		final SimpleLinearModel model = getModel(nodeRecord, color, move);
 		
 		final int history = historyTable.getEvaluation(color, move);
-		final int estimate = model.estimate(history);
-		
-		return estimate;
+
+		return model.estimate(history);
 	}
 
 	public void addCutoff(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move cutoffMove, final int horizon) {
@@ -88,9 +86,8 @@ public class MoveEstimator {
 	private SimpleLinearModel getModel(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move) {
 		final int killer = (move.equals(nodeRecord.getKillerMove())) ? 1 : 0;
 		final int capture = estimateCapture(move.getMovingPieceType(), move.getCapturedPieceType());
-		final SimpleLinearModel model = models[color][killer][capture];
-		
-		return model;
+
+		return models[color][killer][capture];
 	}
 	
 	private void recalculateEstimates() {

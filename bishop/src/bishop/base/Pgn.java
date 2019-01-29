@@ -26,25 +26,23 @@ public abstract class Pgn {
 	protected static final String PGN_ENCODING = "UTF-8";
 
 	
-	protected static final ICharacterFilter nonMoveTokenFilter = new ICharacterFilter() {
-		public boolean filterCharacter(final char ch) {
-			if (Character.isDigit(ch) || ch == '.')
+	protected static final ICharacterFilter nonMoveTokenFilter = ch -> {
+		if (Character.isDigit(ch) || ch == '.')
+			return true;
+
+		for (GameResult result: GameResult.values()) {
+			if (result.toString().indexOf(ch) >= 0)
 				return true;
-			
-			for (GameResult result: GameResult.values()) {
-				if (result.toString().indexOf(ch) >= 0)
-					return true;
-			}
-			
-			return false;
 		}
+
+		return false;
 	};
 		
 	public Pgn() {
-		gameList = new LinkedList<Game>();
+		gameList = new LinkedList<>();
 	}
 	
-	protected List<Game> gameList;
+	protected final List<Game> gameList;
 	
 	public List<Game> getGameList() {
 		return gameList;

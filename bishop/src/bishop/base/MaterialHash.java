@@ -118,7 +118,7 @@ public final class MaterialHash implements IMaterialHashRead {
 	
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj == null || !(obj instanceof MaterialHash))
+		if (!(obj instanceof MaterialHash))
 			return false;
 		
 		final MaterialHash cmp = (MaterialHash) obj;

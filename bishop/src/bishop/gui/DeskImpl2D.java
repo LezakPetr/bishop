@@ -268,7 +268,7 @@ public class DeskImpl2D implements IDesk {
 
 	/**
 	 * Returns bounding rectangle around piece on given position.
-	 * @param point position of the piece
+	 * @param square position of the piece
 	 * @return bounding rectangle
 	 */
 	private Rectangle getSquareRectangle (final int square) {

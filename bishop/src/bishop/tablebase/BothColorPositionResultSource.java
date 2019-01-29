@@ -11,8 +11,8 @@ public class BothColorPositionResultSource<T extends IPositionResultSource> impl
 	private final List<T> baseSources;
 	
 	public BothColorPositionResultSource () {
-		this.baseSources = new ArrayList<T>(Color.LAST);
-		this.baseSources.addAll(Collections.<T>nCopies(Color.LAST, null));
+		this.baseSources = new ArrayList<>(Color.LAST);
+		this.baseSources.addAll(Collections.nCopies(Color.LAST, null));
 	}
 	
 	public T getBaseSource (final int onTurn) {

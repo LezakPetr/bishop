@@ -7,7 +7,7 @@ import bishop.tables.BetweenTable;
  * @author Ing. Petr Ležák
  */
 public class LinePinTable {
-	private static long[] table = initializeTable();
+	private static final long[] table = initializeTable();
 
 	private static long[] initializeTable() {
 		final long[] table = new long[LineIndexer.getLastIndex()];

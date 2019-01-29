@@ -1,8 +1,6 @@
 package bishop.engine;
 
 import bishop.base.BitBoard;
-import bishop.base.Color;
-import bishop.base.Square;
 import bishop.tablebase.Classification;
 
 public class PawnEndingTable implements IPawnEndingTable {

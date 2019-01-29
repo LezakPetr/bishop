@@ -37,6 +37,7 @@ public class BitBoard {
 		return board;
 	}
 
+	@SuppressWarnings("SameReturnValue")
 	public static long of() {
 		return BitBoard.EMPTY;
 	}
