@@ -16,7 +16,7 @@ public class SquareSymmetryTable {
 	
 	private static final int[] table = createTable();
 	
-	private static final int getItemIndex (final int symmetry, final int square) {
+	private static int getItemIndex (final int symmetry, final int square) {
 		return square + (symmetry << SYMMETRY_SHIFT);
 	}
 	

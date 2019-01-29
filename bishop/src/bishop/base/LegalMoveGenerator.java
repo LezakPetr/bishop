@@ -9,23 +9,21 @@ public class LegalMoveGenerator implements IMoveGenerator {
 		return MoveGeneratorType.DIRECT;
 	}
 
-	private final IMoveWalker backgroundWalker = new IMoveWalker() {
-		public boolean processMove(final Move move) {
-			final boolean isLegal = beginPosition.isLegalMove(move);
-
-			if (!isLegal)
-				return true;
-			
-			return userWalker.processMove(move);
-		}
-	};
-
 	/**
 	 * Default constructor.
 	 */
 	public LegalMoveGenerator() {
 		backgroundGenerator = new PseudoLegalMoveGenerator();
-		backgroundGenerator.setWalker(backgroundWalker);
+		backgroundGenerator.setWalker(this::processMove);
+	}
+
+	private boolean processMove(final Move move) {
+		final boolean isLegal = beginPosition.isLegalMove(move);
+
+		if (!isLegal)
+			return true;
+
+		return userWalker.processMove(move);
 	}
 	
 	/**

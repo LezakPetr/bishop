@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import bishop.base.*;
@@ -21,10 +20,7 @@ public class TableCalculator {
 	private final BothColorPositionResultSource<IStagedTable> bothTables;
 	private final TableSwitch resultSource;
 	private final Map<MaterialHash, ITableRead> subTables = new HashMap<>();
-	
-	private BitArray prevPositionsToCheck;
-	private BitArray nextPositionsToCheck;
-	
+
 	private boolean usePersistentTable = false;
 	private boolean useCompressedTable = false;
 
@@ -192,9 +188,9 @@ public class TableCalculator {
 		for (int i = 0; i < parallel.getThreadCount(); i++) {
 			processorList.add (new CalculationTaskProcessor(resultSource));
 		}
-		
-		prevPositionsToCheck = null;
-		nextPositionsToCheck = null;
+
+		BitArray prevPositionsToCheck = null;
+		BitArray nextPositionsToCheck = null;
 		long changeCount;
 		
 		do {

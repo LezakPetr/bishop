@@ -9,7 +9,16 @@ import utils.KeyValueMapping;
  */
 public class CombinatorialNumberSystemRegistrar {
 
-	private final KeyValueMapping<CombinatorialNumberSystemDefinition, ICombinatorialNumberSystem> creator = key -> {
+	private final KeyValueMapping<CombinatorialNumberSystemDefinition, ICombinatorialNumberSystem> mapping;
+	
+	/**
+	 * Private constructor.
+	 */
+	private CombinatorialNumberSystemRegistrar() {
+		mapping = new KeyValueCache<>(CombinatorialNumberSystemRegistrar::getCombinatorialNumberSystemForDefinition);
+	}
+
+	private static ICombinatorialNumberSystem getCombinatorialNumberSystemForDefinition(final CombinatorialNumberSystemDefinition key) {
 		switch (key.getK()) {
 			case 0:
 				return new ZeroCombinatorialNumberSystem(key.getN());
@@ -23,17 +32,8 @@ public class CombinatorialNumberSystemRegistrar {
 			default:
 				return new GeneralCombinatorialNumberSystem(key.getN(), key.getK());
 		}
-	};
-	
-	private final KeyValueMapping<CombinatorialNumberSystemDefinition, ICombinatorialNumberSystem> mapping;
-	
-	/**
-	 * Private constructor.
-	 */
-	private CombinatorialNumberSystemRegistrar() {
-		mapping = new KeyValueCache<>(creator);
 	}
-	
+
 	/**
 	 * Returns number system for given definition.
 	 * @param definition number system definition

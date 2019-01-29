@@ -14,7 +14,7 @@ import bishop.base.IPosition;
 public class LazyFilePositionResultSource implements ITableRead {
 	
 	// Keep last used table reference to prevent collecting it
-	@SuppressWarnings("unused")
+	@SuppressWarnings({"unused", "FieldCanBeLocal"})
 	private static volatile FilePositionResultSource lastUsedTable;
 	
 	private final File file;

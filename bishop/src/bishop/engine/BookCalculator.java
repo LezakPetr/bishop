@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import bishop.base.IMoveWalker;
 import bishop.base.LegalMoveGenerator;
 import bishop.base.Move;
 import bishop.base.Position;

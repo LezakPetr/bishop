@@ -19,12 +19,10 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 	private final boolean[] hasMatingMaterial;
 	
 	private IPositionEvaluator currentEvaluator;
-	private IPositionEvaluation tacticalEvaluation;
-	private IPositionEvaluation positionalEvaluation;
 
 	
-	public PositionEvaluatorSwitch(final PositionEvaluatorSwitchSettings settings, final Supplier<IPositionEvaluation> evaluationFactory) {
-		generalPositionEvaluator = new GeneralPositionEvaluator(settings.getGeneralEvaluatorSettings(), evaluationFactory);
+	public PositionEvaluatorSwitch(final Supplier<IPositionEvaluation> evaluationFactory) {
+		generalPositionEvaluator = new GeneralPositionEvaluator(evaluationFactory);
 		generalMatingEvaluator = new MatingPositionEvaluator(evaluationFactory);
 		drawEvaluator = new DrawPositionEvaluator(evaluationFactory);
 		
@@ -66,16 +64,12 @@ public final class PositionEvaluatorSwitch implements IPositionEvaluator {
 		calculateHasMatingMaterial();
 		selectCurrentEvaluator();
 		
-		tacticalEvaluation = currentEvaluator.evaluateTactical(position, mobilityCalculator);
-		
-		return tacticalEvaluation;
+		return currentEvaluator.evaluateTactical(position, mobilityCalculator);
 	}
 
 	@Override
 	public IPositionEvaluation evaluatePositional() {
-		positionalEvaluation = currentEvaluator.evaluatePositional();
-		
-		return positionalEvaluation;
+		return currentEvaluator.evaluatePositional();
 	}
 	
 	@Override

@@ -52,8 +52,6 @@ public class SearchPerformanceTest {
 	}
 	
 	protected void initializeSearchManager(final TablebasePositionEvaluator tablebaseEvaluator, final long maxTimeForPosition) {
-		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
-		
 		final URL rootUrl;
 		
 		try {
@@ -67,13 +65,11 @@ public class SearchPerformanceTest {
 		final PositionEvaluationCoeffs positionEvaluationCoeffs = SearchResources.createEvaluationCoeffs(rootUrl);
 		final Supplier<IPositionEvaluation> positionEvaluationFactory = SearchResources.createEvaluationFactory(positionEvaluationCoeffs);
 		
-		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, positionEvaluationFactory);
+		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(positionEvaluationFactory);
 
 		final SerialSearchEngineFactory engineFactory = new SerialSearchEngineFactory();
-		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
-		
+
 		engineFactory.setPositionEvaluatorFactory(evaluatorFactory);
-		engineFactory.setEvaluationFactory(evaluationFactory);
 		engineFactory.setMaximalDepth(MAX_DEPTH);
 
 		final PieceTypeEvaluations pieceTypeEvaluations = positionEvaluationCoeffs.getPieceTypeEvaluations();

@@ -1,30 +1,27 @@
 package bishop.base;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 public class MoveParser {
 
-	private final IMoveWalker walker = new IMoveWalker() {
-		public boolean processMove (final Move move) {
-			final Move moveCopy = new Move();
-			moveCopy.assign(move);
-			
-			moveList.add(moveCopy);
-			
-			return true;
-		}
-	};
-	
 	private final LegalMoveGenerator generator;
 	private final List<Move> moveList;
 	
 	public MoveParser() {
 		generator = new LegalMoveGenerator();
-		generator.setWalker(walker);
+		generator.setWalker(this::processMove);
 		
 		moveList = new LinkedList<>();
+	}
+
+	private boolean processMove (final Move move) {
+		final Move moveCopy = new Move();
+		moveCopy.assign(move);
+
+		moveList.add(moveCopy);
+
+		return true;
 	}
 	
 	/**

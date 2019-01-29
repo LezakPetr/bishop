@@ -9,30 +9,8 @@ public class StandardAlgebraicNotationWriter extends StandardAlgebraicNotationBa
 	private int anotherMoveCount;
 	private boolean onSameFile;
 	private boolean onSameRank;
-	
-	private final IMoveWalker walker = new IMoveWalker() {
-		public boolean processMove(final Move generatedMove) {
-			if (generatedMove.getMovingPieceType() == moveToWrite.getMovingPieceType() && generatedMove.getTargetSquare() == moveToWrite.getTargetSquare()) {
-				if (generatedMove.equals(moveToWrite))
-					moveFound = true;
-				else {
-					anotherMoveCount ++;
-					
-					final int generatedBeginSquare = generatedMove.getBeginSquare();
-					final int writtenBeginSquare = moveToWrite.getBeginSquare();
-					
-					if (Square.getFile(generatedBeginSquare) == Square.getFile(writtenBeginSquare))
-						onSameFile = true;
-					
-					if (Square.getRank(generatedBeginSquare) == Square.getRank(writtenBeginSquare))
-						onSameRank = true;
-				}
-			}
-			
-			return true;
-		}
-	};
-	
+
+
 	private final PseudoLegalMoveGenerator generator;
 	private final LegalMoveFinder legalMoveFinder;
 	private final Position tempPosition;
@@ -44,9 +22,30 @@ public class StandardAlgebraicNotationWriter extends StandardAlgebraicNotationBa
 		legalMoveFinder = new LegalMoveFinder();
 		
 		generator = new PseudoLegalMoveGenerator();
-		generator.setWalker(walker);
+		generator.setWalker(this::processMove);
 	}
-	
+
+	private boolean processMove(final Move generatedMove) {
+		if (generatedMove.getMovingPieceType() == moveToWrite.getMovingPieceType() && generatedMove.getTargetSquare() == moveToWrite.getTargetSquare()) {
+			if (generatedMove.equals(moveToWrite))
+				moveFound = true;
+			else {
+				anotherMoveCount ++;
+
+				final int generatedBeginSquare = generatedMove.getBeginSquare();
+				final int writtenBeginSquare = moveToWrite.getBeginSquare();
+
+				if (Square.getFile(generatedBeginSquare) == Square.getFile(writtenBeginSquare))
+					onSameFile = true;
+
+				if (Square.getRank(generatedBeginSquare) == Square.getRank(writtenBeginSquare))
+					onSameRank = true;
+			}
+		}
+
+		return true;
+	}
+
 	/**
 	 * Writes move into given writer.
 	 * @param writer target writer

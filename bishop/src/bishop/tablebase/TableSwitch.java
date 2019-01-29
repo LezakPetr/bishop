@@ -15,7 +15,7 @@ import collections.ImmutableProbabilisticSet;
 
 public class TableSwitch implements IPositionResultSource {
 	
-	private final Map<MaterialHash, ITableRead> tableMap;
+	private final Map<IMaterialHashRead, ITableRead> tableMap;
 	private ImmutableProbabilisticSet<IMaterialHashRead> bothColorMaterialSet;
 	
 	
@@ -45,7 +45,7 @@ public class TableSwitch implements IPositionResultSource {
 			return directTable.getPositionResult(position);
 		}
 		
-		final MaterialHash oppositeHash = directHash.getOpposite();
+		final IMaterialHashRead oppositeHash = directHash.getOpposite();
 		final IPositionResultSource oppositeTable = tableMap.get(oppositeHash);
 		
 		if (oppositeTable != null) {
@@ -79,7 +79,7 @@ public class TableSwitch implements IPositionResultSource {
 		return bothColorMaterialSet.contains(materialHash);
 	}
 	
-	public Set<MaterialHash> getMaterialHashSet() {
+	public Set<IMaterialHashRead> getMaterialHashSet() {
 		return Collections.unmodifiableSet(tableMap.keySet());
 	}
 

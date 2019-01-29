@@ -108,7 +108,6 @@ public class SearchManagerTest {
 
 		engineFactory.setPositionEvaluatorFactory(new MaterialPositionEvaluatorFactory(evaluationFactory));
 		engineFactory.setMaximalDepth(25);
-		engineFactory.setEvaluationFactory(evaluationFactory);
 		engineFactory.setPieceTypeEvaluations(pte);
 
 		manager.setEngineFactory(engineFactory);

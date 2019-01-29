@@ -3,7 +3,6 @@ package bishop.engine;
 import java.util.Arrays;
 
 import bishop.base.Color;
-import bishop.base.IMoveWalker;
 import bishop.base.MateChecker;
 import bishop.base.Move;
 import bishop.base.MoveStack;
@@ -159,16 +158,7 @@ public class MateFinder {
 	private int depthAdvance;
 	private int attackerColor;   // Color of the side that gives mate
 	private NodeRecord[] nodeRecords;
-	
-	private final IMoveWalker walker = new IMoveWalker() {
-		public boolean processMove(final Move move) {
-			moveStack.setRecord(moveStackTop, move, historyTable.getEvaluation(position.getOnTurn(), move));
-			moveStackTop++;
 
-			return true;
-		}
-	};
-	
 	private final PseudoLegalMoveGenerator moveGenerator;
 	private final MateChecker mateChecker = new MateChecker();
 	
@@ -177,7 +167,14 @@ public class MateFinder {
 	
 	public MateFinder() {
 		this.moveGenerator = new PseudoLegalMoveGenerator();
-		this.moveGenerator.setWalker(walker);
+		this.moveGenerator.setWalker(this::processMove);
+	}
+
+	private boolean processMove(final Move move) {
+		moveStack.setRecord(moveStackTop, move, historyTable.getEvaluation(position.getOnTurn(), move));
+		moveStackTop++;
+
+		return true;
 	}
 	
 	public void setPosition (final Position position) {

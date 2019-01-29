@@ -27,14 +27,11 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	private final IPositionEvaluation positionalEvaluation;
 	private final AttackCalculator attackCalculator = new AttackCalculator();
 	
-	private final GeneralEvaluatorSettings settings;
-	
 	private int gameStage;
 	private GameStageCoeffs gameStageCoeffs;
 
 
-	public GeneralPositionEvaluator(final GeneralEvaluatorSettings settings, final Supplier<IPositionEvaluation> evaluationFactory) {
-		this.settings = settings;
+	public GeneralPositionEvaluator(final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.tacticalEvaluation = evaluationFactory.get();
 		this.positionalEvaluation = evaluationFactory.get();
 

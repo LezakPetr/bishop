@@ -21,11 +21,9 @@ public class SampleWriter implements IPositionProcessor, Closeable {
 	private final PrintWriter sampleList;
 	private final PositionEvaluationCoeffs coeffs = new PositionEvaluationCoeffs();
 	private final Supplier<IPositionEvaluation> evaluationFactory = () -> new CoeffCountPositionEvaluation(coeffs);
-	private final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 	private final MobilityCalculator mobilityCalculator = new MobilityCalculator();
 
-	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);
-	private final AttackCalculator attackCalculator = new AttackCalculator();
+	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(evaluationFactory);
 	private GameResult result;
 
 

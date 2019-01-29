@@ -21,7 +21,7 @@ public class BetweenTable {
 	
 	private static final long[] table = createTable();
 	
-	private static final int getItemIndex (final int square1, final int square2) {
+	private static int getItemIndex (final int square1, final int square2) {
 		return square1 + (square2 << SQUARE2_SHIFT);
 	}
 	

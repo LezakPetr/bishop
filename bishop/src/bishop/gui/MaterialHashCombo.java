@@ -8,14 +8,15 @@ import java.util.Set;
 import javax.swing.JComboBox;
 
 import bishop.base.Color;
+import bishop.base.IMaterialHashRead;
 import bishop.base.MaterialHash;
 
 @SuppressWarnings("serial")
 public class MaterialHashCombo extends JComboBox<String> {
 	
-	private MaterialHash[] materialHashes;
+	private IMaterialHashRead[] materialHashes;
 
-	public MaterialHash getSelectedMaterialHash() {
+	public IMaterialHashRead getSelectedMaterialHash() {
 		final int index = getSelectedIndex();
 		
 		return materialHashes[index];
@@ -30,21 +31,21 @@ public class MaterialHashCombo extends JComboBox<String> {
 		}
 	}
 	
-	public void initialize (final Set<MaterialHash> materialHashSet) {
-		final List<MaterialHash> materialHashList = new LinkedList<MaterialHash>();
+	public void initialize (final Set<IMaterialHashRead> materialHashSet) {
+		final List<IMaterialHashRead> materialHashList = new LinkedList<>();
 		
-		for (MaterialHash hash: materialHashSet) {
+		for (IMaterialHashRead hash: materialHashSet) {
 			if (hash.getOnTurn() == Color.WHITE) {
 				materialHashList.add(hash);
 			}
 		}
 		
-		materialHashes = materialHashList.toArray(new MaterialHash[materialHashList.size()]);
+		materialHashes = materialHashList.toArray(IMaterialHashRead.EMPTY_ARRAY);
 		Arrays.sort(materialHashes);
 		
 		this.removeAllItems();
 		
-		for (MaterialHash hash: materialHashes) {
+		for (IMaterialHashRead hash: materialHashes) {
 			this.addItem(hash.getMaterialString());
 		}
 	}

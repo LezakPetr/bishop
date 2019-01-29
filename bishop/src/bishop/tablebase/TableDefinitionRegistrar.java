@@ -38,12 +38,10 @@ public class TableDefinitionRegistrar {
 		}
 	}
 	
-	private final KeyValueMapping<Key, TableDefinition> creator = key -> new TableDefinition(key.version, key.materialHash);
-	
 	private final KeyValueMapping<Key, TableDefinition> mapping;
 	
 	public TableDefinitionRegistrar() {
-		mapping = new KeyValueCache<>(creator);
+		mapping = new KeyValueCache<>(key -> new TableDefinition(key.version, key.materialHash));
 	}
 	
 	public TableDefinition getDefinition(final int version, final MaterialHash hash) {

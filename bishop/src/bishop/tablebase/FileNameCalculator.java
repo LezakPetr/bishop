@@ -51,7 +51,7 @@ public class FileNameCalculator {
 		return new MaterialHash(fileName.substring(MATERIAL_BEGIN, MATERIAL_END), onTurn);
 	}
 	
-	private static final boolean isDigitString(final String str) {
+	private static boolean isDigitString(final String str) {
 		for (int i = 0; i < str.length(); i++) {
 			if (!Character.isDigit(str.charAt(i)))
 				return false;

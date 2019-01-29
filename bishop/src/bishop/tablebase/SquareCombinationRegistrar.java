@@ -5,12 +5,10 @@ import utils.KeyValueMapping;
 
 public class SquareCombinationRegistrar {
 	
-	private final KeyValueMapping<SquareCombinationKey, SquareCombination> creator = SquareCombination::new;
-	
 	private final KeyValueMapping<SquareCombinationKey, SquareCombination> mapping;
 	
 	public SquareCombinationRegistrar() {
-		mapping = new KeyValueCache<>(creator);
+		mapping = new KeyValueCache<>(SquareCombination::new);
 	}
 	
 	public SquareCombination getDefinition(final SquareCombinationKey key) {

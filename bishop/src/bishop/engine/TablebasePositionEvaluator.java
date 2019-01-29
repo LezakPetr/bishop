@@ -81,7 +81,7 @@ public class TablebasePositionEvaluator {
 		}
 	}
 	
-	public Set<MaterialHash> getMaterialHashSet() {
+	public Set<IMaterialHashRead> getMaterialHashSet() {
 		return tableSwitch.getMaterialHashSet();
 	}
 

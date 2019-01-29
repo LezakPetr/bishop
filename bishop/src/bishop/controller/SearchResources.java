@@ -33,14 +33,11 @@ public class SearchResources {
 
 		final PositionEvaluationCoeffs evaluationCoeffs = createEvaluationCoeffs(application.getRootUrl());
 		evaluationFactory = createEvaluationFactory(evaluationCoeffs);
-		
-		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 
 		final PieceTypeEvaluations pieceTypeEvaluations = evaluationCoeffs.getPieceTypeEvaluations();
-		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(settings, getEvaluationFactory());
+		final PositionEvaluatorSwitchFactory evaluatorFactory = new PositionEvaluatorSwitchFactory(getEvaluationFactory());
 
 		searchEngineFactory.setPositionEvaluatorFactory(evaluatorFactory);
-		searchEngineFactory.setEvaluationFactory(evaluationFactory);
 		searchEngineFactory.setMaximalDepth(MAX_TOTAL_DEPTH);
 		searchEngineFactory.setPieceTypeEvaluations(pieceTypeEvaluations);
 		

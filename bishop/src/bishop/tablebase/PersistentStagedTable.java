@@ -3,7 +3,6 @@ package bishop.tablebase;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
-import parallel.IForBody;
 import parallel.Parallel;
 
 /**

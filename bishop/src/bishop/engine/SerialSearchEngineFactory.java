@@ -1,23 +1,12 @@
 package bishop.engine;
 
-import java.util.function.Supplier;
-
 import bishop.base.PieceTypeEvaluations;
 
 public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 
 	private PieceTypeEvaluations pieceTypeEvaluations;
 	private IPositionEvaluatorFactory positionEvaluatorFactory;
-	private Supplier<IPositionEvaluation> evaluationFactory;
 	private int maximalDepth;
-
-	public IPositionEvaluatorFactory getPositionEvaluatorFactory() {
-		return positionEvaluatorFactory;
-	}
-	
-	public void setEvaluationFactory(final Supplier<IPositionEvaluation> evaluationFactory) {
-		this.evaluationFactory = evaluationFactory;
-	}
 
 	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations) {
 		this.pieceTypeEvaluations = pieceTypeEvaluations;

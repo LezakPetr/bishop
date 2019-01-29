@@ -14,16 +14,16 @@ import utils.Logger;
 import parallel.Parallel;
 
 public final class SearchManagerImpl implements ISearchManager {
-	
+
+	private static final int MIN_HORIZON = 3 * SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION;
+
 	// Settings
 	private ISearchEngineFactory engineFactory;
 	private int maxHorizon;
 	private long maxTimeForMove;
 	private final HandlerRegistrarImpl<ISearchManagerHandler> handlerRegistrar;
-	private final int minHorizon = 3 * SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION;
 	private int threadCount = 1;
 	private CombinedPositionEvaluationTable combinedPositionEvaluationTable = CombinedPositionEvaluationTable.ZERO_TABLE;
-	private PieceTypeEvaluations pieceTypeEvaluations;
 	private long searchInfoTimeout = 500; // ms
 	
 	private final List<ISearchEngine> searchEngineList = new ArrayList<>();
@@ -468,7 +468,7 @@ public final class SearchManagerImpl implements ISearchManager {
 			return newCount > 1;
 		});
 		
-		if ((int) moveCount.getValue() == 1)
+		if (moveCount.getValue() == 1)
 			return lastMove;
 		else
 			return null;
@@ -548,7 +548,7 @@ public final class SearchManagerImpl implements ISearchManager {
 			
 			Logger.logMessage("Starting search");
 			
-			this.startHorizon = Math.min(minHorizon, maxHorizon);
+			this.startHorizon = Math.min(MIN_HORIZON, maxHorizon);
 			this.searchFinished = false;
 			this.isResultSent = false;
 			this.searchInfoChanged = false;
@@ -664,7 +664,6 @@ public final class SearchManagerImpl implements ISearchManager {
 		synchronized (monitor) {
 			checkManagerState (ManagerState.STOPPED);
 
-			this.pieceTypeEvaluations = pieceTypeEvaluations;
 			rootPosition.setPieceTypeEvaluations(pieceTypeEvaluations);
 		}
 	}

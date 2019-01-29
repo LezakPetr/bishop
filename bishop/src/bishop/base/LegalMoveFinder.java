@@ -2,13 +2,6 @@ package bishop.base;
 
 public class LegalMoveFinder {
 
-	private final IMoveWalker walker = new IMoveWalker() {
-		public boolean processMove (final Move move) {
-			legalMoveFound = true;
-			return false;
-		}
-	};
-	
 	private final LegalMoveGenerator generator;
 	private boolean legalMoveFound;
 
@@ -18,10 +11,15 @@ public class LegalMoveFinder {
 
 	public LegalMoveFinder(final boolean reduceMovesInCheck) {
 		generator = new LegalMoveGenerator();
-		generator.setWalker(walker);
+		generator.setWalker(this::processMove);
 		generator.setReduceMovesInCheck(reduceMovesInCheck);
 	}
-	
+
+	private boolean processMove (final Move move) {
+		legalMoveFound = true;
+		return false;
+	}
+
 	public boolean existsLegalMove (final Position position) {
 		legalMoveFound = false;
 		

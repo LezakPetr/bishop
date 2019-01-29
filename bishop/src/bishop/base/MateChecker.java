@@ -5,21 +5,19 @@ import bishop.tables.MateCheckerTables;
 
 public class MateChecker {
 
-	private final IMoveWalker walker = new IMoveWalker() {
-		public boolean processMove (final Move move) {
-			legalMoveFound = true;
-			return false;
-		}
-	};
-	
 	private final LegalMoveGenerator generator;
 	private boolean legalMoveFound;
 
 	public MateChecker() {
 		generator = new LegalMoveGenerator();
-		generator.setWalker(walker);
+		generator.setWalker(this::processMove);
 		generator.setReduceMovesInCheck(true);
 		generator.setGenerateMovesOfPiece(PieceType.KING, false);
+	}
+
+	private boolean processMove (final Move move) {
+		legalMoveFound = true;
+		return false;
 	}
 
 	public boolean isMate (final Position position) {
