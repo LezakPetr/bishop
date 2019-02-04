@@ -1,6 +1,7 @@
 package bishopTests;
 
 import bishop.base.GlobalSettings;
+import bishop.base.MaterialHash;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -26,6 +27,7 @@ public class AllTests {
 		BoardConstantsTest.class,
 		CastlingConstantsTest.class,
 		BitLoopTest.class,
+		MaterialHashTest.class,
 		MaxKingDistanceCalculatorTest.class,
 		ImmutableOrdinalMapTest.class,
 		IntUtilsTest.class,

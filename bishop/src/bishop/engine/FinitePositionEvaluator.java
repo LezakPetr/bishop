@@ -32,8 +32,8 @@ public final class FinitePositionEvaluator {
 			
 			return true;
 		}
-		
-		// Repeated positions
+
+		// Dead positions
 		final boolean isDeadPosition = DrawChecker.isDeadPosition(position);
 
 		if (isDeadPosition) {
@@ -42,6 +42,7 @@ public final class FinitePositionEvaluator {
 			return true;
 		}
 
+		// Repeated positions
 		final boolean isRepetition = repeatedPositionRegister.isDrawByRepetition(position, depth);
 
 		if (isRepetition) {
