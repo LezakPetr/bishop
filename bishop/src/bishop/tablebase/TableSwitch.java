@@ -17,6 +17,7 @@ public class TableSwitch implements IPositionResultSource {
 	
 	private final Map<IMaterialHashRead, ITableRead> tableMap;
 	private ImmutableProbabilisticSet<IMaterialHashRead> bothColorMaterialSet;
+	private int maxPieceCount;
 	
 	
 	public TableSwitch() {
@@ -60,6 +61,7 @@ public class TableSwitch implements IPositionResultSource {
 	public void setTables (final Map<MaterialHash, ? extends ITableRead> tables) {
 		final List<MaterialHash> bothColorHashes = new ArrayList<>();
 		tableMap.clear();
+		maxPieceCount = 0;
 		
 		for (Map.Entry<MaterialHash, ? extends ITableRead> entry: tables.entrySet()) {
 			final MaterialHash materialHash = entry.getKey();
@@ -70,13 +72,15 @@ public class TableSwitch implements IPositionResultSource {
 			
 			bothColorHashes.add(copyMaterialHash);
 			bothColorHashes.add(oppositeMaterialHash);
+
+			maxPieceCount = Math.max(maxPieceCount, materialHash.getTotalPieceCount());
 		}
 		
 		bothColorMaterialSet = new ImmutableProbabilisticSet<>(bothColorHashes);
 	}
 	
 	public boolean canProcessSource(final IMaterialHashRead materialHash) {
-		return bothColorMaterialSet.contains(materialHash);
+		return materialHash.getTotalPieceCount() <= maxPieceCount && bothColorMaterialSet.contains(materialHash);
 	}
 	
 	public Set<IMaterialHashRead> getMaterialHashSet() {
