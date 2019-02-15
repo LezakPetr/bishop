@@ -53,6 +53,7 @@ public class AllTests {
 		VectorTest.class,
 		VectorAlgorithmsTest.class,
 		MatrixTest.class,
+		OnlineLogisticModelTest.class,
 		PieceMoveTablesTest.class,
 		PositionTest.class,
 		SearchEngineTest.class,

@@ -289,7 +289,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 								final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
 								currentPosition.makeMove(move);
 
-								if (firstLegalMove.getMoveType() != MoveType.INVALID && alpha != beta) {
+								if (firstLegalMove.getMoveType() != MoveType.INVALID && alpha != beta && moveStack.getEvaluation(moveListEnd - 1) < 0) {
 									evaluateMadeMove (move, reducedHorizon, positionExtension, alpha, alpha, beginMaterialEvaluation);
 									final int childEvaluation = -nextRecord.evaluation;
 
@@ -312,6 +312,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 							moveListEnd--;
 						}
 					}
+
+					if (principalVariation.getSize() > 0)
+						moveEstimator.updateMove(this, currentPosition.getOnTurn(), principalVariation.get(0), horizon, true);
 
 					final int mateEvaluation = Evaluation.getMateEvaluation(depth);
 					checkMateAndStalemate(isCheck, mateEvaluation);
@@ -505,6 +508,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 			}
 
 			if (parentEvaluation > evaluation) {
+				if (principalVariation.getSize() > 0)
+					moveEstimator.updateMove(this, currentPosition.getOnTurn(), principalVariation.get(0), horizon, false);
+
 				evaluation = parentEvaluation;
 				alpha = Math.max(alpha, evaluation);
 
@@ -518,8 +524,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 				// Update alpha and beta
 				if (evaluation > beta) {
-					moveEstimator.addCutoff(this, currentPosition.getOnTurn(), move, horizon);
-
 					killerMove.assign(move);
 
 					betaCutoff = true;
