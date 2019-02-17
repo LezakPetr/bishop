@@ -17,19 +17,11 @@ import math.SimpleLinearModel;
  */
 public class MoveEstimator {
 
-	// Following must be true:
-	//   2 * SAMPLE_COUNT_TO_RECALCULATE_ESTIMATES * REDUCTION_FREQUENCY * e^2 < 2^63
-	// where e = min (MOVE_ESTIMATE, HistoryTable.MAX_EVALUATION)
-	// to prevent potential overflows
-	private static final int SAMPLE_COUNT_TO_RECALCULATE_ESTIMATES = 65536;
-	private static final int REDUCTION_FREQUENCY = 256;
-	private static final int MOVE_ESTIMATE = 1000;
-	
 	private static final int MAX_KILLER = 2;
 	private static final int MAX_CAPTURE_ESTIMATION = PieceType.COUNT * PieceType.COUNT;
 
-	private static final int ESTIMATE_MULTIPLIER = 1000000;
-	private static final int MAX_ESTIMATE = 1000000000;
+	public static final int ESTIMATE_MULTIPLIER = 1_000_000;
+	public static final int MAX_ESTIMATE = 1_000_000_000;
 
 	private final HistoryTable historyTable = new HistoryTable();
 	

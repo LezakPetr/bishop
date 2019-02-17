@@ -2,7 +2,9 @@
 title: "Optimal SearchSettings"
 author: "Petr Lezak"
 date: "23 prosince 2018"
-output: pdf_document
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -46,5 +48,6 @@ ggplot(data, aes (x = recaptureMaxExtension, y = totalNodeCount)) + geom_smooth(
 ggplot(data, aes (x = recaptureBeginMinTreshold, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$recaptureBeginMinTreshold) + geom_hline(yintercept = minRow$totalNodeCount);
 ggplot(data, aes (x = recaptureBeginMaxTreshold, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$recaptureBeginMaxTreshold) + geom_hline(yintercept = minRow$totalNodeCount);
 ggplot(data, aes (x = recaptureTargetTreshold, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$recaptureTargetTreshold) + geom_hline(yintercept = minRow$totalNodeCount);
+ggplot(data, aes (x = maxEstimateForZeroWindowSearch, y = totalNodeCount)) + geom_smooth() + geom_point() + geom_vline(xintercept = minRow$maxEstimateForZeroWindowSearch) + geom_hline(yintercept = minRow$totalNodeCount);
 ```
 

@@ -289,7 +289,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 								final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
 								currentPosition.makeMove(move);
 
-								if (firstLegalMove.getMoveType() != MoveType.INVALID && alpha != beta && moveStack.getEvaluation(moveListEnd - 1) < 0) {
+								if (firstLegalMove.getMoveType() != MoveType.INVALID && alpha != beta && moveStack.getEvaluation(moveListEnd - 1) < searchSettings.getMaxEstimateForZeroWindowSearch()) {
 									evaluateMadeMove (move, reducedHorizon, positionExtension, alpha, alpha, beginMaterialEvaluation);
 									final int childEvaluation = -nextRecord.evaluation;
 

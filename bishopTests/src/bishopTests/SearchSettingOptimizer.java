@@ -9,6 +9,7 @@ import bishop.base.Game;
 import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import bishop.engine.ISearchEngine;
+import bishop.engine.MoveEstimator;
 import bishop.engine.SearchSettings;
 
 import math.Utils;
@@ -42,6 +43,8 @@ public class SearchSettingOptimizer {
 	}
 
 	private void randomizeSettings(final SearchSettings searchSettings, final SearchSettings optimalSettings) {
+		searchSettings.assign(optimalSettings);
+
 		searchSettings.setMaxQuiescenceDepth(
 				getRandom(
 						1, 20,
@@ -154,6 +157,13 @@ public class SearchSettingOptimizer {
 				getRandom(
 						0, queenEvaluation,
 						optimalSettings.getRecaptureTargetTreshold()
+				)
+		);
+
+		searchSettings.setMaxEstimateForZeroWindowSearch(
+				getRandom(
+						-5 * MoveEstimator.ESTIMATE_MULTIPLIER, 5 * MoveEstimator.ESTIMATE_MULTIPLIER,
+						optimalSettings.getMaxEstimateForZeroWindowSearch()
 				)
 		);
 	}
