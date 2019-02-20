@@ -3,10 +3,10 @@ package bishop.engine;
 import java.util.function.Consumer;
 
 import bishop.base.Color;
+import bishop.base.GlobalSettings;
 import bishop.base.Move;
 import bishop.base.PieceType;
-import math.OnlineLogisticModel;
-import math.SimpleLinearModel;
+import math.*;
 
 /**
  * Estimator that estimates the moves to order them in alpha-beta search.
@@ -26,12 +26,17 @@ public class MoveEstimator {
 	private final HistoryTable historyTable = new HistoryTable();
 	
 	private final OnlineLogisticModel models[][][] = new OnlineLogisticModel[Color.LAST][MAX_KILLER][MAX_CAPTURE_ESTIMATION];
+	private static final ConfusionMatrix confusionMatrix = new ConfusionMatrix(2);
 
 	public MoveEstimator() {
+		final IErrorAccumulator costAccumulator = (GlobalSettings.isDebug()) ?
+				new MeanSquareErrorAccumulator() :
+				NullErrorAccumulator.getInstance();
+
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			for (int killer = 0; killer < MAX_KILLER; killer++) {
 				for (int capture = 0; capture < MAX_CAPTURE_ESTIMATION; capture++) 
-					models[color][killer][capture] = new OnlineLogisticModel();
+					models[color][killer][capture] = new OnlineLogisticModel(costAccumulator);
 			}
 		}
 	}
@@ -56,6 +61,8 @@ public class MoveEstimator {
 	}
 
 	public void updateMove(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move, final int horizon, final boolean isBest) {
+		confusionMatrix.addSample((isBest) ? 1 : 0, (getMoveEstimate(nodeRecord, color, move) > 0) ? 1 : 0);
+
 		updateModel(nodeRecord, color, move, (isBest) ? 1 : 0);
 
 		if (isBest)
@@ -87,6 +94,11 @@ public class MoveEstimator {
 
 		return PieceType.COUNT * movingPieceType + updatedCapturedPieceType;
 	}
-		
+
+	public void log() {
+		System.out.println("Move estimator confusion matrix");
+
+		confusionMatrix.log();
+	}
 
 }

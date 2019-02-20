@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.util.stream.IntStream;
 
 import bishop.base.*;
+import math.ConfusionMatrix;
 import utils.Logger;
 import utils.RatioCalculator;
 
@@ -962,6 +963,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 			if (bestMovePerIndexCounts[i] > 0)
 				System.out.println(i + " " + bestMovePerIndexCounts[i]);
 		}
+
+		moveEstimator.log();
 	}
 
 	/**
