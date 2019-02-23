@@ -3,7 +3,6 @@ package bishopTests;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
@@ -34,7 +33,7 @@ public class SearchPerformanceTest {
 		}
 	}
 
-	private static final int HASH_TABLE_EXPONENT = 27;
+	private static final int HASH_TABLE_EXPONENT = 26;
 	private static final int MAX_DEPTH = 25 * SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION;
 	private static final long SEARCH_INFO_TIMEOUT = 200;
 
@@ -75,11 +74,12 @@ public class SearchPerformanceTest {
 		final PieceTypeEvaluations pieceTypeEvaluations = positionEvaluationCoeffs.getPieceTypeEvaluations();
 		engineFactory.setPieceTypeEvaluations(pieceTypeEvaluations);
 		
-		final HashTableImpl hashTable = new HashTableImpl(HASH_TABLE_EXPONENT);
+		final EvaluationHashTableImpl evaluationHashTable = new EvaluationHashTableImpl(HASH_TABLE_EXPONENT);
+		final BestMoveHashTableImpl bestMoveHashTable = new BestMoveHashTableImpl(HASH_TABLE_EXPONENT);
 		
 		manager.setTablebaseEvaluator(tablebaseEvaluator);
 		manager.setEngineFactory(engineFactory);
-		manager.setHashTable(hashTable);
+		manager.setHashTable(evaluationHashTable, bestMoveHashTable);
 		manager.setThreadCount(threadCount);
 		manager.setPieceTypeEvaluations(pieceTypeEvaluations);
 		manager.setSearchInfoTimeout(SEARCH_INFO_TIMEOUT);

@@ -49,10 +49,11 @@ public class SearchManagerTest {
 		GlobalSettings.setDebug(true);
 		Logger.setStream(System.out);
 		
-		final HashTableImpl hashTable = new HashTableImpl(24);
+		final EvaluationHashTableImpl evaluationHashTable = new EvaluationHashTableImpl(23);
+		final BestMoveHashTableImpl bestMoveHashTable = new BestMoveHashTableImpl(23);
 
 		final ISearchManager manager = new SearchManagerImpl();
-		manager.setHashTable(hashTable);
+		manager.setHashTable(evaluationHashTable, bestMoveHashTable);
 		
 		final Holder<Boolean> searchFinished = new Holder<Boolean>();
 		

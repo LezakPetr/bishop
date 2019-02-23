@@ -103,14 +103,13 @@ public interface ISearchManager {
 	 * Returns hash table.
 	 * @returns hash table
 	 */
-	public IHashTable getHashTable();
+	public IEvaluationHashTable getHashTable();
 	
 	/**
 	 * Sets hash table for the manager.
 	 * Manager must be in STOPPED state.
-	 * @param table hash table
 	 */
-	public void setHashTable (final IHashTable table);
+	public void setHashTable (final IEvaluationHashTable evaluationHashTable, final IBestMoveHashTable bestMoveHashTable);
 	
 	/**
 	 * Returns current state of the manager.

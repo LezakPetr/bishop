@@ -2,22 +2,22 @@ package bishop.engine;
 
 import bishop.base.Position;
 
-public interface IHashTable {
+public interface IBestMoveHashTable {
 	/**
 	 * Returns hash record for given position.
 	 * @param position position
-	 * @param record storage for the record
 	 * @return true if record is found, false if not
 	 */
-	public boolean getRecord (final Position position, final int expectedHorizon, final HashRecord record);
-	
+	public int getRecord (final Position position);
+
 	/**
 	 * Updates hash record for given position.
 	 * @param position position
-	 * @param record hash record
+	 * @param horizon horizon
+	 * @param compressedBestMove compressed best move
 	 */
-	public void updateRecord (final Position position, final HashRecord record);
-	
+	public void updateRecord (final Position position, final int horizon, final int compressedBestMove);
+
 	/**
 	 * Clears the table.
 	 */

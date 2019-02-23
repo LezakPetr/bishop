@@ -5,7 +5,6 @@ import java.io.StringWriter;
 import java.util.stream.IntStream;
 
 import bishop.base.*;
-import math.ConfusionMatrix;
 import utils.Logger;
 import utils.RatioCalculator;
 
@@ -32,7 +31,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					if (depth == 0) {
 						currentPosition.makeMove(move);
 
-						if (hashTable.getRecord(currentPosition, -1, estimateHashRecord))
+						if (evaluationHashTable.getRecord(currentPosition, -1, estimateHashRecord))
 							estimate = -estimateHashRecord.getEvaluation();
 
 						currentPosition.undoMove(move);
@@ -383,11 +382,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 		 * @return true if the position evaluation with enough horizon was obtained
 		 */
 		private boolean updateRecordByHash(final int horizon, final HashRecord hashRecord) {
-			if (!readHashRecord(horizon, hashRecord)) {
+			final int compressedBestMove = bestMoveHashTable.getRecord(currentPosition);
+
+			if (compressedBestMove != Move.NONE_COMPRESSED_MOVE)
+				hashBestMove.uncompressMove(compressedBestMove, currentPosition);
+			else
 				hashBestMove.clear();
 
+			if (!readHashRecord(horizon, hashRecord))
 				return false;
-			}
 
 			if (depth > 0 && hashRecord.getHorizon() == horizon) {
 				final int hashEvaluation = hashRecord.getNormalizedEvaluation(depth);
@@ -555,14 +558,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 				record.setEvaluationAndType(evaluation, alpha, beta, depth);
 				record.setHorizon(horizon);
 
-				if (principalVariation.getSize() > 0) {
-					record.setCompressedBestMove(principalVariation.getCompressedMove(0));
-				}
-				else {
-					record.setCompressedBestMove(Move.NONE_COMPRESSED_MOVE);
-				}
+				evaluationHashTable.updateRecord(currentPosition, record);
 
-				hashTable.updateRecord(currentPosition, record);
+				if (principalVariation.getSize() > 0)
+					bestMoveHashTable.updateRecord(currentPosition, horizon, principalVariation.getCompressedMove(0));
 			}
 		}
 
@@ -621,24 +620,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 
 		private boolean readHashRecordImpl(final int horizon, final HashRecord hashRecord) {
-			if (!hashTable.getRecord(currentPosition, horizon, hashRecord))
-				return false;
-
-			if (hashRecord.getCompressedBestMove() == Move.NONE_COMPRESSED_MOVE) {
-				hashBestMove.clear();
-
-				if (GlobalSettings.isDebug())
-					hashPrimaryCollisionRate.addInvocation (false);
-
-				return true;
-			}
-
-			final boolean success = hashBestMove.uncompressMove(hashRecord.getCompressedBestMove(), currentPosition);
-
-			if (GlobalSettings.isDebug())
-				hashPrimaryCollisionRate.addInvocation (!success);
-
-			return success;
+			return evaluationHashTable.getRecord(currentPosition, horizon, hashRecord);
 		}
 	}
 
@@ -649,7 +631,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 	// Settings
 	private int maxTotalDepth;
 	private SearchSettings searchSettings;
-	private IHashTable hashTable;
+	private IEvaluationHashTable evaluationHashTable;
+	private IBestMoveHashTable bestMoveHashTable;
 
 	// Actual task
 	private NodeRecord[] nodeStack;
@@ -687,7 +670,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private static final int MAX_MATE_EXTENSION = 4;
 	
 	private static final RatioCalculator hashSuccessRatio = new RatioCalculator();
-	private static final RatioCalculator hashPrimaryCollisionRate = new RatioCalculator();
 
 	
 	public SerialSearchEngine() {
@@ -711,7 +693,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		mateFinder = new MateFinder();
 		
-		setHashTable(new NullHashTable());
+		setHashTable(new NullEvaluationHashTable(), new NullBestMoveHashTable());
 
 		task = null;
 	}
@@ -948,15 +930,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 		Logger.logMessage("Mate search");
 
 		final double hitRatio = hashSuccessRatio.getRatio();
-		final double primaryColissionRate = hashPrimaryCollisionRate.getRatio();
 		
 		Logger.logMessage("Hash hitratio = " + hitRatio);
-		
-		// primaryColissionRate is rate of undetected collisions against all claimed hits
-		// collissionsNotDetectedRate is rate of undetected collisions against hash fails (detected fails and collisions)
-		final double collissionsNotDetectedRate = (hitRatio * primaryColissionRate) / (primaryColissionRate * hitRatio * primaryColissionRate - hitRatio + 1);
-		Logger.logMessage("Collision not detected rate = " + collissionsNotDetectedRate + ", should be " + HashTableImpl.PRIMARY_COLLISION_RATE);
-		
+
 		System.out.println("Best move perindex counts: ");
 		
 		for (int i = 0; i < bestMovePerIndexCounts.length; i++) {
@@ -1008,14 +984,14 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 	/**
 	 * Sets hash table for the manager. Engine must be in STOPPED state.
-	 * 
-	 * @param table hash table
 	 */
-	public void setHashTable(final IHashTable table) {
+	@Override
+	public void setHashTable(final IEvaluationHashTable evaluationHashTable, final IBestMoveHashTable bestMoveHashTable) {
 		synchronized (monitor) {
 			checkEngineState(EngineState.STOPPED);
 
-			this.hashTable = table;
+			this.evaluationHashTable = evaluationHashTable;
+			this.bestMoveHashTable = bestMoveHashTable;
 		}
 	}
 

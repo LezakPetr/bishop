@@ -12,13 +12,15 @@ import java.util.function.Supplier;
 public class SearchResources {
 	
 	private static final int MAX_TOTAL_DEPTH = 256;
+	private static final int DEFAULT_HASH_TABLE_EXPONENT = 9;
 	
 	private static final String BOOK_PATH = "book.dat";
 	private static final String EVALUATION_COEFFS_PATH = "coeffs.tbl";
 
 	private final IApplication application;
 	private final SerialSearchEngineFactory searchEngineFactory;
-	private final HashTableImpl hashTable;
+	private final EvaluationHashTableImpl evaluationHashTable;
+	private final BestMoveHashTableImpl bestMoveHashTable;
 	private final ISearchManager searchManager;
 	private final TablebasePositionEvaluator tablebasePositionEvaluator;
 	
@@ -41,7 +43,8 @@ public class SearchResources {
 		searchEngineFactory.setMaximalDepth(MAX_TOTAL_DEPTH);
 		searchEngineFactory.setPieceTypeEvaluations(pieceTypeEvaluations);
 		
-		hashTable = new HashTableImpl(10);
+		evaluationHashTable = new EvaluationHashTableImpl(DEFAULT_HASH_TABLE_EXPONENT);
+		bestMoveHashTable = new BestMoveHashTableImpl(DEFAULT_HASH_TABLE_EXPONENT);
 		
 		final EngineSettings engineSettings = application.getSettings().getEngineSettings();
 		final java.io.File tbbsDir = new java.io.File (engineSettings.getTablebaseDirectory());
@@ -49,7 +52,7 @@ public class SearchResources {
 		
 		searchManager = new SearchManagerImpl();
 		searchManager.setEngineFactory(searchEngineFactory);
-		searchManager.setHashTable(hashTable);
+		searchManager.setHashTable(evaluationHashTable, bestMoveHashTable);
 		searchManager.setTablebaseEvaluator (tablebasePositionEvaluator);
 		searchManager.setThreadCount(threadCount);
 		searchManager.setPieceTypeEvaluations (pieceTypeEvaluations);
@@ -95,10 +98,6 @@ public class SearchResources {
 		return searchEngineFactory;
 	}
 
-	public HashTableImpl getHashTable() {
-		return hashTable;
-	}
-
 	public ISearchManager getSearchManager() {
 		return searchManager;
 	}
@@ -111,7 +110,8 @@ public class SearchResources {
 		final ApplicationSettings applicationSettings = application.getSettings();
 		final EngineSettings engineSettings = applicationSettings.getEngineSettings();
 		
-		hashTable.resize (engineSettings.getHashTableExponent());
+		evaluationHashTable.resize (engineSettings.getHashTableExponent());
+		bestMoveHashTable.resize (engineSettings.getHashTableExponent());
 		searchManager.setThreadCount(engineSettings.getThreadCount());
 	}
 	

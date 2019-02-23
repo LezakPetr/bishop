@@ -1,7 +1,6 @@
 package bishopTests;
 
 import bishop.base.GlobalSettings;
-import bishop.base.MaterialHash;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -69,7 +68,8 @@ public class AllTests {
 		TablebaseTest.class,
 		ChunkTest.class,
 		TableDefinitionTest.class,
-		HashTableTest.class,
+		EvaluationHashTableTest.class,
+		BestMoveHashTableTest.class,
 		PawnStructureEvaluatorTest.class,
 		PositionIoTest.class,
 		SimpleLinearModelTest.class,

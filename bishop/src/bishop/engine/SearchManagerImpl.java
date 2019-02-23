@@ -3,6 +3,7 @@ package bishop.engine;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -36,7 +37,8 @@ public final class SearchManagerImpl implements ISearchManager {
 	private boolean bookSearchEnabled;
 	private boolean singleSearchEnabled;
 	private IBook<?> book;
-	private IHashTable hashTable;
+	private IEvaluationHashTable evaluationHashTable;
+	private IBestMoveHashTable bestMoveHashTable;
 	private TablebasePositionEvaluator tablebaseEvaluator;
 	
 	// Synchronization
@@ -222,7 +224,7 @@ public final class SearchManagerImpl implements ISearchManager {
 			engine.setSearchSettings(searchSettings);
 			engine.getHandlerRegistrar().addHandler(engineHandler);
 			engine.setTablebaseEvaluator(tablebaseEvaluator);
-			engine.setHashTable(hashTable);
+			engine.setHashTable(evaluationHashTable, bestMoveHashTable);
 			engine.setCombinedPositionEvaluationTable(combinedPositionEvaluationTable);
 			
 			searchEngineList.add(engine);
@@ -424,7 +426,8 @@ public final class SearchManagerImpl implements ISearchManager {
 		if (bookMove != null && bookSearchEnabled)
 			return bookMove;
 
-		hashTable.clear();
+		evaluationHashTable.clear();
+		bestMoveHashTable.clear();
 
 		for (ISearchEngine engine: searchEngineList)
 			engine.clear();
@@ -561,7 +564,8 @@ public final class SearchManagerImpl implements ISearchManager {
 			totalNodeCount = 0;
 			managerState = ManagerState.SEARCHING;
 			
-			hashTable.clear();
+			evaluationHashTable.clear();
+			bestMoveHashTable.clear();
 			
 			monitor.notifyAll();
 		}
@@ -633,25 +637,26 @@ public final class SearchManagerImpl implements ISearchManager {
 	 * Returns hash table.
 	 * @returns hash table
 	 */
-	public IHashTable getHashTable() {
+	public IEvaluationHashTable getHashTable() {
 		synchronized (monitor) {
-			return hashTable;
+			return evaluationHashTable;
 		}
 	}
 
 	/**
 	 * Sets hash table for the manager.
 	 * Manager must be in STOPPED state.
-	 * @param table hash table
 	 */
-	public void setHashTable (final IHashTable table) {
-		if (table == null)
-			throw new RuntimeException("Hash table cannot be null");
-		
+	@Override
+	public void setHashTable (final IEvaluationHashTable evaluationHashTable, final IBestMoveHashTable bestMoveHashTable) {
+		Objects.requireNonNull(evaluationHashTable);
+		Objects.requireNonNull(bestMoveHashTable);
+
 		synchronized (monitor) {
 			checkManagerState (ManagerState.STOPPED);
 
-			this.hashTable = table;
+			this.evaluationHashTable = evaluationHashTable;
+			this.bestMoveHashTable = bestMoveHashTable;
 		}
 	}
 

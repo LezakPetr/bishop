@@ -37,9 +37,8 @@ public interface ISearchEngine {
 	/**
 	 * Sets hash table for the manager.
 	 * Engine must be in STOPPED state.
-	 * @param table hash table
 	 */
-	public void setHashTable (final IHashTable table);
+	public void setHashTable (final IEvaluationHashTable evaluationHashTable, final IBestMoveHashTable bestMoveHashTable);
 
 	/**
 	 * Sets combined position evaluation table.
