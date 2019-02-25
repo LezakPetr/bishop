@@ -39,6 +39,8 @@ public class MoveEstimator {
 					models[color][killer][capture] = new OnlineLogisticModel(costAccumulator);
 			}
 		}
+
+		clear();
 	}
 	
 	private void forEachModel(final Consumer<OnlineLogisticModel> modelConsumer) {
@@ -86,6 +88,15 @@ public class MoveEstimator {
 	public void clear() {
 		historyTable.clear();
 		forEachModel(OnlineLogisticModel::clear);
+
+		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			for (int capture = 0; capture < MAX_CAPTURE_ESTIMATION; capture++) {
+				models[color][0][capture].setIntercept(0.6);
+				models[color][0][capture].setSlope(0.22);
+				models[color][1][capture].setIntercept(1.65);
+				models[color][1][capture].setSlope(0.31);
+			}
+		}
 	}
 		
 	private static int estimateCapture (final int movingPieceType, final int capturedPieceType) {

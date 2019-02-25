@@ -51,8 +51,10 @@ public class EvaluationHashTableTest {
 			final int horizon = record.getHorizon();
 			final int index = (int) ((hash + horizon) & mask);
 			final Data existingData = expectedMap.get(index);
-			
-			if (existingData == null || horizon >= existingData.record.getHorizon())
+
+			if (existingData == null ||
+					EvaluationHashTableImpl.getCost(horizon, record.getType()) >=
+					EvaluationHashTableImpl.getCost(existingData.record.getHorizon(), existingData.record.getType()))
 				expectedMap.put(index, new Data (hash, record));
 		}
 		

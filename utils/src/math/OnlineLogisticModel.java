@@ -46,4 +46,19 @@ public class OnlineLogisticModel implements IErrorAccumulator {
 		errorAccumulator.clear();
 	}
 
+	public double getIntercept() {
+		return intercept;
+	}
+
+	public void setIntercept(double intercept) {
+		this.intercept = intercept;
+	}
+
+	public double getSlope() {
+		return slope;
+	}
+
+	public void setSlope(double slope) {
+		this.slope = slope;
+	}
 }

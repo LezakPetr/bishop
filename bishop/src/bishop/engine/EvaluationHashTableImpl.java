@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
 
 import bishop.base.Move;
 import bishop.base.Position;
+import utils.IntArrayBuilder;
 import utils.Mixer;
 
 /**
@@ -32,8 +33,6 @@ public final class EvaluationHashTableImpl implements IEvaluationHashTable {
 	private int exponent;
 	private AtomicLongArray table;
 	private long indexMask;
-
-	private static final int HORIZON_DIFF = 0;
 	
 	private static final int HORIZON_SHIFT              = 0;
 	private static final int EVALUATION_SHIFT           = 8;
@@ -49,9 +48,22 @@ public final class EvaluationHashTableImpl implements IEvaluationHashTable {
 	public static final int MIN_EXPONENT = 0;
 	public static final int MAX_EXPONENT = 31;
 	public static final int ITEM_SIZE = Long.BYTES;   // Size of hash item [B]
+
+	private static final int[] RECORD_TYPE_COSTS = new IntArrayBuilder(HashRecordType.LAST)
+			.put(HashRecordType.INVALID, -1000)
+			.put(HashRecordType.VALUE, 2)
+			.put(HashRecordType.UPPER_BOUND, 1)
+			.put(HashRecordType.LOWER_BOUND, -4)
+			.build();
+
+	private static final int HORIZON_COST_SHIFT = 2;
 		
 	// Probability that the collision will be detected by the hash table itself (without uncompressing move)
 	public static final double PRIMARY_COLLISION_RATE = Math.pow(2, -(19 + 3.31 + 0.42));
+
+	public static int getCost (final int horizon, final int type) {
+		return (horizon << HORIZON_COST_SHIFT) + RECORD_TYPE_COSTS[type];
+	}
 	
 	public EvaluationHashTableImpl(final int exponent) {
 		resize(exponent);
@@ -115,11 +127,15 @@ public final class EvaluationHashTableImpl implements IEvaluationHashTable {
 		data |= ((long) record.getType() << TYPE_SHIFT) & TYPE_MASK;
 		data |= hash & HASH_MASK;
 
+		final int newCost = getCost(horizon, record.getType());
+
 		while (true) {
 			final long oldTableItem = table.get(index);
 			final int oldHorizon = (int) ((oldTableItem & HORIZON_MASK) >> HORIZON_SHIFT);
+			final int oldType = (int) ((oldTableItem & TYPE_MASK) >>> TYPE_SHIFT);
+			final int oldCost = getCost(oldHorizon, oldType);
 			
-			if (horizon + HORIZON_DIFF < oldHorizon)
+			if (newCost < oldCost)
 				break;
 			
 			if (table.compareAndSet(index, oldTableItem, data))
