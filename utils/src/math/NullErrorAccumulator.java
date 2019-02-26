@@ -8,7 +8,7 @@ public class NullErrorAccumulator implements IErrorAccumulator {
 	}
 
 	@Override
-	public void addSample(double probability, int y) {
+	public void addSample(final double predictedY, final int expectedY) {
 	}
 
 	@Override

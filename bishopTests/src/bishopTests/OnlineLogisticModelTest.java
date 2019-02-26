@@ -12,21 +12,23 @@ public class OnlineLogisticModelTest {
 	@Test
 	public void testConvergence() {
 		final SplittableRandom rng = new SplittableRandom(1234);
-		final OnlineLogisticModel model = new OnlineLogisticModel();
+		final OnlineLogisticModel model = new OnlineLogisticModel(2);
 
-		final int count = 1000000;
-		final double slope = 2.0;
+		final int count = 2000000;
+		final double slope0 = 2.0;
+		final double slope1 = -0.5;
 		final double intercept = -1.0;
 		double totalSquareError = 0.0;
 
 		for (int i = 0; i < count; i++) {
-			final double x = rng.nextDouble();
-			final double y = LogisticRegressionCostField.sigmoid(intercept + x * slope);
+			final double x0 = rng.nextDouble();
+			final double x1 = rng.nextDouble();
+			final double y = LogisticRegressionCostField.sigmoid(intercept + x0 * slope0 + x1 * slope1);
 
 			if (i < count / 2)
-				model.addSample(x, (y > rng.nextDouble()) ? 1 : 0);
+				model.addSample(new int[] {0, 1}, new double[] {x0, x1}, (y > rng.nextDouble()) ? 1 : 0);
 			else
-				totalSquareError += Utils.sqr(model.getProbability(x) - y);
+				totalSquareError += Utils.sqr(model.getProbability(new int[] {0, 1}, new double[] {x0, x1}) - y);
 		}
 
 		final double meanError = totalSquareError / (count / 2);

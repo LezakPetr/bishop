@@ -2,47 +2,63 @@ package math;
 
 import regression.LogisticRegressionCostField;
 
-public class OnlineLogisticModel implements IErrorAccumulator {
+import java.util.Arrays;
+
+public class OnlineLogisticModel {
 	private final IErrorAccumulator errorAccumulator;
 	private double gamma = 1e-4;   // Speed of learning
-	private double lambda = 0.0;   // Regularization
 	private double intercept;
-	private double slope;
+	private final double[] slopes;
 
-	public OnlineLogisticModel(final IErrorAccumulator errorAccumulator) {
+	public OnlineLogisticModel(final int featureCount, final IErrorAccumulator errorAccumulator) {
 		this.errorAccumulator = errorAccumulator;
+		this.slopes = new double[featureCount];
 
 		clear();
 	}
 
-	public OnlineLogisticModel() {
-		this(NullErrorAccumulator.getInstance());
+	public OnlineLogisticModel(final int featureCount) {
+		this(featureCount, NullErrorAccumulator.getInstance());
 	}
 
-	@Override
-	public void addSample (final double x, final int y) {
-		final double probability = getProbability(x);
+	public void addSample (final int[] featureIndices, final double[] featureValues, final int y) {
+		assert featureIndices.length == slopes.length;
+		assert featureValues.length == slopes.length;
+
+		final double probability = getProbability(featureIndices, featureValues);
 		final double probDiff = probability - y;
-		intercept -= gamma * (probDiff + 2 * lambda * intercept);
-		slope -= gamma * (probDiff * x + 2 * lambda * intercept);
+		intercept -= gamma * probDiff;
+
+		for (int i = 0; i < featureIndices.length; i++)
+			slopes[i] -= gamma * probDiff * featureValues[i];
 
 		errorAccumulator.addSample(probability, y);
 	}
 
-	public double getProbability (final double x) {
-		final double z = getExcitation(x);
+	public double getProbability (final int[] featureIndices, final double[] featureValues) {
+		assert featureIndices.length == slopes.length;
+		assert featureValues.length == slopes.length;
+
+		final double z = getExcitation(featureIndices, featureValues);
 
 		return LogisticRegressionCostField.sigmoid(z);
 	}
 
-	public double getExcitation(final double x) {
-		return intercept + x * slope;
+	public double getExcitation(final int[] featureIndices, final double[] featureValues) {
+		assert featureIndices.length == slopes.length;
+		assert featureValues.length == slopes.length;
+
+		double excitation = intercept;
+
+		for (int i = 0; i < featureIndices.length; i++)
+			excitation += featureValues[i] * slopes[i];
+
+		return excitation;
 	}
 
-	@Override
 	public void clear() {
 		intercept = 0.5;
-		slope = 1.0;
+		Arrays.fill(slopes, 1.0);
 		errorAccumulator.clear();
 	}
 
@@ -54,11 +70,11 @@ public class OnlineLogisticModel implements IErrorAccumulator {
 		this.intercept = intercept;
 	}
 
-	public double getSlope() {
-		return slope;
+	public double getSlope(final int index) {
+		return slopes[index];
 	}
 
-	public void setSlope(double slope) {
-		this.slope = slope;
+	public void setSlope(final int index, final double slope) {
+		this.slopes[index] = slope;
 	}
 }

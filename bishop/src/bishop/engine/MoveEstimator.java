@@ -36,7 +36,7 @@ public class MoveEstimator {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			for (int killer = 0; killer < MAX_KILLER; killer++) {
 				for (int capture = 0; capture < MAX_CAPTURE_ESTIMATION; capture++) 
-					models[color][killer][capture] = new OnlineLogisticModel(costAccumulator);
+					models[color][killer][capture] = new OnlineLogisticModel(1, costAccumulator);
 			}
 		}
 
@@ -56,7 +56,7 @@ public class MoveEstimator {
 		final OnlineLogisticModel model = getModel(nodeRecord, color, move);
 		
 		final int history = historyTable.getEvaluation(color, move);
-		final int excitation = (int) (ESTIMATE_MULTIPLIER * model.getExcitation(history));
+		final int excitation = (int) (ESTIMATE_MULTIPLIER * model.getExcitation(new int[] {0}, new double[] {history}));
 		final int estimate = Math.max(Math.min(excitation, MAX_ESTIMATE), -MAX_ESTIMATE);
 
 		return estimate;
@@ -75,7 +75,7 @@ public class MoveEstimator {
 		final OnlineLogisticModel model = getModel(nodeRecord, color, move);
 		final int history = historyTable.getEvaluation(color, move);
 				
-		model.addSample(history, estimate);
+		model.addSample(new int[] {0}, new double[] {history}, estimate);
 	}
 	
 	private OnlineLogisticModel getModel(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move) {
@@ -92,9 +92,9 @@ public class MoveEstimator {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			for (int capture = 0; capture < MAX_CAPTURE_ESTIMATION; capture++) {
 				models[color][0][capture].setIntercept(0.6);
-				models[color][0][capture].setSlope(0.22);
+				models[color][0][capture].setSlope(0, 0.22);
 				models[color][1][capture].setIntercept(1.65);
-				models[color][1][capture].setSlope(0.31);
+				models[color][1][capture].setSlope(0, 0.31);
 			}
 		}
 	}

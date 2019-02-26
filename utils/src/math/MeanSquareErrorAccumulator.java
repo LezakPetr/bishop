@@ -8,9 +8,9 @@ public class MeanSquareErrorAccumulator implements IErrorAccumulator {
 	private final double[] totalErrors = new double[OUTPUT_COUNT];
 	private final long[] sampleCounts = new long[OUTPUT_COUNT];
 
-	public void addSample (final double probability, final int y) {
-		totalErrors[y] += Utils.sqr(y - probability);
-		sampleCounts[y]++;
+	public void addSample (final double predictedY, final int expectedY) {
+		totalErrors[expectedY] += Utils.sqr(predictedY - expectedY);
+		sampleCounts[expectedY]++;
 
 		logErrors();
 	}
