@@ -26,7 +26,7 @@ public class OnlineLogisticModelTest {
 			final double y = LogisticRegressionCostField.sigmoid(intercept + x0 * slope0 + x1 * slope1);
 
 			if (i < count / 2)
-				model.addSample(new int[] {0, 1}, new double[] {x0, x1}, (y > rng.nextDouble()) ? 1 : 0);
+				model.addSample(new int[] {0, 1}, new double[] {x0, x1}, (y > rng.nextDouble()) ? 1 : 0, 1.0);
 			else
 				totalSquareError += Utils.sqr(model.getProbability(new int[] {0, 1}, new double[] {x0, x1}) - y);
 		}

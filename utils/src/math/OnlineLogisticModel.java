@@ -21,16 +21,18 @@ public class OnlineLogisticModel {
 		this(featureCount, NullErrorAccumulator.getInstance());
 	}
 
-	public void addSample (final int[] featureIndices, final double[] featureValues, final int y) {
+	public void addSample (final int[] featureIndices, final double[] featureValues, final int y, final double weight) {
 		assert featureIndices.length == slopes.length;
 		assert featureValues.length == slopes.length;
 
 		final double probability = getProbability(featureIndices, featureValues);
 		final double probDiff = probability - y;
-		intercept -= gamma * probDiff;
+		final double update = weight * gamma * probDiff;
+
+		intercept -= update;
 
 		for (int i = 0; i < featureIndices.length; i++)
-			slopes[i] -= gamma * probDiff * featureValues[i];
+			slopes[i] -= update * featureValues[i];
 
 		errorAccumulator.addSample(probability, y);
 	}
