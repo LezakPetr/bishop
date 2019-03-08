@@ -63,7 +63,7 @@ public final class SearchSettings {
 		recaptureBeginMinTreshold = roundToInt (7.381 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureBeginMaxTreshold = roundToInt (8.317 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureTargetTreshold = roundToInt (6.029 * PieceTypeEvaluations.PAWN_EVALUATION);
-		maxEstimateForZeroWindowSearch = -1530009;
+		maxEstimateForZeroWindowSearch = -126200;
 	}
 	
 	private static int makeExtension(final double extension) {

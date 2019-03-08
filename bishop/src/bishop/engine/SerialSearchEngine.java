@@ -92,6 +92,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return killerMove;
 		}
 
+		public Move getPrincipalMove() {
+			return principalMove;
+		}
+
 		public Move getFirstLegalMove() {
 			return firstLegalMove;
 		}
