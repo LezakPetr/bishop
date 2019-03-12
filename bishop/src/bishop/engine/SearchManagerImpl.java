@@ -353,6 +353,9 @@ public final class SearchManagerImpl implements ISearchManager {
 			task.getPosition().assign(rootPosition);
 			task.setHorizon(horizon);
 			task.setInitialSearch(initialSearch);
+
+			if (this.searchResult != null)
+				task.getPrincipalVariation().assign(this.searchResult.getPrincipalVariation());
 			
 			final int materialEvaluation = rootPosition.getMaterialEvaluation();
 			task.setRootMaterialEvaluation(materialEvaluation);

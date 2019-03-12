@@ -1,6 +1,9 @@
 package bishop.engine;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import bishop.base.*;
@@ -20,54 +23,44 @@ public class MoveEstimator {
 	public static final int MAX_ESTIMATE = 1_000_000_000;
 
 	private final HistoryTable historyTable = new HistoryTable();
-	private final OnlineLogisticModel models[] = new OnlineLogisticModel[Color.LAST];
 	private static final ConfusionMatrix confusionMatrix = new ConfusionMatrix(2);
 
-	private static final utils.IntHolder FEATURE_OFFSET = new IntHolder();
-
-	private static final int FEATURE_OFFSET_BEGIN_SQUARE = FEATURE_OFFSET.getAndAdd(Square.LAST);
-	private static final int FEATURE_OFFSET_TARGET_SQUARE = FEATURE_OFFSET.getAndAdd(Square.LAST);
-	private static final int FEATURE_OFFSET_MOVING_PIECE_TYPE = FEATURE_OFFSET.getAndAdd(PieceType.LAST);
-	private static final int FEATURE_OFFSET_CAPTURED_PIECE_TYPE = FEATURE_OFFSET.getAndAdd(PieceType.LAST);
-	private static final int FEATURE_OFFSET_ALL = FEATURE_OFFSET.getAndAdd(2 * PieceType.LAST * PieceType.LAST);
-	private static final int FEATURE_OFFSET_ALL_HISTORY = FEATURE_OFFSET.getAndAdd(2 * PieceType.LAST * PieceType.LAST);
-
-	private static final int FEATURE_OFFSET_HISTORY = FEATURE_OFFSET.getAndAdd(1);
-	private static final int FEATURE_KILLER_MOVE = FEATURE_OFFSET.getAndAdd(1);
-	private static final int FEATURE_PRINCIPAL_MOVE = FEATURE_OFFSET.getAndAdd(1);
-	private static final int FEATURE_COUNT = FEATURE_OFFSET.getValue();
-
-	private static final int FEATURE_INDEX_COUNT = 9;
-
-	private final int[] featureIndices = new int[FEATURE_INDEX_COUNT];
-	private final double[] featureValues = new double[FEATURE_INDEX_COUNT];
+	private static final AtomicInteger sampleWriterId = new AtomicInteger();
+	private final PrintWriter sampleWriter;
 
 	public MoveEstimator() {
-		final IErrorAccumulator costAccumulator = (GlobalSettings.isDebug()) ?
-				new MeanSquareErrorAccumulator() :
-				NullErrorAccumulator.getInstance();
-
-		for (int color = Color.FIRST; color < Color.LAST; color++)
-			models[color] = new OnlineLogisticModel(FEATURE_COUNT, costAccumulator);
-
-		Arrays.fill(featureValues, 1.0);
+		sampleWriter = createSampleWriter();
 
 		clear();
 	}
+
+	private PrintWriter createSampleWriter() {
+		if (GlobalSettings.isDebug()) {
+			try {
+				final int id = sampleWriterId.getAndIncrement();
+				final PrintWriter writer = new PrintWriter("moveEstimator_" + id + ".csv");
+				writer.println("depth,horizon,color,history,isKillerMove,isBest");
+
+				return writer;
+			}
+			catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+
+		return null;
+	}
 	
 	private void forEachModel(final Consumer<OnlineLogisticModel> modelConsumer) {
-		for (int color = Color.FIRST; color < Color.LAST; color++)
-			modelConsumer.accept(models[color]);
 	}
 	
 	public int getMoveEstimate(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move) {
-		final OnlineLogisticModel model = getModel(nodeRecord, color, move);
-		fillFeatureIndices(nodeRecord, color, move);
+		final double history = historyTable.getEvaluation(color, move);
+		final int isKiller = (move.equals(nodeRecord.getOriginalKillerMove())) ? 1 : 0;
 
-		final int excitation = (int) (ESTIMATE_MULTIPLIER * model.getExcitation(featureIndices, featureValues));
-		final int estimate = Math.max(Math.min(excitation, MAX_ESTIMATE), -MAX_ESTIMATE);
+		final double estimate = ESTIMATE_MULTIPLIER * (-0.859178 + 0.001082 * history + 2.292038 * isKiller);
 
-		return estimate;
+		return (int) estimate;
 	}
 
 	public void updateMove(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move, final int horizon, final boolean isBest) {
@@ -83,63 +76,33 @@ public class MoveEstimator {
 		if (horizon <= 0)
 			return;
 
-		final OnlineLogisticModel model = getModel(nodeRecord, color, move);
-		model.setGamma(1e-5);
-		model.setLambda(1e-2);
-		fillFeatureIndices(nodeRecord, color, move);
-
-		model.addSample(featureIndices, featureValues, estimate, horizon * horizon * horizon);
+		printSample(nodeRecord, color, move, horizon, estimate);
 	}
 
-	private void fillFeatureIndices (final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move) {
-		final int beginSquare = move.getBeginSquare();
-		final int targetSquare = move.getTargetSquare();
+	private void printSample(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move, final int horizon, final int estimate) {
+		if (sampleWriter != null) {
+			sampleWriter.print(nodeRecord.getDepth());
+			sampleWriter.print(",");
+			sampleWriter.print(horizon);
+			sampleWriter.print(",");
+			sampleWriter.print(Color.getNotation(color));
+			sampleWriter.print(",");
 
-		// King cannot be captured so we changes none to king to have continuous indices.
-		final int capturedPieceType = move.getCapturedPieceType();
-		final int updatedCapturedPieceType = (capturedPieceType == PieceType.NONE) ? PieceType.KING : capturedPieceType;
-		final int movingPieceType = move.getMovingPieceType();
-		final double history = historyTable.getEvaluation(color, move);
-		final int isKiller = (move.equals(nodeRecord.getKillerMove())) ? 1 : 0;
-		final int historyIndex = movingPieceType + updatedCapturedPieceType * PieceType.LAST + isKiller * PieceType.LAST * PieceType.LAST;
+			final double history = historyTable.getEvaluation(color, move);
 
-		featureIndices[0] = FEATURE_OFFSET_BEGIN_SQUARE + beginSquare;
-		featureIndices[1] = FEATURE_OFFSET_TARGET_SQUARE + targetSquare;
-		featureIndices[2] = FEATURE_OFFSET_MOVING_PIECE_TYPE + movingPieceType;
-		featureIndices[3] = FEATURE_OFFSET_CAPTURED_PIECE_TYPE + updatedCapturedPieceType;
+			sampleWriter.print(history);
+			sampleWriter.print(",");
 
-		featureIndices[4] = FEATURE_OFFSET_ALL + historyIndex;
+			sampleWriter.print(move.equals(nodeRecord.getOriginalKillerMove()));
+			sampleWriter.print(",");
 
-		featureIndices[5] = FEATURE_OFFSET_ALL_HISTORY + historyIndex;
-		featureValues[5] = history;
-
-		featureIndices[6] = FEATURE_OFFSET_HISTORY;
-		featureValues[6] = history;
-
-		featureIndices[7] = FEATURE_KILLER_MOVE;
-		featureValues[7] = isKiller;
-
-		featureIndices[8] = FEATURE_PRINCIPAL_MOVE;
-		featureValues[8] = (move.equals(nodeRecord.getPrincipalMove())) ? 1 : 0;
-	}
-	
-	private OnlineLogisticModel getModel(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move) {
-		return models[color];
+			sampleWriter.println(estimate);
+		}
 	}
 
 	public void clear() {
 		historyTable.clear();
 		forEachModel(OnlineLogisticModel::clear);
-
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			models[color].setIntercept(0.5);
-
-			for (int i = 0; i < FEATURE_COUNT; i++)
-				models[color].setSlope(i, 0.1);
-
-			models[color].setSlope(FEATURE_KILLER_MOVE, 1.0);
-			models[color].setSlope(FEATURE_PRINCIPAL_MOVE, 1.0);
-		}
 	}
 
 	public void log() {

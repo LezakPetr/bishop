@@ -56,7 +56,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		private int moveListEnd;
 		private final MoveList principalVariation;
 		private final Move killerMove = new Move();
-		private final Move principalMove = new Move();
+		private final Move originalKillerMove = new Move();
 		private final Move hashBestMove = new Move();
 		private final Move firstLegalMove = new Move();
 		private boolean allMovesGenerated;
@@ -92,8 +92,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return killerMove;
 		}
 
-		public Move getPrincipalMove() {
-			return principalMove;
+		public Move getOriginalKillerMove() {
+			return originalKillerMove;
 		}
 
 		public Move getFirstLegalMove() {
@@ -106,6 +106,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		public NodeRecord getPreviousRecord() {
 			return previousRecord;
+		}
+
+		public int getDepth() {
+			return depth;
 		}
 
 		public void openNode(final int alpha, final int beta) {
@@ -127,7 +131,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			moveListEnd = 0;
 			principalVariation.clear();
 			killerMove.clear();
-			principalMove.clear();
 			hashBestMove.clear();
 			firstLegalMove.clear();
 			allMovesGenerated = false;
@@ -182,6 +185,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			final int ownKingSquare = currentPosition.getKingPosition(onTurn);
 			final boolean isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
+
+			originalKillerMove.assign(killerMove);
 
 			try {
 				// Evaluate position
@@ -269,7 +274,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 							precalculatedMove.assign(hashBestMove);
 						}
 						else
-							precalculatedMoveFound = precalculatedMove.uncompressMove(principalMove.getCompressedMove(), currentPosition);
+							precalculatedMoveFound = false;
 					}
 
 					if (precalculatedMoveFound) {
@@ -775,13 +780,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		for (int i = 0; i < maxTotalDepth; i++)
 			nodeStack[i].killerMove.clear();
-
-		for (int i = 0; i < principalVariation.getSize(); i++) {
-			principalVariation.assignToMove(i, nodeStack[i].principalMove);
-		}
-
-		for (int i = principalVariation.getSize(); i < maxTotalDepth; i++)
-			nodeStack[i].principalMove.clear();
 
 		nodeCount = 0;
 		reportedNodeCount = nodeCount;
