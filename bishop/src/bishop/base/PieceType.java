@@ -38,7 +38,7 @@ public class PieceType {
 	public static final int VARIABLE_COUNT = PieceType.VARIABLE_LAST - PieceType.VARIABLE_FIRST;
 	
 	
-	private static final char[] NOTATION = {'k', 'q', 'r', 'b', 'n', 'p'};
+	private static final char[] NOTATION = {'k', 'q', 'r', 'b', 'n', 'p', '-'};
 	
 	public static final String NAME_KING = "king";
 	public static final String NAME_QUEEN = "queen";

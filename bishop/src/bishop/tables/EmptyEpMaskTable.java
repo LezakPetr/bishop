@@ -12,7 +12,7 @@ public class EmptyEpMaskTable {
 	private static final int COLOR_SHIFT = FILE_SHIFT + File.BIT_COUNT;
 	private static final int BIT_COUNT = COLOR_SHIFT + Color.BIT_COUNT;
 	
-	private static final int getItemIndex (final int color, final int file) {
+	private static int getItemIndex (final int color, final int file) {
 		return file + (color << COLOR_SHIFT);
 	}
 	

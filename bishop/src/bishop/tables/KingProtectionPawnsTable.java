@@ -12,7 +12,7 @@ public class KingProtectionPawnsTable {
 	private static final int BIT_COUNT = COLOR_SHIFT + Color.BIT_COUNT;
 	
 	
-	protected static final int getItemIndex (final int color, final int castlingType) {
+	protected static int getItemIndex (final int color, final int castlingType) {
 		return castlingType + (color << COLOR_SHIFT);
 	}
 

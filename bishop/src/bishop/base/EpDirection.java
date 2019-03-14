@@ -12,7 +12,7 @@ public class EpDirection {
 	private static final int[] FILE_OFFSETS = { -1, +1 };
 
 	
-	public static final int getSourceFile (final int targetFile, final int direction) {
+	public static int getSourceFile (final int targetFile, final int direction) {
 		return targetFile + FILE_OFFSETS[direction];
 	}
 }

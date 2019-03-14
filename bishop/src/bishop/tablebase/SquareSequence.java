@@ -50,7 +50,7 @@ public class SquareSequence {
 		21, 53, 22, 54, 23, 55, 24, 56
 	);
 	
-	private static final byte[] createSequence(final int ...order) {
+	private static byte[] createSequence(final int ...order) {
 		final byte[] sequence = new byte[LAST_INDEX];
 		Arrays.fill(sequence, (byte) -1);
 		

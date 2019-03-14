@@ -3,10 +3,8 @@ package bishop.engine;
 import java.util.Arrays;
 
 import bishop.base.Color;
-import bishop.base.IMoveWalker;
 import bishop.base.MateChecker;
 import bishop.base.Move;
-import bishop.base.MoveList;
 import bishop.base.MoveStack;
 import bishop.base.Position;
 import bishop.base.PseudoLegalMoveGenerator;
@@ -19,6 +17,8 @@ import bishop.base.PseudoLegalMoveGenerator;
  * @author Ing. Petr Ležák
  */
 public class MateFinder {
+
+	private static final double HISTORY_COEFF = 1000;
 
 	private class NodeRecord {
 		private final int depth;
@@ -64,7 +64,7 @@ public class MateFinder {
 			if (killerMove.uncompressMove(killerMoves[depth + depthAdvance], position)) {
 				final int subEvaluation = evaluateMove(horizon, extension, effectiveAlpha, beta, killerMove);
 
-				existLegalMove |= (subEvaluation > Evaluation.MIN);
+				existLegalMove = (subEvaluation > Evaluation.MIN);
 				updatedAlpha = Math.max(updatedAlpha, subEvaluation);
 				evaluation = Math.max(evaluation, subEvaluation);
 
@@ -160,16 +160,7 @@ public class MateFinder {
 	private int depthAdvance;
 	private int attackerColor;   // Color of the side that gives mate
 	private NodeRecord[] nodeRecords;
-	
-	private final IMoveWalker walker = new IMoveWalker() {
-		public boolean processMove(final Move move) {
-			moveStack.setRecord(moveStackTop, move, historyTable.getEvaluation(position.getOnTurn(), move));
-			moveStackTop++;
 
-			return true;
-		}
-	};
-	
 	private final PseudoLegalMoveGenerator moveGenerator;
 	private final MateChecker mateChecker = new MateChecker();
 	
@@ -178,7 +169,15 @@ public class MateFinder {
 	
 	public MateFinder() {
 		this.moveGenerator = new PseudoLegalMoveGenerator();
-		this.moveGenerator.setWalker(walker);
+		this.moveGenerator.setWalker(this::processMove);
+	}
+
+	private boolean processMove(final Move move) {
+		final int history = (int) (HISTORY_COEFF * historyTable.getEvaluation(position.getOnTurn(), move));
+		moveStack.setRecord(moveStackTop, move, history);
+		moveStackTop++;
+
+		return true;
 	}
 	
 	public void setPosition (final Position position) {

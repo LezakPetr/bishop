@@ -8,7 +8,7 @@ public enum GameResult {
 	GAME_IN_PROGRESS ("*");
 
 	
-	private String name;
+	private final String name;
 	
 	private GameResult (final String name) {
 		this.name = name;

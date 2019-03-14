@@ -2,7 +2,9 @@ package bishop.engine;
 
 import java.util.concurrent.atomic.AtomicLongArray;
 
+import bishop.base.Move;
 import bishop.base.Position;
+import utils.IntArrayBuilder;
 import utils.Mixer;
 
 /**
@@ -26,7 +28,7 @@ import utils.Mixer;
  * (it is actually less because the search engine is not querying the hash table for every node).
  * @author Ing. Petr Ležák
  */
-public final class HashTableImpl implements IHashTable {
+public final class EvaluationHashTableImpl implements IEvaluationHashTable {
 	
 	private int exponent;
 	private AtomicLongArray table;
@@ -35,25 +37,35 @@ public final class HashTableImpl implements IHashTable {
 	private static final int HORIZON_SHIFT              = 0;
 	private static final int EVALUATION_SHIFT           = 8;
 	private static final int TYPE_SHIFT                 = 28;
-	private static final int COMPRESSED_BEST_MOVE_SHIFT = 30;
 
 	private static final long HORIZON_MASK              = 0x00000000000000FFL;
 	private static final long EVALUATION_MASK           = 0x000000000FFFFF00L;
 	private static final long TYPE_MASK                 = 0x0000000030000000L;
-	private static final long COMPRESSED_BEST_MOVE_MASK = 0x00001FFFC0000000L;
-	private static final long HASH_MASK                 = 0xFFFFE00000000000L;
-	
-	private static final long DIFFUSED_HASH_MASK = ~(HORIZON_MASK | HASH_MASK);
+	private static final long HASH_MASK                 = 0xFFFFFFFFC0000000L;
+
 	private static final int EVALUATION_OFFSET = Evaluation.MIN;
 	
 	public static final int MIN_EXPONENT = 0;
 	public static final int MAX_EXPONENT = 31;
 	public static final int ITEM_SIZE = Long.BYTES;   // Size of hash item [B]
+
+	private static final int[] RECORD_TYPE_COSTS = new IntArrayBuilder(HashRecordType.LAST)
+			.put(HashRecordType.INVALID, -1000)
+			.put(HashRecordType.VALUE, 2)
+			.put(HashRecordType.UPPER_BOUND, 1)
+			.put(HashRecordType.LOWER_BOUND, -4)
+			.build();
+
+	private static final int HORIZON_COST_SHIFT = 2;
 		
 	// Probability that the collision will be detected by the hash table itself (without uncompressing move)
-	public static double PRIMARY_COLLISION_RATE = Math.pow(2, -(19 + 3.31 + 0.42));
+	public static final double PRIMARY_COLLISION_RATE = Math.pow(2, -(19 + 3.31 + 0.42));
+
+	public static int getCost (final int horizon, final int type) {
+		return (horizon << HORIZON_COST_SHIFT) + RECORD_TYPE_COSTS[type];
+	}
 	
-	public HashTableImpl(final int exponent) {
+	public EvaluationHashTableImpl(final int exponent) {
 		resize(exponent);
 	}
 	
@@ -67,83 +79,36 @@ public final class HashTableImpl implements IHashTable {
 			final int recordCount = 1 << exponent;
 			
 			table = new AtomicLongArray(recordCount);
-			indexMask = ((long) recordCount - 1) & ~1L;
+			indexMask = recordCount - 1;
 		}
 	}
 	
 	public boolean getRecord (final Position position, final int expectedHorizon, final HashRecord record) {
 		return getRecord(position.getHash(), expectedHorizon, record);
 	}
-	
-	private static long diffuseHash(final long hash) {
-		return Mixer.mixLong(hash) & DIFFUSED_HASH_MASK;
-	}
-
-	private boolean isFirstBetter(final boolean correctHash1, final int horizon1, final boolean correctHash2, final int horizon2, final int expectedHorizon) {
-		if (!correctHash1)
-			return false;
-
-		if (!correctHash2)
-			return true;
-
-		if (horizon2 == expectedHorizon)
-			return false;
-
-		if (horizon1 == expectedHorizon)
-			return true;
-
-		return horizon1 > horizon2;
-	}
 
 	public boolean getRecord (final long hash, final int expectedHorizon, final HashRecord record) {
-		final int index = (int) (hash & indexMask);
+		final int index = (int) ((hash + expectedHorizon) & indexMask);
+		final long tableItem = table.get(index);
 
-		final long tableItem1 = table.get(index);
-		final long tableItem2 = table.get(index + 1);
+		if (((tableItem ^ hash) & HASH_MASK) == 0) {
+			final int horizon = (int) ((tableItem & HORIZON_MASK) >>> HORIZON_SHIFT);
 
-		final boolean correctHash1 = ((tableItem1 ^ hash) & HASH_MASK) == 0;
-		final boolean correctHash2 = ((tableItem2 ^ hash) & HASH_MASK) == 0;
+			if (horizon == expectedHorizon) {
+				final int evaluation = (int) ((tableItem & EVALUATION_MASK) >>> EVALUATION_SHIFT) + EVALUATION_OFFSET;
+				final int type = (int) ((tableItem & TYPE_MASK) >>> TYPE_SHIFT);
 
-		if (correctHash1 || correctHash2) {
-			final int horizon1 = (int) ((tableItem1 & HORIZON_MASK) >>> HORIZON_SHIFT);
-			final int horizon2 = (int) ((tableItem2 & HORIZON_MASK) >>> HORIZON_SHIFT);
-			final long tableItem;
-			final int horizon;
+				record.setEvaluation(evaluation);
+				record.setHorizon(horizon);
+				record.setType(type);
 
-			if (isFirstBetter (correctHash1, horizon1, correctHash2, horizon2, expectedHorizon)) {
-				tableItem = tableItem1;
-				horizon = horizon1;
-			}
-			else {
-				tableItem = tableItem2;
-				horizon = horizon2;
-			}
-
-			final long diffusedHash = diffuseHash(hash);
-			final long data = tableItem ^ diffusedHash;
-
-			final int evaluation = (int) ((data & EVALUATION_MASK) >>> EVALUATION_SHIFT) + EVALUATION_OFFSET;
-			final int type = (int) ((data & TYPE_MASK) >>> TYPE_SHIFT);
-			final int compressedBestMove = (int) ((data & COMPRESSED_BEST_MOVE_MASK) >>> COMPRESSED_BEST_MOVE_SHIFT);
-
-			record.setEvaluation(evaluation);
-			record.setHorizon(horizon);
-			record.setType(type);
-			record.setCompressedBestMove(compressedBestMove);
-
-			if (record.canBeStored())
 				return true;
-			else {
-				record.setType(HashRecordType.INVALID);
-
-				return false;
 			}
 		}
-		else {
-			record.setType(HashRecordType.INVALID);
 
-			return false;
-		}
+		record.setType(HashRecordType.INVALID);
+
+		return false;
 	}
 	
 	public void updateRecord (final Position position, final HashRecord record) {
@@ -151,11 +116,8 @@ public final class HashTableImpl implements IHashTable {
 	}
 	
 	public void updateRecord (final long hash, final HashRecord record) {
-		if (!record.canBeStored())
-			return;
-				
-		final int index = (int) (hash & indexMask);
 		final int horizon = record.getHorizon();
+		final int index = (int) ((hash + horizon) & indexMask);
 
 		final long biasedEvaluation = record.getEvaluation() - EVALUATION_OFFSET;
 		
@@ -163,23 +125,22 @@ public final class HashTableImpl implements IHashTable {
 		data |= ((long) biasedEvaluation << EVALUATION_SHIFT) & EVALUATION_MASK;
 		data |= ((long) horizon << HORIZON_SHIFT) & HORIZON_MASK;
 		data |= ((long) record.getType() << TYPE_SHIFT) & TYPE_MASK;
-		data |= ((long) record.getCompressedBestMove() << COMPRESSED_BEST_MOVE_SHIFT) & COMPRESSED_BEST_MOVE_MASK;
-		
-		final long diffusedHash = diffuseHash(hash);
-		final long newTableItem = data ^ diffusedHash ^ (hash & HASH_MASK);
+		data |= hash & HASH_MASK;
+
+		final int newCost = getCost(horizon, record.getType());
 
 		while (true) {
 			final long oldTableItem = table.get(index);
 			final int oldHorizon = (int) ((oldTableItem & HORIZON_MASK) >> HORIZON_SHIFT);
+			final int oldType = (int) ((oldTableItem & TYPE_MASK) >>> TYPE_SHIFT);
+			final int oldCost = getCost(oldHorizon, oldType);
 			
-			if (horizon < oldHorizon)
+			if (newCost < oldCost)
 				break;
 			
-			if (table.compareAndSet(index, oldTableItem, newTableItem))
+			if (table.compareAndSet(index, oldTableItem, data))
 				break;
 		}
-		
-		table.set(index + 1, newTableItem);
 	}
 	
 	/**

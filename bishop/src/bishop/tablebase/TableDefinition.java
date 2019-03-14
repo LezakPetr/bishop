@@ -41,11 +41,11 @@ import bishop.tables.SymmetryTable;
  * @author Ing. Petr Ležák
  */
 public class TableDefinition {
-	
+
 	private static final int[] PIECE_TYPE_SEQUENCE = {
 		PieceType.PAWN, PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN
 	};
-	
+
 	private final int version;   // Version of the table format
 	private final int onTurn;   // Side on turn
 	private final CombinationDefinition[] definitionArray;   // Array of combination definitions
@@ -82,9 +82,9 @@ public class TableDefinition {
 		this.isPawn = calcIsPawn();
 		symmetryTable = selectSymmetryTable();
 		
-		final List<Chunk> chunkList = new LinkedList<Chunk>();
+		final List<Chunk> chunkList = new LinkedList<>();
 		this.itemCount = fillChunks(chunkList);
-		this.chunkArray = chunkList.toArray(new Chunk[chunkList.size()]);
+		this.chunkArray = chunkList.toArray(Chunk.EMPTY_ARRAY);
 		
 		this.pieceCount = calcPieceCount();
 	}
@@ -107,7 +107,7 @@ public class TableDefinition {
 	 * @return array of combination definitions
 	 */
 	private static CombinationDefinition[] calculateDefinitionArray(final MaterialHash materialHash) {
-		final List<CombinationDefinition> definitionList = new LinkedList<CombinationDefinition>();
+		final List<CombinationDefinition> definitionList = new LinkedList<>();
 		final int onTurn = materialHash.getOnTurn();
 		final int[] colorSequence = {Color.getOppositeColor(onTurn), onTurn};
 		
@@ -124,7 +124,7 @@ public class TableDefinition {
 			}
 		}
 		
-		return definitionList.toArray(new CombinationDefinition[definitionList.size()]);
+		return definitionList.toArray(CombinationDefinition.EMPTY_ARRAY);
 	}
 
 	/**
@@ -236,7 +236,7 @@ public class TableDefinition {
 	/**
 	 * Adds EP chunks into chunk list and stores them into
 	 * epChunkArray. Method must also calculate item indices.
-	 * @param chunkList target chunk list
+	 * @param colorChunkList target chunk list
 	 * @param beginIndex begin chunk index (item index on first chunk) 
 	 * @return end chunk index (item index after last chunk)
 	 */
@@ -301,10 +301,7 @@ public class TableDefinition {
 	/**
 	 * Adds EP chunks for given king positions into chunk list and stores them
 	 * into normalChunkArray. Method must also calculate item indices.
-	 * @param whiteKingSquare position of white king
-	 * @param blackKingSquare position of black king
 	 * @param chunkList target chunk list
-	 * @param beginIndex begin chunk index (item index on first chunk) 
 	 * @return end chunk index (item index after last chunk)
 	 */
 	private long fillChunks(final List<Chunk> chunkList) {

@@ -61,7 +61,7 @@ public enum Piece {
 	 * Creates instances of Piece.
 	 * @return precreated instances
 	 */
-	private static final Piece[][] initializeInstances() {
+	private static Piece[][] initializeInstances() {
 		final Piece[][] table = new Piece[Color.LAST][PieceType.LAST];
 		
 		for (Piece piece: values()) {

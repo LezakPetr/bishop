@@ -46,13 +46,8 @@ public class BookRecord {
 	}
 	
 	public boolean isGoodMove(final BookMove move) {
-		if (move.getRelativeMoveRepetition() >= MIN_RELATIVE_MOVE_REPETITION) {
-			if (-move.getTargetPositionBalance() - balance >= MIN_BALANCE_DIFFERENCE) {
-				return true;
-			}						
-		}
-
-		return false;
+		return move.getRelativeMoveRepetition() >= MIN_RELATIVE_MOVE_REPETITION &&
+				-move.getTargetPositionBalance() - balance >= MIN_BALANCE_DIFFERENCE;
 	}
 
 	/**
@@ -63,7 +58,7 @@ public class BookRecord {
 	 */
 	public BookMove getRandomMove(final Random random) {
 		final List<BookMove> goodMoveList = moveMap.values().stream()
-				.filter(m -> isGoodMove(m))
+				.filter(this::isGoodMove)
 				.collect(Collectors.toList());
 		
 		final int moveCount = goodMoveList.size();
@@ -71,7 +66,7 @@ public class BookRecord {
 		if (moveCount <= 0)
 			return null;
 		
-		final int repetitionSum = goodMoveList.stream().mapToInt(m -> m.getRelativeMoveRepetition()).sum();
+		final int repetitionSum = goodMoveList.stream().mapToInt(BookMove::getRelativeMoveRepetition).sum();
 		final int r = random.nextInt(repetitionSum);
 		
 		int partialSum = 0;

@@ -1,12 +1,14 @@
 package bishop.engine;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import bishop.base.Color;
-import bishop.base.Move;
-import bishop.base.PieceType;
-import math.SimpleLinearModel;
-import utils.IntArrayBuilder;
+import bishop.base.*;
+import math.*;
+import utils.IntHolder;
 
 /**
  * Estimator that estimates the moves to order them in alpha-beta search.
@@ -16,110 +18,111 @@ import utils.IntArrayBuilder;
  * @author Ing. Petr Ležák
  */
 public class MoveEstimator {
-	// Following must be true:
-	//   2 * SAMPLE_COUNT_TO_RECALCULATE_ESTIMATES * REDUCTION_FREQUENCY * e^2 < 2^63
-	// where e = min (MOVE_ESTIMATE, HistoryTable.MAX_EVALUATION)
-	// to prevent potential overflows
-	private static final int SAMPLE_COUNT_TO_RECALCULATE_ESTIMATES = 65536;
-	private static final int REDUCTION_FREQUENCY = 256;
-	private static final int MOVE_ESTIMATE = 1000;
-	
-	private static final int MAX_KILLER = 2;
-	private static final int MAX_CAPTURE_ESTIMATION = PieceType.COUNT * PieceType.COUNT;
-	
+
+	public static final int ESTIMATE_MULTIPLIER = 1_000_000;
+	public static final int MAX_ESTIMATE = 1_000_000_000;
 
 	private final HistoryTable historyTable = new HistoryTable();
-	
-	private final SimpleLinearModel models[][][] = new SimpleLinearModel[Color.LAST][MAX_KILLER][MAX_CAPTURE_ESTIMATION];	
-	private int sampleCounter;
-	private int reductionCounter;
-	
+	private static final ConfusionMatrix confusionMatrix = new ConfusionMatrix(2);
+
+	private static final AtomicInteger sampleWriterId = new AtomicInteger();
+	private final PrintWriter sampleWriter;
+
 	public MoveEstimator() {
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			for (int killer = 0; killer < MAX_KILLER; killer++) {
-				for (int capture = 0; capture < MAX_CAPTURE_ESTIMATION; capture++) 
-					models[color][killer][capture] = new SimpleLinearModel();
+		sampleWriter = createSampleWriter();
+
+		clear();
+	}
+
+	private PrintWriter createSampleWriter() {
+		if (GlobalSettings.isDebug()) {
+			try {
+				final int id = sampleWriterId.getAndIncrement();
+				final PrintWriter writer = new PrintWriter("moveEstimator_" + id + ".csv");
+				writer.println("depth,horizon,color,history,capturedPieceEvaluation,isKillerMove,isBest");
+
+				return writer;
+			}
+			catch (IOException ex) {
+				ex.printStackTrace();
 			}
 		}
+
+		return null;
 	}
 	
-	private void forEachModel(final Consumer<SimpleLinearModel> modelConsumer) {
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			for (int killer = 0; killer < MAX_KILLER; killer++) {
-				for (int capture = 0; capture < MAX_CAPTURE_ESTIMATION; capture++) 
-					modelConsumer.accept(models[color][killer][capture]);
-			}
-		}
+	private void forEachModel(final Consumer<OnlineLogisticModel> modelConsumer) {
 	}
 	
 	public int getMoveEstimate(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move) {
-		final SimpleLinearModel model = getModel(nodeRecord, color, move);
-		
-		final int history = historyTable.getEvaluation(color, move);
-		final int estimate = model.estimate(history);
-		
-		return estimate;
+		final double history = historyTable.getEvaluation(color, move);
+		final int isKiller = (move.equals(nodeRecord.getOriginalKillerMove())) ? 1 : 0;
+		final int capturedPieceType = move.getCapturedPieceType();
+		final int capturedPieceEvaluation = PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(capturedPieceType);
+
+		final double estimate = ESTIMATE_MULTIPLIER * (
+				-1.070e-01 +
+				-8.883e-01 * history +
+				3.804e-04 * capturedPieceEvaluation +
+				1.181e+00 * isKiller +
+				6.583e-04 * history * capturedPieceEvaluation
+		);
+
+		return (int) estimate;
 	}
 
-	public void addCutoff(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move cutoffMove, final int horizon) {
-		if (cutoffMove.equals(nodeRecord.getFirstLegalMove()))
+	public void updateMove(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move, final int horizon, final boolean isBest) {
+		confusionMatrix.addSample((isBest) ? 1 : 0, (getMoveEstimate(nodeRecord, color, move) > 0) ? 1 : 0);
+
+		updateModel(nodeRecord, color, move, horizon, (isBest) ? 1 : 0);
+
+		if (isBest)
+			historyTable.addCutoff(color, move, horizon);
+	}
+
+	private void updateModel (final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move, final int horizon, final int estimate) {
+		if (horizon <= 0)
 			return;
-		
-		updateModel(nodeRecord, color, cutoffMove, MOVE_ESTIMATE);
-		updateModel(nodeRecord, color, nodeRecord.getFirstLegalMove(), -MOVE_ESTIMATE);
-		
-		historyTable.addCutoff(color, cutoffMove, horizon);
 
-		sampleCounter++;
-		
-		if (sampleCounter >= SAMPLE_COUNT_TO_RECALCULATE_ESTIMATES) {
-			recalculateEstimates();
-			sampleCounter = 0;
+		printSample(nodeRecord, color, move, horizon, estimate);
+	}
+
+	private void printSample(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move, final int horizon, final int estimate) {
+		if (sampleWriter != null) {
+			sampleWriter.print(nodeRecord.getDepth());
+			sampleWriter.print(",");
+			sampleWriter.print(horizon);
+			sampleWriter.print(",");
+			sampleWriter.print(Color.getNotation(color));
+			sampleWriter.print(",");
+
+			final double history = historyTable.getEvaluation(color, move);
+
+			sampleWriter.print(history);
+			sampleWriter.print(",");
+
+			final int capturedPieceType = move.getCapturedPieceType();
+			final int capturedPieceEvaluation = PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(capturedPieceType);
+
+			sampleWriter.print(capturedPieceEvaluation);
+			sampleWriter.print(",");
+
+			sampleWriter.print(move.equals(nodeRecord.getOriginalKillerMove()));
+			sampleWriter.print(",");
+
+			sampleWriter.println(estimate);
 		}
 	}
 
-	private void updateModel (final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move, final int estimate) {
-		final SimpleLinearModel model = getModel(nodeRecord, color, move);
-		final int history = historyTable.getEvaluation(color, move);
-				
-		model.addSample(history, estimate);
-	}
-	
-	private SimpleLinearModel getModel(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move) {
-		final int killer = (move.equals(nodeRecord.getKillerMove())) ? 1 : 0;
-		final int capture = estimateCapture(move.getMovingPieceType(), move.getCapturedPieceType());
-		final SimpleLinearModel model = models[color][killer][capture];
-		
-		return model;
-	}
-	
-	private void recalculateEstimates() {
-		historyTable.recalculateCoeff();
-		
-		forEachModel(SimpleLinearModel::recalculateModel);
-		
-		reductionCounter++;
-		
-		if (reductionCounter >= REDUCTION_FREQUENCY) {
-			forEachModel(SimpleLinearModel::reduceWeightOfSamples);
-			reductionCounter = 0;
-		}
-	}
-	
 	public void clear() {
 		historyTable.clear();
-		forEachModel(SimpleLinearModel::clear);
-		
-		sampleCounter = 0;
-		reductionCounter = 0;
+		forEachModel(OnlineLogisticModel::clear);
 	}
-		
-	private static int estimateCapture (final int movingPieceType, final int capturedPieceType) {
-		// King cannot be captured so we changes none to king to have continuous indices.
-		final int updatedCapturedPieceType = (capturedPieceType == PieceType.NONE) ? PieceType.KING : capturedPieceType;
 
-		return PieceType.COUNT * movingPieceType + updatedCapturedPieceType;
+	public void log() {
+		System.out.println("Move estimator confusion matrix");
+
+		confusionMatrix.log();
 	}
-		
 
 }

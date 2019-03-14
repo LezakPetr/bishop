@@ -3,8 +3,6 @@ package bishop.engine;
 import utils.Mixer;
 
 import java.util.function.LongBinaryOperator;
-import java.util.function.LongSupplier;
-import java.util.function.ToLongFunction;
 
 public class PawnStructureCache {
 
@@ -18,9 +16,7 @@ public class PawnStructureCache {
 	private long missCount;
 	
 	private static long getHash (final long whitePawnMask, final long blackPawnMask) {
-		final long index = Mixer.mixLong(whitePawnMask + 31 * blackPawnMask);
-
-		return index;
+		return Mixer.mixLong(whitePawnMask + 31 * blackPawnMask);
 	}
 	
 	public PawnStructureCache(final LongBinaryOperator calculateCombinedEvaluation) {

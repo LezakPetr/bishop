@@ -48,11 +48,11 @@ public final class SymmetryTable {
 		return symmetryArray[whiteKingSquare][blackKingSquare];
 	}
 
-	public static final int[] getFullSymmetryList() {
+	public static int[] getFullSymmetryList() {
 		return Arrays.copyOf(FULL_SYMMETRY_LIST, FULL_SYMMETRY_LIST.length);
 	}
 	
-	public static final int[] getPawnSymmetryList() {
+	public static int[] getPawnSymmetryList() {
 		return Arrays.copyOf(PAWN_SYMMETRY_LIST, PAWN_SYMMETRY_LIST.length);
 	}
 

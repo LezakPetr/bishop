@@ -6,7 +6,7 @@ import bishop.base.Position;
 
 public class ReverseTableWalker  implements IMoveWalker {
 	
-	private long[] indexGroup = new long[TableDefinition.MAX_GROUP_SIZE];
+	private final long[] indexGroup = new long[TableDefinition.MAX_GROUP_SIZE];
 	private Position position;
 	private BitArray nextPositionsToCheck;
 	private ITableRead nextTable;

@@ -16,7 +16,7 @@ import utils.IoUtils;
 public class PgnReader extends Pgn {
 	
 	private final StandardAlgebraicNotationReader sanReader = new StandardAlgebraicNotationReader();
-	protected final Stack<ITreeIterator<IGameNode>> nodeStack = new Stack<ITreeIterator<IGameNode>>();
+	protected final Stack<ITreeIterator<IGameNode>> nodeStack = new Stack<>();
 	
 	
 	public void readPgnFromFile (final java.io.File file) throws IOException {
@@ -262,9 +262,8 @@ public class PgnReader extends Pgn {
 
 	public static PushbackReader createPushbackReader(final InputStream stream) throws UnsupportedEncodingException {
 		final InputStreamReader streamReader = new InputStreamReader(stream, PGN_ENCODING);
-		final PushbackReader pushbackReader = new PushbackReader(streamReader);
-		
-		return pushbackReader;
+
+		return new PushbackReader(streamReader);
 	}
 	
 }

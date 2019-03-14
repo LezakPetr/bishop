@@ -2,7 +2,6 @@ package bishop.engine;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -214,7 +213,7 @@ public class BookWriter extends BookIo {
 		targetStream.write(offsetSize);
 		
 		final int maxBookRecordsInList = sortedRecordList.stream()
-				.mapToInt(l -> l.size())
+				.mapToInt(List::size)
 				.max()
 				.orElse(0);
 		
@@ -232,7 +231,7 @@ public class BookWriter extends BookIo {
 			IoUtils.writeNumberBinary(targetStream, offset, offsetSize);
 	}
 
-	private void copyRecordsFromTempFile() throws FileNotFoundException, IOException {
+	private void copyRecordsFromTempFile() throws IOException {
 		try (FileInputStream tempStream = new FileInputStream(tempPath)) {
 			IoUtils.copyStream(tempStream, targetStream);
 		}
@@ -242,10 +241,10 @@ public class BookWriter extends BookIo {
 		final Collection<? extends BookRecord> recordList = book.getAllRecords();
 		setHashBits(IntUtils.ceilLog(recordList.size()));
 		
-		sortedRecordList = new ArrayList<List<BookRecord>>();
+		sortedRecordList = new ArrayList<>();
 				
 		for (int i = 0; i <= hashMask; i++) {
-			sortedRecordList.add(new ArrayList<BookRecord>());
+			sortedRecordList.add(new ArrayList<>());
 		}
 		
 		for (BookRecord record: recordList) {

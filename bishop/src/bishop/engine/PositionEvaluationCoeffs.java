@@ -5,9 +5,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-import bishop.base.AdditiveMaterialEvaluator;
-import bishop.base.IMaterialEvaluator;
-import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import collections.ImmutableList;
 import utils.IoUtils;
@@ -37,10 +34,8 @@ public class PositionEvaluationCoeffs {
 		
 		for (int i = GameStage.FIRST; i < GameStage.LAST; i++)
 			builder.add(new GameStageCoeffs(registry, i));
-		
-		final List<GameStageCoeffs> coeffList = builder.build();
 
-		return coeffList;
+		return builder.build();
 	}
 
 	private static List<TablePositionCoeffs> createTableEvaluatorCoeffs() {

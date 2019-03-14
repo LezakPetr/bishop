@@ -8,7 +8,6 @@ import bishop.base.BoardConstants;
 import bishop.base.Color;
 import bishop.base.PieceType;
 import bishop.base.Position;
-import bishop.base.SquareColor;
 
 public final class BishopColorPositionEvaluator {
 		
@@ -37,7 +36,7 @@ public final class BishopColorPositionEvaluator {
 		if (bishopMask != 0) {
 			final long pawnMask = position.getPiecesMask(pieceColor, PieceType.PAWN);
 			
-			for (int squareColor = SquareColor.FIRST; squareColor < SquareColor.LAST; squareColor++) {
+			for (int squareColor = Color.FIRST; squareColor < Color.LAST; squareColor++) {
 				final long squareMask = BoardConstants.getSquareColorMask(squareColor);
 				
 				if ((bishopMask & squareMask) != 0) {

@@ -24,7 +24,6 @@ public class VariationIterator extends MultiItemIterator implements ICopyable<Va
 	
 	/**
 	 * Creates iterator.
-	 * @param count number of items (size of selection)
 	 * @param first first item
 	 * @param last item after last item
 	 */

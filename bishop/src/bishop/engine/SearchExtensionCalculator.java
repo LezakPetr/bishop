@@ -23,7 +23,7 @@ public class SearchExtensionCalculator {
 	private final MateFinder finder;
 	private SearchSettings settings;
 	
-	private int[] checkExtensionByEscapeSquares = new int[MAX_KING_ESCAPE_SQUARE_COUNT + 1];
+	private final int[] checkExtensionByEscapeSquares = new int[MAX_KING_ESCAPE_SQUARE_COUNT + 1];
 	
 	public SearchExtensionCalculator() {
 		finder = new MateFinder();

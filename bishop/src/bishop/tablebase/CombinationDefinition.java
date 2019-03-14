@@ -8,6 +8,8 @@ import bishop.base.Piece;
  * @author Ing. Petr Ležák
  */
 public class CombinationDefinition {
+
+	public static final CombinationDefinition[] EMPTY_ARRAY = new CombinationDefinition[0];
 	
 	private static final int COLOR_MASK = 0x01;
 	private static final int PIECE_TYPE_MASK = 0x0E;
@@ -71,7 +73,7 @@ public class CombinationDefinition {
 	
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj == null || !(obj instanceof CombinationDefinition))
+		if (!(obj instanceof CombinationDefinition))
 			return false;
 		
 		final CombinationDefinition cmp = (CombinationDefinition) obj;

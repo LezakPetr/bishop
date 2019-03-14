@@ -27,14 +27,11 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	private final IPositionEvaluation positionalEvaluation;
 	private final AttackCalculator attackCalculator = new AttackCalculator();
 	
-	private final GeneralEvaluatorSettings settings;
-	
 	private int gameStage;
 	private GameStageCoeffs gameStageCoeffs;
 
 
-	public GeneralPositionEvaluator(final GeneralEvaluatorSettings settings, final Supplier<IPositionEvaluation> evaluationFactory) {
-		this.settings = settings;
+	public GeneralPositionEvaluator(final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.tacticalEvaluation = evaluationFactory.get();
 		this.positionalEvaluation = evaluationFactory.get();
 
@@ -128,9 +125,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		}
 		
 		positionalEvaluation.addSubEvaluation(pawnStructureEvaluator.evaluate(position, gameStage));
-
 		positionalEvaluation.addSubEvaluation(mobilityEvaluator.evaluatePosition(position, attackCalculator, gameStage));
-		
 		positionalEvaluation.addCoeff(gameStageCoeffs.onTurnBonus, position.getOnTurn());
 
 		return positionalEvaluation;
@@ -148,11 +143,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	
 	private void evaluateSecureFigures() {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			long figures = BitBoard.EMPTY;
-			
-			for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++)
-				figures |= position.getPiecesMask(color, pieceType);
-			
+			final long figures = position.getPromotionFigureMask(color);
 			final long securedFigures = figures & pawnStructureEvaluator.getSecureSquares(color);
 			final int count = BitBoard.getSquareCount(securedFigures);
 			
@@ -160,9 +151,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		}
 	}
 	
-	private int evaluateQueenMove() {
-		int queenMoveEvaluation = 0;
-		
+	private void evaluateQueenMove() {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final long figureMask = position.getPiecesMask(color, PieceType.BISHOP) | position.getPiecesMask(color, PieceType.KNIGHT);
 			final long queenMask = position.getPiecesMask(color, PieceType.QUEEN);
@@ -173,8 +162,6 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 				positionalEvaluation.addCoeff(gameStageCoeffs.queenMoveBonus, color);
 			}
 		}
-		
-		return queenMoveEvaluation;
 	}
 
 	public void writeLog(final PrintWriter writer) {

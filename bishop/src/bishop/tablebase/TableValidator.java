@@ -30,7 +30,7 @@ public class TableValidator {
 	}
 	
 	private boolean checkTable() throws Exception {
-		final List<ValidationTaskProcessor> processorList = new ArrayList<ValidationTaskProcessor>();
+		final List<ValidationTaskProcessor> processorList = new ArrayList<>();
 		
 		for (int i = 0; i < parallel.getThreadCount(); i++) {
 			processorList.add (new ValidationTaskProcessor(resultSource));

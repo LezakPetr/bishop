@@ -1,8 +1,5 @@
 package bishop.tablebase;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-
 
 import parallel.Parallel;
 
@@ -25,7 +22,7 @@ public class MemoryStagedTable extends StagedTableImpl {
 	}
 
 	@Override
-	public synchronized void switchToModeRead(final Parallel parallel) throws IOException, InterruptedException, ExecutionException {
+	public synchronized void switchToModeRead(final Parallel parallel) {
 		mode = Mode.READ;
 	}
 
@@ -36,7 +33,7 @@ public class MemoryStagedTable extends StagedTableImpl {
 	}
 
 	@Override
-	protected IClosableTableIterator getOutputPageIterator(final int pageIndex) throws IOException {
+	protected IClosableTableIterator getOutputPageIterator(final int pageIndex) {
 		return new TablePageIterator(definition, pages.get(pageIndex));
 	}
 

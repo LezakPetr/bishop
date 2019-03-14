@@ -2,7 +2,7 @@ package bishop.base;
 
 public class Game {
 
-	private GameHeader header;
+	private final GameHeader header;
 	private GameNodeImpl rootNode;
 	
 	public Game() {

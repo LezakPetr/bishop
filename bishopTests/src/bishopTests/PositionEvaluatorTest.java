@@ -47,11 +47,9 @@ public class PositionEvaluatorTest {
 		final Position position = new Position();
 		position.setInitialPosition();
 		
-		final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
-		
 		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
 		
-		testPositionEvaluatorSpeed (position, new GeneralPositionEvaluator(settings.getGeneralEvaluatorSettings(), evaluationFactory));
-		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(settings, evaluationFactory));
+		testPositionEvaluatorSpeed (position, new GeneralPositionEvaluator(evaluationFactory));
+		testPositionEvaluatorSpeed (position, new PositionEvaluatorSwitch(evaluationFactory));
 	}
 }

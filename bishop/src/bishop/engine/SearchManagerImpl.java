@@ -3,6 +3,7 @@ package bishop.engine;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -14,16 +15,16 @@ import utils.Logger;
 import parallel.Parallel;
 
 public final class SearchManagerImpl implements ISearchManager {
-	
+
+	private static final int MIN_HORIZON = 3 * SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION;
+
 	// Settings
 	private ISearchEngineFactory engineFactory;
 	private int maxHorizon;
 	private long maxTimeForMove;
-	private HandlerRegistrarImpl<ISearchManagerHandler> handlerRegistrar;
-	private int minHorizon = 3 * SerialSearchEngine.HORIZON_STEP_WITHOUT_EXTENSION;
+	private final HandlerRegistrarImpl<ISearchManagerHandler> handlerRegistrar;
 	private int threadCount = 1;
 	private CombinedPositionEvaluationTable combinedPositionEvaluationTable = CombinedPositionEvaluationTable.ZERO_TABLE;
-	private PieceTypeEvaluations pieceTypeEvaluations;
 	private long searchInfoTimeout = 500; // ms
 	
 	private final List<ISearchEngine> searchEngineList = new ArrayList<>();
@@ -36,7 +37,8 @@ public final class SearchManagerImpl implements ISearchManager {
 	private boolean bookSearchEnabled;
 	private boolean singleSearchEnabled;
 	private IBook<?> book;
-	private IHashTable hashTable;
+	private IEvaluationHashTable evaluationHashTable;
+	private IBestMoveHashTable bestMoveHashTable;
 	private TablebasePositionEvaluator tablebaseEvaluator;
 	
 	// Synchronization
@@ -55,9 +57,9 @@ public final class SearchManagerImpl implements ISearchManager {
 	private boolean searchInfoChanged;
 	private long lastSearchInfoTime;
 	private final List<String> additionalInfo = new ArrayList<>();
-	private Random random = new Random();
+	private final Random random = new Random();
 	
-	private ISearchEngineHandler engineHandler = new ISearchEngineHandler() {
+	private final ISearchEngineHandler engineHandler = new ISearchEngineHandler() {
 		@Override
 		public void onResultUpdate(final SearchResult result) {
 			synchronized (monitor) {
@@ -76,7 +78,7 @@ public final class SearchManagerImpl implements ISearchManager {
 	public SearchManagerImpl() {
 		this.managerState = ManagerState.STOPPED;
 		this.monitor = new Object();
-		this.handlerRegistrar = new HandlerRegistrarImpl<ISearchManagerHandler>();
+		this.handlerRegistrar = new HandlerRegistrarImpl<>();
 		
 		this.setMaxHorizon(256);
 		this.maxTimeForMove = TIME_FOR_MOVE_INFINITY;
@@ -222,7 +224,7 @@ public final class SearchManagerImpl implements ISearchManager {
 			engine.setSearchSettings(searchSettings);
 			engine.getHandlerRegistrar().addHandler(engineHandler);
 			engine.setTablebaseEvaluator(tablebaseEvaluator);
-			engine.setHashTable(hashTable);
+			engine.setHashTable(evaluationHashTable, bestMoveHashTable);
 			engine.setCombinedPositionEvaluationTable(combinedPositionEvaluationTable);
 			
 			searchEngineList.add(engine);
@@ -230,14 +232,12 @@ public final class SearchManagerImpl implements ISearchManager {
 	}
 
 	private void createCheckingThread() {
-		checkingThread = new Thread(new Runnable() {
-			public void run() {
-				try {
-					doChecking();
-				}
-				catch (Throwable ex) {
-					ex.printStackTrace();
-				}
+		checkingThread = new Thread(() -> {
+			try {
+				doChecking();
+			}
+			catch (Throwable ex) {
+				ex.printStackTrace();
 			}
 		});
 		
@@ -247,14 +247,12 @@ public final class SearchManagerImpl implements ISearchManager {
 	}
 
 	private void createSearchingThread() {
-		searchingThread = new Thread(new Runnable() {
-			public void run() {
-				try {
-					doSearching();
-				}
-				catch (Throwable ex) {
-					ex.printStackTrace();
-				}
+		searchingThread = new Thread(() -> {
+			try {
+				doSearching();
+			}
+			catch (Throwable ex) {
+				ex.printStackTrace();
 			}
 		});
 			
@@ -355,6 +353,9 @@ public final class SearchManagerImpl implements ISearchManager {
 			task.getPosition().assign(rootPosition);
 			task.setHorizon(horizon);
 			task.setInitialSearch(initialSearch);
+
+			if (this.searchResult != null)
+				task.getPrincipalVariation().assign(this.searchResult.getPrincipalVariation());
 			
 			final int materialEvaluation = rootPosition.getMaterialEvaluation();
 			task.setRootMaterialEvaluation(materialEvaluation);
@@ -428,7 +429,8 @@ public final class SearchManagerImpl implements ISearchManager {
 		if (bookMove != null && bookSearchEnabled)
 			return bookMove;
 
-		hashTable.clear();
+		evaluationHashTable.clear();
+		bestMoveHashTable.clear();
 
 		for (ISearchEngine engine: searchEngineList)
 			engine.clear();
@@ -463,19 +465,16 @@ public final class SearchManagerImpl implements ISearchManager {
 		final Move lastMove = new Move();
 		final Holder<Integer> moveCount = new Holder<>(0);
 		
-		generator.setWalker(new IMoveWalker() {
-			@Override
-			public boolean processMove(final Move move) {
-				lastMove.assign(move);
-				
-				final int newCount = moveCount.getValue() + 1;
-				moveCount.setValue(newCount);
-				
-				return newCount > 1;
-			}
+		generator.setWalker(move -> {
+			lastMove.assign(move);
+
+			final int newCount = moveCount.getValue() + 1;
+			moveCount.setValue(newCount);
+
+			return newCount > 1;
 		});
 		
-		if ((int) moveCount.getValue() == 1)
+		if (moveCount.getValue() == 1)
 			return lastMove;
 		else
 			return null;
@@ -555,7 +554,7 @@ public final class SearchManagerImpl implements ISearchManager {
 			
 			Logger.logMessage("Starting search");
 			
-			this.startHorizon = Math.min(minHorizon, maxHorizon);
+			this.startHorizon = Math.min(MIN_HORIZON, maxHorizon);
 			this.searchFinished = false;
 			this.isResultSent = false;
 			this.searchInfoChanged = false;
@@ -568,7 +567,8 @@ public final class SearchManagerImpl implements ISearchManager {
 			totalNodeCount = 0;
 			managerState = ManagerState.SEARCHING;
 			
-			hashTable.clear();
+			evaluationHashTable.clear();
+			bestMoveHashTable.clear();
 			
 			monitor.notifyAll();
 		}
@@ -640,25 +640,26 @@ public final class SearchManagerImpl implements ISearchManager {
 	 * Returns hash table.
 	 * @returns hash table
 	 */
-	public IHashTable getHashTable() {
+	public IEvaluationHashTable getHashTable() {
 		synchronized (monitor) {
-			return hashTable;
+			return evaluationHashTable;
 		}
 	}
 
 	/**
 	 * Sets hash table for the manager.
 	 * Manager must be in STOPPED state.
-	 * @param table hash table
 	 */
-	public void setHashTable (final IHashTable table) {
-		if (table == null)
-			throw new RuntimeException("Hash table cannot be null");
-		
+	@Override
+	public void setHashTable (final IEvaluationHashTable evaluationHashTable, final IBestMoveHashTable bestMoveHashTable) {
+		Objects.requireNonNull(evaluationHashTable);
+		Objects.requireNonNull(bestMoveHashTable);
+
 		synchronized (monitor) {
 			checkManagerState (ManagerState.STOPPED);
 
-			this.hashTable = table;
+			this.evaluationHashTable = evaluationHashTable;
+			this.bestMoveHashTable = bestMoveHashTable;
 		}
 	}
 
@@ -671,7 +672,6 @@ public final class SearchManagerImpl implements ISearchManager {
 		synchronized (monitor) {
 			checkManagerState (ManagerState.STOPPED);
 
-			this.pieceTypeEvaluations = pieceTypeEvaluations;
 			rootPosition.setPieceTypeEvaluations(pieceTypeEvaluations);
 		}
 	}

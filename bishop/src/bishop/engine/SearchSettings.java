@@ -20,7 +20,7 @@ public final class SearchSettings {
 			"simpleCheckExtension, attackCheckExtension, forcedMoveExtension, mateExtension, rankAttackExtension, " +
 			"pawnOnSevenRankExtension, protectingPawnOnSixRankExtension, " +
 			"recaptureMinExtension, recaptureMaxExtension, " +
-			"recaptureBeginMinTreshold, recaptureBeginMaxTreshold, recaptureTargetTreshold";
+			"recaptureBeginMinTreshold, recaptureBeginMaxTreshold, recaptureTargetTreshold, maxEstimateForZeroWindowSearch";
 
 	private int maxQuiescenceDepth;
 	private int nullMoveReduction;
@@ -40,6 +40,7 @@ public final class SearchSettings {
 	private int recaptureBeginMaxTreshold;
 	private int recaptureTargetTreshold;
 	private int maxCheckSearchDepth;
+	private int maxEstimateForZeroWindowSearch;
 
 	public SearchSettings() {
 		maxQuiescenceDepth = 13;
@@ -62,6 +63,7 @@ public final class SearchSettings {
 		recaptureBeginMinTreshold = roundToInt (7.381 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureBeginMaxTreshold = roundToInt (8.317 * PieceTypeEvaluations.PAWN_EVALUATION);
 		recaptureTargetTreshold = roundToInt (6.029 * PieceTypeEvaluations.PAWN_EVALUATION);
+		maxEstimateForZeroWindowSearch = -126200;
 	}
 	
 	private static int makeExtension(final double extension) {
@@ -180,6 +182,14 @@ public final class SearchSettings {
 		this.recaptureTargetTreshold = recaptureTargetTreshold;
 	}
 
+	public int getMaxEstimateForZeroWindowSearch() {
+		return maxEstimateForZeroWindowSearch;
+	}
+
+	public void setMaxEstimateForZeroWindowSearch(int maxEstimateForZeroWindowSearch) {
+		this.maxEstimateForZeroWindowSearch = maxEstimateForZeroWindowSearch;
+	}
+
 	public void assign(final SearchSettings orig) {
 		maxQuiescenceDepth = orig.maxQuiescenceDepth;
 		maxCheckSearchDepth = orig.maxCheckSearchDepth;
@@ -248,7 +258,9 @@ public final class SearchSettings {
 
 			printRelativeEvaluation(printWriter, recaptureBeginMinTreshold);
 			printRelativeEvaluation(printWriter, recaptureBeginMaxTreshold);
-			printRelativeEvaluation(printWriter, recaptureTargetTreshold, false);
+			printRelativeEvaluation(printWriter, recaptureTargetTreshold);
+
+			printWriter.print(maxEstimateForZeroWindowSearch);
 
 			printWriter.flush();
 			return stringWriter.toString();

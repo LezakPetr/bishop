@@ -233,8 +233,7 @@ public class PawnStructureEvaluatorTest {
 		final PositionEvaluationCoeffs positionEvaluationCoeffs = new PositionEvaluationCoeffs();
 
 		final Supplier<IPositionEvaluation> evaluationFactory = () -> new CoeffCountPositionEvaluation(positionEvaluationCoeffs);
-		final GeneralEvaluatorSettings settings = new GeneralEvaluatorSettings();
-		final GeneralPositionEvaluator evaluator = new GeneralPositionEvaluator(settings, evaluationFactory);
+		final GeneralPositionEvaluator evaluator = new GeneralPositionEvaluator(evaluationFactory);
 		final AttackCalculator attackCalculator = new AttackCalculator();
 		final Fen fen = new Fen();
 		final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();

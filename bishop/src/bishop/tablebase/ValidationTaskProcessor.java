@@ -43,7 +43,7 @@ public class ValidationTaskProcessor implements Callable<Boolean> {
 	}
 
 	@Override
-	public Boolean call() throws Exception {
+	public Boolean call() {
 		while (count > 0) {
 			final int realResult = iterator.getResult();
 			final int expectedResult;

@@ -56,7 +56,7 @@ public class TableStatistics {
 			if (result != TableResult.ILLEGAL) {
 				it.fillPosition(position);
 
-				final int modelIndex = (int) probabilityModelSelector.getModelIndex(position);
+				final int modelIndex = probabilityModelSelector.getModelIndex(position);
 				final int symbol = symbolToResultMap.resultToSymbol(result);
 				probabilityModelSelector.addSymbol(position, symbol);
 				
@@ -74,7 +74,7 @@ public class TableStatistics {
 	}
 	
 	private Set<Integer> getResultSet(final ITableRead table) {
-		final Set<Integer> resultSet = new TreeSet<Integer>();
+		final Set<Integer> resultSet = new TreeSet<>();
 		
 		for (ITableIteratorRead it = table.getIterator(); it.isValid(); it.next()) {
 			final int result = it.getResult();
@@ -99,7 +99,7 @@ public class TableStatistics {
 		
 		symbolToResultMap = new SortedSymbolToResultMap(symbolToResultTable);
 		symbolFrequencies = calculateSymbolFrequencies(table, blockLength);
-		symbolProbabilities = new HashMap<Integer, int[]>();
+		symbolProbabilities = new HashMap<>();
 		
 		for (int modelIndex = 0; modelIndex < symbolFrequencies.length; modelIndex++) {
 			final int[] probabilities = ProbabilityModelFactory.normalizeProbabilities(symbolFrequencies[modelIndex]);
@@ -158,14 +158,12 @@ public class TableStatistics {
 		
 		for (long[] labelSymbolFrequencies: symbolFrequencies) {
 			final long labelSymbolCount = getLabelSymbolCount(labelSymbolFrequencies);
-			
-			for (int symbol = 0; symbol < labelSymbolFrequencies.length; symbol++) {
-				final long frequency = labelSymbolFrequencies[symbol];
-				
+
+			for (long frequency : labelSymbolFrequencies) {
 				if (frequency > 0) {
 					final double prob = (double) frequency / (double) labelSymbolCount;
 					shanons -= frequency * Math.log(prob) / Math.log(2);
-					
+
 					headerSize += 2;
 				}
 			}

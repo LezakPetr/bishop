@@ -25,6 +25,8 @@ import bishop.tables.SquareSymmetryTable;
  * @author Ing. Petr Ležák
  */
 public class Chunk {
+
+	public static final Chunk[] EMPTY_ARRAY = new Chunk[0];
 	
 	private final int onTurn;   // Side on turn
 	private final int whiteKingSquare;   // Position of white king

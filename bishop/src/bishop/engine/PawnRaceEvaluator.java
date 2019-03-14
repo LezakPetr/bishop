@@ -14,7 +14,6 @@ import bishop.base.Square;
 import bishop.tables.BetweenTable;
 import bishop.tables.FigureAttackTable;
 import bishop.tables.PawnAttackTable;
-import math.Utils;
 
 public class PawnRaceEvaluator {
 

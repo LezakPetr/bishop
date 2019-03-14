@@ -27,11 +27,9 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 	private final LogisticRegression regression;
 	private final PositionEvaluationCoeffs coeffs = new PositionEvaluationCoeffs();
 	private final Supplier<IPositionEvaluation> evaluationFactory = () -> new CoeffCountPositionEvaluation(coeffs);
-	private final PositionEvaluatorSwitchSettings settings = new PositionEvaluatorSwitchSettings();
 	private final MobilityCalculator mobilityCalculator = new MobilityCalculator();
 	
-	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(settings, evaluationFactory);
-	private final AttackCalculator attackCalculator = new AttackCalculator();
+	private final PositionEvaluatorSwitch evaluator = new PositionEvaluatorSwitch(evaluationFactory);
 	private final Random rng = new Random();
 	private final double positionTakeProbability = 1;
 	private final IMaterialEvaluator defaultMaterialEvaluator = new DefaultAdditiveMaterialEvaluator(PieceTypeEvaluations.DEFAULT);

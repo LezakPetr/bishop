@@ -129,10 +129,8 @@ public class PositionValidator {
 			
 			final long freeMask = EmptyEpMaskTable.getItem(color, epFile);
 			
-			if ((position.getOccupancy() & freeMask) != 0 || !position.isEnPassantPossible()) {
+			if ((position.getOccupancy() & freeMask) != 0 || !position.isEnPassantPossible())
 				errorSet.add(Error.WRONG_EP_FILE);
-				return;
-			}
 		}
 	}
 	

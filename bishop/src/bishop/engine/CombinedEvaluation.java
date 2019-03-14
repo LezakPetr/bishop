@@ -1,10 +1,7 @@
 package bishop.engine;
 
-import math.Sigmoid;
 import math.Utils;
-import utils.IntUtils;
 
-import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class CombinedEvaluation {

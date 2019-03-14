@@ -3,6 +3,9 @@ package bishop.base;
 import utils.ICopyable;
 
 public interface IMaterialHashRead extends IPieceCounts, ICopyable<MaterialHash>, Comparable<MaterialHash> {
+
+	public static final IMaterialHashRead[] EMPTY_ARRAY = new IMaterialHashRead[0];
+
 	public int getOnTurn();
 	public MaterialHash getOpposite();
 	public String getMaterialString();

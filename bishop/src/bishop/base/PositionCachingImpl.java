@@ -2,7 +2,6 @@ package bishop.base;
 
 import bishop.engine.CombinedEvaluation;
 import bishop.engine.GameStage;
-import bishop.engine.GameStageCoeffs;
 import bishop.tables.PieceHashTable;
 
 public final class PositionCachingImpl implements IPositionCaching {

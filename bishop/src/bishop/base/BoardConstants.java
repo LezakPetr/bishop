@@ -393,9 +393,8 @@ public class BoardConstants {
 	public static long getAllConnectedPawnSquareMask(final long pawnMask) {
 		final long previousColumn = (pawnMask & ~BoardConstants.FILE_A_MASK) >>> 1;
 		final long nextColumn = (pawnMask & ~BoardConstants.FILE_H_MASK) << 1;
-		final long result = previousColumn | nextColumn;
 
-		return result;
+		return previousColumn | nextColumn;
 	}
 
 	/**
@@ -558,12 +557,10 @@ public class BoardConstants {
 	}
 
 	private static int getMinFileDistanceIndex(final int fileMask, final int file) {
-		final int index = (fileMask << File.BIT_COUNT) | file;
-
-		return index;
+		return (fileMask << File.BIT_COUNT) | file;
 	}
 
-	private static long[] KING_NEAR_SQUARES = LongArrayBuilder.create(Square.LAST)
+	private static final long[] KING_NEAR_SQUARES = LongArrayBuilder.create(Square.LAST)
 			.fill(s -> FigureAttackTable.getItem(PieceType.KING, s) | BitBoard.getSquareMask(s))
 			.build();
 

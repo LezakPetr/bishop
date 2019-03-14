@@ -2,7 +2,6 @@ package bishop.engine;
 
 import bishop.base.BoardConstants;
 import bishop.base.Color;
-import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import bishop.base.Rank;
 import bishop.base.Square;

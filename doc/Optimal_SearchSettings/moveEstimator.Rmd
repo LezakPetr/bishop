@@ -1,0 +1,22 @@
+---
+title: "Move estimator"
+author: "Petr Lezak"
+date: "11.03.2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+library(ggplot2);
+```
+
+```{r}
+data <- read.csv('moveEstimator_0.csv');
+```
+
+```{r}
+model = glm(isBest~history+capturedPieceEvaluation+history*capturedPieceEvaluation+isKillerMove, family=binomial(link='logit'), data = data);
+model
+```

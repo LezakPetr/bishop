@@ -61,29 +61,21 @@ public class TableReader extends TableIo {
 	
 	private void prefetchHeader() throws IOException {
 		final FileInputStream fileStream = new FileInputStream(file);
-		final CountingInputStream countingStream = new CountingInputStream(fileStream);
-		
-		try {
+
+		try (CountingInputStream countingStream = new CountingInputStream(fileStream)) {
 			readHeaderFromStream(countingStream);
-		}
-		finally {
-			countingStream.close();
 		}
 	}
 
 	public void readTable () throws IOException {
-		final FileInputStream fileStream = new FileInputStream(file);
-		
-		try {
+
+		try (FileInputStream fileStream = new FileInputStream(file)) {
 			skipHeader(fileStream);
-			
+
 			table = new CompressedMemoryTable(tableDefinition, new SymbolToResultMapWithIllegal(symbolToResultMap));
-			
+
 			readBlockLenghts(fileStream);
 			readSymbolsFromStream(fileStream);
-		}
-		finally {
-			fileStream.close();
 		}
 	}
 	
@@ -101,26 +93,22 @@ public class TableReader extends TableIo {
 		// Allocate buffer for 2 block positions because they are read byte by byte. We don't have to
 		// allocate buffer for the whole block because it is read by single bulk read.
 		final BufferedInputStream bufferedStream = new BufferedInputStream(fileStream, 2 * bytesPerBlockPosition);
-		final CountingInputStream countingStream = new CountingInputStream(bufferedStream);
-		
-		try {
-			final long blockIndex = getBlockIndex (tableIndex);
+
+		try (CountingInputStream countingStream = new CountingInputStream(bufferedStream)) {
+			final long blockIndex = getBlockIndex(tableIndex);
 			final long blockOffset = blockIndex << blockIndexExponent;
-			
-			IoUtils.skip (countingStream, headerLength + blockIndex * bytesPerBlockPosition);
-			
+
+			IoUtils.skip(countingStream, headerLength + blockIndex * bytesPerBlockPosition);
+
 			final long prevPos = IoUtils.readUnsignedNumberBinary(countingStream, bytesPerBlockPosition);
 			final long nextPos = IoUtils.readUnsignedNumberBinary(countingStream, bytesPerBlockPosition);
 			final int blockLength = (int) (nextPos - prevPos);
-			
-			IoUtils.skip (countingStream, (blockPositionSize - blockIndex - 2) * bytesPerBlockPosition + prevPos);
+
+			IoUtils.skip(countingStream, (blockPositionSize - blockIndex - 2) * bytesPerBlockPosition + prevPos);
 
 			table = new CompressedMemoryTable(tableDefinition, blockOffset, blockIndexCount, new SymbolToResultMapWithIllegal(symbolToResultMap));
 
 			readOneBlock(countingStream, table.getIterator(), blockIndexCount, blockLength);
-		}
-		finally {
-			countingStream.close();
 		}
 	}
 	
@@ -254,9 +242,9 @@ public class TableReader extends TableIo {
 				throw new IOException("Unknown version");
 		}		
 		
-		symbolProbabilities = new HashMap<Integer, int[]>();
+		symbolProbabilities = new HashMap<>();
 
-		probabilityModelMap = new HashMap<Integer, IProbabilityModel>();
+		probabilityModelMap = new HashMap<>();
 		
 		for (int modelIndex = 0; modelIndex < modelCount; modelIndex++) {
 			final int[] probabilities = new int[symbolCount];

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import bishop.base.IMoveWalker;
 import bishop.base.LegalMoveGenerator;
 import bishop.base.Move;
 import bishop.base.Position;
@@ -73,20 +72,17 @@ public class BookCalculator implements IBook<EvaluatedBookRecord> {
 		final Position currentPosition = new Position();
 		moveGenerator.setPosition(currentPosition);
 		
-		moveGenerator.setWalker(new IMoveWalker() {
-			@Override
-			public boolean processMove(final Move move) {
-				currentPosition.makeMove(move);
-				
-				if (recordMap.containsKey(currentPosition) && !walkedSet.contains(currentPosition)) {
-					final EvaluatedBookRecord record = recordMap.get(currentPosition);
-					walkedSet.add(record.getPosition());
-					positionOrder.add(0, record.getPosition());
-				}
-				
-				currentPosition.undoMove(move);
-				return true;
+		moveGenerator.setWalker(move -> {
+			currentPosition.makeMove(move);
+
+			if (recordMap.containsKey(currentPosition) && !walkedSet.contains(currentPosition)) {
+				final EvaluatedBookRecord record = recordMap.get(currentPosition);
+				walkedSet.add(record.getPosition());
+				positionOrder.add(0, record.getPosition());
 			}
+
+			currentPosition.undoMove(move);
+			return true;
 		});
 		
 		while (!openQueue.isEmpty()) {
@@ -146,7 +142,6 @@ public class BookCalculator implements IBook<EvaluatedBookRecord> {
 			
 			final HashRecord hashRecord = new HashRecord();
 			hashRecord.setHorizon(100);
-			hashRecord.setCompressedBestMove(bestMove.getCompressedMove());
 			hashRecord.setEvaluation(result.getEvaluation());
 			hashRecord.setType(HashRecordType.VALUE);
 			

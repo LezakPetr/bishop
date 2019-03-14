@@ -78,7 +78,7 @@ public class PgnWriter extends Pgn {
 	}
 	
 	
-	protected final Stack<StackRecord> nodeStack = new Stack<StackRecord>();
+	protected final Stack<StackRecord> nodeStack = new Stack<>();
 	
 	
 	private void writeTag (final String name, final String value) {

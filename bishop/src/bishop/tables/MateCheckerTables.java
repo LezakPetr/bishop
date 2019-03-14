@@ -6,7 +6,7 @@ public class MateCheckerTables {
 	private static final long[][] LINE_AFFECTING_SQUARES = createLineAffectingSquares();
 	private static final long[] KNIGHT_AFFECTING_SQUARES = createKnightAffectingSquares();
 
-	private static final long[][] createLineAffectingSquares() {
+	private static long[][] createLineAffectingSquares() {
 		final long[][] table = new long[CrossDirection.LAST][Square.LAST];
 
 		for (int crossDirection = CrossDirection.FIRST; crossDirection < CrossDirection.LAST; crossDirection++) {
@@ -27,7 +27,7 @@ public class MateCheckerTables {
 		return table;
 	}
 
-	private static final long[] createKnightAffectingSquares() {
+	private static long[] createKnightAffectingSquares() {
 		final long[] table = new long[Square.LAST];
 
 		for (int kingSquare = Square.FIRST; kingSquare < Square.LAST; kingSquare++) {

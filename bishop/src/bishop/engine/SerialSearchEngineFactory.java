@@ -1,24 +1,12 @@
 package bishop.engine;
 
-import java.util.function.Supplier;
-
-import bishop.base.IMaterialEvaluator;
 import bishop.base.PieceTypeEvaluations;
 
 public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 
 	private PieceTypeEvaluations pieceTypeEvaluations;
 	private IPositionEvaluatorFactory positionEvaluatorFactory;
-	private Supplier<IPositionEvaluation> evaluationFactory;
 	private int maximalDepth;
-
-	public IPositionEvaluatorFactory getPositionEvaluatorFactory() {
-		return positionEvaluatorFactory;
-	}
-	
-	public void setEvaluationFactory(final Supplier<IPositionEvaluation> evaluationFactory) {
-		this.evaluationFactory = evaluationFactory;
-	}
 
 	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations) {
 		this.pieceTypeEvaluations = pieceTypeEvaluations;
@@ -52,9 +40,7 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 	 */
 	public ISearchEngine createEngine() {
 		try {
-			final SerialSearchEngine searchEngine = createSingleEngine();
-			
-			return searchEngine;
+			return createSingleEngine();
 		}
 		catch (Throwable th) {
 			throw new RuntimeException("Cannot create instance of search engine", th);
@@ -64,8 +50,7 @@ public final class SerialSearchEngineFactory implements ISearchEngineFactory {
 	private SerialSearchEngine createSingleEngine() {
 		final IPositionEvaluator evaluator = createPositionEvaluator();
 		final SerialSearchEngine searchEngine = new SerialSearchEngine();
-		
-		searchEngine.setEvaluationFactory(evaluationFactory);
+
 		searchEngine.setPositionEvaluator(evaluator);
 		searchEngine.setPieceTypeEvaluations(pieceTypeEvaluations);
 		searchEngine.setMaximalDepth(maximalDepth);

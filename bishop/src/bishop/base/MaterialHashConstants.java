@@ -47,6 +47,9 @@ public class MaterialHashConstants {
 
 	public static final long QUEEN_ROOK_OR_PAWN_BOTH_COLOR_MASK = combineMasks(QUEEN_ROOK_OR_PAWN_MASKS);
 	public static final long FIGURE_BOTH_COLOR_MASK = combineMasks(FIGURE_MASKS);
+
+	public static final long TOTAL_PIECE_COUNT_MULTIPLICAOR = 0x0410410410410410L;
+	public static final int TOTAL_PIECE_COUNT_SHIFT = 58;
 	
 	/**
 	 * Returns offset of the count of given pieces. 

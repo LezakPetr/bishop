@@ -611,6 +611,15 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	public long getBothColorPiecesMask(final int type) {
 		return pieceTypeMasks[type];
 	}
+
+	/**
+	 * Returns mask of promotion figures with given color.
+	 * @param color color of figures
+	 * @return mask of promotion figures with given color
+	 */
+	public long getPromotionFigureMask(final int color) {
+		return colorOccupancy[color] & ~(pieceTypeMasks[PieceType.KING] | pieceTypeMasks[PieceType.PAWN]);
+	}
 	
 	/**
 	 * Returns mask of all occupied squares.
@@ -1135,9 +1144,8 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	public boolean isKingNotOnTurnAttacked() {
 		final int oppositeColor = Color.getOppositeColor(onTurn);
 		final int kingPos = getKingPosition(oppositeColor);
-		final boolean isCheck = isSquareAttacked(onTurn, kingPos);
-		
-		return isCheck;
+
+		return isSquareAttacked(onTurn, kingPos);
 	}
 	
 	public int getCheapestAttacker (final int color, final int square) {

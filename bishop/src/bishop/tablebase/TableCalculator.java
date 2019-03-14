@@ -1,6 +1,5 @@
 package bishop.tablebase;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -9,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import bishop.base.*;
@@ -22,10 +20,7 @@ public class TableCalculator {
 	private final BothColorPositionResultSource<IStagedTable> bothTables;
 	private final TableSwitch resultSource;
 	private final Map<MaterialHash, ITableRead> subTables = new HashMap<>();
-	
-	private BitArray prevPositionsToCheck;
-	private BitArray nextPositionsToCheck;
-	
+
 	private boolean usePersistentTable = false;
 	private boolean useCompressedTable = false;
 
@@ -37,7 +32,7 @@ public class TableCalculator {
 			this.materialHashArray[color] = materialHashArray[color].copy();
 		
 		this.parallel = parallel;		
-		this.bothTables = new BothColorPositionResultSource<IStagedTable>();
+		this.bothTables = new BothColorPositionResultSource<>();
 		
 		this.resultSource = new TableSwitch();
 	}
@@ -127,7 +122,7 @@ public class TableCalculator {
 			result.setBaseSource(onTurn, bothTables.getBaseSource(onTurn));
 	}
 	
-	private static void initializeBlocks(final IStagedTable table) throws FileNotFoundException, IOException {
+	private static void initializeBlocks(final IStagedTable table) throws IOException {
 		final LegalMoveFinder moveFinder = new LegalMoveFinder();
 		
 		final Position position = new Position(true);
@@ -168,7 +163,7 @@ public class TableCalculator {
 		}
 	}
 	
-	private void initializeTable() throws FileNotFoundException, IOException, InterruptedException, ExecutionException {
+	private void initializeTable() throws InterruptedException, ExecutionException {
 		
 		for (int onTurn = Color.FIRST; onTurn < Color.LAST; onTurn++) {
 			final IStagedTable table = bothTables.getBaseSource(onTurn);
@@ -176,14 +171,11 @@ public class TableCalculator {
 			table.clear();
 			table.switchToModeWrite();
 			
-			parallel.runParallel(new Callable<Throwable>() {
-				@Override
-				public Throwable call() throws Exception {
-					initializeBlocks(table);
-					
-					return null;
-				}
-			});			
+			parallel.runParallel(() -> {
+				initializeBlocks(table);
+
+				return null;
+			});
 		}
 	}
 
@@ -191,14 +183,14 @@ public class TableCalculator {
 		initializeTable();
 		
 		boolean firstIteration = true;
-		final List<CalculationTaskProcessor> processorList = new ArrayList<CalculationTaskProcessor>();
+		final List<CalculationTaskProcessor> processorList = new ArrayList<>();
 		
 		for (int i = 0; i < parallel.getThreadCount(); i++) {
 			processorList.add (new CalculationTaskProcessor(resultSource));
 		}
-		
-		prevPositionsToCheck = null;
-		nextPositionsToCheck = null;
+
+		BitArray prevPositionsToCheck = null;
+		BitArray nextPositionsToCheck = null;
 		long changeCount;
 		
 		do {
@@ -219,9 +211,8 @@ public class TableCalculator {
 				// Initialize
 				ownTable.switchToModeWrite();
 				oppositeTable.switchToModeRead(parallel);
-				
-				for (int i = 0; i < processorList.size(); i++) {
-					final CalculationTaskProcessor processor = processorList.get(i);
+
+				for (CalculationTaskProcessor processor: processorList) {
 					processor.initialize(firstIteration, oppositeTableDefinition, prevPositionsToCheck, nextPositionsToCheck, ownTable, oppositeTable);
 				}
 				

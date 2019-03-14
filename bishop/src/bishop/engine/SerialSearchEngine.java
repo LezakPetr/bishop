@@ -2,7 +2,6 @@ package bishop.engine;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import bishop.base.*;
@@ -32,7 +31,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					if (depth == 0) {
 						currentPosition.makeMove(move);
 
-						if (hashTable.getRecord(currentPosition, -1, estimateHashRecord))
+						if (evaluationHashTable.getRecord(currentPosition, -1, estimateHashRecord))
 							estimate = -estimateHashRecord.getEvaluation();
 
 						currentPosition.undoMove(move);
@@ -57,7 +56,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		private int moveListEnd;
 		private final MoveList principalVariation;
 		private final Move killerMove = new Move();
-		private final Move principalMove = new Move();
+		private final Move originalKillerMove = new Move();
 		private final Move hashBestMove = new Move();
 		private final Move firstLegalMove = new Move();
 		private boolean allMovesGenerated;
@@ -93,6 +92,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return killerMove;
 		}
 
+		public Move getOriginalKillerMove() {
+			return originalKillerMove;
+		}
+
 		public Move getFirstLegalMove() {
 			return firstLegalMove;
 		}
@@ -103,6 +106,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 		public NodeRecord getPreviousRecord() {
 			return previousRecord;
+		}
+
+		public int getDepth() {
+			return depth;
 		}
 
 		public void openNode(final int alpha, final int beta) {
@@ -124,7 +131,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			moveListEnd = 0;
 			principalVariation.clear();
 			killerMove.clear();
-			principalMove.clear();
 			hashBestMove.clear();
 			firstLegalMove.clear();
 			allMovesGenerated = false;
@@ -161,7 +167,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				evaluation = Evaluation.MAX;
 		}
 
-		public void alphaBetaInLegalPosition(final int horizon) {
+		private void alphaBetaInLegalPosition(final int horizon) {
 			final int onTurn = currentPosition.getOnTurn();
 			final int oppositeColor = Color.getOppositeColor(onTurn);
 
@@ -177,10 +183,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 			final int reducedHorizon = shouldReduceHorizon(horizon) ? 0 : horizon;
 			isQuiescenceSearch = (reducedHorizon <= 0);
 
-			final boolean isFirstQuiescence = isQuiescenceSearch && depth > 0 && !previousRecord.isQuiescenceSearch;
-
 			final int ownKingSquare = currentPosition.getKingPosition(onTurn);
 			final boolean isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
+
+			originalKillerMove.assign(killerMove);
 
 			try {
 				// Evaluate position
@@ -207,7 +213,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					if (evaluation > beta) {
 						final int mateEvaluation = Evaluation.getMateEvaluation(depth);
-						checkMate(isCheck, mateEvaluation);
+						checkMateAndStalemate(isCheck, mateEvaluation);
 
 						return;
 					}
@@ -268,7 +274,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 							precalculatedMove.assign(hashBestMove);
 						}
 						else
-							precalculatedMoveFound = precalculatedMove.uncompressMove(principalMove.getCompressedMove(), currentPosition);
+							precalculatedMoveFound = false;
 					}
 
 					if (precalculatedMoveFound) {
@@ -292,7 +298,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 								final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
 								currentPosition.makeMove(move);
 
-								if (firstLegalMove.getMoveType() != MoveType.INVALID && alpha != beta) {
+								if (firstLegalMove.getMoveType() != MoveType.INVALID && alpha != beta && moveStack.getEvaluation(moveListEnd - 1) < searchSettings.getMaxEstimateForZeroWindowSearch()) {
 									evaluateMadeMove (move, reducedHorizon, positionExtension, alpha, alpha, beginMaterialEvaluation);
 									final int childEvaluation = -nextRecord.evaluation;
 
@@ -316,8 +322,11 @@ public final class SerialSearchEngine implements ISearchEngine {
 						}
 					}
 
+					if (principalVariation.getSize() > 0)
+						moveEstimator.updateMove(this, currentPosition.getOnTurn(), principalVariation.get(0), horizon, true);
+
 					final int mateEvaluation = Evaluation.getMateEvaluation(depth);
-					checkMate(isCheck, mateEvaluation);
+					checkMateAndStalemate(isCheck, mateEvaluation);
 				}
 			}
 			finally {
@@ -382,11 +391,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 		 * @return true if the position evaluation with enough horizon was obtained
 		 */
 		private boolean updateRecordByHash(final int horizon, final HashRecord hashRecord) {
-			if (!readHashRecord(horizon, hashRecord)) {
+			final int compressedBestMove = bestMoveHashTable.getRecord(currentPosition);
+
+			if (compressedBestMove != Move.NONE_COMPRESSED_MOVE)
+				hashBestMove.uncompressMove(compressedBestMove, currentPosition);
+			else
 				hashBestMove.clear();
 
+			if (!readHashRecord(horizon, hashRecord))
 				return false;
-			}
 
 			if (depth > 0 && hashRecord.getHorizon() == horizon) {
 				final int hashEvaluation = hashRecord.getNormalizedEvaluation(depth);
@@ -463,18 +476,15 @@ public final class SerialSearchEngine implements ISearchEngine {
 		 * @param alpha alpha from current view
 		 * @param beta alpha from current view
 		 */
-		private ISearchResult evaluateMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta) {
+		private void evaluateMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta) {
 			final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
 
 			currentPosition.makeMove(move);
-
-			final ISearchResult result = evaluateMadeMove(move, horizon, positionExtension, alpha, beta, beginMaterialEvaluation);
+			evaluateMadeMove(move, horizon, positionExtension, alpha, beta, beginMaterialEvaluation);
 			currentPosition.undoMove(move);
-
-			return result;
 		}
 
-		private ISearchResult evaluateMadeMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta, final int beginMaterialEvaluation) {
+		private void evaluateMadeMove(final Move move, final int horizon, final int positionExtension, final int alpha, final int beta, final int beginMaterialEvaluation) {
 			final int moveExtension;
 
 			if (horizon >= searchSettings.getMinExtensionHorizon())
@@ -495,14 +505,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 			nextRecord.openNode(-beta, -alpha);
 			nextRecord.alphaBeta(subHorizon);
 
-			final ISearchResult result = nextRecord;
-
 			moveStackTop = moveListEnd;
 
 			currentMove.clear();
 			repeatedPositionRegister.popPosition();
-
-			return result;
 		}
 
 		private boolean updateCurrentRecordAfterEvaluation(final Move move, final int horizon, final ISearchResult result) {
@@ -515,6 +521,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 			}
 
 			if (parentEvaluation > evaluation) {
+				if (principalVariation.getSize() > 0)
+					moveEstimator.updateMove(this, currentPosition.getOnTurn(), principalVariation.get(0), horizon, false);
+
 				evaluation = parentEvaluation;
 				alpha = Math.max(alpha, evaluation);
 
@@ -528,8 +537,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 				// Update alpha and beta
 				if (evaluation > beta) {
-					moveEstimator.addCutoff(this, currentPosition.getOnTurn(), move, horizon);
-
 					killerMove.assign(move);
 
 					betaCutoff = true;
@@ -560,14 +567,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 				record.setEvaluationAndType(evaluation, alpha, beta, depth);
 				record.setHorizon(horizon);
 
-				if (principalVariation.getSize() > 0) {
-					record.setCompressedBestMove(principalVariation.getCompressedMove(0));
-				}
-				else {
-					record.setCompressedBestMove(Move.NONE_COMPRESSED_MOVE);
-				}
+				evaluationHashTable.updateRecord(currentPosition, record);
 
-				hashTable.updateRecord(currentPosition, record);
+				if (principalVariation.getSize() > 0)
+					bestMoveHashTable.updateRecord(currentPosition, horizon, principalVariation.getCompressedMove(0));
 			}
 		}
 
@@ -586,34 +589,21 @@ public final class SerialSearchEngine implements ISearchEngine {
 		 * stored in current node record.
 		 * @param isCheck if there is check in the position
 		 * @param mateEvaluation evaluation of the mate
-		 * @return if there is a mate
 		 */
-		private boolean checkMate(final boolean isCheck, final int mateEvaluation) {
-			boolean isMate = false;
-
+		private void checkMateAndStalemate(final boolean isCheck, final int mateEvaluation) {
 			if (firstLegalMove.getMoveType() == MoveType.INVALID) {
-				if (allMovesGenerated) {
-					if (isCheck) {
-						evaluation = -mateEvaluation;
-						isMate = true;
-					}
-					else
-						evaluation = Evaluation.DRAW;
-				}
-
-				// If we are at horizon 0 not all moves was generated so we must
-				// check if there really isn't legal move. This is slow so we
-				// will detect only mate in case of check.
-				if (isCheck && !isMate && mobilityCalculator.canBeMate(currentPosition)) {
-					if (!legalMoveFinder.existsLegalMove(currentPosition)) {
-						this.evaluation = -mateEvaluation;
-
-						isMate = true;
+				if (allMovesGenerated)
+					evaluation = (isCheck) ? -mateEvaluation : Evaluation.DRAW;
+				else {
+					// If we are at horizon 0 not all moves was generated so we must
+					// check if there really isn't legal move. This is slow so we
+					// will detect only mate in case of check.
+					if (isCheck && mobilityCalculator.canBeMate(currentPosition)) {
+						if (!legalMoveFinder.existsLegalMove(currentPosition))
+							this.evaluation = -mateEvaluation;
 					}
 				}
 			}
-
-			return isMate;
 		}
 
 		private boolean checkFiniteEvaluation(final int horizon) {
@@ -639,43 +629,27 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 
 		private boolean readHashRecordImpl(final int horizon, final HashRecord hashRecord) {
-			if (!hashTable.getRecord(currentPosition, horizon, hashRecord))
-				return false;
-
-			if (hashRecord.getCompressedBestMove() == Move.NONE_COMPRESSED_MOVE) {
-				hashBestMove.clear();
-
-				if (GlobalSettings.isDebug())
-					hashPrimaryCollisionRate.addInvocation (false);
-
-				return true;
-			}
-
-			final boolean success = hashBestMove.uncompressMove(hashRecord.getCompressedBestMove(), currentPosition);
-
-			if (GlobalSettings.isDebug())
-				hashPrimaryCollisionRate.addInvocation (!success);
-
-			return success;
+			return evaluationHashTable.getRecord(currentPosition, horizon, hashRecord);
 		}
 	}
 
-	private static final int RECEIVE_UPDATES_COUNT = 16768;
+	private static final int RECEIVE_UPDATES_COUNT = 8192;
 
 	private static final int HASH_BEST_MOVE_ESTIMATE = Integer.MAX_VALUE;
 	
 	// Settings
 	private int maxTotalDepth;
 	private SearchSettings searchSettings;
-	private IHashTable hashTable;
-	private Supplier<IPositionEvaluation> evaluationFactory;
+	private IEvaluationHashTable evaluationHashTable;
+	private IBestMoveHashTable bestMoveHashTable;
 
 	// Actual task
 	private NodeRecord[] nodeStack;
 	private MoveStack moveStack;
 	private final Position currentPosition;
 	private int moveStackTop;
-	private volatile long nodeCount;
+	private long nodeCount;
+	private volatile long reportedNodeCount;
 	private final RepeatedPositionRegister repeatedPositionRegister;
 	private final EvaluatedMoveList evaluatedMoveList;
 
@@ -691,7 +665,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private final SearchExtensionCalculator extensionCalculator;
 	private final MoveExtensionEvaluator moveExtensionEvaluator;
 	private SearchTask task;
-	private PieceTypeEvaluations pieceTypeEvaluations;
 	private IPositionEvaluator positionEvaluator;
 	private final HandlerRegistrarImpl<ISearchEngineHandler> handlerRegistrar;
 	private final MateFinder mateFinder;
@@ -706,7 +679,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private static final int MAX_MATE_EXTENSION = 4;
 	
 	private static final RatioCalculator hashSuccessRatio = new RatioCalculator();
-	private static final RatioCalculator hashPrimaryCollisionRate = new RatioCalculator();
 
 	
 	public SerialSearchEngine() {
@@ -730,7 +702,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		mateFinder = new MateFinder();
 		
-		setHashTable(new NullHashTable());
+		setHashTable(new NullEvaluationHashTable(), new NullBestMoveHashTable());
 
 		task = null;
 	}
@@ -760,6 +732,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		
 		if (receiveUpdatesCounter >= RECEIVE_UPDATES_COUNT) {
 			synchronized (monitor) {
+				reportedNodeCount = nodeCount;
+				
 				if (task.isTerminated()) {
 					Logger.logMessage("SerialSearchEngine task termination received");
 					throw new SearchTerminatedException();
@@ -807,14 +781,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		for (int i = 0; i < maxTotalDepth; i++)
 			nodeStack[i].killerMove.clear();
 
-		for (int i = 0; i < principalVariation.getSize(); i++) {
-			principalVariation.assignToMove(i, nodeStack[i].principalMove);
-		}
-
-		for (int i = principalVariation.getSize(); i < maxTotalDepth; i++)
-			nodeStack[i].principalMove.clear();
-
 		nodeCount = 0;
+		reportedNodeCount = nodeCount;
 		
 		// Do the search
 		boolean terminated = false;
@@ -886,7 +854,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 		synchronized (monitor) {
 			checkEngineState(EngineState.STOPPED);
 
-			this.pieceTypeEvaluations = pieceTypeEvaluations;
 			moveExtensionEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
 			finiteEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
 			currentPosition.setPieceTypeEvaluations(pieceTypeEvaluations);
@@ -904,20 +871,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			checkEngineState(EngineState.STOPPED);
 
 			this.positionEvaluator = evaluator;
-		}
-	}
-	
-	/**
-	 * Sets evaluation factory
-	 * Engine must be in STOPPED state.
-	 * @param evaluationFactory factory
-	 */
-	@Override
-	public void setEvaluationFactory(final Supplier<IPositionEvaluation> evaluationFactory) {
-		synchronized (monitor) {
-			checkEngineState(EngineState.STOPPED);
-
-			this.evaluationFactory = evaluationFactory;
 		}
 	}
 
@@ -979,21 +932,17 @@ public final class SerialSearchEngine implements ISearchEngine {
 		Logger.logMessage("Mate search");
 
 		final double hitRatio = hashSuccessRatio.getRatio();
-		final double primaryColissionRate = hashPrimaryCollisionRate.getRatio();
 		
 		Logger.logMessage("Hash hitratio = " + hitRatio);
-		
-		// primaryColissionRate is rate of undetected collisions against all claimed hits
-		// collissionsNotDetectedRate is rate of undetected collisions against hash fails (detected fails and collisions)
-		final double collissionsNotDetectedRate = (hitRatio * primaryColissionRate) / (primaryColissionRate * hitRatio * primaryColissionRate - hitRatio + 1);
-		Logger.logMessage("Collision not detected rate = " + collissionsNotDetectedRate + ", should be " + HashTableImpl.PRIMARY_COLLISION_RATE);
-		
+
 		System.out.println("Best move perindex counts: ");
 		
 		for (int i = 0; i < bestMovePerIndexCounts.length; i++) {
 			if (bestMovePerIndexCounts[i] > 0)
 				System.out.println(i + " " + bestMovePerIndexCounts[i]);
 		}
+
+		moveEstimator.log();
 	}
 
 	/**
@@ -1002,11 +951,13 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 * @return result of the search
 	 */
 	private SearchResult getResult(final int horizon) {
+		reportedNodeCount = nodeCount;
+
 		final SearchResult result = new SearchResult();
 
 		result.setEvaluation(nodeStack[0].evaluation);
 		result.getPrincipalVariation().assign(nodeStack[0].principalVariation);
-		result.setNodeCount(nodeCount);
+		result.setNodeCount(reportedNodeCount);
 		result.getRootMoveList().assign(evaluatedMoveList);
 		result.setHorizon(horizon);
 
@@ -1030,19 +981,19 @@ public final class SerialSearchEngine implements ISearchEngine {
 	 * @return number of searched nodes
 	 */
 	public long getNodeCount() {
-		return nodeCount;
+		return reportedNodeCount;
 	}
 
 	/**
 	 * Sets hash table for the manager. Engine must be in STOPPED state.
-	 * 
-	 * @param table hash table
 	 */
-	public void setHashTable(final IHashTable table) {
+	@Override
+	public void setHashTable(final IEvaluationHashTable evaluationHashTable, final IBestMoveHashTable bestMoveHashTable) {
 		synchronized (monitor) {
 			checkEngineState(EngineState.STOPPED);
 
-			this.hashTable = table;
+			this.evaluationHashTable = evaluationHashTable;
+			this.bestMoveHashTable = bestMoveHashTable;
 		}
 	}
 

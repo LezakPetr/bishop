@@ -3,7 +3,6 @@ package bishop.tablebase;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
-import parallel.IForBody;
 import parallel.Parallel;
 
 /**
@@ -24,28 +23,25 @@ public class PersistentStagedTable extends StagedTableImpl {
 	}
 
 	@Override
-	public synchronized void switchToModeRead(final Parallel parallel) throws IOException, InterruptedException, ExecutionException {
+	public synchronized void switchToModeRead(final Parallel parallel) throws InterruptedException, ExecutionException {
 		if (mode == Mode.READ)
 			return;
 		
 		moveOutputToInput();
 		
 		pages.clear();
-		pages.addAll(java.util.Collections.<ITablePage>nCopies(pageCount, null));
+		pages.addAll(java.util.Collections.nCopies(pageCount, null));
 		
-		parallel.parallelFor(0, pageCount, new IForBody() {
-			@Override
-			public void run(final int blockIndex) throws Exception {
-				final ITablePage page = createPage(blockIndex);
-				
-				try (
-					final InputFileTableIterator it = new InputFileTableIterator(getPagePath(blockIndex) + INPUT_SUFFIX, definition, page.getOffset(), page.getSize())
-				) {
-					page.read (it);
-				}
-				
-				pages.set(blockIndex, page);
+		parallel.parallelFor(0, pageCount, blockIndex -> {
+			final ITablePage page = createPage(blockIndex);
+
+			try (
+				final InputFileTableIterator it = new InputFileTableIterator(getPagePath(blockIndex) + INPUT_SUFFIX, definition, page.getOffset(), page.getSize())
+			) {
+				page.read (it);
 			}
+
+			pages.set(blockIndex, page);
 		});
 		
 		mode = Mode.READ;
@@ -71,10 +67,8 @@ public class PersistentStagedTable extends StagedTableImpl {
 			inputIterator = new InputFileTableIterator(inputPath, definition, offset, size);
 		else
 			inputIterator = null;
-		
-		final OutputFileTableIterator outputIterator = new OutputFileTableIterator(inputIterator, getPagePath(pageIndex) + OUTPUT_SUFFIX, definition, offset, size);
 
-		return outputIterator;
+		return new OutputFileTableIterator(inputIterator, getPagePath(pageIndex) + OUTPUT_SUFFIX, definition, offset, size);
 	}
 	
 	public String getPagePath (final int pageIndex) {
