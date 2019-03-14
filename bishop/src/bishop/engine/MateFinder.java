@@ -18,6 +18,8 @@ import bishop.base.PseudoLegalMoveGenerator;
  */
 public class MateFinder {
 
+	private static final double HISTORY_COEFF = 1000;
+
 	private class NodeRecord {
 		private final int depth;
 		private final NodeRecord nextRecord;
@@ -171,7 +173,8 @@ public class MateFinder {
 	}
 
 	private boolean processMove(final Move move) {
-		moveStack.setRecord(moveStackTop, move, historyTable.getEvaluation(position.getOnTurn(), move));
+		final int history = (int) (HISTORY_COEFF * historyTable.getEvaluation(position.getOnTurn(), move));
+		moveStack.setRecord(moveStackTop, move, history);
 		moveStackTop++;
 
 		return true;

@@ -13,7 +13,7 @@ import bishop.base.Square;
  * @author Ing. Petr Ležák
  */
 public class HistoryTable {
-	private static final int MAX_EVALUATION = 1000;
+	private static final double MAX_EVALUATION = 1.0;
 	
 	private final long[] historyTable = new long[Color.LAST * PieceType.LAST * Square.LAST];
 	private long maxEntry;
@@ -35,14 +35,14 @@ public class HistoryTable {
 	
 	public void recalculateCoeff() {
 		if (maxEntry > 0)
-			coeff = (double) MAX_EVALUATION / (double) maxEntry;
+			coeff = MAX_EVALUATION / (double) maxEntry;
 	}
 	
-	public int getEvaluation(final int color, final Move move) {
+	public double getEvaluation(final int color, final Move move) {
 		final int historyTableIndex = getHistoryTableIndex(color, move);
 		final long entry = historyTable[historyTableIndex];
 		
-		return (int) (entry * coeff);
+		return entry * coeff;
 	}
 	
 	private static int getHistoryTableIndex (final int color, final Move move) {

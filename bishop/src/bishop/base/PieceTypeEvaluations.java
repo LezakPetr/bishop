@@ -15,13 +15,14 @@ public final class PieceTypeEvaluations {
 	public static final int KING_EVALUATION = 0;
 
 	public static final PieceTypeEvaluations DEFAULT = new PieceTypeEvaluations(
-			new IntArrayBuilder(PieceType.LAST)
+			new IntArrayBuilder(PieceType.LAST + 1)
 			.put(PieceType.PAWN, PAWN_EVALUATION)
 			.put(PieceType.KNIGHT, 3 * PAWN_EVALUATION)
 			.put(PieceType.BISHOP, 3 * PAWN_EVALUATION)
 			.put(PieceType.ROOK, 5 * PAWN_EVALUATION)
 			.put(PieceType.QUEEN, 9 * PAWN_EVALUATION)
 			.put(PieceType.KING, KING_EVALUATION)
+			.put(PieceType.NONE, 0)
 			.build()
 	);
 

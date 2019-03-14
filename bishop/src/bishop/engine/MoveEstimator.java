@@ -39,7 +39,7 @@ public class MoveEstimator {
 			try {
 				final int id = sampleWriterId.getAndIncrement();
 				final PrintWriter writer = new PrintWriter("moveEstimator_" + id + ".csv");
-				writer.println("depth,horizon,color,history,isKillerMove,isBest");
+				writer.println("depth,horizon,color,history,capturedPieceEvaluation,isKillerMove,isBest");
 
 				return writer;
 			}
@@ -57,8 +57,16 @@ public class MoveEstimator {
 	public int getMoveEstimate(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move) {
 		final double history = historyTable.getEvaluation(color, move);
 		final int isKiller = (move.equals(nodeRecord.getOriginalKillerMove())) ? 1 : 0;
+		final int capturedPieceType = move.getCapturedPieceType();
+		final int capturedPieceEvaluation = PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(capturedPieceType);
 
-		final double estimate = ESTIMATE_MULTIPLIER * (-0.859178 + 0.001082 * history + 2.292038 * isKiller);
+		final double estimate = ESTIMATE_MULTIPLIER * (
+				-1.070e-01 +
+				-8.883e-01 * history +
+				3.804e-04 * capturedPieceEvaluation +
+				1.181e+00 * isKiller +
+				6.583e-04 * history * capturedPieceEvaluation
+		);
 
 		return (int) estimate;
 	}
@@ -91,6 +99,12 @@ public class MoveEstimator {
 			final double history = historyTable.getEvaluation(color, move);
 
 			sampleWriter.print(history);
+			sampleWriter.print(",");
+
+			final int capturedPieceType = move.getCapturedPieceType();
+			final int capturedPieceEvaluation = PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(capturedPieceType);
+
+			sampleWriter.print(capturedPieceEvaluation);
 			sampleWriter.print(",");
 
 			sampleWriter.print(move.equals(nodeRecord.getOriginalKillerMove()));
