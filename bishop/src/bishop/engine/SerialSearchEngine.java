@@ -31,8 +31,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 					if (depth == 0) {
 						currentPosition.makeMove(move);
 
-						if (evaluationHashTable.getRecord(currentPosition, -1, estimateHashRecord))
-							estimate = -estimateHashRecord.getEvaluation();
+						for (int horizon = SerialSearchEngine.MAX_HORIZON - 1; horizon >= 0; horizon--) {
+							if (evaluationHashTable.getRecord(currentPosition, horizon, estimateHashRecord)) {
+								estimate = -estimateHashRecord.getEvaluation();
+								break;
+							}
+						}
 
 						currentPosition.undoMove(move);
 					}
@@ -273,8 +277,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 							precalculatedMoveFound = true;
 							precalculatedMove.assign(hashBestMove);
 						}
-						else
+						else {
 							precalculatedMoveFound = false;
+							precalculatedMove.clear();
+						}
 					}
 
 					if (precalculatedMoveFound) {
