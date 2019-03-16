@@ -21,6 +21,7 @@ public class MobilityCalculator {
 	private final long[] queenAttackedSquares = new long[Color.LAST];
 
 	private final long[] pawnAttackedSquares = new long[Color.LAST];
+	private final long[] kingAttackedSquares = new long[Color.LAST];
 
 	private final long[] attackedSquares = new long[Color.LAST];
 
@@ -175,7 +176,7 @@ public class MobilityCalculator {
 
 	private void calculateKings(final int color, final Position position) {
 		final long attack = FigureAttackTable.getItem(PieceType.KING, position.getKingPosition(color));
-		pawnAttackedSquares[color] = attack;
+		kingAttackedSquares[color] = attack;
 		attackedSquares[color] |= attack;
 	}
 

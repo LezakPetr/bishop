@@ -116,6 +116,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return depth;
 		}
 
+		public MobilityCalculator getMobilityCalculator() {
+			return mobilityCalculator;
+		}
+
 		public void openNode(final int alpha, final int beta) {
 			this.evaluation = Evaluation.MIN;
 			this.alpha = alpha;
