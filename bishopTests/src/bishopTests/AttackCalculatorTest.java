@@ -1,17 +1,14 @@
 package bishopTests;
 
-import java.io.IOException;
-
-import bishop.engine.MobilityCalculator;
-import org.junit.Assert;
-import org.junit.Test;
-
 import bishop.base.BitBoard;
 import bishop.base.Color;
 import bishop.base.Fen;
 import bishop.base.Position;
 import bishop.engine.AttackCalculator;
-import bishop.engine.AttackEvaluationTableGroup;
+import bishop.engine.MobilityCalculator;
+import org.junit.Test;
+
+import java.io.IOException;
 
 public class AttackCalculatorTest {
 	@Test

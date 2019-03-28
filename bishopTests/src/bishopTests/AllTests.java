@@ -1,6 +1,7 @@
 package bishopTests;
 
 import bishop.base.GlobalSettings;
+import bishop.engine.PawnEndingKey;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -31,6 +32,7 @@ public class AllTests {
 		ImmutableOrdinalMapTest.class,
 		IntUtilsTest.class,
 		MixerTest.class,
+		PawnEndingKeyTest.class,
 		ParallelTaskRunnerTest.class,
 		BitBoardTest.class,
 		BitBoardCombinatorTest.class,
