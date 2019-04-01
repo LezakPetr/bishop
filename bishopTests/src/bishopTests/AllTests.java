@@ -2,6 +2,7 @@ package bishopTests;
 
 import bishop.base.GlobalSettings;
 import bishop.engine.PawnEndingKey;
+import bishop.tablebase.BitArray;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -37,6 +38,7 @@ public class AllTests {
 		BitBoardTest.class,
 		BitBoardCombinatorTest.class,
 		BetweenTableTest.class,
+		BitArrayTest.class,
 		CombinatorialNumberSystemTest.class,
 		TableMaterialEvaluatorTest.class,
 		LineIndexerTest.class,
