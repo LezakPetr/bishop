@@ -1,0 +1,33 @@
+---
+title: "Move estimator"
+author: "Petr Lezak"
+date: "11.03.2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup}
+data = read.csv('pawnPromotion.csv');
+data = data[data$queenProtected == 'true' | data$queenAttacked == 'false',];
+
+
+modelWin = glm(isWin~isCheck+attackerPawnCount+defendantPawnCount+defendantPawnCountOneMoveToPromotion+defendantPawnCountOneMoveToPromotionWithCheck+defendantPawnCountTwoMovesToPromotion+queenProtected+queenAttacked,family=binomial(link='logit'), data = data);
+modelLose = glm(isLose~isCheck+attackerPawnCount+defendantPawnCount+defendantPawnCountOneMoveToPromotion+defendantPawnCountOneMoveToPromotionWithCheck+defendantPawnCountTwoMovesToPromotion+queenProtected+queenAttacked,family=binomial(link='logit'), data = data);
+
+modelWin
+modelLose
+
+winPrediction = predict(modelWin, newdata = data);
+losePrediction = predict(modelLose, newdata = data);
+
+accuracyWin = sum(data$isWin == (winPrediction >= 0)) / length(data$isWin);
+accuracyLose = sum(data$isLose == (losePrediction >= 0)) / length(data$isLose);
+
+accuracyWin
+accuracyLose
+
+data[data$isWin != (winPrediction >= 0), ]
+data[data$isLose != (losePrediction >= 0), ]
+
+```

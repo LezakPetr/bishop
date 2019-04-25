@@ -12,25 +12,18 @@ public class PawnEndingTerminalPositionEvaluator {
     private final PawnEndingKey key;
     private final long pawnOccupancy;
     private final long[] squaresAttackedByPawns;
-    private final TablebasePositionEvaluator tablebaseEvaluator;
     private final PawnEndingTableRegister register;
-    private boolean useTablebase;
+	private final PawnPromotionEstimator promotionEstimator = new PawnPromotionEstimator();
 
 
-    public PawnEndingTerminalPositionEvaluator (final TablebasePositionEvaluator tablebaseEvaluator, final PawnEndingTableRegister register, final PawnEndingKey key) {
-        this.tablebaseEvaluator = tablebaseEvaluator;
+    public PawnEndingTerminalPositionEvaluator (final PawnEndingTableRegister register, final PawnEndingKey key) {
         this.register = register;
         this.key = key;
         this.pawnOccupancy = key.getPawnOccupancy();
-        this.useTablebase = (tablebaseEvaluator != null);
 
         this.squaresAttackedByPawns = Color.mapToBitBoardArray(
                 c -> BoardConstants.getPawnsAttackedSquares(c, key.getPawnMask(c))
         );
-    }
-
-    public void setUseTablebase (final boolean use) {
-        this.useTablebase = use;
     }
 
     private int evaluateTerminalPosition(final int kingOnTurnSquare, final int kingNotOnTurnSquare, final int onTurn) {
@@ -91,27 +84,9 @@ public class PawnEndingTerminalPositionEvaluator {
 
     // Evaluate position where queen is not attacked.
     private int getNotAttackedQueenEvaluation (final PawnEndingKey key, final int attackerKingSquare, final int defendantKingSquare, final int queenSquare, final int onTurn) {
-        final long pawnOnSevenRankMask = key.getPawnMask(onTurn) & BoardConstants.getRankMask(Rank.getAbsolute(Rank.R7, onTurn));
+    	promotionEstimator.init(key, attackerKingSquare, defendantKingSquare);
 
-        if (pawnOnSevenRankMask == BitBoard.EMPTY)
-            return Classification.LOSE;   // No opposite pawn on the seventh rank - queen wins
-
-        if (BitBoard.getSquareCount(pawnOnSevenRankMask) > 1)
-            return Classification.DRAW;   // More pawns on the seventh rank - draw
-
-        // There is exactly 1 pawn on 7 rank. Reduce the ending to queen against pawn.
-        final long promotedPawnMask = key.getPawnOccupancy() & ~BoardConstants.PAWN_ALLOWED_SQUARES;
-        final long mask = pawnOnSevenRankMask | promotedPawnMask;
-        final long whitePawnMask = key.getWhitePawns() & mask;
-        final long blackPawnMask = key.getBlackPawns() & mask;
-        final PawnEndingKey subKey = new PawnEndingKey(whitePawnMask, blackPawnMask);
-
-        if (key.equals(subKey) && (tablebaseEvaluator == null || !tablebaseEvaluator.canEvaluateMaterial(subKey.getMaterialHash())))
-        	return Classification.LOSE;   // We are already calculating ending queen against pawn. This can happen in case that we don't have the ending in tablebases.
-
-        final PawnEndingTable subTable = register.getTable(subKey);
-
-        return subTable.getClassification(defendantKingSquare, attackerKingSquare, onTurn);
+    	return promotionEstimator.estimate();
     }
 
     private PawnEndingTable createPrecalculatedTable(final int onTurn) {
@@ -146,9 +121,6 @@ public class PawnEndingTerminalPositionEvaluator {
     }
 
     public PawnEndingTable calculateTable(final int onTurn) {
-        if (useTablebase && tablebaseEvaluator.canEvaluateMaterial(key.getMaterialHash()))
-            return new TablebasePawnEndingTable(key, tablebaseEvaluator);
-        else
-            return createPrecalculatedTable(onTurn);
+		return createPrecalculatedTable(onTurn);
     }
 }

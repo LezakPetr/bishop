@@ -70,9 +70,7 @@ public class PawnRaceEvaluator {
 		final int oppositeColor = Color.getOppositeColor(color);
 		final long oppositePawnsMask = pawnsMask[oppositeColor];
 		final long directlyBlockedSquares = occupancy | BoardConstants.getPawnsAttackedSquares(oppositeColor, oppositePawnsMask);
-		final long blockedSquares = (color == Color.WHITE) ?
-				BitBoard.extendBackward(directlyBlockedSquares) >>> File.LAST :
-				BitBoard.extendForward(directlyBlockedSquares) << File.LAST;
+		final long blockedSquares = BitBoard.extendForwardByColorWithoutItself(oppositeColor, directlyBlockedSquares);
 		final long sourceMask = pawnsMask[color] & ~blockedSquares;
 
 		long result = BitBoard.EMPTY;
