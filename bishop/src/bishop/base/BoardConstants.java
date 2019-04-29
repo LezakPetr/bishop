@@ -36,6 +36,8 @@ public class BoardConstants {
 	public static final long WHITE_SQUARE_MASK = 0x55AA55AA55AA55AAL;
 	public static final long BLACK_SQUARE_MASK = 0xAA55AA55AA55AA55L;
 
+	public static final long BOARD_EDGE_MASK = FILE_A_MASK | FILE_H_MASK | RANK_1_MASK | RANK_8_MASK;
+
 	private static final long[] FIRST_RANK_MASKS = LongArrayBuilder.create(Color.LAST)
 			.put(Color.WHITE, RANK_1_MASK)
 			.put(Color.BLACK, RANK_8_MASK)

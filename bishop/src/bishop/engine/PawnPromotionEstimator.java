@@ -6,7 +6,17 @@ import bishop.tables.FigureAttackTable;
 
 public class PawnPromotionEstimator {
 
-	public static final String FEATURES_HEADER = "defendantInCheck,attackerInCheck,attackerPawnCount,defendantPawnCount,defendantPawnCountOneMoveToPromotion,defendantPawnCountOneMoveToPromotionWithCheck,defendantPawnCountTwoMovesToPromotion,queenProtected,queenAttacked";
+	public static final String FEATURES_HEADER =
+			"defendantInCheck," +
+			"attackerPawnCount," +
+			"defendantPawnCount," +
+			"defendantPawnCountOneMoveToPromotion," +
+			"defendantPawnCountOneMoveToPromotionWithCheck," +
+			"defendantPawnCountTwoMovesToPromotion," +
+			"attackerKingInMateRisk," +
+			"defendantKingInMateRisk," +
+			"queenProtected," +
+			"queenAttacked";
 
 	private boolean defendantInCheck;   // Defendant is in check
 	private int attackerPawnCount;   // Count of attacker's pawns
@@ -14,6 +24,8 @@ public class PawnPromotionEstimator {
 	private int defendantPawnCountOneMoveToPromotion;
 	private int defendantPawnCountOneMoveToPromotionWithCheck;
 	private int defendantPawnCountTwoMovesToPromotion;
+	private boolean attackerKingInMateRisk;
+	private boolean defendantKingInMateRisk;
 	private boolean queenProtected;
 	private boolean queenAttacked;
 
@@ -37,9 +49,12 @@ public class PawnPromotionEstimator {
 		final long seventhRankMask = BoardConstants.getRankMask(Rank.getAbsolute(Rank.R7, defendantColor));
 		final long queenBlockedSquares = getQueenAttackedSquare(queenSquare, occupancy & ~seventhRankMask, occupancy);
 
+		final long attackerKingTargetSquares = FigureAttackTable.getItem(PieceType.KING, attackerKingSquare);
+		final long defendantKingTargetSquares = FigureAttackTable.getItem(PieceType.KING, defendantKingSquare);
+
 		final long blockers = attackerPawns | defendantPawns |
 				BitBoard.of(attackerKingSquare) |
-				((FigureAttackTable.getItem(PieceType.KING, attackerKingSquare) | queenBlockedSquares) & ~FigureAttackTable.getItem(PieceType.KING, defendantKingSquare));
+				((attackerKingTargetSquares | queenBlockedSquares) & ~FigureAttackTable.getItem(PieceType.KING, defendantKingSquare));
 
 		final long blockedSquares = BitBoard.extendForwardByColorWithoutItself(attackerColor, blockers);   // Squares on which the attacker's pawns would be blocked
 
@@ -57,6 +72,9 @@ public class PawnPromotionEstimator {
 		final long kingMaskAroundQueen = FigureAttackTable.getItem(PieceType.KING, queenSquare);
 		queenProtected = BitBoard.containsSquare(kingMaskAroundQueen, attackerKingSquare);
 		queenAttacked = BitBoard.containsSquare(kingMaskAroundQueen, defendantKingSquare);
+
+		attackerKingInMateRisk = BitBoard.getSquareCount(attackerKingTargetSquares & ~defendantKingTargetSquares) <= 2;
+		defendantKingInMateRisk = BitBoard.getSquareCount(defendantKingTargetSquares & ~attackerKingTargetSquares) <= 2;
 	}
 
 	private long getQueenAttackedSquare(final int square, final long orthogonalBlockers, final long diagonalBlockers) {
@@ -78,6 +96,8 @@ public class PawnPromotionEstimator {
 		result.append(defendantPawnCountOneMoveToPromotion).append(",");
 		result.append(defendantPawnCountOneMoveToPromotionWithCheck).append(",");
 		result.append(defendantPawnCountTwoMovesToPromotion).append(",");
+		result.append(attackerKingInMateRisk).append(",");
+		result.append(defendantKingInMateRisk).append(",");
 		result.append(queenProtected).append(",");
 		result.append(queenAttacked);
 
@@ -85,25 +105,29 @@ public class PawnPromotionEstimator {
 	}
 
 	public int estimate() {
-		final double zWin = 5.93153 +
-				(defendantInCheck ? 5.25171 : 0.0) +
-				2.00215 * attackerPawnCount +
-				-0.08915 * defendantPawnCount +
-				-7.21683 * defendantPawnCountOneMoveToPromotion +
-				-2.04623 * defendantPawnCountOneMoveToPromotionWithCheck +
-				-3.29355 * defendantPawnCountTwoMovesToPromotion +
-				(queenProtected ? -0.09224 : 0.0) +
-				(queenAttacked ? 6.15914 : 0.0);
+		final double zWin = 5.9650 +
+				(defendantInCheck ? 5.3031 : 0.0) +
+				2.0112 * attackerPawnCount +
+				-0.1240 * defendantPawnCount +
+				-7.2215 * defendantPawnCountOneMoveToPromotion +
+				-2.0809 * defendantPawnCountOneMoveToPromotionWithCheck +
+				-3.2843 * defendantPawnCountTwoMovesToPromotion +
+				(attackerKingInMateRisk ? 1.2229 : 0) +
+				(defendantKingInMateRisk ? -1.3780 : 0) +
+				(queenProtected ? -0.1021 : 0.0) +
+				(queenAttacked ? 6.2466 : 0.0);
 
-		final double zLose = -10.7836 +
-				(defendantInCheck ? -21.2530 : 0.0) +
-				0.6665 * attackerPawnCount +
-				1.8224 * defendantPawnCount +
-				3.2597 * defendantPawnCountOneMoveToPromotion +
-				3.1986 * defendantPawnCountOneMoveToPromotionWithCheck +
-				0.5452 * defendantPawnCountTwoMovesToPromotion +
-				(queenProtected ? -0.4086 : 0.0) +
-				(queenAttacked ? 6.8980 : 0.0);
+		final double zLose = -10.9900 +
+				(defendantInCheck ? -21.4347 : 0.0) +
+				0.5744 * attackerPawnCount +
+				1.7337 * defendantPawnCount +
+				3.5569 * defendantPawnCountOneMoveToPromotion +
+				3.1984 * defendantPawnCountOneMoveToPromotionWithCheck +
+				0.6570 * defendantPawnCountTwoMovesToPromotion +
+				(attackerKingInMateRisk ? 2.2635 : 0) +
+				(defendantKingInMateRisk ? -18.0247 : 0) +
+				(queenProtected ? -0.3668 : 0.0) +
+				(queenAttacked ? 7.2090 : 0.0);
 
 		if (zWin < 0 && zLose < 0)
 			return Classification.DRAW;
