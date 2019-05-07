@@ -12,7 +12,7 @@ import java.util.SplittableRandom;
 
 public class PawnPromotionQueryTool {
 
-	private static final int SAMPLE_COUNT = 10000;
+	private static final int SAMPLE_COUNT = 100000;
 	private static final int MAX_PAWN_COUNT = 2;
 
 	public static void main(final String[] args) throws FileNotFoundException {
