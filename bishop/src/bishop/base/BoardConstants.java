@@ -36,6 +36,10 @@ public class BoardConstants {
 	public static final long WHITE_SQUARE_MASK = 0x55AA55AA55AA55AAL;
 	public static final long BLACK_SQUARE_MASK = 0xAA55AA55AA55AA55L;
 
+	public static final long BOARD_EDGE_MASK = FILE_A_MASK | FILE_H_MASK | RANK_1_MASK | RANK_8_MASK;
+
+	public static final long RANK_1278_MASK = RANK_1_MASK | RANK_2_MASK | RANK_7_MASK | RANK_8_MASK;
+
 	private static final long[] FIRST_RANK_MASKS = LongArrayBuilder.create(Color.LAST)
 			.put(Color.WHITE, RANK_1_MASK)
 			.put(Color.BLACK, RANK_8_MASK)
@@ -129,6 +133,9 @@ public class BoardConstants {
 
 	private static final long[][] SQUARES_IN_FRONT_INCLUSIVE = initializeSquareMaskBySquareTableBothColors(
 			(d, m) -> Square.getFile(d) == Square.getFile(m) && Square.getRank(m) >= Square.getRank(d));
+
+	private static final long[][] SQUARES_IN_FRONT_EXCLUSIVE = initializeSquareMaskBySquareTableBothColors(
+			(d, m) -> Square.getFile(d) == Square.getFile(m) && Square.getRank(m) > Square.getRank(d));
 
 	private static final long[] CONNECTED_PAWN_SQUARE_MASKS = initializeConnectedPawnSquareMasks();
 
@@ -371,6 +378,10 @@ public class BoardConstants {
 
 	public static long getSquaresInFrontInclusive(final int color, final int square) {
 		return SQUARES_IN_FRONT_INCLUSIVE[color][square];
+	}
+
+	public static long getSquaresInFrontExclusive(final int color, final int square) {
+		return SQUARES_IN_FRONT_EXCLUSIVE[color][square];
 	}
 
 	/**

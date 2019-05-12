@@ -17,6 +17,6 @@ data <- read.csv('moveEstimator_0.csv');
 ```
 
 ```{r}
-model = glm(isBest~history+capturedPieceEvaluation+history*capturedPieceEvaluation+isKillerMove, family=binomial(link='logit'), data = data);
+model = glm(isBest~history+capturedPieceEvaluation+history*capturedPieceEvaluation+savedMovingPieceEvaluation+history*savedMovingPieceEvaluation+lostMovingPieceEvaluation+history*lostMovingPieceEvaluation+weakerPieceAttacked+isKillerMove, family=binomial(link='logit'), data = data);
 model
 ```

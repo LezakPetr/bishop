@@ -221,6 +221,13 @@ public class BitBoard {
 			return extendBackward(mask);
 	}
 
+	public static long extendForwardByColorWithoutItself (final int color, final long mask) {
+		if (color == Color.WHITE)
+			return BitBoard.extendForward(mask) << File.LAST;
+		else
+			return BitBoard.extendBackward(mask) >>> File.LAST;
+	}
+
 	public static boolean containsSquare(final long mask, final int square) {
 		return ((mask >>> square) & 0x01) != 0;
 	}

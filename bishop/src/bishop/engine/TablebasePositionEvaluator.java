@@ -1,51 +1,23 @@
 package bishop.engine;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import bishop.base.IMaterialHashRead;
 import bishop.base.MaterialHash;
 import bishop.base.Position;
-import bishop.tablebase.FileNameCalculator;
 import bishop.tablebase.ITableRead;
-import bishop.tablebase.LazyFilePositionResultSource;
-import bishop.tablebase.TableBlockCache;
 import bishop.tablebase.TableResult;
 import bishop.tablebase.TableSwitch;
-import bishop.tablebase.TablebaseFileNameFilter;
+
+import java.io.File;
+import java.util.Set;
 
 public class TablebasePositionEvaluator {
 
-	private final File directory;
 	private final TableSwitch tableSwitch;
-	private final TableBlockCache blockCache;
 	
 	public TablebasePositionEvaluator(final File directory) {
-		this.directory = directory;
-		this.tableSwitch = new TableSwitch();
-		this.blockCache = new TableBlockCache(16);
-		
-		if (directory != null && directory.exists()) {
-			scanDirectory();
-		}
+		this.tableSwitch = new TableSwitch(directory);
 	}
 
-	private void scanDirectory() {
-		final File[] files = directory.listFiles(new TablebaseFileNameFilter());
-		final Map<MaterialHash, ITableRead> tableMap = new HashMap<>();
-		
-		for (File file: files) {
-			final MaterialHash materialHash = FileNameCalculator.parseFileName(file.getName());
-			final ITableRead table = new LazyFilePositionResultSource(file, blockCache);
-			
-			tableMap.put(materialHash, table);
-		}
-		
-		tableSwitch.setTables(tableMap);
-	}
-	
 	/**
 	 * Returns relative evaluation of given position.
 	 * @param position position to evaluate

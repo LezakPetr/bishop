@@ -68,7 +68,11 @@ public class PawnEndingKey {
         return "white pawns = " + BitBoard.toString(whitePawns) + ", black pawns = " + BitBoard.toString(blackPawns);
     }
 
-    public int getPromotedPawnColor() {
+	/**
+	 * Returns color of promoted pawn(s), if any. If pawn of both colors has promoted, the result is undefined.
+	 * @return color of promoted pawn or Color.NONE
+	 */
+	public int getPromotedPawnColor() {
         final long occupancy = getPawnOccupancy();
 
         for (int color = Color.FIRST; color < Color.LAST; color++) {
@@ -106,7 +110,7 @@ public class PawnEndingKey {
             final int pawnCount = BitBoard.getSquareCount(pawnMask & BoardConstants.PAWN_ALLOWED_SQUARES);
             materialHash.addPiece(color, PieceType.PAWN, pawnCount);
 
-            final int queenCount = BitBoard.getSquareCount(pawnMask & BoardConstants.PAWN_ALLOWED_SQUARES);
+            final int queenCount = BitBoard.getSquareCount(pawnMask & ~BoardConstants.PAWN_ALLOWED_SQUARES);
             materialHash.addPiece(color, PieceType.QUEEN, queenCount);
         }
 

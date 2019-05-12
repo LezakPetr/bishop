@@ -11,7 +11,7 @@ public final class FinitePositionEvaluator {
 
 	private RepeatedPositionRegister repeatedPositionRegister;
 	private TablebasePositionEvaluator tablebaseEvaluator;
-	private PawnEndingTableRegister pawnEndingTableRegister = new PawnEndingTableRegister(null);
+	private PawnEndingTableRegister pawnEndingTableRegister = new PawnEndingTableRegister();
 	private PieceTypeEvaluations pieceTypeEvaluations;
 	private int evaluation;
 
@@ -102,7 +102,7 @@ public final class FinitePositionEvaluator {
 	public void setTablebaseEvaluator (final TablebasePositionEvaluator evaluator) {
 		this.tablebaseEvaluator = evaluator;
 
-		pawnEndingTableRegister = new PawnEndingTableRegister(tablebaseEvaluator);
+		pawnEndingTableRegister = new PawnEndingTableRegister();
 	}
 
 	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations) {

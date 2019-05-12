@@ -342,11 +342,11 @@ public class PawnEndingEvaluator {
         return new PawnEndingTable(wonPositions, lostPositions);
     }
 
-    public static PawnEndingTable calculateTable(final TablebasePositionEvaluator tablebaseEvaluator, final PawnEndingTableRegister register, final PawnEndingKey key) {
+    public static PawnEndingTable calculateTable(final PawnEndingTableRegister register, final PawnEndingKey key) {
         final int promotedPawnColor = key.getPromotedPawnColor();
 
         if (promotedPawnColor != Color.NONE) {
-            final PawnEndingTerminalPositionEvaluator terminalPositionEvaluator = new PawnEndingTerminalPositionEvaluator(tablebaseEvaluator, register, key);
+            final PawnEndingTerminalPositionEvaluator terminalPositionEvaluator = new PawnEndingTerminalPositionEvaluator(register, key);
             final int onTurn = Color.getOppositeColor(promotedPawnColor);
 
             return terminalPositionEvaluator.calculateTable(onTurn);

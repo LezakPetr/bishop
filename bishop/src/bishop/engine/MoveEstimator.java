@@ -29,7 +29,7 @@ public class MoveEstimator {
 	private final PrintWriter sampleWriter;
 
 	public MoveEstimator() {
-		sampleWriter = createSampleWriter();
+		this.sampleWriter = createSampleWriter();
 
 		clear();
 	}
@@ -39,7 +39,7 @@ public class MoveEstimator {
 			try {
 				final int id = sampleWriterId.getAndIncrement();
 				final PrintWriter writer = new PrintWriter("moveEstimator_" + id + ".csv");
-				writer.println("depth,horizon,color,history,capturedPieceEvaluation,isKillerMove,isBest");
+				writer.println("depth,horizon,color,history,capturedPieceEvaluation,lostMovingPieceEvaluation,isKillerMove,isBest");
 
 				return writer;
 			}
@@ -50,22 +50,22 @@ public class MoveEstimator {
 
 		return null;
 	}
-	
-	private void forEachModel(final Consumer<OnlineLogisticModel> modelConsumer) {
-	}
-	
+
 	public int getMoveEstimate(final SerialSearchEngine.NodeRecord nodeRecord, final int color, final Move move) {
 		final double history = historyTable.getEvaluation(color, move);
 		final int isKiller = (move.equals(nodeRecord.getOriginalKillerMove())) ? 1 : 0;
-		final int capturedPieceType = move.getCapturedPieceType();
-		final int capturedPieceEvaluation = PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(capturedPieceType);
+		final int capturedPieceEvaluation = getCapturedPieceEvaluation(move);
+
+		final int lostMovingPieceEvaluation = getLostMovingPieceEvaluation(nodeRecord.getMobilityCalculator(), color, move);
 
 		final double estimate = ESTIMATE_MULTIPLIER * (
-				-1.070e-01 +
-				-8.883e-01 * history +
-				3.804e-04 * capturedPieceEvaluation +
-				1.181e+00 * isKiller +
-				6.583e-04 * history * capturedPieceEvaluation
+				-1.590e-01 +
+				3.016e+00 * history +
+				3.901e-04 * capturedPieceEvaluation +
+				-1.663e-04 * lostMovingPieceEvaluation +
+				1.134e+00 * isKiller +
+				-1.459e-04 * history * capturedPieceEvaluation +
+				-9.947e-05 * history * lostMovingPieceEvaluation
 		);
 
 		return (int) estimate;
@@ -101,10 +101,14 @@ public class MoveEstimator {
 			sampleWriter.print(history);
 			sampleWriter.print(",");
 
-			final int capturedPieceType = move.getCapturedPieceType();
-			final int capturedPieceEvaluation = PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(capturedPieceType);
+			final int capturedPieceEvaluation = getCapturedPieceEvaluation(move);
 
 			sampleWriter.print(capturedPieceEvaluation);
+			sampleWriter.print(",");
+
+			final int lostMovingPieceEvaluation = getLostMovingPieceEvaluation(nodeRecord.getMobilityCalculator(), color, move);
+
+			sampleWriter.print(lostMovingPieceEvaluation);
 			sampleWriter.print(",");
 
 			sampleWriter.print(move.equals(nodeRecord.getOriginalKillerMove()));
@@ -114,9 +118,22 @@ public class MoveEstimator {
 		}
 	}
 
+	private int getLostMovingPieceEvaluation(final MobilityCalculator mobilityCalculator, final int color, final Move move) {
+		final int oppositeColor = Color.getOppositeColor(color);
+		final int targetSquare = move.getTargetSquare();
+
+		return (mobilityCalculator.isSquareAttacked(oppositeColor, targetSquare)) ?
+				PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(move.getMovingPieceType()) : 0;
+	}
+
+	private int getCapturedPieceEvaluation(final Move move) {
+		final int capturedPieceType = move.getCapturedPieceType();
+
+		return PieceTypeEvaluations.DEFAULT.getPieceTypeEvaluation(capturedPieceType);
+	}
+
 	public void clear() {
 		historyTable.clear();
-		forEachModel(OnlineLogisticModel::clear);
 	}
 
 	public void log() {

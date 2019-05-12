@@ -1,5 +1,6 @@
 package bishop.tablebase;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,16 +15,38 @@ import bishop.base.MirrorPosition;
 import collections.ImmutableProbabilisticSet;
 
 public class TableSwitch implements IPositionResultSource {
-	
+
 	private final Map<IMaterialHashRead, ITableRead> tableMap;
 	private ImmutableProbabilisticSet<IMaterialHashRead> bothColorMaterialSet;
 	private int maxPieceCount;
-	
-	
+
 	public TableSwitch() {
 		this.tableMap = new HashMap<>();
 	}
 	
+	public TableSwitch(final File directory) {
+		this();
+
+		if (directory != null && directory.exists()) {
+			scanDirectory(directory);
+		}
+	}
+
+	private void scanDirectory(final File directory) {
+		final TableBlockCache blockCache = new TableBlockCache(16);
+		final File[] files = directory.listFiles(new TablebaseFileNameFilter());
+		final Map<MaterialHash, ITableRead> tableMap = new HashMap<>();
+
+		for (File file: files) {
+			final MaterialHash materialHash = FileNameCalculator.parseFileName(file.getName());
+			final ITableRead table = new LazyFilePositionResultSource(file, blockCache);
+
+			tableMap.put(materialHash, table);
+		}
+
+		this.setTables(tableMap);
+	}
+
 	@Override
 	public int getPositionResult(final IPosition position) {
 		final int result = getPositionResultIfPossible(position);

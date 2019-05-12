@@ -199,12 +199,16 @@ public class BitBoardTest {
 		for (int i = 0; i < 100000; i++) {
 			long mask = BitBoard.EMPTY;
 			long extendedMask = BitBoard.EMPTY;
+			long extendedWithoutItself = BitBoard.EMPTY;
 
 			for (int file = File.FIRST; file < File.LAST; file++) {
 				boolean extended = false;
 
 				for (int rank = Rank.FIRST; rank < Rank.LAST; rank++) {
 					final int square = Square.onFileRank(file, rank);
+
+					if (extended)
+						extendedWithoutItself |= BitBoard.of(square);
 
 					if (rng.nextBoolean()) {
 						mask |= BitBoard.of(square);
@@ -218,6 +222,7 @@ public class BitBoardTest {
 
 			Assert.assertEquals(extendedMask, BitBoard.extendForward(mask));
 			Assert.assertEquals(extendedMask, BitBoard.extendForwardByColor(Color.WHITE, mask));
+			Assert.assertEquals(extendedWithoutItself, BitBoard.extendForwardByColorWithoutItself(Color.WHITE, mask));
 		}
 	}
 
@@ -228,12 +233,16 @@ public class BitBoardTest {
 		for (int i = 0; i < 100000; i++) {
 			long mask = BitBoard.EMPTY;
 			long extendedMask = BitBoard.EMPTY;
+			long extendedWithoutItself = BitBoard.EMPTY;
 
 			for (int file = File.FIRST; file < File.LAST; file++) {
 				boolean extended = false;
 
 				for (int rank = Rank.LAST - 1; rank >= Rank.FIRST; rank--) {
 					final int square = Square.onFileRank(file, rank);
+
+					if (extended)
+						extendedWithoutItself |= BitBoard.of(square);
 
 					if (rng.nextBoolean()) {
 						mask |= BitBoard.of(square);
@@ -247,6 +256,7 @@ public class BitBoardTest {
 
 			Assert.assertEquals(extendedMask, BitBoard.extendBackward(mask));
 			Assert.assertEquals(extendedMask, BitBoard.extendForwardByColor(Color.BLACK, mask));
+			Assert.assertEquals(extendedWithoutItself, BitBoard.extendForwardByColorWithoutItself(Color.BLACK, mask));
 		}
 	}
 
