@@ -4,6 +4,7 @@ import bishop.base.*;
 import bishop.engine.PawnEndingKey;
 import bishop.engine.PawnPromotionEstimator;
 import bishop.tablebase.*;
+import bishop.tables.PawnAttackTable;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -43,7 +44,9 @@ public class PawnPromotionQueryTool {
 				position.setSquareContent(rng.nextInt(Square.A8, Square.LAST), Piece.WHITE_QUEEN);
 				position.refreshCachedData();
 
-				if (BitBoard.getSquareCount(position.getOccupancy()) == 3 + pawnCount) {
+				final boolean checkByPawn = ((position.getPiecesMask(Color.WHITE, PieceType.PAWN) & PawnAttackTable.getItem(Color.BLACK, position.getKingPosition(Color.BLACK))) != 0);
+
+				if (BitBoard.getSquareCount(position.getOccupancy()) == 3 + pawnCount && !checkByPawn) {
 					final int result = resultSource.getPositionResult(position);
 
 					if (result != TableResult.ILLEGAL) {

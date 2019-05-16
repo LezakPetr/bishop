@@ -12,8 +12,8 @@ data = read.csv('pawnPromotion.csv');
 data = data[data$queenProtected == 'true' | data$queenAttacked == 'false',];
 
 
-modelWin = glm(isWin~defendantInCheck+attackerPawnCount+defendantPawnCount+attackerKingInMateRisk+defendantKingInMateRisk+queenProtected+queenAttacked+exchangeableQueenCount+capturableQueenCount+pawnTwoMovesToPromotionCount+savedQueenCount,family=binomial(link='logit'), data = data);
-modelLose = glm(isLose~defendantInCheck+attackerPawnCount+defendantPawnCount+attackerKingInMateRisk+defendantKingInMateRisk+queenProtected+queenAttacked+exchangeableQueenCount+capturableQueenCount+pawnTwoMovesToPromotionCount+savedQueenCount,family=binomial(link='logit'), data = data);
+modelWin = glm(isWin~defendantInCheck+attackerPawnCount+defendantPawnCount+attackerKingInMateRisk+defendantKingInMateRisk+queenProtected+queenAttacked+exchangeableQueenCount+capturableQueenCount+pawnTwoMovesToPromotionCount+savedQueenCount+attackerPawnOnSevenRankCount,family=binomial(link='logit'), data = data);
+modelLose = glm(isLose~defendantInCheck+attackerPawnCount+defendantPawnCount+attackerKingInMateRisk+defendantKingInMateRisk+queenProtected+queenAttacked+exchangeableQueenCount+capturableQueenCount+pawnTwoMovesToPromotionCount+savedQueenCount+attackerPawnOnSevenRankCount,family=binomial(link='logit'), data = data);
 
 modelWin
 modelLose
