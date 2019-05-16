@@ -236,6 +236,23 @@ public class BoardConstantsTest {
 		testGetSquaresInFrontInclusive(Color.BLACK, Square.E2, "e2, e1");
 	}
 
+	private void testGetSquaresInFrontExclusive(final int color, final int square, final String expectedBoard) {
+		Assert.assertEquals(
+				BitBoard.fromString(expectedBoard),
+				BoardConstants.getSquaresInFrontExclusive(color, square)
+		);
+	}
+
+	@Test
+	public void getSquaresInFrontExclusiveTest() {
+		testGetSquaresInFrontExclusive(Color.WHITE, Square.A4, "a5, a6, a7, a8");
+		testGetSquaresInFrontExclusive(Color.WHITE, Square.H5, "h6, h7, h8");
+		testGetSquaresInFrontExclusive(Color.WHITE, Square.C6, "c7, c8");
+		testGetSquaresInFrontExclusive(Color.BLACK, Square.A4, "a3, a2, a1");
+		testGetSquaresInFrontExclusive(Color.BLACK, Square.H5, "h4, h3, h2, h1");
+		testGetSquaresInFrontExclusive(Color.BLACK, Square.E2, "e1");
+	}
+
 	@Test
 	public void getConnectedPawnSquareMaskTest() {
 		for (int file = File.FIRST; file < File.LAST; file++) {

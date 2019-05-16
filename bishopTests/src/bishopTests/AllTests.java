@@ -2,6 +2,7 @@ package bishopTests;
 
 import bishop.base.GlobalSettings;
 import bishop.engine.PawnEndingKey;
+import bishop.engine.PawnPromotionEstimatorTest;
 import bishop.tablebase.BitArray;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
@@ -83,7 +84,9 @@ public class AllTests {
 		ScalarFieldTest.class,
 		NewtonSolverTest.class,
 		LogisticRegressionTest.class,
-		CholeskySolverTest.class
+		CholeskySolverTest.class,
+		ProlongTableTest.class,
+		PawnPromotionEstimatorTest.class
 	};
 	
 	public static final void main (final String[] args) {
