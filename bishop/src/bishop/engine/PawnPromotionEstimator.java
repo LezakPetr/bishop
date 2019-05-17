@@ -18,7 +18,8 @@ public class PawnPromotionEstimator {
 			"queenAttacked," +
 			"exchangeableQueenCount," +
 			"capturableQueenCount," +
-			"pawnTwoMovesToPromotionCount," +
+			"normalPawnTwoMovesToPromotionCount," +
+			"stalematingPawnTwoMovesToPromotionCount," +
 			"savedQueenCount," +
 			"attackerPawnOnSevenRankCount";
 
@@ -32,7 +33,8 @@ public class PawnPromotionEstimator {
 	boolean queenAttacked;
 	int exchangeableQueenCount;
 	int capturableQueenCount;
-	int pawnTwoMovesToPromotionCount;
+	int normalPawnTwoMovesToPromotionCount;
+	int stalematingPawnTwoMovesToPromotionCount;
 	int savedQueenCount;
 	int attackerPawnOnSevenRankCount;
 
@@ -64,7 +66,8 @@ public class PawnPromotionEstimator {
 
 		exchangeableQueenCount = 0;
 		capturableQueenCount = 0;
-		pawnTwoMovesToPromotionCount = 0;
+		normalPawnTwoMovesToPromotionCount = 0;
+		stalematingPawnTwoMovesToPromotionCount = 0;
 		savedQueenCount = 0;
 
 		final long defendantKingAttackedSquares = FigureAttackTable.getItem(PieceType.KING, defendantKingSquare);
@@ -79,6 +82,7 @@ public class PawnPromotionEstimator {
 			if (!defendantInCheck && relativeRank == Rank.R7 && attackerKingSquare != promotionSquare && defendantKingSquare != promotionSquare) {
 				// Pawn can be promoted
 				final long squaresAttackedByPromotedPawn = getQueenAttackedSquare(promotionSquare, occupancy & ~BitBoard.of(defendantPawnSquare), occupancy);
+				final boolean attackerWouldBeInCheck = BitBoard.containsSquare(squaresAttackedByPromotedPawn, attackerKingSquare);
 
 				final boolean promotedPawnAttackedByQueen = BitBoard.containsSquare(squaresAttackedByPromotedPawn, queenSquare);
 				final boolean promotedPawnAttackedByKing = BitBoard.containsSquare(kingMaskAroundPawn, attackerKingSquare);
@@ -89,7 +93,8 @@ public class PawnPromotionEstimator {
 						~attackerPawns & ~BitBoard.of(attackerKingSquare) &
 						~defendantKingAttackedSquares;
 
-				final boolean queenPinnable = BitBoard.containsSquare(squaresAttackedByPromotedPawn, defendantKingSquare) &&
+				final boolean queenPinnable = !attackerWouldBeInCheck &&
+						BitBoard.containsSquare(squaresAttackedByPromotedPawn, defendantKingSquare) &&
 						(squaresAttackedByQueen & pinSquares) != 0;
 
 				final boolean queenPinnableWithoutProtection = queenPinnable &&
@@ -111,8 +116,19 @@ public class PawnPromotionEstimator {
 			}
 			else {
 				// Pawn cannot be promoted
-				if (!defendantInCheck && relativeRank == Rank.R6 && (BoardConstants.getSquaresInFrontExclusive(defendantColor, defendantPawnSquare) & occupancy) == 0 && BitBoard.containsSquare(kingMaskAroundPawn & BoardConstants.RANK_1278_MASK, defendantKingSquare))
-					pawnTwoMovesToPromotionCount++;
+				final boolean isPawnTwoMovesToPromotion =
+						!defendantInCheck &&
+						relativeRank == Rank.R6 &&
+						(BoardConstants.getSquaresInFrontExclusive(defendantColor, defendantPawnSquare) & occupancy) == 0 &&
+						Rank.getRelative(Square.getRank(defendantKingSquare), defendantColor) >= Rank.R6 &&
+						Math.abs(Square.getFile(defendantKingSquare) - Square.getFile(defendantPawnSquare)) <= 1;
+
+				if (isPawnTwoMovesToPromotion) {
+					if (defendantPawnCount == 1 && BitBoard.containsSquare(BoardConstants.FILE_ACFH_MASK, defendantPawnSquare))
+						stalematingPawnTwoMovesToPromotionCount++;
+					else
+						normalPawnTwoMovesToPromotionCount++;
+				}
 			}
 		}
 
@@ -143,7 +159,8 @@ public class PawnPromotionEstimator {
 		result.append(queenAttacked).append(",");
 		result.append(exchangeableQueenCount).append(",");
 		result.append(capturableQueenCount).append(",");
-		result.append(pawnTwoMovesToPromotionCount).append(",");
+		result.append(normalPawnTwoMovesToPromotionCount).append(",");
+		result.append(stalematingPawnTwoMovesToPromotionCount).append(",");
 		result.append(savedQueenCount).append(",");;
 		result.append(attackerPawnOnSevenRankCount);
 
@@ -151,33 +168,35 @@ public class PawnPromotionEstimator {
 	}
 
 	public int estimate() {
-		final double zWin = 5.91191 +
-				(defendantInCheck ? 0.15723 : 0.0) +
-				2.21205 * attackerPawnCount +
-				-0.89213 * defendantPawnCount +
-				(attackerKingInMateRisk ? 0.05764 : 0) +
-				(defendantKingInMateRisk ? 0.31546 : 0) +
-				(queenProtected ? -0.03113 : 0.0) +
-				(queenAttacked ? 10.63715 : 0.0) +
-				-6.56015 * exchangeableQueenCount +
-				-2.80828 * capturableQueenCount +
-				-3.78363 * pawnTwoMovesToPromotionCount +
-				-7.95718 * savedQueenCount +
-				1.49808 * attackerPawnOnSevenRankCount;
+		final double zWin = 6.08236 +
+				(defendantInCheck ? 0.14016 : 0.0) +
+				2.48287 * attackerPawnCount +
+				-1.04147 * defendantPawnCount +
+				(attackerKingInMateRisk ? 0.25733 : 0) +
+				(defendantKingInMateRisk ? 0.27758 : 0) +
+				(queenProtected ? -0.05739 : 0.0) +
+				(queenAttacked ? 10.64491 : 0.0) +
+				-6.44507 * exchangeableQueenCount +
+				-1.71240 * capturableQueenCount +
+				-2.33803 * normalPawnTwoMovesToPromotionCount +
+				-5.08712 * stalematingPawnTwoMovesToPromotionCount +
+				-8.22822 * savedQueenCount +
+				1.54418 * attackerPawnOnSevenRankCount;
 
-		final double zLose = -10.69381 +
-				(defendantInCheck ? -2.16229 : 0.0) +
-				0.46413 * attackerPawnCount +
-				2.52537 * defendantPawnCount +
-				(attackerKingInMateRisk ? 2.59111 : 0) +
-				(defendantKingInMateRisk ? -0.48017 : 0) +
-				(queenProtected ? 0.04962 : 0.0) +
-				(queenAttacked ? -9.06008 : 0.0) +
-				3.18915 * exchangeableQueenCount +
-				2.06947 * capturableQueenCount +
-				0.74375 * pawnTwoMovesToPromotionCount +
-				3.73932 * savedQueenCount +
-				-0.37207 * attackerPawnOnSevenRankCount;
+		final double zLose = -10.897410 +
+				(defendantInCheck ? -1.943260 : 0.0) +
+				0.457819 * attackerPawnCount +
+				2.518333 * defendantPawnCount +
+				(attackerKingInMateRisk ? 2.598186 : 0) +
+				(defendantKingInMateRisk ? -0.497930 : 0) +
+				(queenProtected ? -0.003037 : 0.0) +
+				(queenAttacked ? -9.015048 : 0.0) +
+				2.748906 * exchangeableQueenCount +
+				1.458396 * capturableQueenCount +
+				0.978398 * normalPawnTwoMovesToPromotionCount +
+				-10.437299 * stalematingPawnTwoMovesToPromotionCount +
+				4.034489 * savedQueenCount +
+				-0.397108 * attackerPawnOnSevenRankCount;
 
 		if (zWin < 0 && zLose < 0)
 			return Classification.DRAW;

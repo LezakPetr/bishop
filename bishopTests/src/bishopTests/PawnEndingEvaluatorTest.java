@@ -15,7 +15,7 @@ public class PawnEndingEvaluatorTest {
 
     private static final String TBBS_DIR = "/home/petr/tbbs/";   // TODO
     private static final int SPEED_COUNT = 20000;
-    private static final double MAX_ERROR_RATE = 120.0 / 3844.0;
+    private static final double MAX_ERROR_RATE = 100.0 / 3844.0;
 
     private static class TestCase {
         private final long[] pawnMasks = new long[Color.LAST];
