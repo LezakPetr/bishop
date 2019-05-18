@@ -5,8 +5,21 @@ import bishop.tablebase.Classification;
 import bishop.tables.BetweenTable;
 import bishop.tables.FigureAttackTable;
 import bishop.tables.ProlongTable;
+import utils.LongArrayBuilder;
 
 public class PawnPromotionEstimator {
+
+	private static final long[] SIXTH_RANK_MASK = LongArrayBuilder.create(Color.LAST)
+			.put(Color.WHITE, BoardConstants.RANK_6_MASK)
+			.put(Color.BLACK, BoardConstants.RANK_3_MASK)
+			.build();
+
+	private static final long[] SEVENTH_RANK_MASK = LongArrayBuilder.create(Color.LAST)
+			.put(Color.WHITE, BoardConstants.RANK_7_MASK)
+			.put(Color.BLACK, BoardConstants.RANK_2_MASK)
+			.build();
+
+	private static final long[][] PAWN_TWO_MOVES_TO_PROMOTION_MASK = initPawnTwoMovesToPromotionMask();
 
 	public static final String FEATURES_HEADER =
 			"defendantInCheck," +
@@ -38,6 +51,26 @@ public class PawnPromotionEstimator {
 	int savedQueenCount;
 	int attackerPawnOnSevenRankCount;
 
+	private static long[][] initPawnTwoMovesToPromotionMask() {
+		final long[][] result = new long[Color.LAST][Square.LAST];
+
+		for (int color = Color.FIRST; color < Color.LAST; color++) {
+			for (int defendantKingSquare = Square.FIRST; defendantKingSquare < Square.LAST; defendantKingSquare++) {
+				for (int pawnSquare = Square.FIRST_PAWN_SQUARE; pawnSquare < Square.LAST_PAWN_SQUARE; pawnSquare++) {
+					final boolean isPawnTwoMovesToPromotion =
+							Rank.getRelative(Square.getRank(defendantKingSquare), color) >= Rank.R6 &&
+							Math.abs(Square.getFile(defendantKingSquare) - Square.getFile(pawnSquare)) <= 1 &&
+							Rank.getRelative(Square.getRank(pawnSquare), color) == Rank.R6;
+
+					if (isPawnTwoMovesToPromotion)
+						result[color][defendantKingSquare] |= BitBoard.of(pawnSquare);
+				}
+			}
+		}
+
+		return result;
+	}
+
 	private long getQueenAttackedSquare(final int square, final long orthogonalBlockers, final long diagonalBlockers) {
 		final int indexDiagonal = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, square, diagonalBlockers);
 		final long attackDiagonal = LineAttackTable.getAttackMask(indexDiagonal);
@@ -66,75 +99,73 @@ public class PawnPromotionEstimator {
 
 		exchangeableQueenCount = 0;
 		capturableQueenCount = 0;
-		normalPawnTwoMovesToPromotionCount = 0;
-		stalematingPawnTwoMovesToPromotionCount = 0;
 		savedQueenCount = 0;
 
 		final long defendantKingAttackedSquares = FigureAttackTable.getItem(PieceType.KING, defendantKingSquare);
 
-		for (BitLoop defendantPawnLoop = new BitLoop(defendantPawns); defendantPawnLoop.hasNextSquare(); ) {
-			final int defendantPawnSquare = defendantPawnLoop.getNextSquare();
-			final int relativeRank = Rank.getRelative(Square.getRank(defendantPawnSquare), defendantColor);
-			final int promotionSquare = BoardConstants.getPawnPromotionSquare(defendantColor, defendantPawnSquare);
+		if (!defendantInCheck) {
+			final long pawnsOnSeventhRank = defendantPawns & SEVENTH_RANK_MASK[defendantColor];
 
-			final long kingMaskAroundPawn = FigureAttackTable.getItem(PieceType.KING, promotionSquare);
+			for (BitLoop defendantPawnLoop = new BitLoop(pawnsOnSeventhRank); defendantPawnLoop.hasNextSquare(); ) {
+				final int defendantPawnSquare = defendantPawnLoop.getNextSquare();
+				final int promotionSquare = BoardConstants.getPawnPromotionSquare(defendantColor, defendantPawnSquare);
 
-			if (!defendantInCheck && relativeRank == Rank.R7 && attackerKingSquare != promotionSquare && defendantKingSquare != promotionSquare) {
-				// Pawn can be promoted
-				final long squaresAttackedByPromotedPawn = getQueenAttackedSquare(promotionSquare, occupancy & ~BitBoard.of(defendantPawnSquare), occupancy);
-				final boolean attackerWouldBeInCheck = BitBoard.containsSquare(squaresAttackedByPromotedPawn, attackerKingSquare);
+				if (attackerKingSquare != promotionSquare && defendantKingSquare != promotionSquare) {
+					// Pawn can be promoted
+					final long kingMaskAroundPawn = FigureAttackTable.getItem(PieceType.KING, promotionSquare);
+					final long squaresAttackedByPromotedPawn = getQueenAttackedSquare(promotionSquare, occupancy & ~BitBoard.of(defendantPawnSquare), occupancy);
+					final boolean attackerWouldBeInCheck = BitBoard.containsSquare(squaresAttackedByPromotedPawn, attackerKingSquare);
 
-				final boolean promotedPawnAttackedByQueen = BitBoard.containsSquare(squaresAttackedByPromotedPawn, queenSquare);
-				final boolean promotedPawnAttackedByKing = BitBoard.containsSquare(kingMaskAroundPawn, attackerKingSquare);
-				final boolean promotedPawnProtectedByKing = BitBoard.containsSquare(kingMaskAroundPawn, defendantKingSquare);
+					final boolean promotedPawnAttackedByQueen = BitBoard.containsSquare(squaresAttackedByPromotedPawn, queenSquare);
+					final boolean promotedPawnAttackedByKing = BitBoard.containsSquare(kingMaskAroundPawn, attackerKingSquare);
+					final boolean promotedPawnProtectedByKing = BitBoard.containsSquare(kingMaskAroundPawn, defendantKingSquare);
 
-				final long pinSquares = ProlongTable.getItem(promotionSquare, defendantKingSquare) &
-						getQueenAttackedSquare(defendantKingSquare, occupancy, occupancy) &
-						~attackerPawns & ~BitBoard.of(attackerKingSquare) &
-						~defendantKingAttackedSquares;
+					final long pinSquares = ProlongTable.getItem(promotionSquare, defendantKingSquare) &
+							getQueenAttackedSquare(defendantKingSquare, occupancy, occupancy) &
+							~attackerPawns & ~BitBoard.of(attackerKingSquare) &
+							~defendantKingAttackedSquares;
 
-				final boolean queenPinnable = !attackerWouldBeInCheck &&
-						BitBoard.containsSquare(squaresAttackedByPromotedPawn, defendantKingSquare) &&
-						(squaresAttackedByQueen & pinSquares) != 0;
+					final boolean queenPinnable = !attackerWouldBeInCheck &&
+							BitBoard.containsSquare(squaresAttackedByPromotedPawn, defendantKingSquare) &&
+							(squaresAttackedByQueen & pinSquares) != 0;
 
-				final boolean queenPinnableWithoutProtection = queenPinnable &&
-						(kingMaskAroundPawn & defendantKingAttackedSquares & ~BetweenTable.getItem(promotionSquare, defendantKingSquare)) == 0;
+					final boolean queenPinnableWithoutProtection = queenPinnable &&
+							(kingMaskAroundPawn & defendantKingAttackedSquares & ~BetweenTable.getItem(promotionSquare, defendantKingSquare)) == 0;
 
-				final boolean queensExchangeable = (promotedPawnAttackedByQueen && promotedPawnProtectedByKing && !promotedPawnAttackedByKing) || (queenPinnable && !queenPinnableWithoutProtection);
-				final boolean queenCapturable = ((promotedPawnAttackedByQueen || promotedPawnAttackedByKing) && !promotedPawnProtectedByKing) ||
-						(promotedPawnAttackedByQueen && promotedPawnAttackedByKing) ||
-						queenPinnableWithoutProtection;
+					final boolean queensExchangeable = (promotedPawnAttackedByQueen && promotedPawnProtectedByKing && !promotedPawnAttackedByKing) || (queenPinnable && !queenPinnableWithoutProtection);
+					final boolean queenCapturable = ((promotedPawnAttackedByQueen || promotedPawnAttackedByKing) && !promotedPawnProtectedByKing) ||
+							(promotedPawnAttackedByQueen && promotedPawnAttackedByKing) ||
+							queenPinnableWithoutProtection;
 
-				if (queensExchangeable)
-					exchangeableQueenCount++;
-				else {
-					if (queenCapturable)
-						capturableQueenCount++;
-					else
-						savedQueenCount++;
-				}
-			}
-			else {
-				// Pawn cannot be promoted
-				final boolean isPawnTwoMovesToPromotion =
-						!defendantInCheck &&
-						relativeRank == Rank.R6 &&
-						(BoardConstants.getSquaresInFrontExclusive(defendantColor, defendantPawnSquare) & occupancy) == 0 &&
-						Rank.getRelative(Square.getRank(defendantKingSquare), defendantColor) >= Rank.R6 &&
-						Math.abs(Square.getFile(defendantKingSquare) - Square.getFile(defendantPawnSquare)) <= 1;
-
-				if (isPawnTwoMovesToPromotion) {
-					if (defendantPawnCount == 1 && BitBoard.containsSquare(BoardConstants.FILE_ACFH_MASK, defendantPawnSquare))
-						stalematingPawnTwoMovesToPromotionCount++;
-					else
-						normalPawnTwoMovesToPromotionCount++;
+					if (queensExchangeable)
+						exchangeableQueenCount++;
+					else {
+						if (queenCapturable)
+							capturableQueenCount++;
+						else
+							savedQueenCount++;
+					}
 				}
 			}
 		}
 
-		attackerPawnOnSevenRankCount = BitBoard.getSquareCount(
-				attackerPawns & BoardConstants.getRankMask(Rank.getAbsolute(Rank.R7, attackerColor))
-		);
+		if (!defendantInCheck) {
+			final long blockedSquares = BitBoard.extendForwardByColorWithoutItself(attackerColor, occupancy);
+			final long pawnsTwoMovesToPromotion = defendantPawns &
+					PAWN_TWO_MOVES_TO_PROMOTION_MASK[defendantColor][defendantKingSquare] &
+					~blockedSquares;
+
+			if (defendantPawnCount == 1) {
+				stalematingPawnTwoMovesToPromotionCount = BitBoard.getSquareCount(pawnsTwoMovesToPromotion & BoardConstants.FILE_ACFH_MASK);
+				normalPawnTwoMovesToPromotionCount = BitBoard.getSquareCount(pawnsTwoMovesToPromotion & ~BoardConstants.FILE_ACFH_MASK);
+			}
+			else {
+				stalematingPawnTwoMovesToPromotionCount = 0;
+				normalPawnTwoMovesToPromotionCount = BitBoard.getSquareCount(pawnsTwoMovesToPromotion);
+			}
+		}
+
+		attackerPawnOnSevenRankCount = BitBoard.getSquareCount(attackerPawns & SEVENTH_RANK_MASK[attackerColor]);
 
 		// Squares that blocks defendant pawns
 		final long attackerKingTargetSquares = FigureAttackTable.getItem(PieceType.KING, attackerKingSquare);
