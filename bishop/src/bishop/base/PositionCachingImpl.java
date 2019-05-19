@@ -91,10 +91,7 @@ public final class PositionCachingImpl implements IPositionCaching {
 
 	@Override
 	public int getTablePositionEvaluation(final int gameStage) {
-		return CombinedEvaluation.decode(
-				combinedEvaluation,
-				CombinedEvaluation.getMultiplicatorForGameStage(gameStage)
-		);
+		return CombinedEvaluation.getDecoderForGameStage(gameStage).decode(combinedEvaluation);
 	}
 
 	@Override

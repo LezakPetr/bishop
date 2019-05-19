@@ -17,59 +17,50 @@ public class CombinedEvaluation {
 
 	public static final int MIDDLE_GAME_TRESHOLD = 8;
 
-	private static final int COMPONENT_SHIFT = Evaluation.BITS + 1;
+	public static final int COMPONENT_SHIFT = Evaluation.BITS + 1;
 
 	private static final int ENDING_SHIFT = COMPONENT_ENDING * COMPONENT_SHIFT;
 	private static final int MIDDLE_GAME_SHIFT = COMPONENT_MIDDLE_GAME * COMPONENT_SHIFT;
 	private static final int OPENING_SHIFT = COMPONENT_OPENING * COMPONENT_SHIFT;
 
-	private static final int EVALUATION_MASK = (1 << Evaluation.BITS) - 1;
+	public static final int EVALUATION_MASK = (1 << Evaluation.BITS) - 1;
 
 	private static final int BASE_EXPONENT = Evaluation.BITS - 1;
 
-	private static final int EVALUATION_BASE = 1 << BASE_EXPONENT;
+	public static final int EVALUATION_BASE = 1 << BASE_EXPONENT;
 
 	public static final long ACCUMULATOR_BASE =
 			(1L << (BASE_EXPONENT + ENDING_SHIFT)) +
 			(1L << (BASE_EXPONENT + MIDDLE_GAME_SHIFT)) +
 			(1L << (BASE_EXPONENT + OPENING_SHIFT));
 
-	private static final long[] EVALUATION_DECODE_MULTIPLICATORS = IntStream.range(GameStage.FIRST, GameStage.LAST)
-			.mapToLong(CombinedEvaluation::calculateMultiplicatorForGameStage)
-			.toArray();
+	private static final CombinedEvaluationDecoder[] COMBINED_EVALUATION_DECODERS = IntStream.range(GameStage.FIRST, GameStage.LAST)
+			.mapToObj(CombinedEvaluation::calculateDecoderForGameStage)
+			.toArray(CombinedEvaluationDecoder[]::new);
 
-	public static long calculateMultiplicatorForGameStage(final int gameStage) {
-		int lowerShift;
-		int upperShift;
+	public static CombinedEvaluationDecoder calculateDecoderForGameStage(final int gameStage) {
+		int shift;
 		double t;
 
 		if (gameStage <= MIDDLE_GAME_TRESHOLD) {
 			t = (double) (gameStage - GameStage.FIRST) / (double) (MIDDLE_GAME_TRESHOLD - GameStage.FIRST);
-			lowerShift = ENDING_SHIFT;
-			upperShift = MIDDLE_GAME_SHIFT;
+			shift = ENDING_SHIFT;
 		}
 		else {
 			t = (double) (gameStage - MIDDLE_GAME_TRESHOLD) / (double) (GameStage.LAST - 1 - MIDDLE_GAME_TRESHOLD);
-			lowerShift = MIDDLE_GAME_SHIFT;
-			upperShift = OPENING_SHIFT;
+			shift = MIDDLE_GAME_SHIFT;
 		}
 
-		final long alpha = Utils.roundToInt(MAX_ALPHA * t);
+		final int alpha = Utils.roundToInt(MAX_ALPHA * t);
 
-		return ((MAX_ALPHA - alpha) << lowerShift) + (alpha << upperShift);
+		return new CombinedEvaluationDecoder(
+			shift,
+			alpha
+		);
 	}
 
-
-	public static int decode (final long combinedEvaluation, final long multiplicator) {
-		final int opening = (((int) (combinedEvaluation >>> OPENING_SHIFT) & EVALUATION_MASK) - EVALUATION_BASE) * ((int) (multiplicator >>> OPENING_SHIFT) & EVALUATION_MASK);
-		final int middleGame = (((int) (combinedEvaluation >>> MIDDLE_GAME_SHIFT) & EVALUATION_MASK) - EVALUATION_BASE) * ((int) (multiplicator >>> MIDDLE_GAME_SHIFT) & EVALUATION_MASK);
-		final int ending = (((int) (combinedEvaluation >>> ENDING_SHIFT) & EVALUATION_MASK) - EVALUATION_BASE) * ((int) (multiplicator >>> ENDING_SHIFT) & EVALUATION_MASK);
-
-		return (opening + middleGame + ending) >> ALPHA_BITS;
-	}
-
-	public static long getMultiplicatorForGameStage (final int gameStage) {
-		return EVALUATION_DECODE_MULTIPLICATORS[gameStage];
+	public static CombinedEvaluationDecoder getDecoderForGameStage (final int gameStage) {
+		return COMBINED_EVALUATION_DECODERS[gameStage];
 	}
 
 	public static long combine (final int evaluationOpening, final int evaluationMiddle, final int evaluationEnding) {
@@ -79,6 +70,6 @@ public class CombinedEvaluation {
 	}
 
 	public static int getComponentMultiplicator (final int gameStage, final int component) {
-		return (int) (getMultiplicatorForGameStage(gameStage) >>> (component * COMPONENT_SHIFT)) & EVALUATION_MASK;
+		return (int) (getDecoderForGameStage(gameStage).getMultiplicator() >>> (component * COMPONENT_SHIFT)) & EVALUATION_MASK;
 	}
 }

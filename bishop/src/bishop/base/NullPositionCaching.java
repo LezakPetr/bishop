@@ -63,10 +63,8 @@ public class NullPositionCaching implements IPositionCaching {
 
 	@Override
 	public int getTablePositionEvaluation(final int gameStage) {
-		return CombinedEvaluation.decode(
-				calculateCombinedEvaluation(position, evaluationTable),
-				CombinedEvaluation.getMultiplicatorForGameStage(gameStage)
-		);
+		return CombinedEvaluation.getDecoderForGameStage(gameStage)
+				.decode(calculateCombinedEvaluation(position, evaluationTable));
 	}
 
 	public static long calculateCombinedEvaluation(final Position position, final CombinedPositionEvaluationTable evaluationTable) {
