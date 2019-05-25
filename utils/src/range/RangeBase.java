@@ -56,16 +56,6 @@ public abstract class RangeBase {
 	protected long number;   // Actual number read from the stream
 	protected long low;   // Lower bound of actual range (inclusive)
 	protected long high;   // Upper bound of actual range (exclusive)
-
-	
-	/**
-	 * Writes byte into stream in encoder.
-	 * Reads byte from stream in decoder.
-	 * In both cases method shifts range boundaries left by BITS_IN_BYTE bits.
-	 * Method expects that high byte can be shifted out.
-	 * @throws IOException thrown in case of IO error
-	 */
-	protected abstract void addByte() throws IOException;
 	
 	/**
 	 * Updates range by selection of subrange corresponding to given symbol.
@@ -97,12 +87,8 @@ public abstract class RangeBase {
 	 * Reads or writes as many bytes as possible from/to stream and updates range.  
 	 * @throws IOException thrown in case of IO exception
 	 */
-	private void shiftOutBytes() throws IOException {
-		while ((low & HIGH_BYTE) == ((high - 1) & HIGH_BYTE)) {
-			addByte();
-		}
-	}
-	
+	abstract protected void shiftOutBytes() throws IOException;
+
 	/**
 	 * Shifts out as many bytes as possible. If range is still narrower
 	 * than MIN_RANGE_WIDTH it select subrange of current so it can shift out

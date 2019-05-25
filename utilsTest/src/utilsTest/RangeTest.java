@@ -3,6 +3,7 @@ package utilsTest;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Random;
 
 import org.junit.Assert;
@@ -12,6 +13,7 @@ import range.IProbabilityModel;
 import range.ProbabilityModelFactory;
 import range.RangeDecoder;
 import range.RangeEncoder;
+import utils.MemoryInputStream;
 
 public class RangeTest {
 	
@@ -119,11 +121,11 @@ public class RangeTest {
 		final RangeDecoder decoder = new RangeDecoder();
 
 		for (int i = 0; i < PREWARM_COUNT; i++) {
-			final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+			final InputStream inputStream = new MemoryInputStream(outputStream.toByteArray());
 			decodeSequence(decoder, model, origSequence, inputStream);
 		}
 		
-		final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+		final InputStream inputStream = new MemoryInputStream(outputStream.toByteArray());
 		
 		final long beginDecodeTime = System.currentTimeMillis();
 		decodeSequence(decoder, model, origSequence, inputStream);		
@@ -144,7 +146,7 @@ public class RangeTest {
 		encoder.close();
 	}
 	
-	private void decodeSequence(final RangeDecoder decoder, final IProbabilityModel model, final int[] origSequence, final ByteArrayInputStream stream) throws IOException {
+	private void decodeSequence(final RangeDecoder decoder, final IProbabilityModel model, final int[] origSequence, final InputStream stream) throws IOException {
 		decoder.initialize(stream);
 		
 		for (int i = 0; i < SEQUENCE_LENGTH; i++) {
