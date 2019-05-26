@@ -23,17 +23,17 @@ public class GameStageCoeffs {
 		
 		final boolean withFigures = gameStage != GameStage.PAWNS_ONLY;
 
-		pawnOnSameColorBonus = (withFigures) ? registry.add("pawn_on_same_color") : -1;
-		rookOnOpenFileBonus = (withFigures) ? registry.add("rook_on_open_file") : -1;
-		figureOnSecureSquareBonus = (withFigures) ? registry.add("figure_on_secure_square") : -1;
-		queenMoveBonus = (withFigures) ? registry.add("queen_move") : -1;
+		pawnOnSameColorBonus = (withFigures) ? registry.addCoeff("pawn_on_same_color") : -1;
+		rookOnOpenFileBonus = (withFigures) ? registry.addCoeff("rook_on_open_file") : -1;
+		figureOnSecureSquareBonus = (withFigures) ? registry.addCoeff("figure_on_secure_square") : -1;
+		queenMoveBonus = (withFigures) ? registry.addCoeff("queen_move") : -1;
 		
-		kingMainProtectionPawnBonus = (withFigures) ? registry.add("king_main_protection_pawn") : -1;
-		kingSecondProtectionPawnBonus = (withFigures) ? registry.add("king_second_protection_pawn") : -1;
-		kingAttackBonus = (withFigures) ? registry.add("king_attack") : -1;
-		maxKingPawnDistance = registry.add("max_king_pawn_distance");
+		kingMainProtectionPawnBonus = (withFigures) ? registry.addCoeff("king_main_protection_pawn") : -1;
+		kingSecondProtectionPawnBonus = (withFigures) ? registry.addCoeff("king_second_protection_pawn") : -1;
+		kingAttackBonus = (withFigures) ? registry.addCoeff("king_attack") : -1;
+		maxKingPawnDistance = registry.addCoeff("max_king_pawn_distance");
 		
-		onTurnBonus = registry.add("onTurn");
+		onTurnBonus = registry.addCoeff("onTurn");
 		
 		lastCoeff = registry.leaveCategory();
 	}

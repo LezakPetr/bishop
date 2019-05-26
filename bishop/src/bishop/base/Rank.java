@@ -22,7 +22,9 @@ public class Rank {
 	public static final int LAST = 8;
 	public static final int COUNT = LAST - FIRST;
 	public static final int BIT_COUNT = 3;
-	
+
+	public static final double MIDDLE = (R1 + R8) / 2.0;
+
 	private static final char[] NOTATION = {'1', '2', '3', '4', '5', '6', '7', '8'};
 	
 	

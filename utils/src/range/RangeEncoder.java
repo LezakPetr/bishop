@@ -26,14 +26,6 @@ public class RangeEncoder extends RangeBase {
 	}
 	
 	/**
-	 * Writes high byte into output stream and shifts it out.
-	 */
-	protected void addByte() throws IOException {
-		final byte b = popHighByte();
-		stream.write(b);
-	}
-	
-	/**
 	 * Encodes given symbol.
 	 * @param probabilityModel probability model used to encode symbol
 	 * @param symbol symbol to encode
@@ -69,6 +61,24 @@ public class RangeEncoder extends RangeBase {
 			storedNumber |= digit << shift;
 			
 			stream.write((byte) digit);
+		}
+	}
+
+	/**
+	 * Reads or writes as many bytes as possible from/to stream and updates range.
+	 * @throws IOException thrown in case of IO exception
+	 */
+	protected void shiftOutBytes() throws IOException {
+		while ((low & HIGH_BYTE) == ((high - 1) & HIGH_BYTE)) {
+			final long highByte = low & HIGH_BYTE;
+
+			low = (low - highByte) << BITS_IN_BYTE;
+			high = (high - highByte) << BITS_IN_BYTE;
+			number = (number - highByte) << BITS_IN_BYTE;
+
+			final int b = (byte) (highByte >>> ((MAX_RANGE_BYTES - 1) * BITS_IN_BYTE));
+
+			stream.write(b);
 		}
 	}
 

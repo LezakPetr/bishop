@@ -77,8 +77,9 @@ public class PawnStructureEvaluator {
 					endingPositionDependentEvaluation.getEvaluation()
 			);
 
-			final long multiplicator = CombinedEvaluation.getMultiplicatorForGameStage(gameStage);
-			evaluation.addEvaluation(CombinedEvaluation.decode(combinedEvaluation, multiplicator));
+			evaluation.addEvaluation(
+					CombinedEvaluation.getDecoderForGameStage(gameStage).decode(combinedEvaluation)
+			);
 		}
 
 		return evaluation;

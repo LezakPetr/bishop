@@ -33,12 +33,15 @@ public class BoardConstants {
 	public static final long FILE_G_MASK = 0x4040404040404040L;
 	public static final long FILE_H_MASK = 0x8080808080808080L;
 
+	public static final long FILE_ACFH_MASK = FILE_A_MASK | FILE_C_MASK | FILE_F_MASK | FILE_H_MASK;
+
 	public static final long WHITE_SQUARE_MASK = 0x55AA55AA55AA55AAL;
 	public static final long BLACK_SQUARE_MASK = 0xAA55AA55AA55AA55L;
 
 	public static final long BOARD_EDGE_MASK = FILE_A_MASK | FILE_H_MASK | RANK_1_MASK | RANK_8_MASK;
 
 	public static final long RANK_1278_MASK = RANK_1_MASK | RANK_2_MASK | RANK_7_MASK | RANK_8_MASK;
+	public static final long RANK_123678_MASK = RANK_1_MASK | RANK_2_MASK | RANK_3_MASK | RANK_6_MASK | RANK_7_MASK | RANK_8_MASK;
 
 	private static final long[] FIRST_RANK_MASKS = LongArrayBuilder.create(Color.LAST)
 			.put(Color.WHITE, RANK_1_MASK)

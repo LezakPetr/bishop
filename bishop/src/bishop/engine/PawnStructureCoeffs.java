@@ -6,6 +6,8 @@ import bishop.base.Color;
 import bishop.base.File;
 import bishop.base.Rank;
 import bishop.base.Square;
+import math.IVector;
+import math.Vectors;
 
 public class PawnStructureCoeffs {
 	
@@ -27,12 +29,13 @@ public class PawnStructureCoeffs {
 	private final int lastCoeff;
 	
 	private static final int PAWN_COUNT = 8;
+	private static final int RANK_FEATURE_COUNT = 4;
 		
 	
 	public PawnStructureCoeffs(final CoeffRegistry registry) {
 		firstCoeff = registry.enterCategory("pawn_structure");
 
-		coeffUnprotectedOpenFilePawnBonus = registry.add("unprotected_open_file_pawn");
+		coeffUnprotectedOpenFilePawnBonus = registry.addCoeff("unprotected_open_file_pawn");
 
 		connectedPassedPawnBonusCoeffs = createRankCoeffs (registry, "connected_passed_pawn", Rank.R2, Rank.R7);
 		protectedPassedPawnBonusCoeffs = createRankCoeffs (registry, "protected_passed_pawn", Rank.R3, Rank.R7);
@@ -53,11 +56,30 @@ public class PawnStructureCoeffs {
 		registry.enterCategory(category);
 		
 		final int[][] coeffs = new int[Color.LAST][Rank.LAST];
+
+		// Features will be coefficients of polynomial with zero on the beginning rank
+		final int[] featureIndices = new int[RANK_FEATURE_COUNT];
+
+		for (int i = 0; i < RANK_FEATURE_COUNT; i++)
+				featureIndices[i] = registry.addFeature();
 		
 		for (int rank = Rank.FIRST; rank < Rank.LAST; rank++) {
-			final int coeffIndex = (rank >= from && rank <= to) ?
-					registry.add(Character.toString(Rank.toChar(rank))) :
-					-1;
+			final int coeffIndex;
+
+			if (rank >= from && rank <= to) {
+				final double t = (double) (rank - from) / (double) (to - from);
+				final IVector features = Vectors.sparse(registry.getFeatureCount());
+
+				for (int i = 0; i < RANK_FEATURE_COUNT; i++)
+					features.setElement(featureIndices[i], Math.pow(t, i));
+
+				coeffIndex = registry.addCoeffWithFeatures(
+						Character.toString(Rank.toChar(rank)),
+						features.freeze()
+				);
+			}
+			else
+				coeffIndex = -1;
 			
 			coeffs[Color.WHITE][rank] = coeffIndex;
 			coeffs[Color.BLACK][Rank.getOppositeRank(rank)] = coeffIndex;
@@ -74,7 +96,7 @@ public class PawnStructureCoeffs {
 		registry.enterCategory("pawn_majority");
 		
 		for (int i = 0; i < PAWN_COUNT; i++)
-			coeffs[i] = registry.add(Integer.toString(i));
+			coeffs[i] = registry.addCoeff(Integer.toString(i));
 
 		Arrays.fill(coeffs, PAWN_COUNT, Square.COUNT, coeffs[PAWN_COUNT - 1]);
 		
@@ -90,7 +112,7 @@ public class PawnStructureCoeffs {
 		final int[] coeffs = new int[maxDistance];
 		
 		for (int distance = 0; distance < maxDistance; distance++) {
-			final int coeffIndex = registry.add(Integer.toString(distance));
+			final int coeffIndex = registry.addCoeff(Integer.toString(distance));
 			
 			coeffs[distance] = coeffIndex;
 		}

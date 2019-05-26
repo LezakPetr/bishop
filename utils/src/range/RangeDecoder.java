@@ -22,22 +22,17 @@ public final class RangeDecoder extends RangeBase {
 		this.stream = stream;
 		
 		low = 0;
-		high = 1;
+		high = MAX_RANGE_WIDTH;
 		number = 0;
 		
-		for (int i = 0; i < MAX_RANGE_BYTES; i++)
-			addByte();
-	}
+		for (int i = 0; i < MAX_RANGE_BYTES; i++) {
+			number <<= BITS_IN_BYTE;
 
-	protected void addByte() throws IOException {
-		popHighByte();
-		
-		final int b = stream.read();
-		
-		if (b >= 0)
-			number += b;
-		
-		assert (number >= low && number < high) : "Number is out of range";
+			final int b = stream.read();
+
+			if (b >= 0)
+				number += b;
+		}
 	}
 	
 	/**
@@ -95,5 +90,30 @@ public final class RangeDecoder extends RangeBase {
 	public void close() throws IOException {
 		stream = null;
 	}
+
+	/**
+	 * Reads or writes as many bytes as possible from/to stream and updates range.
+	 * @throws IOException thrown in case of IO exception
+	 */
+	protected void shiftOutBytes() throws IOException {
+		while (true) {
+			final long highByte = low & HIGH_BYTE;
+
+			if (highByte != ((high - 1) & HIGH_BYTE))
+				break;
+
+			low = (low - highByte) << BITS_IN_BYTE;
+			high = (high - highByte) << BITS_IN_BYTE;
+			number = (number - highByte) << BITS_IN_BYTE;
+
+			final int b = stream.read();
+
+			if (b >= 0)
+				number += b;
+
+			assert (number >= low && number < high) : "Number is out of range";
+		}
+	}
+
 
 }

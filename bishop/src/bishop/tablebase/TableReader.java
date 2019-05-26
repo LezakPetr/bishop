@@ -13,10 +13,7 @@ import range.IProbabilityModel;
 import range.ProbabilityModelFactory;
 import range.RangeBase;
 import range.RangeDecoder;
-import utils.ChecksumStream;
-import utils.CountingInputStream;
-import utils.HugeLongArray;
-import utils.IoUtils;
+import utils.*;
 import bishop.base.Color;
 import bishop.base.MaterialHash;
 import bishop.base.Piece;
@@ -124,9 +121,9 @@ public class TableReader extends TableIo {
 	private void readOneBlock(final InputStream stream, final ITableIterator it, final int blockIndexCount, final int blockLength) throws IOException {
 		final byte[] blockData = IoUtils.readByteArray(stream, blockLength);
 		final int dataSize = blockLength - CRC_SIZE;
-		final ByteArrayInputStream memoryStream = new ByteArrayInputStream(blockData, 0, dataSize);
+		final MemoryInputStream memoryStream = new MemoryInputStream(blockData, 0, dataSize);
 		
-		final ByteArrayInputStream crcStream = new ByteArrayInputStream(blockData, dataSize, CRC_SIZE);
+		final MemoryInputStream crcStream = new MemoryInputStream(blockData, dataSize, CRC_SIZE);
 		final long expectedCrc = IoUtils.readUnsignedNumberBinary(crcStream, CRC_SIZE);
 		final CRC32 crcChecksum = new CRC32();
 		final ChecksumStream checksumStream = new ChecksumStream(crcChecksum);

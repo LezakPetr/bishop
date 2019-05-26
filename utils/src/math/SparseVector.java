@@ -55,6 +55,9 @@ public class SparseVector extends AbstractVector {
 	public IVector setElement(final int index, final double value) {
 		checkNotFrozen();
 
+		if (index < 0 || index >= dimension)
+			throw new RuntimeException("Index out of range: " + index);
+
 		final int sparseIndex = findSparseIndex(index);
 		
 		if (sparseIndex >= 0) {

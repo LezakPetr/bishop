@@ -89,7 +89,8 @@ public class PawnPromotionEstimatorTest {
 		test("2Q5/8/8/8/8/1K6/2pk4/8 b - - 0 1", e -> e.exchangeableQueenCount == 1);
 		test("2Q5/8/8/8/8/8/1Kpk4/8 b - - 0 1", e -> e.exchangeableQueenCount == 0);
 		test("Q7/8/8/8/7K/8/7p/6k1 b - - 0 1", e -> e.exchangeableQueenCount == 1);
-		test("Q7/8/8/3P4/7K/8/7p/6k1 b - - 0 1", e -> e.exchangeableQueenCount == 1);
+		test("Q7/8/8/3P4/6K1/8/7p/6k1 b - - 0 1", e -> e.exchangeableQueenCount == 1);
+		test("Q7/8/8/3P4/7K/8/7p/6k1 b - - 0 1", e -> e.exchangeableQueenCount == 0);
 		test("Q7/8/8/3P4/P6K/8/7p/6k1 b - - 0 1", e -> e.exchangeableQueenCount == 0);
 		test("1Q6/8/8/8/7K/8/1p6/1k6 b - - 0 1", e -> e.exchangeableQueenCount == 0);
 		test("5Q2/8/8/8/7K/3k4/1p6/8 b - - 0 1", e -> e.exchangeableQueenCount == 0);
@@ -106,13 +107,21 @@ public class PawnPromotionEstimatorTest {
 		test("2Q5/8/8/8/8/1K6/2pk4/8 b - - 0 1", e -> e.capturableQueenCount == 0);
 		test("3Q4/8/8/8/8/1K2k3/2p5/8 b - - 0 1", e -> e.capturableQueenCount == 1);
 		test("6Q1/8/8/8/5k2/1K6/2p5/8 b - - 0 1", e -> e.capturableQueenCount == 0);
+		test("5Q2/8/8/8/8/2K1k3/2p5/8 b - - 0 1", e -> e.capturableQueenCount == 0);
 	}
 
 	@Test
-	public void testPawnTwoMovesToPromotionCount() {
-		test("2Q5/8/1K6/8/8/4pk2/8/8 b - - 0 1", e -> e.pawnTwoMovesToPromotionCount == 0);
-		test("2Q5/8/1K6/8/8/4p3/5k2/8 b - - 0 1", e -> e.pawnTwoMovesToPromotionCount == 1);
-		test("2Q5/8/1K6/8/8/4p3/4k3/8 b - - 0 1", e -> e.pawnTwoMovesToPromotionCount == 0);
+	public void testNormalPawnTwoMovesToPromotionCount() {
+		test("2Q5/8/1K6/8/8/4pk2/8/8 b - - 0 1", e -> e.normalPawnTwoMovesToPromotionCount == 1);
+		test("2Q5/8/1K6/8/8/4p3/5k2/8 b - - 0 1", e -> e.normalPawnTwoMovesToPromotionCount == 1);
+		test("2Q5/8/1K6/8/8/4p3/4k3/8 b - - 0 1", e -> e.normalPawnTwoMovesToPromotionCount == 0);
+	}
+
+	@Test
+	public void testStalematingPawnTwoMovesToPromotionCount() {
+		test("2Q5/8/1K6/8/8/6kp/8/8 b - - 0 1", e -> e.stalematingPawnTwoMovesToPromotionCount == 1);
+		test("2Q5/8/1K6/8/8/5p2/6k1/8 b - - 0 1", e -> e.stalematingPawnTwoMovesToPromotionCount == 1);
+		test("2Q5/8/1K6/8/8/p7/k7/8 b - - 0 1", e -> e.stalematingPawnTwoMovesToPromotionCount == 0);
 	}
 
 	@Test

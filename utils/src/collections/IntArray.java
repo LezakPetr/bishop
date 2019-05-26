@@ -43,4 +43,13 @@ public class IntArray {
 		if (capacity > items.length)
 			items = Arrays.copyOf(items, capacity);
 	}
+
+	public static IntArray of (final int... items) {
+		final IntArray array = new IntArray(items.length);
+
+		for (int i = 0; i < items.length; i++)
+			array.append(items[i]);
+
+		return array;
+	}
 }
