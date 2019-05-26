@@ -5,6 +5,7 @@ import bishop.base.IMaterialHashRead;
 import bishop.base.MaterialHash;
 import bishop.base.PieceType;
 import bishop.engine.CoeffCountPositionEvaluation;
+import bishop.engine.CoeffRegistry;
 import bishop.engine.PositionEvaluationCoeffs;
 import bishop.tablebase.ClassificationProbabilityModelSelector;
 import math.IVector;
@@ -17,7 +18,8 @@ import java.io.*;
 
 
 public class EvaluationSample implements ISample {
-    public static final int FEATURE_COUNT = PositionEvaluationCoeffs.LAST + PieceType.VARIABLE_COUNT;
+	public static final int POSITIONAL_FEATURE_COUNT = PositionEvaluationCoeffs.getCoeffRegistry().getFeatureCount();
+	public static final int FEATURE_COUNT = POSITIONAL_FEATURE_COUNT + PieceType.VARIABLE_COUNT;
 
     private static final int COEFF_COUNT_CATEGORY_PLUS_ONE = 0;
 	private static final int COEFF_COUNT_CATEGORY_MINUS_ONE = 1;
@@ -146,12 +148,20 @@ public class EvaluationSample implements ISample {
 			final int indexDiff = getIndexDiffFromStream(smallIndexDiff, stream);
 			lastIndex += indexDiff;
 
-			vector.setElement(lastIndex, (double) coeffCount / (double) CoeffCountPositionEvaluation.COEFF_MULTIPLICATOR);
+			final IVectorRead features = PositionEvaluationCoeffs
+					.getCoeffRegistry()
+					.getFeaturesOfCoeff(lastIndex)
+					.multiply((double) coeffCount / (double) CoeffCountPositionEvaluation.COEFF_MULTIPLICATOR);
+
+			Vectors.addInPlace(
+					vector,
+					features
+			);
 		}
 	}
 
 	public static int getIndexOfPieceTypeFeature (final int pieceType) {
-        return pieceType - PieceType.VARIABLE_FIRST + PositionEvaluationCoeffs.LAST;
+        return pieceType - PieceType.VARIABLE_FIRST + POSITIONAL_FEATURE_COUNT;
     }
 
     @Override

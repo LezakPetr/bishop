@@ -46,7 +46,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 
 		final List<Integer> regularizedFeatures = new ArrayList<>();
 
-		for (int i = 0; i < PositionEvaluationCoeffs.LAST; i++)
+		for (int i = 0; i < EvaluationSample.POSITIONAL_FEATURE_COUNT; i++)
 			regularizedFeatures.add(i);
 
 		final DirectFeatureCombination featureCombination = new DirectFeatureCombination(EvaluationSample.FEATURE_COUNT);
@@ -149,16 +149,19 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 		final double[] materialProbabilities = calculateMaterialProbabilities(results);
 		final double pawnProbability = materialProbabilities[PieceType.PAWN];
 
-		final double[] materialEvaluations = IntStream.range(0, materialProbabilities.length)
-				.mapToDouble(i -> PieceTypeEvaluations.PAWN_EVALUATION / pawnProbability * materialProbabilities[i])
+		final double[] materialEvaluations = Arrays.stream(materialProbabilities)
+				.map(materialProbability -> PieceTypeEvaluations.PAWN_EVALUATION / pawnProbability * materialProbability)
 				.toArray();
-		
-		final double[] bestCoeffs = IntStream.range(0, results.getDimension())
-				.mapToDouble(i -> PieceTypeEvaluations.PAWN_EVALUATION / pawnProbability * results.getElement(i))
+
+		final CoeffRegistry coeffRegistry = PositionEvaluationCoeffs.getCoeffRegistry();
+		final IVectorRead positionalResult = results.subVector(0, coeffRegistry.getFeatureCount());
+
+		final double[] bestCoeffs = IntStream.range(0, PositionEvaluationCoeffs.LAST)
+				.mapToDouble(i -> PieceTypeEvaluations.PAWN_EVALUATION / pawnProbability * positionalResult.dotProduct(coeffRegistry.getFeaturesOfCoeff(i)))
 				.toArray();
 
 		for (int i = 0; i < PositionEvaluationCoeffs.LAST; i++) {
-			System.out.println(PositionEvaluationCoeffs.getCoeffRegistry().getName(i) + " " + bestCoeffs[i]);			
+			System.out.println(coeffRegistry.getName(i) + " " + bestCoeffs[i]);
 		}
 
 		final int[] pieceTypeEvaluations = Arrays.stream(materialEvaluations)

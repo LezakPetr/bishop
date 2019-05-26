@@ -37,7 +37,7 @@ public class MobilityPositionEvaluator {
 
 		for (int gameStage = GameStage.FIRST; gameStage < GameStage.LAST; gameStage++) {
 			for (int pieceType = PieceType.PROMOTION_FIGURE_FIRST; pieceType < PieceType.PROMOTION_FIGURE_LAST; pieceType++) {
-				registry.add(gameStage + "." + Character.toString(PieceType.toChar(pieceType, false)));
+				registry.addCoeff(gameStage + "." + Character.toString(PieceType.toChar(pieceType, false)));
 			}
 		}
 		

@@ -24,8 +24,9 @@ public class File {
 	
 	public static final int COUNT = LAST - FIRST;
 	public static final int BIT_COUNT = 3;
-	
-	
+
+	public static final double MIDDLE = (FA + FH) / 2.0;
+
 	private static final char[] NOTATION = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
 	
 	
