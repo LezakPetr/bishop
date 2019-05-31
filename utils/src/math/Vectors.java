@@ -93,13 +93,18 @@ public class Vectors {
 	public static void addInPlace (final IVector a, final IVectorRead b) {
 		assert a != b;
 
-		for (IVectorIterator it = b.getNonZeroElementIterator(); it.isValid(); it.next()) {
-			final int index = it.getIndex();
+		if (a instanceof SparseVector && b instanceof SparseVector) {
+			((SparseVector) a).addInPlace ((SparseVector) b);
+		}
+		else {
+			for (IVectorIterator it = b.getNonZeroElementIterator(); it.isValid(); it.next()) {
+				final int index = it.getIndex();
 
-			a.setElement(
-				index,
-				a.getElement(index) + it.getElement()
-			);
+				a.setElement(
+						index,
+						a.getElement(index) + it.getElement()
+				);
+			}
 		}
 	}
 

@@ -120,6 +120,21 @@ public class MatrixTest {
 	}
 
 	@Test
+	public void testAddSameAsAddInPlace() {
+		for (int i = 0; i < COUNT; i++) {
+			final IMatrix a = createRandomMatrix(getRandomDensity(), 3, 5);
+			final IMatrix b = createRandomMatrix(getRandomDensity(), 3, 5);
+
+			final IMatrixRead result1 = a.plus(b);
+
+			final IMatrix result2 = a.copy();
+			Matrices.addInPlace(result2, b);
+
+			Assert.assertEquals(result1, result2);
+		}
+	}
+
+	@Test
 	public void testAssociativity() {
 		testAssociativityOfOperator(IMatrixRead::plus);
 		testAssociativityOfOperator(IMatrixRead::multiply);

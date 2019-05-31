@@ -177,4 +177,74 @@ public class SparseVector extends AbstractVector {
 			elements = Arrays.copyOf(elements, capacity);
 		}
 	}
+
+	void addInPlace(final SparseVector that) {
+		final int totalIndices = this.nonZeroElementCount + that.nonZeroElementCount - countCommonIndices (that);
+		ensureCapacity(totalIndices);
+
+		int srcIndexThis = this.nonZeroElementCount - 1;
+		int srcIndexThat = that.nonZeroElementCount - 1;
+		int dstIndexThis = totalIndices - 1;
+
+		while (srcIndexThis >= 0 && srcIndexThat >= 0) {
+			final int valueThis = this.indices[srcIndexThis];
+			final int valueThat = that.indices[srcIndexThat];
+
+			if (valueThis == valueThat) {
+				this.indices[dstIndexThis] = valueThis;
+				this.elements[dstIndexThis] = this.elements[srcIndexThis] + that.elements[srcIndexThat];
+
+				srcIndexThis--;
+				srcIndexThat--;
+			}
+			else {
+				if (valueThis > valueThat) {
+					this.indices[dstIndexThis] = valueThis;
+					this.elements[dstIndexThis] = this.elements[srcIndexThis];
+
+					srcIndexThis--;
+				}
+				else {
+					this.indices[dstIndexThis] = valueThat;
+					this.elements[dstIndexThis] = that.elements[srcIndexThat];
+
+					srcIndexThat--;
+				}
+			}
+
+			dstIndexThis--;
+		}
+
+		if (srcIndexThat >= 0) {
+			System.arraycopy(that.indices, 0, this.indices, 0, srcIndexThat + 1);
+			System.arraycopy(that.elements, 0, this.elements, 0, srcIndexThat + 1);
+		}
+
+		this.nonZeroElementCount = totalIndices;
+	}
+
+	private int countCommonIndices(final SparseVector that) {
+		int count = 0;
+		int indexThis = 0;
+		int indexThat = 0;
+
+		while (indexThis < this.nonZeroElementCount && indexThat < that.nonZeroElementCount) {
+			final int valueThis = this.indices[indexThis];
+			final int valueThat = that.indices[indexThat];
+
+			if (valueThis == valueThat) {
+				count++;
+				indexThis++;
+				indexThat++;
+			}
+			else {
+				if (valueThis < valueThat)
+					indexThis++;
+				else
+					indexThat++;
+			}
+		}
+
+		return count;
+	}
 }
