@@ -177,4 +177,76 @@ public class SparseVector extends AbstractVector {
 			elements = Arrays.copyOf(elements, capacity);
 		}
 	}
+
+	void addInPlace(final SparseVector that) {
+		final int totalIndices = this.nonZeroElementCount + that.nonZeroElementCount - countCommonIndices (that);
+		ensureCapacity(totalIndices);
+
+		int srcSparseIndexThis = this.nonZeroElementCount - 1;
+		int srcSparseIndexThat = that.nonZeroElementCount - 1;
+		int dstSparseIndexThis = totalIndices - 1;
+
+		while (srcSparseIndexThis >= 0 && srcSparseIndexThat >= 0) {
+			final int indexThis = this.indices[srcSparseIndexThis];
+			final int indexThat = that.indices[srcSparseIndexThat];
+
+			if (indexThis == indexThat) {
+				this.indices[dstSparseIndexThis] = indexThis;
+				this.elements[dstSparseIndexThis] = this.elements[srcSparseIndexThis] + that.elements[srcSparseIndexThat];
+
+				srcSparseIndexThis--;
+				srcSparseIndexThat--;
+			}
+			else {
+				if (indexThis > indexThat) {
+					this.indices[dstSparseIndexThis] = indexThis;
+					this.elements[dstSparseIndexThis] = this.elements[srcSparseIndexThis];
+
+					srcSparseIndexThis--;
+				}
+				else {
+					this.indices[dstSparseIndexThis] = indexThat;
+					this.elements[dstSparseIndexThis] = that.elements[srcSparseIndexThat];
+
+					srcSparseIndexThat--;
+				}
+			}
+
+			dstSparseIndexThis--;
+		}
+
+		// Copy remaining part of that.
+		// No need to do the same with this vector because of in-place operation (the part is already there).
+		if (srcSparseIndexThat >= 0) {
+			System.arraycopy(that.indices, 0, this.indices, 0, srcSparseIndexThat + 1);
+			System.arraycopy(that.elements, 0, this.elements, 0, srcSparseIndexThat + 1);
+		}
+
+		this.nonZeroElementCount = totalIndices;
+	}
+
+	private int countCommonIndices(final SparseVector that) {
+		int count = 0;
+		int sparseIndexThis = 0;
+		int sparseIndexThat = 0;
+
+		while (sparseIndexThis < this.nonZeroElementCount && sparseIndexThat < that.nonZeroElementCount) {
+			final int indexThis = this.indices[sparseIndexThis];
+			final int indexThat = that.indices[sparseIndexThat];
+
+			if (indexThis == indexThat) {
+				count++;
+				sparseIndexThis++;
+				sparseIndexThat++;
+			}
+			else {
+				if (indexThis < indexThat)
+					sparseIndexThis++;
+				else
+					sparseIndexThat++;
+			}
+		}
+
+		return count;
+	}
 }
