@@ -8,15 +8,13 @@ public class RepeatedPositionRegister {
 	private long[] hashStack;
 	private int[] intervalBeginStack;   // Stack of begin indices of positions to check repeats
 	private int size;
-	
-	public RepeatedPositionRegister() {
-	}
+
 	
 	/**
 	 * Reserves capacity of the register. Clears data.
 	 * @param capacity capacity of the register
 	 */
-	public void clearAnsReserve (final int capacity) {
+	public void clearAndReserve(final int capacity) {
 		if (hashStack == null || capacity > hashStack.length) {
 			hashStack = new long[capacity];
 			intervalBeginStack = new int[capacity];
@@ -86,7 +84,7 @@ public class RepeatedPositionRegister {
 
 	public RepeatedPositionRegister copy() {
 		final RepeatedPositionRegister result = new RepeatedPositionRegister();
-		result.clearAnsReserve(this.getSize());
+		result.clearAndReserve(this.getSize());
 		result.pushAll(this);
 		
 		return result;

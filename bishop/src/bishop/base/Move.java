@@ -302,19 +302,16 @@ public final class Move implements Comparable<Move> {
 		this.clear();
 		
 		final int onTurn = position.getOnTurn();
-		final int oppositeColor = Color.getOppositeColor(onTurn);
-		final Piece movingPiece = position.getSquareContent(beginSquare);
+		final long occupancyOnTurn = position.getColorOccupancy(onTurn);
 		
 		// Pre-checks for correctness
-		if (movingPiece == null || movingPiece.getColor() != onTurn)
+		if (!BitBoard.containsSquare(occupancyOnTurn, beginSquare))
+			return false;
+
+		if (BitBoard.containsSquare(occupancyOnTurn, targetSquare))
 			return false;
 		
-		final Piece capturedPiece = position.getSquareContent(targetSquare);
-		
-		if (capturedPiece != null && capturedPiece.getColor() != oppositeColor)
-			return false;
-		
-		final int movingPieceType = movingPiece.getPieceType();
+		final int movingPieceType = position.getPieceTypeOnSquare(beginSquare);
     	final boolean shouldBePromotion = isPromotion(movingPieceType, targetSquare);
     	
     	if (shouldBePromotion) {
@@ -347,10 +344,11 @@ public final class Move implements Comparable<Move> {
 					}
 				}
 			}
-			
 		}
 		
 		// EP
+		final int oppositeColor = Color.getOppositeColor(onTurn);
+
 		if (movingPieceType == PieceType.PAWN && Square.getFile(targetSquare) == epFile &&
 		    Square.getRank(beginSquare) == BoardConstants.getEpRank(oppositeColor) &&
 		    BitBoard.containsSquare(PawnAttackTable.getItem(onTurn, beginSquare), targetSquare)) {
@@ -364,10 +362,11 @@ public final class Move implements Comparable<Move> {
 		}
 		
 		// Normal move or promotion
+		final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
 		final long allowedSquaresMask;
 		
 		if (movingPieceType == PieceType.PAWN) {
-			if (capturedPiece == null)				
+			if (capturedPieceType == PieceType.NONE)
 				allowedSquaresMask = PawnMoveTable.getItem(onTurn, beginSquare);
 			else
 				allowedSquaresMask = PawnAttackTable.getItem(onTurn, beginSquare);
@@ -387,8 +386,6 @@ public final class Move implements Comparable<Move> {
 			return false;
 		
 		// Make the normal move or promotion
-    	final int capturedPieceType = (capturedPiece == null) ? PieceType.NONE : capturedPiece.getPieceType();
-    	    	
     	if (shouldBePromotion) {
     		initialize(position.getCastlingRights().getIndex(), epFile);
         	setMovingPieceType(PieceType.PAWN);
