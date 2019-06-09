@@ -168,6 +168,12 @@ public class BoardConstantsTest {
 		Assert.assertEquals(-1, BoardConstants.getPawnRankOffset(Color.BLACK));
 	}
 
+	@Test
+	public void getPawnSquareOffsetTest() {
+		Assert.assertEquals(+File.COUNT, BoardConstants.getPawnSquareOffset(Color.WHITE));
+		Assert.assertEquals(-File.COUNT, BoardConstants.getPawnSquareOffset(Color.BLACK));
+	}
+
 	private void testGetFrontSquaresOnThreeFiles(final int color, final int square, final String expectedBoard) {
 		Assert.assertEquals(
 				BitBoard.fromString(expectedBoard),

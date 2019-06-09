@@ -9,43 +9,67 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
 
 	private boolean generateChecks;
 	
-	// Generates moves of some short moving figure.
+	// Generates moves of king.
     // Returns if generation should continue.
-    private boolean generateShortMovingFigureMoves(final int figure, final long possibleTargetSquares) {
+    private boolean generateKingMoves(final long possibleTargetSquares) {
     	final int onTurn = position.getOnTurn();
-    	final long beginSquareMask = position.getPiecesMask(onTurn, figure);
-    	
-    	if (beginSquareMask == 0)
-    		return true;
-    	
-    	final BitLoop beginSquareLoop = new BitLoop();
-    	final BitLoop targetSquareLoop = new BitLoop();
-    	
-    	move.setMovingPieceType(figure);
 
     	// Loop through all squares with our figure
-    	for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
-    		final int beginSquare = beginSquareLoop.getNextSquare();
-    		move.setBeginSquare(beginSquare);
-    		
-    		final long targetSquareMask = FigureAttackTable.getItem(figure, beginSquare) & possibleTargetSquares;
+		final int beginSquare = position.getKingPosition(onTurn);
+		final long targetSquareMask = FigureAttackTable.getItem(PieceType.KING, beginSquare) & possibleTargetSquares;
 
-    		// Loop through all target squares
-    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
-    			final int targetSquare = targetSquareLoop.getNextSquare();
-    			final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
+		move.setMovingPieceType(PieceType.KING);
+		move.setBeginSquare(beginSquare);
+
+		// Loop through all target squares
+		for (BitLoop targetSquareLoop = new BitLoop(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+			final int targetSquare = targetSquareLoop.getNextSquare();
+			final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
+
+			// Make and process move
+			move.finishNormalMove(targetSquare, capturedPieceType);
+
+			if (!walker.processMove(move))
+				return false;
+		}
+
+    	return true;
+    }
+
+	// Generates moves of knight.
+	// Returns if generation should continue.
+	private boolean generateKnightMoves(final long possibleTargetSquares) {
+		final int onTurn = position.getOnTurn();
+		final long beginSquareMask = position.getPiecesMask(onTurn, PieceType.KNIGHT);
+
+		if (beginSquareMask == 0)
+			return true;
+
+		move.setMovingPieceType(PieceType.KNIGHT);
+
+		// Loop through all squares with our figure
+		for (BitLoop beginSquareLoop = new BitLoop(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
+			final int beginSquare = beginSquareLoop.getNextSquare();
+			move.setBeginSquare(beginSquare);
+
+			final long targetSquareMask = FigureAttackTable.getItem(PieceType.KNIGHT, beginSquare) & possibleTargetSquares;
+
+			// Loop through all target squares
+			for (BitLoop targetSquareLoop = new BitLoop(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+				final int targetSquare = targetSquareLoop.getNextSquare();
+				final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
 
 				// Make and process move
 				move.finishNormalMove(targetSquare, capturedPieceType);
 
 				if (!walker.processMove(move))
 					return false;
-    		}
-    	}
+			}
+		}
 
-    	return true;
-    }
-    
+		return true;
+	}
+
 	// Generates moves of bishop.
     // Returns if generation should continue.
     private boolean generateBishopMoves(final long possibleTargetSquares) {
@@ -56,14 +80,11 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
     		return true;
 
     	final long occupancy = position.getOccupancy();
-    	
-    	final BitLoop beginSquareLoop = new BitLoop();
-    	final BitLoop targetSquareLoop = new BitLoop();
-    	
+
     	move.setMovingPieceType(PieceType.BISHOP);
 
     	// Loop through all squares with our figure
-    	for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
+    	for (BitLoop beginSquareLoop = new BitLoop(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
     		final int beginSquare = beginSquareLoop.getNextSquare();
     		
     		if ((FigureAttackTable.getItem(PieceType.BISHOP, beginSquare) & possibleTargetSquares) != 0) {
@@ -73,7 +94,7 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
 	    		final long targetSquareMask = LineAttackTable.getAttackMask(diagonalIndex) & possibleTargetSquares;
 	
 	    		// Loop through all target squares
-	    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+	    		for (BitLoop targetSquareLoop = new BitLoop(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
 	    			final int targetSquare = targetSquareLoop.getNextSquare();
 					final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
 	
@@ -99,14 +120,11 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
     		return true;
 
     	final long occupancy = position.getOccupancy();
-    	
-    	final BitLoop beginSquareLoop = new BitLoop();
-    	final BitLoop targetSquareLoop = new BitLoop();
-    	
+
     	move.setMovingPieceType(PieceType.ROOK);
 
     	// Loop through all squares with our figure
-    	for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
+    	for (BitLoop beginSquareLoop = new BitLoop(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
     		final int beginSquare = beginSquareLoop.getNextSquare();
     		
     		if ((FigureAttackTable.getItem(PieceType.ROOK, beginSquare) & possibleTargetSquares) != 0) {
@@ -116,7 +134,7 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
 	    		final long targetSquareMask = LineAttackTable.getAttackMask(orthogonalIndex) & possibleTargetSquares;
 	
 	    		// Loop through all target squares
-	    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+	    		for (BitLoop targetSquareLoop = new BitLoop(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
 	    			final int targetSquare = targetSquareLoop.getNextSquare();
 					final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
 	
@@ -143,13 +161,10 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
 
     	final long occupancy = position.getOccupancy();
     	
-    	final BitLoop beginSquareLoop = new BitLoop();
-    	final BitLoop targetSquareLoop = new BitLoop();
-    	
     	move.setMovingPieceType(PieceType.QUEEN);
 
     	// Loop through all squares with our figure
-    	for (beginSquareLoop.init(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
+    	for (BitLoop beginSquareLoop = new BitLoop(beginSquareMask); beginSquareLoop.hasNextSquare(); ) {
     		final int beginSquare = beginSquareLoop.getNextSquare();
     		
     		if ((FigureAttackTable.getItem(PieceType.QUEEN, beginSquare) & possibleTargetSquares) != 0) {
@@ -164,7 +179,7 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
 	    		final long targetSquareMask = (diagonalMask | orthogonalMask) & possibleTargetSquares;
 	
 	    		// Loop through all target squares
-	    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+	    		for (BitLoop targetSquareLoop = new BitLoop(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
 	    			final int targetSquare = targetSquareLoop.getNextSquare();
 					final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
 	
@@ -192,48 +207,42 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
     	
     	final int oppositeColor = Color.getOppositeColor(onTurn);
     	final long occupancy = position.getOccupancy();
-    	final long opponentSquares = position.getColorOccupancy(oppositeColor);
-    	
-    	final long moveBeginMask = (onTurn == Color.WHITE) ? BoardConstants.RANK_7_MASK : BoardConstants.RANK_2_MASK;
-    	final long captureBeginMask = BoardConstants.getPawnsAttackedSquares (oppositeColor, opponentSquares);
-    	
-    	final BitLoop beginSquareLoop = new BitLoop();
-    	final BitLoop targetSquareLoop = new BitLoop();
-    	
+
+    	final long moveBeginMask = (onTurn == Color.WHITE) ?
+				pawnMask & BoardConstants.RANK_7_MASK & (~occupancy >>> File.COUNT) :
+				pawnMask & BoardConstants.RANK_2_MASK & (~occupancy << File.COUNT);
+
     	move.setMovingPieceType(PieceType.PAWN);
 
     	// Promotion
-    	for (beginSquareLoop.init(pawnMask & moveBeginMask); beginSquareLoop.hasNextSquare(); ) {
+    	for (BitLoop beginSquareLoop = new BitLoop(moveBeginMask); beginSquareLoop.hasNextSquare(); ) {
     		final int beginSquare = beginSquareLoop.getNextSquare();
     		move.setBeginSquare(beginSquare);
     		
-    		final long targetSquareMask = PawnMoveTable.getItem(onTurn, beginSquare) & ~occupancy;
-    		final int targetSquare = BitBoard.getFirstSquare(targetSquareMask);
-    		
-    		if (targetSquare != Square.NONE) {
-				if ((BetweenTable.getItem(beginSquare, targetSquare) & occupancy) == 0) {
-					final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
-	
-					// Make and process move
-					for (int promotionFigure = PieceType.PROMOTION_FIGURE_FIRST; promotionFigure < PieceType.PROMOTION_FIGURE_LAST; promotionFigure++) {
-						move.finishPromotion(targetSquare, capturedPieceType, promotionFigure);
-	
-						if (!walker.processMove(move))
-							return false;
-					}
-	    		}
-    		}
+    		final int targetSquare = beginSquare + BoardConstants.getPawnSquareOffset(onTurn);
+    		final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
+
+			// Make and process move
+			for (int promotionFigure = PieceType.PROMOTION_FIGURE_FIRST; promotionFigure < PieceType.PROMOTION_FIGURE_LAST; promotionFigure++) {
+				move.finishPromotion(targetSquare, capturedPieceType, promotionFigure);
+
+				if (!walker.processMove(move))
+					return false;
+			}
     	}
     	
     	// Captures
-    	for (beginSquareLoop.init(pawnMask & captureBeginMask); beginSquareLoop.hasNextSquare(); ) {
+		final long opponentSquares = position.getColorOccupancy(oppositeColor);
+		final long captureBeginMask = pawnMask & BoardConstants.getPawnsAttackedSquares (oppositeColor, opponentSquares);
+
+		for (BitLoop beginSquareLoop = new BitLoop(captureBeginMask); beginSquareLoop.hasNextSquare(); ) {
     		final int beginSquare = beginSquareLoop.getNextSquare();
     		move.setBeginSquare(beginSquare);
     		
     		final long targetSquareMask = PawnAttackTable.getItem(onTurn, beginSquare) & opponentSquares;
 
     		// Loop through all target squares
-    		for (targetSquareLoop.init(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
+    		for (BitLoop targetSquareLoop = new BitLoop(targetSquareMask); targetSquareLoop.hasNextSquare(); ) {
     			final int targetSquare = targetSquareLoop.getNextSquare();
 				final int capturedPieceType = position.getPieceTypeOnSquare(targetSquare);
 
@@ -281,15 +290,15 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
     	if (generateChecks) {
     		final int kingSquare = position.getKingPosition(notOnTurn);
     		final long occupancy = position.getOccupancy();
-    		final long ownOccupancy = position.getColorOccupancy(onTurn);
-    				
-    		knightCheckSquares = FigureAttackTable.getItem(PieceType.KNIGHT, kingSquare) & ~ownOccupancy;
+			final long opponentOrEmptySquares = ~position.getColorOccupancy(onTurn);
+
+			knightCheckSquares = FigureAttackTable.getItem(PieceType.KNIGHT, kingSquare) & opponentOrEmptySquares;
     		
     		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, kingSquare, occupancy);
-    		orthogonalCheckSquares = LineAttackTable.getAttackMask(orthogonalIndex) & ~ownOccupancy;
+    		orthogonalCheckSquares = LineAttackTable.getAttackMask(orthogonalIndex) & opponentOrEmptySquares;
 
     		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, kingSquare, occupancy);
-    		diagonalCheckSquares = LineAttackTable.getAttackMask(diagonalIndex) & ~ownOccupancy;
+    		diagonalCheckSquares = LineAttackTable.getAttackMask(diagonalIndex) & opponentOrEmptySquares;
     	}
     	else {
     		knightCheckSquares = BitBoard.EMPTY;
@@ -299,10 +308,10 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
 
     	final long opponentSquares = position.getColorOccupancy(notOnTurn);
 
-    	if (!generateShortMovingFigureMoves(PieceType.KING, opponentSquares))
+    	if (!generateKingMoves(opponentSquares))
     		return;
 
-    	if (!generateShortMovingFigureMoves(PieceType.KNIGHT, opponentSquares | knightCheckSquares))
+    	if (!generateKnightMoves(opponentSquares | knightCheckSquares))
     		return;
 
     	if (!generateQueenMoves(opponentSquares | orthogonalCheckSquares | diagonalCheckSquares))
