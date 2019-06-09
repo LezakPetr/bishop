@@ -345,6 +345,15 @@ public class BoardConstants {
 	}
 
 	/**
+	 * Returns offset of square for move of pawn with given color.
+	 * @param color color of the pawn
+	 * @return the offset
+	 */
+	public static int getPawnSquareOffset(final int color) {
+		return 8 - (color << 4);
+	}
+
+	/**
 	 * Returns mask of squares in front of given square on same and neighbor
 	 * files.
 	 *

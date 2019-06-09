@@ -68,10 +68,8 @@ public class MobilityCalculator {
 	private void calculateKnights(final int color, final Position position, final MobilityCalculator parentCalculator, final long changeMask) {
 		final long knightMask = position.getPiecesMask(color, PieceType.KNIGHT);
 
-		if (parentCalculator != null && ((parentCalculator.knightMasks[color] | knightMask) & changeMask) == 0) {
+		if (parentCalculator != null && ((parentCalculator.knightMasks[color] | knightMask) & changeMask) == 0)
 			knightAttackedSquares[color] = parentCalculator.knightAttackedSquares[color];
-			knightMasks[color] = parentCalculator.knightMasks[color];
-		}
 		else {
 			long attackedSquares = BitBoard.EMPTY;
 
@@ -82,9 +80,9 @@ public class MobilityCalculator {
 			}
 
 			knightAttackedSquares[color] = attackedSquares;
-			knightMasks[color] = knightMask;
 		}
 
+		knightMasks[color] = knightMask;
 		attackedSquares[color] |= knightAttackedSquares[color];
 	}
 

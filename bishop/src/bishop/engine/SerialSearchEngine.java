@@ -185,7 +185,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			moveListBegin = moveStackTop;
 
 			// Try to find position in hash table
-			if (updateRecordByHash(horizon, hashRecord))
+			if (updateRecordByHash(horizon))
 				return;
 
 			final int reducedHorizon = shouldReduceHorizon(horizon) ? 0 : horizon;
@@ -206,7 +206,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				final int positionExtension;
 
 				if (reducedHorizon >= searchSettings.getMinExtensionHorizon())
-					positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, hashRecord, horizon);
+					positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, horizon);
 				else
 					positionExtension = 0;
 
@@ -397,10 +397,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 		/**
 		 * Updates currentRecord by hash table.
 		 * @param horizon current horizon
-		 * @param hashRecord target hash record
 		 * @return true if the position evaluation with enough horizon was obtained
 		 */
-		private boolean updateRecordByHash(final int horizon, final HashRecord hashRecord) {
+		private boolean updateRecordByHash(final int horizon) {
 			final int compressedBestMove = bestMoveHashTable.getRecord(currentPosition);
 
 			if (compressedBestMove != Move.NONE_COMPRESSED_MOVE)
@@ -408,7 +407,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			else
 				hashBestMove.clear();
 
-			if (!readHashRecord(horizon, hashRecord))
+			if (!readHashRecord(horizon))
 				return false;
 
 			if (depth > 0 && hashRecord.getHorizon() == horizon) {
@@ -626,11 +625,11 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return false;
 		}
 
-		private boolean readHashRecord(final int horizon, final HashRecord hashRecord) {
+		private boolean readHashRecord(final int horizon) {
 			if (horizon <= 0)
 				return false;
 
-			final boolean success = readHashRecordImpl(horizon, hashRecord);
+			final boolean success = readHashRecordImpl(horizon);
 
 			if (GlobalSettings.isDebug())
 				hashSuccessRatio.addInvocation(success);
@@ -638,7 +637,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return success;
 		}
 
-		private boolean readHashRecordImpl(final int horizon, final HashRecord hashRecord) {
+		private boolean readHashRecordImpl(final int horizon) {
 			return evaluationHashTable.getRecord(currentPosition, horizon, hashRecord);
 		}
 	}
@@ -902,7 +901,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		try {
 			final RepeatedPositionRegister taskRepeatedPositionRegister = task.getRepeatedPositionRegister();
 			
-			repeatedPositionRegister.clearAnsReserve(taskRepeatedPositionRegister.getSize() + maxTotalDepth);
+			repeatedPositionRegister.clearAndReserve(taskRepeatedPositionRegister.getSize() + maxTotalDepth);
 			repeatedPositionRegister.pushAll(taskRepeatedPositionRegister);
 			
 			return searchOneTask();

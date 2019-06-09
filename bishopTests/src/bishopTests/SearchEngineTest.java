@@ -158,7 +158,7 @@ public class SearchEngineTest {
 		final Position position = fen.getPosition();
 		final RepeatedPositionRegister register = new RepeatedPositionRegister();
 
-		register.clearAnsReserve(1);
+		register.clearAndReserve(1);
 		register.pushPosition(position, null);
 
 		task.setRepeatedPositionRegister(register);
