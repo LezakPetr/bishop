@@ -30,7 +30,8 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	private int epFile;   // File where pawn advanced by two squares in last move (or File.NONE)
 
 	private final IPositionCaching caching;
-	
+	private final Move epCheckMove = new Move();
+
 	public static final Position INITIAL_POSITION = createInitialPosition();
 	
 	/**
@@ -1085,8 +1086,6 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		for (BitLoop loop = new BitLoop(possibleBeginSquares); loop.hasNextSquare(); ) {
 			final int beginSquare = loop.getNextSquare();
 
-			final Move epCheckMove = new Move();
-
 			epCheckMove.initialize(CastlingRights.FIRST_INDEX, epFile);
 			epCheckMove.setMovingPieceType(PieceType.PAWN);
 			epCheckMove.setBeginSquare (beginSquare);
@@ -1148,52 +1147,52 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		return isSquareAttacked(onTurn, kingPos);
 	}
 	
-	public int getCheapestAttacker (final int color, final int square) {
+	public int getCheapestAttacker (final int color, final int square, final long effectiveOccupancy) {
 		// Pawn
 		final int oppositeColor = Color.getOppositeColor(color);
-		final long attackingPawnMask = getPiecesMask(color, PieceType.PAWN) & PawnAttackTable.getItem(oppositeColor, square);
+		final long attackingPawnMask = getPiecesMask(color, PieceType.PAWN) & PawnAttackTable.getItem(oppositeColor, square) & effectiveOccupancy;
 
 		if (attackingPawnMask != 0)
 			return BitBoard.getFirstSquare(attackingPawnMask);
 
 		// Knight
-		final long attackingKnightMask = getPiecesMask(color, PieceType.KNIGHT) & FigureAttackTable.getItem (PieceType.KNIGHT, square);
+		final long attackingKnightMask = getPiecesMask(color, PieceType.KNIGHT) & FigureAttackTable.getItem (PieceType.KNIGHT, square) & effectiveOccupancy;
 		
 		if (attackingKnightMask != 0)
 			return BitBoard.getFirstSquare(attackingKnightMask);
 		
 		// Bishop
-		final long attackingBishopMask = getPiecesMask(color, PieceType.BISHOP) & FigureAttackTable.getItem(PieceType.BISHOP, square);
+		final long attackingBishopMask = getPiecesMask(color, PieceType.BISHOP) & FigureAttackTable.getItem(PieceType.BISHOP, square) & effectiveOccupancy;
 		
 		for (BitLoop loop = new BitLoop(attackingBishopMask); loop.hasNextSquare(); ) {
 			final int testSquare = loop.getNextSquare();
 
-			if ((BetweenTable.getItem(square, testSquare) & occupancy) == 0)
+			if ((BetweenTable.getItem(square, testSquare) & effectiveOccupancy) == 0)
 				return testSquare;
 		}
 		
 		// Rook
-		final long attackingRookMask = getPiecesMask(color, PieceType.ROOK) & FigureAttackTable.getItem(PieceType.ROOK, square);
+		final long attackingRookMask = getPiecesMask(color, PieceType.ROOK) & FigureAttackTable.getItem(PieceType.ROOK, square) & effectiveOccupancy;
 		
 		for (BitLoop loop = new BitLoop(attackingRookMask); loop.hasNextSquare(); ) {
 			final int testSquare = loop.getNextSquare();
 
-			if ((BetweenTable.getItem(square, testSquare) & occupancy) == 0)
+			if ((BetweenTable.getItem(square, testSquare) & effectiveOccupancy) == 0)
 				return testSquare;
 		}
 
 		// Queen
-		final long attackingQueenMask = getPiecesMask(color, PieceType.QUEEN) & FigureAttackTable.getItem(PieceType.QUEEN, square);
+		final long attackingQueenMask = getPiecesMask(color, PieceType.QUEEN) & FigureAttackTable.getItem(PieceType.QUEEN, square) & effectiveOccupancy;
 		
 		for (BitLoop loop = new BitLoop(attackingQueenMask); loop.hasNextSquare(); ) {
 			final int testSquare = loop.getNextSquare();
 
-			if ((BetweenTable.getItem(square, testSquare) & occupancy) == 0)
+			if ((BetweenTable.getItem(square, testSquare) & effectiveOccupancy) == 0)
 				return testSquare;
 		}
 
 		// King
-		final long attackingKingMask = getPiecesMask(color, PieceType.KING) & FigureAttackTable.getItem (PieceType.KING, square);
+		final long attackingKingMask = getPiecesMask(color, PieceType.KING) & FigureAttackTable.getItem (PieceType.KING, square) & effectiveOccupancy;
 				
 		if (attackingKingMask != 0)
 			return BitBoard.getFirstSquare(attackingKingMask);
@@ -1202,40 +1201,23 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	}
 
 	public int getStaticExchangeEvaluation (final int color, final int square, final PieceTypeEvaluations pieceTypeEvaluations) {
-		final int attackerSquare = getCheapestAttacker (color, square);
+		return getStaticExchangeEvaluation(color, square, pieceTypeEvaluations, occupancy, getPieceTypeOnSquare(square));
+	}
+
+	private int getStaticExchangeEvaluation (final int color, final int square, final PieceTypeEvaluations pieceTypeEvaluations, final long effectiveOccupancy, final int pieceTypeOnSquare) {
+		final int attackerSquare = getCheapestAttacker (color, square, effectiveOccupancy);
 		
 		if (attackerSquare != Square.NONE) {
-			final int capturedPieceType = getPieceTypeOnSquare(square);
-			
-			if (capturedPieceType == PieceType.NONE)
+			if (pieceTypeOnSquare == PieceType.NONE)
 				return 0;
 			
-			if (capturedPieceType == PieceType.KING)
+			if (pieceTypeOnSquare == PieceType.KING)
 				return Evaluation.MAX;
 			
 			final int attackerPieceType = getPieceTypeOnSquare(attackerSquare);
-			final Move move = new Move();
-			
-			if (attackerPieceType == PieceType.NONE) {
-				getCheapestAttacker(color, square);
-			}
-			
-			move.initialize(castlingRights.getIndex(), epFile);
-			move.setBeginSquare(attackerSquare);
-			move.setMovingPieceType(attackerPieceType);
-			
-			if (Move.isPromotion(attackerPieceType, square)) {
-				move.finishPromotion(square, capturedPieceType, PieceType.QUEEN);
-			}
-			else {
-				move.finishNormalMove(square, capturedPieceType);
-			}
-			
-			makeMove(move);	
-			final int childEvaluation = getStaticExchangeEvaluation (Color.getOppositeColor(color), square, pieceTypeEvaluations);
-			undoMove(move);
+			final int childEvaluation = getStaticExchangeEvaluation (Color.getOppositeColor(color), square, pieceTypeEvaluations, effectiveOccupancy & ~BitBoard.of(attackerSquare), attackerPieceType);
 
-			return Math.max(0, pieceTypeEvaluations.getPieceTypeEvaluation(capturedPieceType) - childEvaluation);
+			return Math.max(0, pieceTypeEvaluations.getPieceTypeEvaluation(pieceTypeOnSquare) - childEvaluation);
 		}
 		else
 			return 0;

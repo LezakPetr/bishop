@@ -63,6 +63,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		private final Move originalKillerMove = new Move();
 		private final Move hashBestMove = new Move();
 		private final Move firstLegalMove = new Move();
+		private final Move principalMove = new Move();
 		private boolean allMovesGenerated;
 		private boolean isQuiescenceSearch;
 		private int legalMoveCount;
@@ -333,8 +334,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 						}
 					}
 
-					if (principalVariation.getSize() > 0)
-						moveEstimator.updateMove(this, currentPosition.getOnTurn(), principalVariation.get(0), horizon, true);
+					if (principalVariation.getSize() > 0) {
+						principalVariation.assignToMove(0, principalMove);
+						moveEstimator.updateMove(this, currentPosition.getOnTurn(), principalMove, horizon, true);
+					}
 
 					final int mateEvaluation = Evaluation.getMateEvaluation(depth);
 					checkMateAndStalemate(isCheck, mateEvaluation);
@@ -534,8 +537,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 			}
 
 			if (parentEvaluation > evaluation) {
-				if (principalVariation.getSize() > 0)
-					moveEstimator.updateMove(this, currentPosition.getOnTurn(), principalVariation.get(0), horizon, false);
+				if (principalVariation.getSize() > 0) {
+					principalVariation.assignToMove(0, principalMove);
+					moveEstimator.updateMove(this, currentPosition.getOnTurn(), precalculatedMove, horizon, false);
+				}
 
 				evaluation = parentEvaluation;
 				alpha = Math.max(alpha, evaluation);
