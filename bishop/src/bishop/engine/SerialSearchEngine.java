@@ -297,10 +297,11 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					// If precalculated move didn't make beta cutoff try other moves
 					if (!precalculatedBetaCutoff) {
-						generateAndSortMoves(reducedHorizon, isQuiescenceSearch, isCheckSearch, isCheck);
+						generateMoves(reducedHorizon, isQuiescenceSearch, isCheckSearch, isCheck);
 
-						// First legal move
 						while (moveListEnd > moveListBegin) {
+							selectBestMove();
+
 							final Move move = precreatedCurrentMove;
 							moveStack.getMove(moveListEnd - 1, move);
 
@@ -444,7 +445,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return false;
 		}
 
-		private void generateAndSortMoves(final int horizon, final boolean isQuiescenceSearch, final boolean isCheckSearch, final boolean isCheck) {
+		private void generateMoves(final int horizon, final boolean isQuiescenceSearch, final boolean isCheckSearch, final boolean isCheck) {
 			moveListBegin = moveStackTop;
 
 			final EvaluatedMoveList rootMoveList = task.getRootMoveList();
@@ -473,9 +474,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 				}
 
 				moveListEnd = moveStackTop;
-
-				moveStack.sortMoves (moveListBegin, moveListEnd);
 			}
+		}
+
+		private void selectBestMove() {
+			final int bestMoveIndex = moveStack.findBestMove (moveListBegin, moveListEnd);
+			moveStack.swapMoves (bestMoveIndex, moveListEnd - 1);
 		}
 
 		/**
