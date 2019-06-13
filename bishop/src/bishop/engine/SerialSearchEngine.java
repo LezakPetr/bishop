@@ -63,6 +63,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		private final Move originalKillerMove = new Move();
 		private final Move hashBestMove = new Move();
 		private final Move firstLegalMove = new Move();
+		private final Move principalMove = new Move();
 		private boolean allMovesGenerated;
 		private boolean isQuiescenceSearch;
 		private int legalMoveCount;
@@ -297,10 +298,11 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					// If precalculated move didn't make beta cutoff try other moves
 					if (!precalculatedBetaCutoff) {
-						generateAndSortMoves(reducedHorizon, isQuiescenceSearch, isCheckSearch, isCheck);
+						generateMoves(reducedHorizon, isQuiescenceSearch, isCheckSearch, isCheck);
 
-						// First legal move
 						while (moveListEnd > moveListBegin) {
+							selectBestMove();
+
 							final Move move = precreatedCurrentMove;
 							moveStack.getMove(moveListEnd - 1, move);
 
@@ -332,8 +334,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 						}
 					}
 
-					if (principalVariation.getSize() > 0)
-						moveEstimator.updateMove(this, currentPosition.getOnTurn(), principalVariation.get(0), horizon, true);
+					if (principalVariation.getSize() > 0) {
+						principalVariation.assignToMove(0, principalMove);
+						moveEstimator.updateMove(this, currentPosition.getOnTurn(), principalMove, horizon, true);
+					}
 
 					final int mateEvaluation = Evaluation.getMateEvaluation(depth);
 					checkMateAndStalemate(isCheck, mateEvaluation);
@@ -444,7 +448,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return false;
 		}
 
-		private void generateAndSortMoves(final int horizon, final boolean isQuiescenceSearch, final boolean isCheckSearch, final boolean isCheck) {
+		private void generateMoves(final int horizon, final boolean isQuiescenceSearch, final boolean isCheckSearch, final boolean isCheck) {
 			moveListBegin = moveStackTop;
 
 			final EvaluatedMoveList rootMoveList = task.getRootMoveList();
@@ -473,9 +477,12 @@ public final class SerialSearchEngine implements ISearchEngine {
 				}
 
 				moveListEnd = moveStackTop;
-
-				moveStack.sortMoves (moveListBegin, moveListEnd);
 			}
+		}
+
+		private void selectBestMove() {
+			final int bestMoveIndex = moveStack.findBestMove (moveListBegin, moveListEnd);
+			moveStack.swapMoves (bestMoveIndex, moveListEnd - 1);
 		}
 
 		/**
@@ -530,8 +537,10 @@ public final class SerialSearchEngine implements ISearchEngine {
 			}
 
 			if (parentEvaluation > evaluation) {
-				if (principalVariation.getSize() > 0)
-					moveEstimator.updateMove(this, currentPosition.getOnTurn(), principalVariation.get(0), horizon, false);
+				if (principalVariation.getSize() > 0) {
+					principalVariation.assignToMove(0, principalMove);
+					moveEstimator.updateMove(this, currentPosition.getOnTurn(), precalculatedMove, horizon, false);
+				}
 
 				evaluation = parentEvaluation;
 				alpha = Math.max(alpha, evaluation);

@@ -37,6 +37,30 @@ public class MoveStack {
 		System.arraycopy(source.stack, srcIndex, this.stack, dstIndex, size);
 	}
 
+	public int findBestMove(final int begin, final int end) {
+		// This is a little hack. Because evaluation is stored in MSB bytes,
+		// it drives order.
+		int bestIndex = -1;
+		long bestMove = Long.MIN_VALUE;
+
+		for (int i = begin; i < end; i++) {
+			final long move = stack[i];
+
+			if (move >= bestMove) {
+				bestIndex = i;
+				bestMove = move;
+			}
+		}
+
+		return bestIndex;
+	}
+
+	public void swapMoves (final int index1, final int index2) {
+		final long tmp = stack[index1];
+		stack[index1] = stack[index2];
+		stack[index2] = tmp;
+	}
+
 	public void sortMoves(final int begin, final int end) {
 		// This is a little hack. Because evaluation is stored in MSB bytes,
 		// it drives order. So worst moves will be in the begin, best in the end,
