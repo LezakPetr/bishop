@@ -78,8 +78,8 @@ public class LineIndexer {
 		baseTable = new int[CrossDirection.LAST * Square.LAST];
 		int base = 0;
 		
-		for (int direction = CrossDirection.FIRST; direction < CrossDirection.LAST; direction++) {
-			for (int square = Square.FIRST; square < Square.LAST; square++) {
+		for (int square = Square.FIRST; square < Square.LAST; square++) {
+			for (int direction = CrossDirection.FIRST; direction < CrossDirection.LAST; direction++) {
 				final int tableIndex = getCellIndex(direction, square);
 				final long mask = calculateDirectionMask (direction, square);
 				final int bits = DEPTHS[tableIndex];
