@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.PushbackReader;
 import java.io.StringWriter;
+import java.util.Arrays;
 
 import utils.IoUtils;
 
@@ -126,16 +127,45 @@ public class BitBoard {
 		return Long.bitCount(board);
 	}
 
+	private static final long FIRST_SQUARE_TABLE_COEFF = 544578837055249459L;
+	private static final int FIRST_SQUARE_TABLE_BITS = Square.BIT_COUNT + 1;
+	private static final int FIRST_SQUARE_TABLE_SIZE = 1 << FIRST_SQUARE_TABLE_BITS;
+	private static final int FIRST_SQUARE_TABLE_SHIFT = Long.SIZE - FIRST_SQUARE_TABLE_BITS;
+	private static final byte[] FIRST_SQUARE_TABLE = initializeFirstSquareTable();
+
+	private static byte[] initializeFirstSquareTable() {
+		final byte[] table = new byte[FIRST_SQUARE_TABLE_SIZE];
+		Arrays.fill(table, (byte) -1);
+
+		table[getFirstSquareTableIndex(BitBoard.EMPTY)] = Square.NONE;
+
+		for (int square = Square.FIRST; square < Square.LAST; square++) {
+			final int index = getFirstSquareTableIndex(BitBoard.of(square));
+
+			if (table[index] != -1)
+				throw new RuntimeException("Collision in table");
+
+			table[index] = (byte) square;
+		}
+
+		return table;
+	}
+
+	private static int getFirstSquareTableIndex (final long board) {
+		final long firstSetBit = board & -board;
+
+		return (int) ((firstSetBit * FIRST_SQUARE_TABLE_COEFF) >>> FIRST_SQUARE_TABLE_SHIFT);
+	}
+
 	/**
 	 * Returns first set square on the board.
 	 * @param board board
 	 * @return first set square or Square.NONE
 	 */
 	public static int getFirstSquare(final long board) {
-		if (board != 0)
-			return Long.numberOfTrailingZeros(board);
-		else
-			return Square.NONE;
+		final int index = getFirstSquareTableIndex(board);
+
+		return FIRST_SQUARE_TABLE[index];
 	}
 
 	/**
