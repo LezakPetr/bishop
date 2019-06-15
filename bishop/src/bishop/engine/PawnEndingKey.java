@@ -110,7 +110,7 @@ public class PawnEndingKey {
             final int pawnCount = BitBoard.getSquareCount(pawnMask & BoardConstants.PAWN_ALLOWED_SQUARES);
             materialHash.addPiece(color, PieceType.PAWN, pawnCount);
 
-            final int queenCount = BitBoard.getSquareCount(pawnMask & ~BoardConstants.PAWN_ALLOWED_SQUARES);
+            final int queenCount = BitBoard.getSquareCountSparse(pawnMask & ~BoardConstants.PAWN_ALLOWED_SQUARES);
             materialHash.addPiece(color, PieceType.QUEEN, queenCount);
         }
 

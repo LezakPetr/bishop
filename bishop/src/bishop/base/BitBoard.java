@@ -124,7 +124,40 @@ public class BitBoard {
 	}
 
 	public static int getSquareCount (final long board) {
+		/*//final long counterWidth2 = (board         & 0x5555555555555555L) + ((board         & 0xAAAAAAAAAAAAAAAAL) >>> 1);
+
+		// 00 = 0 => 0
+		// 01 = 1 => 1
+		// 10 = 2 => 1
+		// 11 = 3 => 2
+		// counterWidth2 = board - upper bit shifted down
+		final long counterWidth2 = board - ((board & 0xAAAAAAAAAAAAAAAAL) >>> 1);
+		final long counterWidth4 = (counterWidth2 & 0x3333333333333333L) + ((counterWidth2 & 0xCCCCCCCCCCCCCCCCL) >>> 2);
+		final long counterWidth8 = (counterWidth4 & 0x0F0F0F0F0F0F0F0FL) + ((counterWidth4 & 0xF0F0F0F0F0F0F0F0L) >>> 4);
+		final int count = (int) ((counterWidth8 * 0x0101010101010101L) >>> 56);
+
+		return count;*/
 		return Long.bitCount(board);
+	}
+
+	public static int getSquareCountSparse (final long board) {
+		long mask = board;
+		int count = 0;
+
+		while (mask != 0) {
+			mask &= mask - 1;
+			count++;
+		}
+
+		return count;
+	}
+
+	public static boolean hasSingleSquare (final long board) {
+		return board != 0 && (board & (board - 1)) == 0;
+	}
+
+	public static boolean hasAtLeastTwoSquares (final long board) {
+		return (board & (board - 1)) != 0;
 	}
 
 	private static final long FIRST_SQUARE_TABLE_COEFF = 544578837055249459L;
@@ -206,7 +239,7 @@ public class BitBoard {
 		long mask = possibleSquares;
 
 		for (int i = 0; i < index; i++)
-			mask &= ~Long.lowestOneBit(mask);
+			mask &= mask - 1;
 		
 		return getFirstSquare(mask);
 	}

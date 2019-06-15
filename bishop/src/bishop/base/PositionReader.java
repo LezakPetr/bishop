@@ -42,7 +42,7 @@ public class PositionReader extends PositionIo {
 		final long possibleSquares = getPossibleEpSquares();
 
 		if (possibleSquares != BitBoard.EMPTY) {
-			final int count = BitBoard.getSquareCount(possibleSquares);
+			final int count = BitBoard.getSquareCountSparse(possibleSquares);
 			final IProbabilityModel model = getEpFileProbabilityModel(count);
 			final int symbol = decoder.decodeSymbol(model);
 			final int epFile;

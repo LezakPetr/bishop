@@ -37,7 +37,7 @@ public class PositionWriter extends PositionIo {
 		for (RecordedPiece recordedPiece: RECORDED_PIECES) {
 			for (int color = Color.FIRST; color < Color.LAST; color++) {
 				final long pieces = position.getPiecesMask(color, recordedPiece.getPieceType());
-				final int count = BitBoard.getSquareCount(pieces & recordedPiece.getRecordedSquares());
+				final int count = BitBoard.getSquareCountSparse(pieces & recordedPiece.getRecordedSquares());
 				final IProbabilityModel model = recordedPiece.getCountProbabilityModel();
 				
 				if (model != null)
@@ -64,7 +64,7 @@ public class PositionWriter extends PositionIo {
 		final long possibleMask = ~occupiedSquares & recordedPiece.getRecordedSquares();
 		final long pieceMask = position.getPiecesMask(color, recordedPiece.getPieceType()) & possibleMask;
 		
-		int remainingPieceCount = BitBoard.getSquareCount(pieceMask);
+		int remainingPieceCount = BitBoard.getSquareCountSparse(pieceMask);
 		int remainingSquareCount = BitBoard.getSquareCount(possibleMask);
 		
 		for (int square = Square.FIRST; square < Square.LAST && remainingPieceCount > 0 && remainingPieceCount < remainingSquareCount; square++) {
@@ -104,7 +104,7 @@ public class PositionWriter extends PositionIo {
 		final long possibleSquares = getPossibleEpSquares();
 		
 		if (possibleSquares != BitBoard.EMPTY) {
-			final int count = BitBoard.getSquareCount(possibleSquares);
+			final int count = BitBoard.getSquareCountSparse(possibleSquares);
 			final int epFile = position.getEpFile(); 
 			final int symbol;
 			

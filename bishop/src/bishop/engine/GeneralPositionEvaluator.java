@@ -35,16 +35,19 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		this.tacticalEvaluation = evaluationFactory.get();
 		this.positionalEvaluation = evaluationFactory.get();
 
-		if (positionalEvaluation instanceof CoeffCountPositionEvaluation)
+		if (positionalEvaluation instanceof CoeffCountPositionEvaluation) {
 			this.tablePositionEvaluator = new GameStageTablePositionEvaluator(PositionEvaluationCoeffs.TABLE_EVALUATOR_COEFFS, evaluationFactory);
-		else
+			this.pawnStructureEvaluator = new CoeffCountPawnStructureEvaluator(evaluationFactory);
+		}
+		else {
 			this.tablePositionEvaluator = new IterativeGameStageTablePositionEvaluator(evaluationFactory);
+			this.pawnStructureEvaluator = new AlgebraicPawnStructureEvaluator(evaluationFactory);
+		}
 
 		this.bishopColorPositionEvaluators = new BishopColorPositionEvaluator[GameStage.COUNT];
 		this.mobilityEvaluator = new MobilityPositionEvaluator(evaluationFactory);
 		this.kingSafetyEvaluators = new KingSafetyEvaluator[GameStage.COUNT];
 		this.pawnRaceEvaluator = new PawnRaceEvaluator(evaluationFactory);
-		this.pawnStructureEvaluator = new PawnStructureEvaluator(evaluationFactory);
 		
 		for (int gameStage = GameStage.FIRST; gameStage < GameStage.LAST; gameStage++) {
 			final GameStageCoeffs coeffs = PositionEvaluationCoeffs.GAME_STAGE_COEFFS.get(gameStage);
@@ -68,7 +71,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 			final long rookMask = position.getPiecesMask(color, PieceType.ROOK);
 			final long openRooks = rookMask & ~pawnStructureEvaluator.getBackSquares(color);
 			
-			positionalEvaluation.addCoeff(gameStageCoeffs.rookOnOpenFileBonus, color, BitBoard.getSquareCount(openRooks));
+			positionalEvaluation.addCoeff(gameStageCoeffs.rookOnOpenFileBonus, color, BitBoard.getSquareCountSparse(openRooks));
 		}
 	}
 	
@@ -145,7 +148,7 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final long figures = position.getPromotionFigureMask(color);
 			final long securedFigures = figures & pawnStructureEvaluator.getSecureSquares(color);
-			final int count = BitBoard.getSquareCount(securedFigures);
+			final int count = BitBoard.getSquareCountSparse(securedFigures);
 			
 			positionalEvaluation.addCoeff(gameStageCoeffs.figureOnSecureSquareBonus, color, count);
 		}
@@ -153,13 +156,16 @@ public class GeneralPositionEvaluator  implements IPositionEvaluator {
 	
 	private void evaluateQueenMove() {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final long figureMask = position.getPiecesMask(color, PieceType.BISHOP) | position.getPiecesMask(color, PieceType.KNIGHT);
-			final long queenMask = position.getPiecesMask(color, PieceType.QUEEN);
 			final long firstRankMask = BoardConstants.getFirstRankMask (color);
+			final long figureMask = position.getPiecesMask(color, PieceType.BISHOP) | position.getPiecesMask(color, PieceType.KNIGHT);
 			final long figuresOnFirstRank = figureMask & firstRankMask;
-			
-			if (figuresOnFirstRank != 0 && (queenMask & ~firstRankMask) != 0) {
-				positionalEvaluation.addCoeff(gameStageCoeffs.queenMoveBonus, color);
+
+			if (figuresOnFirstRank != 0) {
+				final long queenMask = position.getPiecesMask(color, PieceType.QUEEN);
+
+				if ((queenMask & ~firstRankMask) != 0) {
+					positionalEvaluation.addCoeff(gameStageCoeffs.queenMoveBonus, color);
+				}
 			}
 		}
 	}

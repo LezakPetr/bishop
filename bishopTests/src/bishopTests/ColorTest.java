@@ -46,4 +46,16 @@ public class ColorTest {
 			Assert.assertEquals(-value, Color.colorNegate(Color.BLACK, value));
 		}
 	}
+
+	@Test
+	public void testColorNegateLong() {
+		final SplittableRandom rng = new SplittableRandom(1234);
+
+		for (int i = 0; i < 1000000; i++) {
+			final long value = rng.nextLong();
+
+			Assert.assertEquals(value, Color.colorNegate(Color.WHITE, value));
+			Assert.assertEquals(-value, Color.colorNegate(Color.BLACK, value));
+		}
+	}
 }

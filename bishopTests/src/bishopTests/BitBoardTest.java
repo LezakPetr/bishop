@@ -95,10 +95,46 @@ public class BitBoardTest {
 			}
 
 			Assert.assertEquals(expectedCount, BitBoard.getSquareCount(mask));
+			Assert.assertEquals(expectedCount, BitBoard.getSquareCountSparse(mask));
 		}
 
 		Assert.assertEquals(0, BitBoard.getSquareCount(BitBoard.EMPTY));
 		Assert.assertEquals(Square.COUNT, BitBoard.getSquareCount(BitBoard.FULL));
+
+		Assert.assertEquals(0, BitBoard.getSquareCountSparse(BitBoard.EMPTY));
+		Assert.assertEquals(Square.COUNT, BitBoard.getSquareCountSparse(BitBoard.FULL));
+	}
+
+	@Test
+	public void testHasSingleSquare() {
+		// Empty board
+		Assert.assertFalse(BitBoard.hasSingleSquare(BitBoard.EMPTY));
+
+		// Single square
+		for (int s = Square.FIRST; s < Square.LAST; s++)
+			Assert.assertTrue(BitBoard.hasSingleSquare(BitBoard.of(s)));
+
+		// Two squares
+		for (int s1 = Square.FIRST; s1 < Square.LAST; s1++) {
+			for (int s2 = s1 + 1; s2 < Square.LAST; s2++)
+				Assert.assertFalse(BitBoard.hasSingleSquare(BitBoard.of(s1, s2)));
+		}
+	}
+
+	@Test
+	public void testHasAtLeastTwoSquares() {
+		// Empty board
+		Assert.assertFalse(BitBoard.hasAtLeastTwoSquares(BitBoard.EMPTY));
+
+		// Single square
+		for (int s = Square.FIRST; s < Square.LAST; s++)
+			Assert.assertFalse(BitBoard.hasAtLeastTwoSquares(BitBoard.of(s)));
+
+		// Two squares
+		for (int s1 = Square.FIRST; s1 < Square.LAST; s1++) {
+			for (int s2 = s1 + 1; s2 < Square.LAST; s2++)
+				Assert.assertTrue(BitBoard.hasAtLeastTwoSquares(BitBoard.of(s1, s2)));
+		}
 	}
 
 	@Test

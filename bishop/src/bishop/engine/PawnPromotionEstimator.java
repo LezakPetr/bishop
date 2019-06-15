@@ -156,16 +156,16 @@ public class PawnPromotionEstimator {
 					~blockedSquares;
 
 			if (defendantPawnCount == 1) {
-				stalematingPawnTwoMovesToPromotionCount = BitBoard.getSquareCount(pawnsTwoMovesToPromotion & BoardConstants.FILE_ACFH_MASK);
-				normalPawnTwoMovesToPromotionCount = BitBoard.getSquareCount(pawnsTwoMovesToPromotion & ~BoardConstants.FILE_ACFH_MASK);
+				stalematingPawnTwoMovesToPromotionCount = BitBoard.getSquareCountSparse(pawnsTwoMovesToPromotion & BoardConstants.FILE_ACFH_MASK);
+				normalPawnTwoMovesToPromotionCount = BitBoard.getSquareCountSparse(pawnsTwoMovesToPromotion & ~BoardConstants.FILE_ACFH_MASK);
 			}
 			else {
 				stalematingPawnTwoMovesToPromotionCount = 0;
-				normalPawnTwoMovesToPromotionCount = BitBoard.getSquareCount(pawnsTwoMovesToPromotion);
+				normalPawnTwoMovesToPromotionCount = BitBoard.getSquareCountSparse(pawnsTwoMovesToPromotion);
 			}
 		}
 
-		attackerPawnOnSevenRankCount = BitBoard.getSquareCount(attackerPawns & SEVENTH_RANK_MASK[attackerColor]);
+		attackerPawnOnSevenRankCount = BitBoard.getSquareCountSparse(attackerPawns & SEVENTH_RANK_MASK[attackerColor]);
 
 		// Squares that blocks defendant pawns
 		final long attackerKingTargetSquares = FigureAttackTable.getItem(PieceType.KING, attackerKingSquare);

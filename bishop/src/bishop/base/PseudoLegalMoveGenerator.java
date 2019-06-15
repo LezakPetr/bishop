@@ -372,9 +372,7 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
     	if (checkingPieces == BitBoard.EMPTY)
     		return notOwnSquares;   // No check
     	
-		final int checkCount = BitBoard.getSquareCount(checkingPieces);
-		
-		if (checkCount == 1) {
+		if (BitBoard.hasSingleSquare(checkingPieces)) {
 			final int checkingSquare = BitBoard.getFirstSquare(checkingPieces);
 			
 			return checkingPieces | BetweenTable.getItem(kingSquare, checkingSquare);
@@ -411,7 +409,7 @@ public final class PseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase
 			final int square = loop.getNextSquare();
 			final long betweenMask = BetweenTable.getItem(oppositeKingSquare, square) & position.getOccupancy();
 			
-			if (BitBoard.getSquareCount(betweenMask) == 1)
+			if (BitBoard.hasSingleSquare(betweenMask))
 				blockers |= betweenMask;
 		}
 		

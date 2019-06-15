@@ -20,24 +20,13 @@ public class AttackCalculator {
 	private static final int PAWN_ATTACK_COEFF = 2;
 	private static final int TOTAL_ATTACK_COEFF = 1;
 
-	private final long[] pawnAttackedSquares = new long[Color.LAST];
-
 	private final long[] directlyAttackedSquares = new long[Color.LAST];   // Squares attacked by some piece
 	private final int[] mobility = new int[PieceType.LAST];
 	private final int[] attackEvaluation = new int[Color.LAST];   // Attack evaluation for given color, always positive
 
 	public void calculate(final Position position, final MobilityCalculator mobilityCalculator) {
-		calculatePawnAttacks(position);
 		calculateMobility(position, mobilityCalculator);
 		calculateAttackEvaluation(position, mobilityCalculator);
-	}
-
-	private void calculatePawnAttacks(final Position position) {
-		for (int color = Color.FIRST; color < Color.LAST; color++) {
-			final long pawnsMask = position.getPiecesMask(color, PieceType.PAWN);
-			
-			pawnAttackedSquares[color] = BoardConstants.getPawnsAttackedSquares(color, pawnsMask);
-		}
 	}
 	
 	private void calculateMobility(final Position position, final MobilityCalculator mobilityCalculator) {
@@ -45,7 +34,9 @@ public class AttackCalculator {
 		
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int oppositeColor = Color.getOppositeColor(color);
-			final long oppositePawnAttacks = pawnAttackedSquares[oppositeColor];
+
+			final long pawnsMask = position.getPiecesMask(oppositeColor, PieceType.PAWN);
+			final long oppositePawnAttacks = BoardConstants.getPawnsAttackedSquares(oppositeColor, pawnsMask);
 			final long freeSquares = ~(oppositePawnAttacks | position.getColorOccupancy(color));
 
 			// Bishop
@@ -60,7 +51,7 @@ public class AttackCalculator {
 			final long queenAttackedSquares = mobilityCalculator.getQueenAttackedSquares(color);
 			mobility[PieceType.QUEEN] += Color.colorNegate(color, BitBoard.getSquareCount(queenAttackedSquares & freeSquares));
 			
-			//Knight
+			// Knight
 			final long knightAttackedSquares = mobilityCalculator.getKnightAttackedSquares(color);
 			mobility[PieceType.KNIGHT] += Color.colorNegate(color, BitBoard.getSquareCount(knightAttackedSquares & freeSquares));
 
@@ -77,11 +68,11 @@ public class AttackCalculator {
 
 			int evaluation = 0;
 
-			evaluation += KNIGHT_ATTACK_COEFF * BitBoard.getSquareCount(nearAttackableMask & mobilityCalculator.getKnightAttackedSquares(color));
-			evaluation += BISHOP_ATTACK_COEFF * BitBoard.getSquareCount(nearAttackableMask & mobilityCalculator.getBishopAttackedSquares(color));
-			evaluation += ROOK_ATTACK_COEFF * BitBoard.getSquareCount(nearAttackableMask & mobilityCalculator.getRookAttackedSquares(color));
-			evaluation += QUEEN_ATTACK_COEFF * BitBoard.getSquareCount(nearAttackableMask & mobilityCalculator.getQueenAttackedSquares(color));
-			evaluation += PAWN_ATTACK_COEFF * BitBoard.getSquareCount(nearAttackableMask & mobilityCalculator.getPawnAttackedSquares(color));
+			evaluation += KNIGHT_ATTACK_COEFF * BitBoard.getSquareCountSparse(nearAttackableMask & mobilityCalculator.getKnightAttackedSquares(color));
+			evaluation += BISHOP_ATTACK_COEFF * BitBoard.getSquareCountSparse(nearAttackableMask & mobilityCalculator.getBishopAttackedSquares(color));
+			evaluation += ROOK_ATTACK_COEFF * BitBoard.getSquareCountSparse(nearAttackableMask & mobilityCalculator.getRookAttackedSquares(color));
+			evaluation += QUEEN_ATTACK_COEFF * BitBoard.getSquareCountSparse(nearAttackableMask & mobilityCalculator.getQueenAttackedSquares(color));
+			evaluation += PAWN_ATTACK_COEFF * BitBoard.getSquareCountSparse(nearAttackableMask & mobilityCalculator.getPawnAttackedSquares(color));
 
 			evaluation += TOTAL_ATTACK_COEFF * BitBoard.getSquareCount(farAttackableMask & mobilityCalculator.getAllAttackedSquares(color));
 

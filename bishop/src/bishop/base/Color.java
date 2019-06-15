@@ -119,4 +119,16 @@ public class Color {
 	public static int colorNegate (final int color, final int value) {
 		return (value ^ -color) + color;
 	}
+
+	/**
+	 * Returns value if color == Color.WHITE.
+	 * Returns -value if color == Color.BLACK.
+	 * Result is undefined if color has other value.
+	 */
+	public static long colorNegate (final int color, final long value) {
+		final long colorLong = color;
+
+		return (value ^ -colorLong) + colorLong;
+	}
+
 }

@@ -749,7 +749,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	public int getCountOfAttacks (final int color, final int square) {
 		final long attackingPieceMask = getAttackingPieces(color, square);
 				
-		return BitBoard.getSquareCount(attackingPieceMask);
+		return BitBoard.getSquareCountSparse(attackingPieceMask);
 	}
 
 	/**

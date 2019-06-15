@@ -112,8 +112,8 @@ public class SearchExtensionCalculator {
 		final long oppositeRookMask = position.getPiecesMask(notOnTurn, PieceType.ROOK);
 		final long heavyFigureMask = oppositeQueenMask | oppositeRookMask;
 		
-		return BitBoard.getSquareCount(heavyFigureMask & firstRankMask) >= 2 ||
-		       BitBoard.getSquareCount(heavyFigureMask & secondRankMask) >= 2;
+		return BitBoard.hasAtLeastTwoSquares(heavyFigureMask & firstRankMask) ||
+		       BitBoard.hasAtLeastTwoSquares(heavyFigureMask & secondRankMask);
 	}
 	
 	public void setSearchSettings(final SearchSettings settings) {
