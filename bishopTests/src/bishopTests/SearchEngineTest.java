@@ -107,7 +107,7 @@ public class SearchEngineTest {
 
 	public SerialSearchEngine configureEngine(final boolean withCheckSearch) {
 		final SerialSearchEngine engine = new SerialSearchEngine();
-		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getTestingFactory();
+		final Supplier<IPositionEvaluation> evaluationFactory = AlgebraicPositionEvaluation.getAlgebraicTestingFactory();
 		final MaterialPositionEvaluator evaluator = new MaterialPositionEvaluator(evaluationFactory);
 
 		engine.setPositionEvaluator(evaluator);

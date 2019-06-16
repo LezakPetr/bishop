@@ -14,4 +14,5 @@ public interface IPosition extends IPieceCounts {
 	public void setPieceTypeEvaluations (final PieceTypeEvaluations pieceTypeEvaluations);
 	public int getMaterialEvaluation();
 	public int getGameStage();
+	public Piece getSquareContent (final int square);
 }

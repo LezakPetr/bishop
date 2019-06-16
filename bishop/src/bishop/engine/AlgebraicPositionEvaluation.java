@@ -6,7 +6,9 @@ import bishop.base.Color;
 
 public class AlgebraicPositionEvaluation implements IPositionEvaluation {
 
-	private static final Supplier<IPositionEvaluation> TESTING_FACTORY = () -> new AlgebraicPositionEvaluation(new PositionEvaluationCoeffs());
+	private static final PositionEvaluationCoeffs RANDOM_COEFFS = PositionEvaluationCoeffs.random();
+	private static final Supplier<IPositionEvaluation> ALGEBRAIC_TESTING_FACTORY = () -> new AlgebraicPositionEvaluation(RANDOM_COEFFS);
+	private static final Supplier<IPositionEvaluation> COEFF_COUNT_TESTING_FACTORY = () -> new CoeffCountPositionEvaluation(RANDOM_COEFFS);
 	
 	private final PositionEvaluationCoeffs coeffs;
 	private int evaluation;
@@ -62,8 +64,12 @@ public class AlgebraicPositionEvaluation implements IPositionEvaluation {
 		addCoeff(index, color, 1);
 	}
 
-	public static Supplier<IPositionEvaluation> getTestingFactory() {
-		return TESTING_FACTORY;
+	public static Supplier<IPositionEvaluation> getAlgebraicTestingFactory() {
+		return ALGEBRAIC_TESTING_FACTORY;
+	}
+
+	public static Supplier<IPositionEvaluation> getCoeffCountTestingFactory() {
+		return COEFF_COUNT_TESTING_FACTORY;
 	}
 
 }
