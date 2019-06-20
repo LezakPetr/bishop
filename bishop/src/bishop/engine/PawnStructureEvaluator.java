@@ -101,7 +101,7 @@ abstract public class PawnStructureEvaluator {
 	abstract protected void addPositionDependentEvaluation(final int endingCoeff, final int color, final int coeffCount);
 
 
-		protected void evaluatePositionDependent(final Position position) {
+	protected void evaluatePositionDependent(final Position position) {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int oppositeColor = Color.getOppositeColor(color);
 			final long oppositeRookMask = position.getPiecesMask(oppositeColor, PieceType.ROOK);
