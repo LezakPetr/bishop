@@ -68,11 +68,11 @@ public class AttackCalculator {
 
 			int evaluation = 0;
 
-			evaluation += KNIGHT_ATTACK_COEFF * BitBoard.getSquareCountSparse(nearAttackableMask & mobilityCalculator.getKnightAttackedSquares(color));
-			evaluation += BISHOP_ATTACK_COEFF * BitBoard.getSquareCountSparse(nearAttackableMask & mobilityCalculator.getBishopAttackedSquares(color));
-			evaluation += ROOK_ATTACK_COEFF * BitBoard.getSquareCountSparse(nearAttackableMask & mobilityCalculator.getRookAttackedSquares(color));
-			evaluation += QUEEN_ATTACK_COEFF * BitBoard.getSquareCountSparse(nearAttackableMask & mobilityCalculator.getQueenAttackedSquares(color));
-			evaluation += PAWN_ATTACK_COEFF * BitBoard.getSquareCountSparse(nearAttackableMask & mobilityCalculator.getPawnAttackedSquares(color));
+			evaluation += KNIGHT_ATTACK_COEFF * BitBoard.getSquareCountNearKing(nearAttackableMask & mobilityCalculator.getKnightAttackedSquares(color));
+			evaluation += BISHOP_ATTACK_COEFF * BitBoard.getSquareCountNearKing(nearAttackableMask & mobilityCalculator.getBishopAttackedSquares(color));
+			evaluation += ROOK_ATTACK_COEFF * BitBoard.getSquareCountNearKing(nearAttackableMask & mobilityCalculator.getRookAttackedSquares(color));
+			evaluation += QUEEN_ATTACK_COEFF * BitBoard.getSquareCountNearKing(nearAttackableMask & mobilityCalculator.getQueenAttackedSquares(color));
+			evaluation += PAWN_ATTACK_COEFF * BitBoard.getSquareCountNearKing(nearAttackableMask & mobilityCalculator.getPawnAttackedSquares(color));
 
 			evaluation += TOTAL_ATTACK_COEFF * BitBoard.getSquareCount(farAttackableMask & mobilityCalculator.getAllAttackedSquares(color));
 

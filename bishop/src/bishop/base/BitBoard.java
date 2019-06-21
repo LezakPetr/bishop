@@ -13,6 +13,25 @@ public class BitBoard {
 	
 	public static final long EMPTY = 0L;
 	public static final long FULL = 0xFFFFFFFFFFFFFFFFL;
+
+	private static final int NEAR_KING_SQUARE_COUNT_TABLE_BITS = 12;
+	private static final int NEAR_KING_SQUARE_COUNT_TABLE_SIZE = 1 << NEAR_KING_SQUARE_COUNT_TABLE_BITS;
+
+	// Before multiplication: abc_____def_____ghi
+	// After  multiplication: abc_ghi_def_
+	private static final int NEAR_KING_SQUARE_COUNT_TABLE_SHIFT = Square.COUNT - NEAR_KING_SQUARE_COUNT_TABLE_BITS;
+	private static final long NEAR_KING_SQUARE_COUNT_TABLE_COEFF = 0x1001001001001001L;
+
+	private static final byte[] NEAR_KING_SQUARE_COUNT_TABLE = initializeNearKingSquareCountTable();
+
+	private static byte[] initializeNearKingSquareCountTable() {
+		final byte[] table = new byte[NEAR_KING_SQUARE_COUNT_TABLE_SIZE];
+
+		for (int i = 0; i < NEAR_KING_SQUARE_COUNT_TABLE_SIZE; i++)
+			table[i] = (byte) Integer.bitCount(i);
+
+		return table;
+	}
 	
 
 	/**
@@ -150,6 +169,16 @@ public class BitBoard {
 		}
 
 		return count;
+	}
+
+	/**
+	 * Returns number of squares in given board,
+	 * but expects that the board contains only near king squares (with distance <= 1).
+	 */
+	public static int getSquareCountNearKing (final long board) {
+		int index = (int) ((board * NEAR_KING_SQUARE_COUNT_TABLE_COEFF) >>> NEAR_KING_SQUARE_COUNT_TABLE_SHIFT);
+
+		return NEAR_KING_SQUARE_COUNT_TABLE[index];
 	}
 
 	public static boolean hasSingleSquare (final long board) {

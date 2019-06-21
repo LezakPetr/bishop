@@ -106,6 +106,33 @@ public class BitBoardTest {
 	}
 
 	@Test
+	public void testGetSquareCountNearKing() {
+		final SplittableRandom rng = new SplittableRandom(1234);
+
+		for (int i = 0; i < 1000000; i++) {
+			final int kingSquare = rng.nextInt(Square.FIRST, Square.LAST);
+			final long nearKingMask = BoardConstants.getKingNearSquares(kingSquare);
+
+			long mask = BitBoard.EMPTY;
+			int expectedCount = 0;
+
+			for (BitLoop loop = new BitLoop(nearKingMask); loop.hasNextSquare(); ) {
+				final int square = loop.getNextSquare();
+
+				if (rng.nextBoolean()) {
+					mask |= BitBoard.of(square);
+					expectedCount++;
+				}
+			}
+
+			Assert.assertEquals(expectedCount, BitBoard.getSquareCountNearKing(mask));
+			Assert.assertEquals(BitBoard.getSquareCount(nearKingMask), BitBoard.getSquareCountNearKing(nearKingMask));
+		}
+
+		Assert.assertEquals(0, BitBoard.getSquareCountNearKing(BitBoard.EMPTY));
+	}
+
+	@Test
 	public void testHasSingleSquare() {
 		// Empty board
 		Assert.assertFalse(BitBoard.hasSingleSquare(BitBoard.EMPTY));
