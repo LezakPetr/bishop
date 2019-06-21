@@ -14,7 +14,9 @@ import bishop.base.Square;
  */
 public class HistoryTable {
 	private static final double MAX_EVALUATION = 1.0;
-	
+	public static final int COLOR_OFFSET = Square.BIT_COUNT;
+	public static final int PIECE_TYPE_OFFSET = Square.BIT_COUNT + Color.BIT_COUNT;
+
 	private final long[] historyTable = new long[Color.LAST * PieceType.LAST * Square.LAST];
 	private long maxEntry;
 	private double coeff;
@@ -47,8 +49,8 @@ public class HistoryTable {
 	
 	private static int getHistoryTableIndex (final int color, final Move move) {
 		return move.getTargetSquare() +
-		       (color << Square.BIT_COUNT) +
-		       (move.getMovingPieceType() << (Square.BIT_COUNT + Color.BIT_COUNT));
+		       (color << COLOR_OFFSET) +
+		       (move.getMovingPieceType() << PIECE_TYPE_OFFSET);
 	}
 	
 	public void clear() {
