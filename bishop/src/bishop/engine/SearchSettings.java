@@ -45,7 +45,7 @@ public final class SearchSettings {
 	public SearchSettings() {
 		maxQuiescenceDepth = 13;
 		maxCheckSearchDepth = 11;
-		nullMoveReduction = 6;
+		nullMoveReduction = 4;
 		minExtensionHorizon = 2;
 
 		simpleCheckExtension = makeExtension(0.0);
