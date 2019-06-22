@@ -33,6 +33,22 @@ public final class FinitePositionEvaluator {
 			return true;
 		}
 
+		// Alone king
+		final int onTurn = position.getOnTurn();
+		final IMaterialHashRead materialHash = position.getMaterialHash();
+
+		if (materialHash.isAloneKing(onTurn) && alpha > Evaluation.DRAW) {
+			evaluation = Evaluation.DRAW;
+			return true;
+		}
+
+		final int oppositeColor = Color.getOppositeColor(onTurn);
+
+		if (materialHash.isAloneKing(oppositeColor) && beta < Evaluation.DRAW) {
+			evaluation = Evaluation.DRAW;
+			return true;
+		}
+
 		// Dead positions
 		final boolean isDeadPosition = DrawChecker.isDeadPosition(position);
 
@@ -63,7 +79,7 @@ public final class FinitePositionEvaluator {
 		}
 
 		// Pawn ending
-		if (depth > MIN_PAWN_EVALUATOR_DEPTH && horizon > MIN_PAWN_ENDING_EVALUATOR_HORIZON && !position.getMaterialHash().hasFigure()) {
+		if (depth > MIN_PAWN_EVALUATOR_DEPTH && horizon > MIN_PAWN_ENDING_EVALUATOR_HORIZON && !materialHash.hasFigure()) {
 			final PawnEndingKey key = new PawnEndingKey(
 					position.getPiecesMask(Color.WHITE, PieceType.PAWN),
 					position.getPiecesMask(Color.BLACK, PieceType.PAWN)
@@ -71,7 +87,6 @@ public final class FinitePositionEvaluator {
 
 			if (key.estimateComplexity() < MAX_PAWN_ENDING_EVALUATOR_COMPLEXITY) {
 				final PawnEndingTable table = pawnEndingTableRegister.getTable(key);
-				final int onTurn = position.getOnTurn();
 				final int kingOnTurnSquare = position.getKingPosition(onTurn);
 				final int kingNotOnTurnSquare = position.getKingPosition(Color.getOppositeColor(onTurn));
 				final int classification = table.getClassification(kingOnTurnSquare, kingNotOnTurnSquare, onTurn);
