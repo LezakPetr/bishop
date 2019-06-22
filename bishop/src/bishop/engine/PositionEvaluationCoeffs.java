@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.SplittableRandom;
 
+import bishop.base.PieceType;
 import bishop.base.PieceTypeEvaluations;
 import collections.ImmutableList;
 import utils.IoUtils;
@@ -101,6 +103,16 @@ public class PositionEvaluationCoeffs {
 			IoUtils.writeNumberBinary(stream, coeffs[i], IoUtils.SHORT_BYTES);
 
 		pieceTypeEvaluations.write (stream);
+	}
+
+	public static PositionEvaluationCoeffs random() {
+		final PositionEvaluationCoeffs coeffs = new PositionEvaluationCoeffs();
+		final SplittableRandom rng = new SplittableRandom(12345);
+
+		for (int i = 0; i < LAST; i++)
+			coeffs.coeffs[i] = (short) rng.nextInt(PieceTypeEvaluations.PAWN_EVALUATION);
+
+		return coeffs;
 	}
 
 }

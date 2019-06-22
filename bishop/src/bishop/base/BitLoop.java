@@ -39,7 +39,7 @@ public final class BitLoop {
 	 * @return square with set bit
 	 */
 	public int getNextSquare() {
-		final int square = Long.numberOfTrailingZeros(board);
+		final int square = BitBoard.getFirstSquare(board);
 		board &= board - 1;
 		
 		return square;

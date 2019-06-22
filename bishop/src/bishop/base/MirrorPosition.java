@@ -90,4 +90,16 @@ public class MirrorPosition implements IPosition {
 		return basePosition.getGameStage();
 	}
 
+	@Override
+	public Piece getSquareContent (final int square) {
+		final Piece piece = basePosition.getSquareContent(Square.getOppositeSquare(square));
+
+		if (piece == null)
+			return piece;
+
+		return Piece.withColorAndType(
+				Color.getOppositeColor(piece.getColor()),
+				piece.getPieceType()
+		);
+	}
 }

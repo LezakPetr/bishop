@@ -24,7 +24,7 @@ public class DrawChecker {
 		final long allKnightMask = position.getBothColorPiecesMask(PieceType.KNIGHT);
 		final long allBishopMask = position.getBothColorPiecesMask(PieceType.BISHOP);
 		
-		int effectiveCount = BitBoard.getSquareCount(allKnightMask);
+		int effectiveCount = BitBoard.getSquareCountSparse(allKnightMask);
 		
 		if ((allBishopMask & BoardConstants.WHITE_SQUARE_MASK) != 0)
 			effectiveCount++;

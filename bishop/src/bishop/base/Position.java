@@ -749,7 +749,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	public int getCountOfAttacks (final int color, final int square) {
 		final long attackingPieceMask = getAttackingPieces(color, square);
 				
-		return BitBoard.getSquareCount(attackingPieceMask);
+		return BitBoard.getSquareCountSparse(attackingPieceMask);
 	}
 
 	/**
@@ -903,6 +903,7 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 	 * Assigns given original position into this.
 	 * @param orig original position
 	 */
+	@Override
 	public void assign (final Position orig) {
 		System.arraycopy(orig.pieceTypeMasks, 0, this.pieceTypeMasks, 0, PieceType.LAST);
 		System.arraycopy(orig.colorOccupancy, 0, this.colorOccupancy, 0, Color.LAST);
@@ -912,6 +913,24 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		this.castlingRights.assign (orig.castlingRights);
 		this.epFile = orig.epFile;
 		this.caching.assign(orig.caching);
+	}
+
+	/**
+	 * Assigns given original position into this.
+	 * @param orig original position
+	 */
+	public void assign (final IPosition orig) {
+		clearPosition();
+
+		for (int square = Square.FIRST; square < Square.LAST; square++) {
+			this.setSquareContent(square, orig.getSquareContent (square));
+		}
+
+		this.onTurn = orig.getOnTurn();
+		this.castlingRights.assign (orig.getCastlingRights());
+		this.epFile = orig.getEpFile();
+
+		refreshCachedData();
 	}
 	
 	/**

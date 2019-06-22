@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.PushbackReader;
 import java.io.StringWriter;
+import java.util.Arrays;
 
 import utils.IoUtils;
 
@@ -12,6 +13,25 @@ public class BitBoard {
 	
 	public static final long EMPTY = 0L;
 	public static final long FULL = 0xFFFFFFFFFFFFFFFFL;
+
+	private static final int NEAR_KING_SQUARE_COUNT_TABLE_BITS = 12;
+	private static final int NEAR_KING_SQUARE_COUNT_TABLE_SIZE = 1 << NEAR_KING_SQUARE_COUNT_TABLE_BITS;
+
+	// Before multiplication: abc_____def_____ghi
+	// After  multiplication: abc_ghi_def_
+	private static final int NEAR_KING_SQUARE_COUNT_TABLE_SHIFT = Square.COUNT - NEAR_KING_SQUARE_COUNT_TABLE_BITS;
+	private static final long NEAR_KING_SQUARE_COUNT_TABLE_COEFF = 0x1001001001001001L;
+
+	private static final byte[] NEAR_KING_SQUARE_COUNT_TABLE = initializeNearKingSquareCountTable();
+
+	private static byte[] initializeNearKingSquareCountTable() {
+		final byte[] table = new byte[NEAR_KING_SQUARE_COUNT_TABLE_SIZE];
+
+		for (int i = 0; i < NEAR_KING_SQUARE_COUNT_TABLE_SIZE; i++)
+			table[i] = (byte) Integer.bitCount(i);
+
+		return table;
+	}
 	
 
 	/**
@@ -123,7 +143,80 @@ public class BitBoard {
 	}
 
 	public static int getSquareCount (final long board) {
+		/*//final long counterWidth2 = (board         & 0x5555555555555555L) + ((board         & 0xAAAAAAAAAAAAAAAAL) >>> 1);
+
+		// 00 = 0 => 0
+		// 01 = 1 => 1
+		// 10 = 2 => 1
+		// 11 = 3 => 2
+		// counterWidth2 = board - upper bit shifted down
+		final long counterWidth2 = board - ((board & 0xAAAAAAAAAAAAAAAAL) >>> 1);
+		final long counterWidth4 = (counterWidth2 & 0x3333333333333333L) + ((counterWidth2 & 0xCCCCCCCCCCCCCCCCL) >>> 2);
+		final long counterWidth8 = (counterWidth4 & 0x0F0F0F0F0F0F0F0FL) + ((counterWidth4 & 0xF0F0F0F0F0F0F0F0L) >>> 4);
+		final int count = (int) ((counterWidth8 * 0x0101010101010101L) >>> 56);
+
+		return count;*/
 		return Long.bitCount(board);
+	}
+
+	public static int getSquareCountSparse (final long board) {
+		long mask = board;
+		int count = 0;
+
+		while (mask != 0) {
+			mask &= mask - 1;
+			count++;
+		}
+
+		return count;
+	}
+
+	/**
+	 * Returns number of squares in given board,
+	 * but expects that the board contains only near king squares (with distance <= 1).
+	 */
+	public static int getSquareCountNearKing (final long board) {
+		int index = (int) ((board * NEAR_KING_SQUARE_COUNT_TABLE_COEFF) >>> NEAR_KING_SQUARE_COUNT_TABLE_SHIFT);
+
+		return NEAR_KING_SQUARE_COUNT_TABLE[index];
+	}
+
+	public static boolean hasSingleSquare (final long board) {
+		return board != 0 && (board & (board - 1)) == 0;
+	}
+
+	public static boolean hasAtLeastTwoSquares (final long board) {
+		return (board & (board - 1)) != 0;
+	}
+
+	private static final long FIRST_SQUARE_TABLE_COEFF = 544578837055249459L;
+	private static final int FIRST_SQUARE_TABLE_BITS = Square.BIT_COUNT + 1;
+	private static final int FIRST_SQUARE_TABLE_SIZE = 1 << FIRST_SQUARE_TABLE_BITS;
+	private static final int FIRST_SQUARE_TABLE_SHIFT = Long.SIZE - FIRST_SQUARE_TABLE_BITS;
+	private static final byte[] FIRST_SQUARE_TABLE = initializeFirstSquareTable();
+
+	private static byte[] initializeFirstSquareTable() {
+		final byte[] table = new byte[FIRST_SQUARE_TABLE_SIZE];
+		Arrays.fill(table, (byte) -1);
+
+		table[getFirstSquareTableIndex(BitBoard.EMPTY)] = Square.NONE;
+
+		for (int square = Square.FIRST; square < Square.LAST; square++) {
+			final int index = getFirstSquareTableIndex(BitBoard.of(square));
+
+			if (table[index] != -1)
+				throw new RuntimeException("Collision in table");
+
+			table[index] = (byte) square;
+		}
+
+		return table;
+	}
+
+	private static int getFirstSquareTableIndex (final long board) {
+		final long firstSetBit = board & -board;
+
+		return (int) ((firstSetBit * FIRST_SQUARE_TABLE_COEFF) >>> FIRST_SQUARE_TABLE_SHIFT);
 	}
 
 	/**
@@ -132,10 +225,9 @@ public class BitBoard {
 	 * @return first set square or Square.NONE
 	 */
 	public static int getFirstSquare(final long board) {
-		if (board != 0)
-			return Long.numberOfTrailingZeros(board);
-		else
-			return Square.NONE;
+		final int index = getFirstSquareTableIndex(board);
+
+		return FIRST_SQUARE_TABLE[index];
 	}
 
 	/**
@@ -176,7 +268,7 @@ public class BitBoard {
 		long mask = possibleSquares;
 
 		for (int i = 0; i < index; i++)
-			mask &= ~Long.lowestOneBit(mask);
+			mask &= mask - 1;
 		
 		return getFirstSquare(mask);
 	}

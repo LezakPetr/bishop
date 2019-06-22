@@ -5,87 +5,25 @@ import java.util.function.Supplier;
 import bishop.base.*;
 import bishop.tables.FrontSquaresOnSameFileTable;
 
-public class PawnStructureEvaluator {
+abstract public class PawnStructureEvaluator {
 
-	private static final PawnStructureCoeffs ENDING_COEFFS = PositionEvaluationCoeffs.PAWN_STRUCTURE_COEFFS.get(CombinedEvaluation.COMPONENT_ENDING);
-	private static final PawnStructureCoeffs OPENING_COEFFS = PositionEvaluationCoeffs.PAWN_STRUCTURE_COEFFS.get(CombinedEvaluation.COMPONENT_OPENING);
-	private static final PawnStructureCoeffs MIDDLE_GAME_COEFFS = PositionEvaluationCoeffs.PAWN_STRUCTURE_COEFFS.get(CombinedEvaluation.COMPONENT_MIDDLE_GAME);
+	protected static final PawnStructureCoeffs ENDING_COEFFS = PositionEvaluationCoeffs.PAWN_STRUCTURE_COEFFS.get(CombinedEvaluation.COMPONENT_ENDING);
+	protected static final PawnStructureCoeffs OPENING_COEFFS = PositionEvaluationCoeffs.PAWN_STRUCTURE_COEFFS.get(CombinedEvaluation.COMPONENT_OPENING);
+	protected static final PawnStructureCoeffs MIDDLE_GAME_COEFFS = PositionEvaluationCoeffs.PAWN_STRUCTURE_COEFFS.get(CombinedEvaluation.COMPONENT_MIDDLE_GAME);
 
-	private static final int OPENING_COEFF_DIFF = OPENING_COEFFS.getFirstCoeff() - ENDING_COEFFS.getFirstCoeff();
-	private static final int MIDDLE_GAME_COEFF_DIFF = MIDDLE_GAME_COEFFS.getFirstCoeff() - ENDING_COEFFS.getFirstCoeff();
+	protected static final int OPENING_COEFF_DIFF = OPENING_COEFFS.getFirstCoeff() - ENDING_COEFFS.getFirstCoeff();
+	protected static final int MIDDLE_GAME_COEFF_DIFF = MIDDLE_GAME_COEFFS.getFirstCoeff() - ENDING_COEFFS.getFirstCoeff();
 
-	private final IPositionEvaluation evaluation;
-	private final PawnStructureCache structureCache;
-	private final IPositionEvaluation openingCachedEvaluation;
-	private final IPositionEvaluation middleGameCachedEvaluation;
-	private final IPositionEvaluation endingCachedEvaluation;
-	private final IPositionEvaluation openingPositionDependentEvaluation;
-	private final IPositionEvaluation middleGamePositionDependentEvaluation;
-	private final IPositionEvaluation endingPositionDependentEvaluation;
-	private final PawnStructureData structureData = new PawnStructureData();
+	protected final IPositionEvaluation evaluation;
+	protected final PawnStructureData structureData = new PawnStructureData();
 
-	public PawnStructureEvaluator(final Supplier<IPositionEvaluation> evaluationFactory) {
+	protected PawnStructureEvaluator(final Supplier<IPositionEvaluation> evaluationFactory) {
 		this.evaluation = evaluationFactory.get();
-		this.openingCachedEvaluation = evaluationFactory.get();
-		this.middleGameCachedEvaluation = evaluationFactory.get();
-		this.endingCachedEvaluation = evaluationFactory.get();
-		this.openingPositionDependentEvaluation = evaluationFactory.get();
-		this.middleGamePositionDependentEvaluation = evaluationFactory.get();
-		this.endingPositionDependentEvaluation = evaluationFactory.get();
-		this.structureCache = new PawnStructureCache(
-			(whitePawnMask, blackPawnMask) -> {
-				assert whitePawnMask == structureData.getPawnMask(Color.WHITE);
-				assert blackPawnMask == structureData.getPawnMask(Color.BLACK);
-
-				evaluatePawnStructure();
-
-				return CombinedEvaluation.combine(
-						openingCachedEvaluation.getEvaluation(),
-						middleGameCachedEvaluation.getEvaluation(),
-						endingCachedEvaluation.getEvaluation()
-				);
-			}
-		);
 	}
 
-	public IPositionEvaluation evaluate(final Position position, final int gameStage) {
-		if (evaluation instanceof CoeffCountPositionEvaluation) {
-			evaluatePawnStructure();
+	abstract public IPositionEvaluation evaluate(final Position position, final int gameStage);
 
-			final int openingCount = CombinedEvaluation.getComponentMultiplicator (gameStage, CombinedEvaluation.COMPONENT_OPENING);
-			final int middleGameCount = CombinedEvaluation.getComponentMultiplicator (gameStage, CombinedEvaluation.COMPONENT_MIDDLE_GAME);
-			final int endingCount = CombinedEvaluation.getComponentMultiplicator (gameStage, CombinedEvaluation.COMPONENT_ENDING);
-
-			evaluation.addSubEvaluation(openingCachedEvaluation, openingCount);
-			evaluation.addSubEvaluation(middleGameCachedEvaluation, middleGameCount);
-			evaluation.addSubEvaluation(endingCachedEvaluation, endingCount);
-
-			evaluation.addSubEvaluation(openingPositionDependentEvaluation, openingCount);
-			evaluation.addSubEvaluation(middleGamePositionDependentEvaluation, middleGameCount);
-			evaluation.addSubEvaluation(endingPositionDependentEvaluation, endingCount);
-
-			evaluation.shiftRight(CombinedEvaluation.ALPHA_BITS);
-		}
-		else {
-			long combinedEvaluation = CombinedEvaluation.ACCUMULATOR_BASE;
-			combinedEvaluation += structureCache.getCombinedEvaluation(position.getPiecesMask(Color.WHITE, PieceType.PAWN), position.getPiecesMask(Color.BLACK, PieceType.PAWN));
-
-			evaluatePositionDependent(position);
-			combinedEvaluation += CombinedEvaluation.combine(
-					openingPositionDependentEvaluation.getEvaluation(),
-					middleGamePositionDependentEvaluation.getEvaluation(),
-					endingPositionDependentEvaluation.getEvaluation()
-			);
-
-			evaluation.addEvaluation(
-					CombinedEvaluation.getDecoderForGameStage(gameStage).decode(combinedEvaluation)
-			);
-		}
-
-		return evaluation;
-	}
-		
-	private void evaluatePawnStructure() {
+	protected void evaluatePawnStructure() {
 		structureData.calculate();
 
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
@@ -158,13 +96,12 @@ public class PawnStructureEvaluator {
 		}
 	}
 
-	private void addCachedEvaluation(final int endingCoeff, final int color) {
-		endingCachedEvaluation.addCoeff(endingCoeff, color);
-		middleGameCachedEvaluation.addCoeff(endingCoeff + MIDDLE_GAME_COEFF_DIFF, color);
-		openingCachedEvaluation.addCoeff(endingCoeff + OPENING_COEFF_DIFF, color);
-	}
+	abstract protected void addCachedEvaluation(final int endingCoeff, final int color);
 
-	private void evaluatePositionDependent(final Position position) {
+	abstract protected void addPositionDependentEvaluation(final int endingCoeff, final int color, final int coeffCount);
+
+
+	protected void evaluatePositionDependent(final Position position) {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final int oppositeColor = Color.getOppositeColor(color);
 			final long oppositeRookMask = position.getPiecesMask(oppositeColor, PieceType.ROOK);
@@ -178,9 +115,7 @@ public class PawnStructureEvaluator {
 				final int endingCoeff = ENDING_COEFFS.getCoeffUnprotectedOpenFilePawnBonus();
 				final int coeffCount = BitBoard.getSquareCount(unprotectedOpenPawnMask);
 
-				endingPositionDependentEvaluation.addCoeff(endingCoeff, color, coeffCount);
-				middleGamePositionDependentEvaluation.addCoeff(endingCoeff + MIDDLE_GAME_COEFF_DIFF, color, coeffCount);
-				openingPositionDependentEvaluation.addCoeff(endingCoeff + OPENING_COEFF_DIFF, color, coeffCount);
+				addPositionDependentEvaluation(endingCoeff, color, coeffCount);
 			}
 		}
 	}
@@ -202,12 +137,6 @@ public class PawnStructureEvaluator {
 	public void clear() {
 		structureData.clear();
 		evaluation.clear();
-		openingCachedEvaluation.clear();
-		middleGameCachedEvaluation.clear();
-		endingCachedEvaluation.clear();
-		openingPositionDependentEvaluation.clear();
-		middleGamePositionDependentEvaluation.clear();
-		endingPositionDependentEvaluation.clear();
 	}
 
 

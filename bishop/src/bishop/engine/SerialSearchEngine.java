@@ -392,10 +392,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			// Check position - at least two figures are needed
 			final int onTurn = currentPosition.getOnTurn();
-			final long figureMask = currentPosition.getColorOccupancy(onTurn) & ~currentPosition.getBothColorPiecesMask(PieceType.PAWN);
-			final int figureCount = BitBoard.getSquareCount(figureMask);
+			final long figureMask = currentPosition.getPromotionFigureMask(onTurn);
 
-			return figureCount >= 3;   // At least two figures + king
+			return BitBoard.hasAtLeastTwoSquares(figureMask);
 		}
 
 		/**

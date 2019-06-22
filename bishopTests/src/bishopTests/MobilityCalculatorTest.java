@@ -45,4 +45,27 @@ public class MobilityCalculatorTest {
 		}
 	}
 
+	@Test
+	public void speedTest() {
+		final int count = 20000000;
+
+		final MobilityCalculator mobilityCalculator = new MobilityCalculator();
+		final Position position = new Position();
+		position.setInitialPosition();
+
+		for (int i = 0; i < count; i++)
+			mobilityCalculator.calculate(position);
+
+		final long t1 = System.currentTimeMillis();
+
+		for (int i = 0; i < count; i++)
+			mobilityCalculator.calculate(position);
+
+		final long t2 = System.currentTimeMillis();
+
+		final double iterPerSec = (double) count * 1000 / (t2 - t1);
+
+		System.out.println("Mobility calculator: " + iterPerSec);
+	}
+
 }

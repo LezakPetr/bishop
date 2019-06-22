@@ -57,7 +57,7 @@ public class PositionValidator {
 	private boolean checkKingCount() {
 		for (int color = Color.FIRST; color < Color.LAST; color++) {
 			final long kingBoard = position.getPiecesMask(color, PieceType.KING);
-			final int kingCount = BitBoard.getSquareCount(kingBoard);
+			final int kingCount = BitBoard.getSquareCountSparse(kingBoard);
 			
 			if (kingCount != 1) {
 				errorSet.add(Error.KING_COUNT);

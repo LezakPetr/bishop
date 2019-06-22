@@ -102,7 +102,7 @@ MessagePositionValidator.errorWrongEpFile=Nemožný sloupec braní mimochodem
 
 AboutDialog.title=Bishop
 AboutDialog.labelProduct.textPrefix=Bishop verze 
-AboutDialog.labelCopyright.text=Copyright 2018 Ing. Petr Ležák
+AboutDialog.labelCopyright.text=Copyright 2019 Ing. Petr Ležák
 AboutDialog.labelUser.textPrefix=Uživatel: 
 AboutDialog.labelCompany.textPrefix=Společnost: 
 
