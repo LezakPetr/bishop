@@ -212,6 +212,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					positionExtension = 0;
 
 				final boolean isMaxDepth = (depth >= maxTotalDepth - 1);
+				final long possibleTargetSquares = (reducedHorizon <= -maxCheckSearchDepth) ? mobilityCalculator.getQuiescencePossibleTargetSquares(currentPosition) : BitBoard.FULL;
 
 				// Use position evaluation as initial evaluation
 				if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
@@ -220,7 +221,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					nodeCount++;
 
-					if (evaluation > beta) {
+					if (evaluation > beta || possibleTargetSquares == BitBoard.EMPTY) {
 						final int mateEvaluation = Evaluation.getMateEvaluation(depth);
 						checkMateAndStalemate(isCheck, mateEvaluation);
 
@@ -298,7 +299,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					// If precalculated move didn't make beta cutoff try other moves
 					if (!precalculatedBetaCutoff) {
-						generateMoves(reducedHorizon, isQuiescenceSearch, isCheckSearch, isCheck);
+						generateMoves(reducedHorizon, isQuiescenceSearch, isCheckSearch, isCheck, possibleTargetSquares);
 
 						while (moveListEnd > moveListBegin) {
 							selectBestMove();
@@ -447,7 +448,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return false;
 		}
 
-		private void generateMoves(final int horizon, final boolean isQuiescenceSearch, final boolean isCheckSearch, final boolean isCheck) {
+		private void generateMoves(final int horizon, final boolean isQuiescenceSearch, final boolean isCheckSearch, final boolean isCheck, final long allowedTargetSquares) {
 			moveListBegin = moveStackTop;
 
 			final EvaluatedMoveList rootMoveList = task.getRootMoveList();
@@ -465,6 +466,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					quiescenceLegalMoveGenerator.setGenerateChecks(horizon > -maxCheckSearchDepth);
 					quiescenceLegalMoveGenerator.setPosition(currentPosition);
+					quiescenceLegalMoveGenerator.setAllowedTargetSquares(allowedTargetSquares);
 					quiescenceLegalMoveGenerator.generateMoves();
 				}
 				else {

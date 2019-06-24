@@ -230,4 +230,21 @@ public class MobilityCalculator {
 
 		return (attacks & (ownFigures | unprotectedPawns)) == 0;
 	}
+
+	public long getQuiescencePossibleTargetSquares (final Position position) {
+		final int onTurn = position.getOnTurn();
+		final int oppositeColor = Color.getOppositeColor(onTurn);
+		final long attacks = attackedSquares[onTurn] & position.getColorOccupancy(oppositeColor);
+		long possibleSquares = BitBoard.EMPTY;
+
+		for (BitLoop loop = new BitLoop(attacks); loop.hasNextSquare(); ) {
+			final int square = loop.getNextSquare();
+
+			if (position.getStaticExchangeEvaluation(onTurn, square, PieceTypeEvaluations.DEFAULT) > 0)
+				possibleSquares |= BitBoard.of(square);
+		}
+
+		return possibleSquares;
+	}
+
 }

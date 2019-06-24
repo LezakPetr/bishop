@@ -8,6 +8,7 @@ import bishop.tables.PawnMoveTable;
 public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGeneratorBase {
 
 	private boolean generateChecks;
+	private long allowedTargetSquares = BitBoard.FULL;
 	
 	// Generates moves of king.
     // Returns if generation should continue.
@@ -308,19 +309,19 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
 
     	final long opponentSquares = position.getColorOccupancy(notOnTurn);
 
-    	if (!generateKingMoves(opponentSquares))
+    	if (!generateKingMoves(opponentSquares & allowedTargetSquares))
     		return;
 
-    	if (!generateKnightMoves(opponentSquares | knightCheckSquares))
+    	if (!generateKnightMoves((opponentSquares | knightCheckSquares) & allowedTargetSquares))
     		return;
 
-    	if (!generateQueenMoves(opponentSquares | orthogonalCheckSquares | diagonalCheckSquares))
+    	if (!generateQueenMoves((opponentSquares | orthogonalCheckSquares | diagonalCheckSquares) & allowedTargetSquares))
     		return;
 
-    	if (!generateRookMoves(opponentSquares | orthogonalCheckSquares))
+    	if (!generateRookMoves((opponentSquares | orthogonalCheckSquares) & allowedTargetSquares))
     		return;
 
-    	if (!generateBishopMoves(opponentSquares | diagonalCheckSquares))
+    	if (!generateBishopMoves((opponentSquares | diagonalCheckSquares) & allowedTargetSquares))
     		return;
 
     	if (!generatePawnMoves())
@@ -332,4 +333,8 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
     public void setGenerateChecks (final boolean generate) {
     	this.generateChecks = generate;
     }
+
+    public void setAllowedTargetSquares(final long allowedTargetSquares) {
+    	this.allowedTargetSquares = allowedTargetSquares;
+	}
 }
