@@ -53,6 +53,13 @@ public class SearchSettingOptimizer {
 
 		);
 
+		searchSettings.setMaxFullQuiescenceSearchDepth(
+				getRandom(
+						0, searchSettings.getMaxQuiescenceDepth() - 1,
+						optimalSettings.getMaxFullQuiescenceSearchDepth()
+				)
+		);
+
 		searchSettings.setMaxCheckSearchDepth(
 				getRandom(
 						0, searchSettings.getMaxQuiescenceDepth() - 1,

@@ -212,7 +212,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 					positionExtension = 0;
 
 				final boolean isMaxDepth = (depth >= maxTotalDepth - 1);
-				final long possibleTargetSquares = (reducedHorizon <= -maxCheckSearchDepth) ? mobilityCalculator.getQuiescencePossibleTargetSquares(currentPosition) : BitBoard.FULL;
+				final long allowedTargetSquares = (reducedHorizon <= -searchSettings.getMaxFullQuiescenceSearchDepth()) ? mobilityCalculator.getQuiescencePossibleTargetSquares(currentPosition) : BitBoard.FULL;
 
 				// Use position evaluation as initial evaluation
 				if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
@@ -221,7 +221,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					nodeCount++;
 
-					if (evaluation > beta || possibleTargetSquares == BitBoard.EMPTY) {
+					if (evaluation > beta || allowedTargetSquares == BitBoard.EMPTY) {
 						final int mateEvaluation = Evaluation.getMateEvaluation(depth);
 						checkMateAndStalemate(isCheck, mateEvaluation);
 
@@ -299,7 +299,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					// If precalculated move didn't make beta cutoff try other moves
 					if (!precalculatedBetaCutoff) {
-						generateMoves(reducedHorizon, isQuiescenceSearch, isCheckSearch, isCheck, possibleTargetSquares);
+						generateMoves(reducedHorizon, isQuiescenceSearch, isCheckSearch, isCheck, allowedTargetSquares);
 
 						while (moveListEnd > moveListBegin) {
 							selectBestMove();

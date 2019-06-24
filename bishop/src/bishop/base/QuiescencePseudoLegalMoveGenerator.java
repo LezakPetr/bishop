@@ -309,19 +309,21 @@ public final class QuiescencePseudoLegalMoveGenerator extends PseudoLegalMoveGen
 
     	final long opponentSquares = position.getColorOccupancy(notOnTurn);
 
-    	if (!generateKingMoves(opponentSquares & allowedTargetSquares))
+		final long allowedOpponentSquares = opponentSquares & allowedTargetSquares;
+
+		if (!generateKingMoves(allowedOpponentSquares))
     		return;
 
-    	if (!generateKnightMoves((opponentSquares | knightCheckSquares) & allowedTargetSquares))
+    	if (!generateKnightMoves(allowedOpponentSquares | knightCheckSquares))
     		return;
 
-    	if (!generateQueenMoves((opponentSquares | orthogonalCheckSquares | diagonalCheckSquares) & allowedTargetSquares))
+    	if (!generateQueenMoves(allowedOpponentSquares | orthogonalCheckSquares | diagonalCheckSquares))
     		return;
 
-    	if (!generateRookMoves((opponentSquares | orthogonalCheckSquares) & allowedTargetSquares))
+    	if (!generateRookMoves(allowedOpponentSquares | orthogonalCheckSquares))
     		return;
 
-    	if (!generateBishopMoves((opponentSquares | diagonalCheckSquares) & allowedTargetSquares))
+    	if (!generateBishopMoves(allowedOpponentSquares | diagonalCheckSquares))
     		return;
 
     	if (!generatePawnMoves())
