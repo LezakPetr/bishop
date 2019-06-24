@@ -44,7 +44,7 @@ public final class SearchSettings {
 
 	public SearchSettings() {
 		maxQuiescenceDepth = 13;
-		maxCheckSearchDepth = 11;
+		maxCheckSearchDepth = 8;
 		nullMoveReduction = 4;
 		minExtensionHorizon = 2;
 
