@@ -16,7 +16,7 @@ public final class SearchSettings {
 	public static final int EXTENSION_GRANULARITY = 1 << EXTENSION_FRACTION_BITS;
 	public static final int EXTENSION_TRESHOLD = makeExtension(0.8);
 
-	public static final String CSV_HEADER = "maxQuiescenceDepth, maxCheckSearchDepth, nullMoveReduction, minExtensionHorizon, " +
+	public static final String CSV_HEADER = "maxQuiescenceDepth, maxFullQuiescenceSearchDepth, maxCheckSearchDepth, nullMoveReduction, minExtensionHorizon, " +
 			"simpleCheckExtension, attackCheckExtension, forcedMoveExtension, mateExtension, rankAttackExtension, " +
 			"pawnOnSevenRankExtension, protectingPawnOnSixRankExtension, " +
 			"recaptureMinExtension, recaptureMaxExtension, " +
@@ -40,30 +40,33 @@ public final class SearchSettings {
 	private int recaptureBeginMaxTreshold;
 	private int recaptureTargetTreshold;
 	private int maxCheckSearchDepth;
+	private int maxFullQuiescenceSearchDepth;
 	private int maxEstimateForZeroWindowSearch;
 
 	public SearchSettings() {
-		maxQuiescenceDepth = 13;
-		maxCheckSearchDepth = 8;
-		nullMoveReduction = 4;
-		minExtensionHorizon = 2;
+		maxQuiescenceDepth = 17;
+		maxFullQuiescenceSearchDepth = 5;
+		maxCheckSearchDepth = 12;
+
+		nullMoveReduction = 5;
+		minExtensionHorizon = 1;
 
 		simpleCheckExtension = makeExtension(0.0);
-		attackCheckExtension = makeExtension(0.7509766);
-		forcedMoveExtension = makeExtension(0.6708984);
-		mateExtension = makeExtension(0.5);
-		rankAttackExtension = makeExtension(0.9521484);
+		attackCheckExtension = makeExtension(0.53515625);
+		forcedMoveExtension = makeExtension(0.74609375);
+		mateExtension = makeExtension(0.322265625);
+		rankAttackExtension = makeExtension(0.6796875);
 		
-		pawnOnSevenRankExtension = makeExtension(0.9853516);
+		pawnOnSevenRankExtension = makeExtension(1.0);
 		protectingPawnOnSixRankExtension = makeExtension(1.0);
 		
-		recaptureMinExtension = makeExtension(0.171875);
-		recaptureMaxExtension = makeExtension(0.9580078);
+		recaptureMinExtension = makeExtension(0.0);
+		recaptureMaxExtension = makeExtension(1.0);
 
-		recaptureBeginMinTreshold = roundToInt (7.381 * PieceTypeEvaluations.PAWN_EVALUATION);
-		recaptureBeginMaxTreshold = roundToInt (8.317 * PieceTypeEvaluations.PAWN_EVALUATION);
-		recaptureTargetTreshold = roundToInt (6.029 * PieceTypeEvaluations.PAWN_EVALUATION);
-		maxEstimateForZeroWindowSearch = -126200;
+		recaptureBeginMinTreshold = roundToInt (8.999 * PieceTypeEvaluations.PAWN_EVALUATION);
+		recaptureBeginMaxTreshold = roundToInt (9.0 * PieceTypeEvaluations.PAWN_EVALUATION);
+		recaptureTargetTreshold = roundToInt (9.0 * PieceTypeEvaluations.PAWN_EVALUATION);
+		maxEstimateForZeroWindowSearch = 1411974;
 	}
 	
 	private static int makeExtension(final double extension) {
@@ -190,9 +193,26 @@ public final class SearchSettings {
 		this.maxEstimateForZeroWindowSearch = maxEstimateForZeroWindowSearch;
 	}
 
+	public int getMaxCheckSearchDepth() {
+		return maxCheckSearchDepth;
+	}
+
+	public void setMaxCheckSearchDepth(final int maxCheckSearchDepth) {
+		this.maxCheckSearchDepth =  maxCheckSearchDepth;
+	}
+
+	public int getMaxFullQuiescenceSearchDepth() {
+		return maxFullQuiescenceSearchDepth;
+	}
+
+	public void setMaxFullQuiescenceSearchDepth(final int maxFullQuiescenceSearchDepth) {
+		this.maxFullQuiescenceSearchDepth = maxFullQuiescenceSearchDepth;
+	}
+
 	public void assign(final SearchSettings orig) {
 		maxQuiescenceDepth = orig.maxQuiescenceDepth;
 		maxCheckSearchDepth = orig.maxCheckSearchDepth;
+		maxFullQuiescenceSearchDepth = orig.maxFullQuiescenceSearchDepth;
 		nullMoveReduction = orig.nullMoveReduction;
 		minExtensionHorizon = orig.minExtensionHorizon;
 
@@ -240,6 +260,7 @@ public final class SearchSettings {
 		)
 		{
 			printWriter.print(maxQuiescenceDepth + ", ");
+			printWriter.print(maxFullQuiescenceSearchDepth + ", ");
 			printWriter.print(maxCheckSearchDepth + ", ");
 			printWriter.print(nullMoveReduction + ", ");
 			printWriter.print(minExtensionHorizon + ", ");
@@ -276,14 +297,6 @@ public final class SearchSettings {
 
 	public void setProtectingPawnOnSixRankExtension(int protectingPawnOnSixRankExtension) {
 		this.protectingPawnOnSixRankExtension = protectingPawnOnSixRankExtension;
-	}
-
-	public int getMaxCheckSearchDepth() {
-		return maxCheckSearchDepth;
-	}
-
-	public void setMaxCheckSearchDepth(final int maxCheckSearchDepth) {
-		this.maxCheckSearchDepth =  maxCheckSearchDepth;
 	}
 
 }
