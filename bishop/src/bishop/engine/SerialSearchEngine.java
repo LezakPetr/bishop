@@ -202,7 +202,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 				final int positionEvaluation = getPositionEvaluation(onTurn);
 				final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
 
-				final boolean isCheckSearch = isQuiescenceSearch && reducedHorizon > -maxCheckSearchDepth && isCheck;
+				final boolean checkSearchAllowed = reducedHorizon > -maxCheckSearchDepth;
+				final boolean isCheckSearch = isQuiescenceSearch && checkSearchAllowed && isCheck;
 
 				final int positionExtension;
 
@@ -221,7 +222,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					nodeCount++;
 
-					if (evaluation > beta || allowedTargetSquares == BitBoard.EMPTY) {
+					if (evaluation > beta || (allowedTargetSquares == BitBoard.EMPTY && checkSearchAllowed)) {
 						final int mateEvaluation = Evaluation.getMateEvaluation(depth);
 						checkMateAndStalemate(isCheck, mateEvaluation);
 
