@@ -1225,8 +1225,9 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 
 	public int getStaticExchangeEvaluation (final int color, final Move move, final PieceTypeEvaluations pieceTypeEvaluations) {
 		final int movingPieceType = move.getMovingPieceType();
+		final int capturedPieceType = move.getCapturedPieceType();
 
-		return pieceTypeEvaluations.getPieceTypeEvaluation(movingPieceType) - getStaticExchangeEvaluation(
+		return pieceTypeEvaluations.getPieceTypeEvaluation(capturedPieceType) - getStaticExchangeEvaluation(
 				Color.getOppositeColor(color),
 				move.getTargetSquare(),
 				pieceTypeEvaluations,
