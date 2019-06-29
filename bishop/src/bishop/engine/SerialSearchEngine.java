@@ -66,6 +66,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 		private final Move principalMove = new Move();
 		private boolean allMovesGenerated;
 		private boolean isQuiescenceSearch;
+		private boolean isCheckSearch;
+		private boolean isCheck;
 		private int legalMoveCount;
 		private int bestLegalMoveIndex;
 		private final MobilityCalculator mobilityCalculator = new MobilityCalculator();
@@ -144,6 +146,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 			firstLegalMove.clear();
 			allMovesGenerated = false;
 			isQuiescenceSearch = false;
+			isCheck = false;
+			isCheckSearch = false;
 			legalMoveCount = 0;
 			bestLegalMoveIndex = 0;
 			hashRecord.clear();
@@ -193,7 +197,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			isQuiescenceSearch = (reducedHorizon <= 0);
 
 			final int ownKingSquare = currentPosition.getKingPosition(onTurn);
-			final boolean isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
+			isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
 
 			originalKillerMove.assign(killerMove);
 
@@ -203,7 +207,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
 
 				final boolean checkSearchAllowed = reducedHorizon > -maxCheckSearchDepth;
-				final boolean isCheckSearch = isQuiescenceSearch && checkSearchAllowed && isCheck;
+				isCheckSearch = isQuiescenceSearch && checkSearchAllowed && isCheck;
 
 				final int positionExtension;
 
@@ -213,7 +217,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 					positionExtension = 0;
 
 				final boolean isMaxDepth = (depth >= maxTotalDepth - 1);
-				final long allowedTargetSquares = (reducedHorizon <= -searchSettings.getMaxFullQuiescenceSearchDepth()) ? mobilityCalculator.getQuiescencePossibleTargetSquares(currentPosition) : BitBoard.FULL;
 
 				// Use position evaluation as initial evaluation
 				if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
@@ -222,7 +225,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					nodeCount++;
 
-					if (evaluation > beta || (allowedTargetSquares == BitBoard.EMPTY && checkSearchAllowed)) {
+					if (evaluation > beta) {
 						final int mateEvaluation = Evaluation.getMateEvaluation(depth);
 						checkMateAndStalemate(isCheck, mateEvaluation);
 
@@ -300,7 +303,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					// If precalculated move didn't make beta cutoff try other moves
 					if (!precalculatedBetaCutoff) {
-						generateMoves(reducedHorizon, isQuiescenceSearch, isCheckSearch, isCheck, allowedTargetSquares);
+						generateMoves(reducedHorizon);
 
 						while (moveListEnd > moveListBegin) {
 							selectBestMove();
@@ -308,7 +311,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 							final Move move = precreatedCurrentMove;
 							moveStack.getMove(moveListEnd - 1, move);
 
-							if (!move.equals(precalculatedMove)) {
+							if (!move.equals(precalculatedMove) && shouldEvaluateMove (move)) {
 								final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
 								currentPosition.makeMove(move);
 
@@ -349,6 +352,30 @@ public final class SerialSearchEngine implements ISearchEngine {
 				updateHashRecord(reducedHorizon);
 				updateBestMovePerIndexCounts();
 			}
+		}
+
+		private boolean shouldEvaluateMove (final Move move)
+		{
+			if (!isQuiescenceSearch || isCheckSearch || move.getMoveType() == MoveType.PROMOTION)
+				return true;
+
+			final PieceTypeEvaluations pte = PieceTypeEvaluations.DEFAULT;
+
+			final int capturedPieceEvaluation = pte.getPieceTypeEvaluation(move.getCapturedPieceType());
+			final int movingPieceEvaluation = pte.getPieceTypeEvaluation(move.getMovingPieceType());
+
+			if (capturedPieceEvaluation >= movingPieceEvaluation)
+				return true;   // Just a speedup
+
+			final int onTurn = currentPosition.getOnTurn();
+
+			final int sse =	currentPosition.getStaticExchangeEvaluation(
+					onTurn,
+					move,
+					pte
+			);
+
+			return sse >= 0;
 		}
 
 		private int getPositionEvaluation(int onTurn) {
@@ -449,7 +476,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return false;
 		}
 
-		private void generateMoves(final int horizon, final boolean isQuiescenceSearch, final boolean isCheckSearch, final boolean isCheck, final long allowedTargetSquares) {
+		private void generateMoves(final int horizon) {
 			moveListBegin = moveStackTop;
 
 			final EvaluatedMoveList rootMoveList = task.getRootMoveList();
@@ -467,7 +494,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 					quiescenceLegalMoveGenerator.setGenerateChecks(horizon > -maxCheckSearchDepth);
 					quiescenceLegalMoveGenerator.setPosition(currentPosition);
-					quiescenceLegalMoveGenerator.setAllowedTargetSquares(allowedTargetSquares);
 					quiescenceLegalMoveGenerator.generateMoves();
 				}
 				else {

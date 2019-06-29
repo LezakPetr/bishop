@@ -1223,6 +1223,18 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		return getStaticExchangeEvaluation(color, square, pieceTypeEvaluations, occupancy, getPieceTypeOnSquare(square));
 	}
 
+	public int getStaticExchangeEvaluation (final int color, final Move move, final PieceTypeEvaluations pieceTypeEvaluations) {
+		final int movingPieceType = move.getMovingPieceType();
+
+		return pieceTypeEvaluations.getPieceTypeEvaluation(movingPieceType) - getStaticExchangeEvaluation(
+				Color.getOppositeColor(color),
+				move.getTargetSquare(),
+				pieceTypeEvaluations,
+				occupancy & ~BitBoard.of(move.getBeginSquare()),
+				movingPieceType
+		);
+	}
+
 	private int getStaticExchangeEvaluation (final int color, final int square, final PieceTypeEvaluations pieceTypeEvaluations, final long effectiveOccupancy, final int pieceTypeOnSquare) {
 		final int attackerSquare = getCheapestAttacker (color, square, effectiveOccupancy);
 		
