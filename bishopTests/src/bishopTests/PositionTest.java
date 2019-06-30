@@ -6,6 +6,7 @@ import java.io.PushbackReader;
 import java.io.StringReader;
 
 import bishop.base.*;
+import bishop.engine.Evaluation;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -221,6 +222,47 @@ public class PositionTest {
 			
 			final int evaluation = position.getStaticExchangeEvaluation(testCase.color, testCase.square, pte);
 			
+			Assert.assertEquals(testCase.position, testCase.evaluation, evaluation);
+			Assert.assertEquals(testCase.position, beginPosition, position);
+		}
+	}
+
+	private static class StaticExchangeMoveTestCase {
+		public final String position;
+		public final String move;
+		public final int evaluation;
+
+		public StaticExchangeMoveTestCase(final String position, final String move, final int evaluation) {
+			this.position = position;
+			this.move = move;
+			this.evaluation = evaluation;
+		}
+	}
+
+	@Test
+	public void staticExchangeMoveTest() throws IOException {
+		final StaticExchangeMoveTestCase[] testCaseArray = {
+				new StaticExchangeMoveTestCase("3r3k/6b1/8/8/3r4/8/2N2Q2/7K w - - 0 1", "Qxd4", pte.getPieceTypeEvaluation(PieceType.ROOK) - pte.getPieceTypeEvaluation(PieceType.QUEEN)),
+				new StaticExchangeMoveTestCase("7k/2Q5/3B2n1/8/5n2/8/8/7K w - - 0 1", "Bxf4", 2 * pte.getPieceTypeEvaluation(PieceType.KNIGHT) - pte.getPieceTypeEvaluation(PieceType.BISHOP)),
+				new StaticExchangeMoveTestCase("5k2/8/2p5/1N6/2P5/8/8/4K3 b - - 0 1", "cxb5", pte.getPieceTypeEvaluation(PieceType.KNIGHT) - pte.getPieceTypeEvaluation(PieceType.PAWN)),
+				new StaticExchangeMoveTestCase("5k2/8/2p5/1N6/2P5/8/8/4K3 b - - 0 1", "c5", 0),
+				new StaticExchangeMoveTestCase("8/8/4k3/3N4/8/5K2/8/7B b - - 0 1", "Kxd5", pte.getPieceTypeEvaluation(PieceType.KNIGHT))
+		};
+
+		final Fen fen = new Fen();
+
+		for (StaticExchangeMoveTestCase testCase: testCaseArray) {
+			fen.readFenFromString(testCase.position);
+
+			final Position beginPosition = fen.getPosition();
+			final Position position = beginPosition.copy();
+
+			final StandardAlgebraicNotationReader moveReader = new StandardAlgebraicNotationReader();
+			final Move move = new Move();
+			moveReader.readMove(new PushbackReader(new StringReader(testCase.move)), position, move);
+
+			final int evaluation = position.getStaticExchangeEvaluation(position.getOnTurn(), move, pte);
+
 			Assert.assertEquals(testCase.position, testCase.evaluation, evaluation);
 			Assert.assertEquals(testCase.position, beginPosition, position);
 		}
