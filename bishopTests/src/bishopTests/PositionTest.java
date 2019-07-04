@@ -246,7 +246,9 @@ public class PositionTest {
 				new StaticExchangeMoveTestCase("7k/2Q5/3B2n1/8/5n2/8/8/7K w - - 0 1", "Bxf4", 2 * pte.getPieceTypeEvaluation(PieceType.KNIGHT) - pte.getPieceTypeEvaluation(PieceType.BISHOP)),
 				new StaticExchangeMoveTestCase("5k2/8/2p5/1N6/2P5/8/8/4K3 b - - 0 1", "cxb5", pte.getPieceTypeEvaluation(PieceType.KNIGHT) - pte.getPieceTypeEvaluation(PieceType.PAWN)),
 				new StaticExchangeMoveTestCase("5k2/8/2p5/1N6/2P5/8/8/4K3 b - - 0 1", "c5", 0),
-				new StaticExchangeMoveTestCase("8/8/4k3/3N4/8/5K2/8/7B b - - 0 1", "Kxd5", pte.getPieceTypeEvaluation(PieceType.KNIGHT))
+				new StaticExchangeMoveTestCase("8/8/4k3/3N4/8/5K2/8/7B b - - 0 1", "Kxd5", pte.getPieceTypeEvaluation(PieceType.KNIGHT)),
+				new StaticExchangeMoveTestCase("QR6/7k/8/8/7q/8/6P1/6K1 b - - 0 1", "Qe1", 0),
+				new StaticExchangeMoveTestCase("QR6/7k/8/8/8/8/6PK/4q3 b - - 0 1", "Qh4", 0)
 		};
 
 		final Fen fen = new Fen();
