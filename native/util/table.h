@@ -40,7 +40,7 @@ namespace util {
 			Table():
 				pData (new T[totalSize])
 			{
-				::std::fill_n (pData, totalSize, T());
+				fill (T());
 			}
 
 			/**
@@ -74,6 +74,10 @@ namespace util {
 			template<typename... IDX>
 			T operator() (const IDX... indices) const {
 				return pData[getCompoundIndex(indices...)];
+			}
+
+			void fill (const T &value) {
+				::std::fill_n (pData, totalSize, value);
 			}
 	};
 }
