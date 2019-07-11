@@ -18,6 +18,7 @@ namespace bishop::base {
 			static const int figureDirectionOffsets[PieceType::LAST];
 			static const int figureDirectionCounts[PieceType::LAST];
     
+		public:
 			// Returns number of directions where given figure can move.
 			static inline int getFigureDirectionCount (const PieceType::Type pieceType) {
 				return figureDirectionCounts[pieceType];
