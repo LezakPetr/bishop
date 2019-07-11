@@ -13,6 +13,7 @@ namespace bishop::base {
 	class Square {
 		public:
 			typedef int_fast8_t Type;
+			typedef int8_t SmallType;
 
 			static constexpr Square::Type FIRST = 0;
 			
