@@ -72,7 +72,7 @@ namespace util {
 			 * Returns element with given indices.
 			 */
 			template<typename... IDX>
-			T operator() (const IDX... indices) const {
+			const T & operator() (const IDX... indices) const {
 				return pData[getCompoundIndex(indices...)];
 			}
 

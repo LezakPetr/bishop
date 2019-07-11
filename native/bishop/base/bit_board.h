@@ -50,6 +50,17 @@ namespace bishop::base {
 				return BitBoard::getSquareMask(square) | BitBoard::of(args...);
 			}
 
+			template<typename Iter>
+			static BitBoard::Type fromRange	(Iter first, Iter last) {
+				BitBoard::Type mask = BitBoard::EMPTY;
+
+				for (Iter it = first; it != last; ++it)
+					mask |= BitBoard::getSquareMask (*it);
+
+				return mask;
+			}
+
+
 			static inline int getSquareCount (const BitBoard::Type board) {
 				//const BitBoard::Type counterWidth2 = (board         & 0x5555555555555555L) + ((board         & 0xAAAAAAAAAAAAAAAAL) >> 1);
 
