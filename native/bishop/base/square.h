@@ -6,6 +6,7 @@
 #include "color.h"
 
 #include <cstdint>
+#include <string>
 
 
 namespace bishop::base {
@@ -14,6 +15,7 @@ namespace bishop::base {
 		public:
 			typedef int_fast8_t Type;
 			typedef int8_t SmallType;
+			typedef int_fast8_t Difference;
 
 			static constexpr Square::Type FIRST = 0;
 			
@@ -98,7 +100,7 @@ namespace bishop::base {
 			static constexpr Square::Type FIRST_PAWN_SQUARE = Square::A2;
 			static constexpr Square::Type LAST_PAWN_SQUARE = Square::H7 + 1;
 
-			static constexpr int COUNT = LAST - FIRST;
+			static constexpr Square::Difference COUNT = LAST - FIRST;
 			
 
 			/**
@@ -159,6 +161,8 @@ namespace bishop::base {
 				// oppositeSquare = (square ^ ~0x07) + 64
 				return (square ^ ~0x7) + 64;
 			}
+
+			static Square::Type fromString (::std::string const & str);
 	};
 			
 }

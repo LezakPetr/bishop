@@ -4,11 +4,13 @@
 
 #include <cstdint>
 
+
 namespace bishop::base {
 	
 	class File {
 		public:
 			typedef int_fast8_t Type;
+			typedef int_fast8_t Difference;
 
 			static constexpr File::Type FIRST = 0;
 			
@@ -24,7 +26,7 @@ namespace bishop::base {
 			static constexpr File::Type LAST = 8;
 			static constexpr File::Type NONE = 15;
 			
-			static constexpr int COUNT = LAST - FIRST;
+			static constexpr File::Difference COUNT = LAST - FIRST;
 			static constexpr int BIT_COUNT = 3;
 
 			static constexpr double MIDDLE = (FA + FH) / 2.0;
@@ -41,6 +43,8 @@ namespace bishop::base {
 			static inline File::Type getOppositeFile(const File::Type file) {
 				return FH - file;
 			}
+
+			static File::Type fromChar (const char ch);
 	};
 }
 
