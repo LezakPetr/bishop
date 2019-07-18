@@ -76,7 +76,7 @@ namespace util {
 				return pData[getCompoundIndex(indices...)];
 			}
 
-			void fill (const T &value) {
+			void fill (const T value) {
 				::std::fill_n (pData, totalSize, value);
 			}
 	};
