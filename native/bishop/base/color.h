@@ -21,6 +21,8 @@ namespace bishop::base {
 			static constexpr Color::Type LAST = 2;
 			
 			static constexpr Color::Type NONE = 15;
+
+			static constexpr int COUNT = LAST - FIRST;
 		
 			// Number of bits to store color
 			static constexpr int BIT_COUNT = 1;
@@ -54,6 +56,16 @@ namespace bishop::base {
 				
 				return (value ^ -castedColor) + castedColor;
 			}
+
+			/**
+			 * Returns whiteValue if color == WHITE.
+			 * Returns blackValue if color == BLACK.
+			 */
+			template<typename T, T whiteValue, T blackValue>
+			static T colorFunction (const Color::Type color) {
+				return (((T) color - 1) & (whiteValue ^ blackValue)) ^ blackValue;
+			}
+
 
 	};
 	

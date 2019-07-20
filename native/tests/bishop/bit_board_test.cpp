@@ -85,10 +85,10 @@ TEST (testGetSquareCount) {
 	}
 
 	assertEquals(0, BitBoard::getSquareCount(BitBoard::EMPTY));
-	assertEquals(Square::COUNT, BitBoard::getSquareCount(BitBoard::FULL));
+	assertEquals((int) Square::COUNT, BitBoard::getSquareCount(BitBoard::FULL));
 
 	assertEquals(0, BitBoard::getSquareCountSparse(BitBoard::EMPTY));
-	assertEquals(Square::COUNT, BitBoard::getSquareCountSparse(BitBoard::FULL));
+	assertEquals((int) Square::COUNT, BitBoard::getSquareCountSparse(BitBoard::FULL));
 }
 /*
 TEST (testGetSquareCountNearKing) {

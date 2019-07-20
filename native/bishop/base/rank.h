@@ -9,6 +9,7 @@ namespace bishop::base {
 	class Rank {
 		public:
 			typedef int_fast8_t Type;
+			typedef int_fast8_t Difference;
 
 			static constexpr Rank::Type FIRST = 0;
 			
@@ -22,7 +23,7 @@ namespace bishop::base {
 			static constexpr Rank::Type R8 = 7;
 			
 			static constexpr Rank::Type LAST = 8;
-			static constexpr int COUNT = LAST - FIRST;
+			static constexpr Rank::Difference COUNT = LAST - FIRST;
 			static constexpr int BIT_COUNT = 3;
 
 			static constexpr double MIDDLE = (R1 + R8) / 2.0;
@@ -48,6 +49,9 @@ namespace bishop::base {
 			static inline Rank::Type getRelative(const Rank::Type absoluteRank, const Color::Type color) {
 				return getAbsolute(absoluteRank, color);
 			}
+
+			static Rank::Type fromChar (const char ch);
+
 	};
 
 }

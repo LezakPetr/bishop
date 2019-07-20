@@ -17,10 +17,10 @@ TEST (test) {
 	for (const std::vector<Square::Type> &squares: TESTED_MASKS) {
 		BitBoardCombinator combinator(BitBoard::fromRange(squares.begin(), squares.end()));
 
-		for (unsigned int i = 0; i < (1 << squares.size()); i++) {
+		for (unsigned int i = 0; i < (1ULL << squares.size()); i++) {
 			BitBoard::Type expectedCombination = BitBoard::EMPTY;
 
-			for (int j = 0; j < squares.size(); j++) {
+			for (size_t j = 0; j < squares.size(); j++) {
 				const Square::Type square = squares[j];
 
 				expectedCombination |= (BitBoard::Type) ((i >> j) & 0x01L) << square;

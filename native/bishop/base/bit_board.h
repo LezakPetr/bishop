@@ -6,6 +6,7 @@
 #include "../../util/table.h"
 
 #include <cstdint>
+#include <string>
 
 
 using namespace util;
@@ -37,16 +38,16 @@ namespace bishop::base {
 			 * @param square square
 			 * @return mask of square
 			 */
-			static inline BitBoard::Type getSquareMask (const Square::Type square) {
+			static constexpr inline BitBoard::Type getSquareMask (const Square::Type square) {
 				return ((BitBoard::Type) 1) << square;
 			}
 			
-			static inline BitBoard::Type of() {
+			static constexpr inline BitBoard::Type of() {
 				return BitBoard::EMPTY;
 			}
 
 			template<typename... Args>
-			static inline BitBoard::Type of(const Square::Type square, Args... args) {
+			static constexpr inline BitBoard::Type of(const Square::Type square, Args... args) {
 				return BitBoard::getSquareMask(square) | BitBoard::of(args...);
 			}
 
@@ -224,6 +225,8 @@ namespace bishop::base {
 			static inline bool containsSquare(const BitBoard::Type mask, const Square::Type square) {
 				return ((mask >> square) & 0x01) != 0;
 			}
+			
+			static BitBoard::Type fromString (::std::string const & str);
 	};
 
 }

@@ -22,6 +22,8 @@ namespace bishop::base {
 			static constexpr PieceType::Type LAST = 6;
 			static constexpr int COUNT = LAST - FIRST;
 
+			static constexpr int BIT_COUNT = 3;
+
 			static constexpr PieceType::Type NONE = 6;   // I must use value that fits into 3 bits because Move needs it
 	
 			// Subinterval of figures (pieces without pawn)
