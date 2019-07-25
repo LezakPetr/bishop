@@ -78,5 +78,7 @@ namespace bishop::base {
 	};
 }
 
+#define FOR_EACH_PIECE_TYPE(pieceType) for (::bishop::base::PieceType::Type pieceType = ::bishop::base::PieceType::FIRST; pieceType < ::bishop::base::PieceType::LAST; pieceType++)
+
 #endif
 

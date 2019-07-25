@@ -30,6 +30,9 @@ namespace bishop::base {
 			static constexpr Index FIRST_INDEX = 0;
 			static constexpr Index LAST_INDEX = FULL_RIGHTS + 1;
 
+			static constexpr int INDEX_BIT_COUNT = 4;
+			
+
 			// Mask of all squares that affects castling rights
 			static constexpr BitBoard::Type AFFECTED_SQUARES = BitBoard::of(
 				Square::A1, Square::E1, Square::H1, Square::A8, Square::E8, Square::H8
@@ -95,7 +98,7 @@ namespace bishop::base {
 			 * @param type type of right
 			 * @return true if given player has right for given castling, false if not
 			 */
-			bool isRight (const Color::Type color, const CastlingType::Type type) {
+			bool isRight (const Color::Type color, const CastlingType::Type type) const {
 				return (rights & getMaskOfRight (color, type)) != 0;
 			}
     
@@ -104,7 +107,7 @@ namespace bishop::base {
 			 * @param color color of player
 			 * @return true if given player has right for some castling, false if not
 			 */
-			bool isRightForColor (const Color::Type color) {
+			bool isRightForColor (const Color::Type color) const {
 				return (rights & TABLE_COLOR_RIGHT_MASK(color)) != 0;
 			}
 
@@ -112,7 +115,7 @@ namespace bishop::base {
 			 * Checks if set of rights is empty e.g. if there is no right for castling.
 			 * @return true if set of rights is empty, false if not
 			 */
-			bool isEmpty() {
+			bool isEmpty() const {
 				return rights == 0;
 			}
 
@@ -159,7 +162,7 @@ namespace bishop::base {
 			 * Returns index of this rights.
 			 * @return rights index
 			 */
-			Index getIndex() {
+			Index getIndex() const {
 				return rights;
 			}
 

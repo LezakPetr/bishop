@@ -4,6 +4,13 @@
 #define _BISHOP_BASE_MOVE_H_
 
 
+#include "move_type.h"
+#include "square.h"
+#include "piece_type.h"
+#include "castling_rights.h"
+#include "board_constants.h"
+
+
 namespace bishop::base {
 	
 	class Move {
@@ -14,17 +21,17 @@ namespace bishop::base {
 			unsigned int beginSquare: Square::BIT_COUNT;
 			unsigned int targetSquare: Square::BIT_COUNT;
 			unsigned int promotionPieceType: PieceType::BIT_COUNT;
-			unsigned int movingPieceTyype: PieceType::BIT_COUNT;
-			unsigned int capturedPieceTyype: PieceType::BIT_COUNT;
+			unsigned int movingPieceType: PieceType::BIT_COUNT;
+			unsigned int capturedPieceType: PieceType::BIT_COUNT;
 			unsigned int moveType: MoveType::BIT_COUNT;
-			unsigned int previousCastlingRight: BIT_COUNT;
+			unsigned int previousCastlingRightIndex: CastlingRights::INDEX_BIT_COUNT;
 			unsigned int previousEpFile: 4;
 
 		public:
 			static constexpr CompressedMove NONE_COMPRESSED_MOVE = 0;
 	
 			static constexpr CompressedMove FIRST_COMPRESSED_MOVE = 0;
-			static constexpr CompressedMove LAST_COMPRESSED_MOVE = COMPRESSED_MOVE_MASK + 1;
+			static constexpr CompressedMove LAST_COMPRESSED_MOVE = (CompressedMove) 1 << (Square::BIT_COUNT + Square::BIT_COUNT + PieceType::BIT_COUNT);
 	
 			/**
 			 * Clears the move.
@@ -33,8 +40,8 @@ namespace bishop::base {
 				*this = Move();
 			}
     
-    			inline void initialize(const int previousCastlingRights_, const File::Type previousEpFile_) {
-				previousCastlingRights = previousCastlingRights_;
+    			inline void initialize(const CastlingRights::Index previousCastlingRightIndex_, const File::Type previousEpFile_) {
+				previousCastlingRightIndex = previousCastlingRightIndex_;
 				previousEpFile = previousEpFile_;
 			}
 
@@ -104,14 +111,14 @@ namespace bishop::base {
 				initialize(previousCastlingRights_, previousEpFile_);
 				setMovingPieceType(PieceType::NONE);
 				setBeginSquare (Square::FIRST);
-				finishData (MoveType::NULL, Square::FIRST, PieceType::NONE, PieceType::NONE);
+				finishData (MoveType::NULL_MOVE, Square::FIRST, PieceType::NONE, PieceType::NONE);
 			}
 
 			/**
 			 * Returns type of move.
 			 * @return type of move
 			 */
-			inline MoveType::Type getMoveType() {
+			inline MoveType::Type getMoveType() const {
 				return moveType;
 			}
 
@@ -119,7 +126,7 @@ namespace bishop::base {
 			 * Returns type of piece that is moving.
 			 * @return moving piece type
 			 */
-			inline PieceType::Type getMovingPieceType() {
+			inline PieceType::Type getMovingPieceType() const {
 				return movingPieceType;
 			}
 
@@ -127,7 +134,7 @@ namespace bishop::base {
 			 * Returns begin square of move.
 			 * @return begin square of move
 			 */
-			inline Square::Type getBeginSquare() {
+			inline Square::Type getBeginSquare() const {
 				return beginSquare;
 			}
 
@@ -135,7 +142,7 @@ namespace bishop::base {
 			 * Returns target square of move.
 			 * @return target square of move
 			 */
-			inline Square::Type getTargetSquare() {
+			inline Square::Type getTargetSquare() const {
 				return targetSquare;
 			}
 
@@ -143,7 +150,7 @@ namespace bishop::base {
 			 * Returns type of captured piece.
 			 * @return type of captured piece
 			 */
-			inline PieceType::Type getCapturedPieceType() {
+			inline PieceType::Type getCapturedPieceType() const {
 				return capturedPieceType;
 			}
 
@@ -151,7 +158,7 @@ namespace bishop::base {
 			 * Returns type of piece after pawn promotion.
 			 * @return type of promotion piece
 			 */
-			inline PieceType::Type getPromotionPieceType() {
+			inline PieceType::Type getPromotionPieceType() const {
 				return promotionPieceType;
 			}
 
@@ -159,7 +166,7 @@ namespace bishop::base {
 			 * Returns castling right index before the move.
 			 * @return castling right index before the move
 			 */
-			inline int getPreviousCastlingRigthIndex() {
+			inline int getPreviousCastlingRigthIndex() const {
 				return previousCastlingRightIndex;
 			}
 
@@ -167,7 +174,7 @@ namespace bishop::base {
 			 * Returns EP file before the move.
 			 * @return EP file before the move
 			 */
-			inline File::Type getPreviousEpFile() {
+			inline File::Type getPreviousEpFile() const {
 				return previousEpFile;
 			}
 

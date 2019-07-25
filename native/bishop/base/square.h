@@ -167,5 +167,7 @@ namespace bishop::base {
 			
 }
 
+#define FOR_EACH_SQUARE(square) for (::bishop::base::Square::Type square = ::bishop::base::Square::FIRST; square < ::bishop::base::Square::LAST; square++)
+
 #endif
 

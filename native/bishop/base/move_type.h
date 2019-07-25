@@ -1,16 +1,29 @@
-package bishop.base;
 
-public class MoveType {
+
+#ifndef _BISHOP_BASE_MOVE_TYPE_H_
+#define _BISHOP_BASE_MOVE_TYPE_H_
+
+
+namespace bishop::base {
+	class MoveType {
+		public:
+			typedef int_fast8_t Type;
+
+			static constexpr Type INVALID = 0;
+			static constexpr Type FIRST = 1;
 	
-	public static final int INVALID = 0;
-	public static final int FIRST = 1;
+			static constexpr Type NORMAL = 1;
+			static constexpr Type PROMOTION = 2;
+			static constexpr Type CASTLING = 3;
+			static constexpr Type EN_PASSANT = 4;
+			static constexpr Type NULL_MOVE = 5;
 	
-	public static final int NORMAL = 1;
-	public static final int PROMOTION = 2;
-	public static final int CASTLING = 3;
-	public static final int EN_PASSANT = 4;
-	public static final int NULL = 5;
-	
-	public static final int LAST = 6;
+			static constexpr Type LAST = 6;
+
+			static constexpr int BIT_COUNT = 3;
+	};
 
 }
+
+#endif
+
