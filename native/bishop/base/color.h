@@ -71,5 +71,7 @@ namespace bishop::base {
 	
 }
 
+#define FOR_EACH_COLOR(color) for (::bishop::base::Color::Type color = ::bishop::base::Color::FIRST; color < ::bishop::base::Color::LAST; color++)
+
 #endif
 

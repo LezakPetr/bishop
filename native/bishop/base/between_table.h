@@ -21,7 +21,7 @@ namespace bishop::base {
 			static constexpr size_t SIZE = 1 << BIT_COUNT;
 
 		public:
-			static const Table<BetweenTable::SIZE, BitBoard::Type, BetweenTable::SQUARE1_SHIFT, BetweenTable::SQUARE2_SHIFT> getItem;
+			static const util::Table<BetweenTable::SIZE, BitBoard::Type, BetweenTable::SQUARE1_SHIFT, BetweenTable::SQUARE2_SHIFT> getItem;
 	};
 }
 

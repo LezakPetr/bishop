@@ -22,7 +22,7 @@ const Table<Square::COUNT, CastlingRights::Index, 0> bishop::base::CastlingRight
 	table(Square::A8) &= ~getMaskOfRight (Color::BLACK, CastlingType::LONG);
 });
 
-const Table<Color::COUNT, CastlingRights::Index, 0> TABLE_COLOR_RIGHT_MASK(
+const Table<Color::COUNT, CastlingRights::Index, 0> bishop::base::CastlingRights::TABLE_COLOR_RIGHT_MASK(
 	makeDirectTableInitializer(
 		[](const Color::Type color) {
 			return CastlingRights::getMaskOfRight (color, CastlingType::SHORT) | CastlingRights::getMaskOfRight (color, CastlingType::LONG);
