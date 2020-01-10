@@ -181,176 +181,193 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 
 		private void alphaBetaInLegalPosition(final int horizon) {
-			final int onTurn = currentPosition.getOnTurn();
-			final int oppositeColor = Color.getOppositeColor(onTurn);
-
 			if (checkFiniteEvaluation(horizon))
 				return;
-
-			moveListBegin = moveStackTop;
 
 			// Try to find position in hash table
 			if (updateRecordByHash(horizon))
 				return;
 
 			final int reducedHorizon = shouldReduceHorizon(horizon) ? 0 : horizon;
+			initialize(reducedHorizon);
+
+			performSearch(horizon, reducedHorizon);
+
+			updateHashRecord(reducedHorizon);
+			updateBestMovePerIndexCounts();
+		}
+
+		private void initialize(int reducedHorizon) {
 			isQuiescenceSearch = (reducedHorizon <= 0);
 
+			final int onTurn = currentPosition.getOnTurn();
+			final int oppositeColor = Color.getOppositeColor(onTurn);
 			final int ownKingSquare = currentPosition.getKingPosition(onTurn);
 			isCheck = mobilityCalculator.isSquareAttacked(oppositeColor, ownKingSquare);
 
 			originalKillerMove.assign(killerMove);
+		}
 
-			try {
-				// Evaluate position
-				final int positionEvaluation = getPositionEvaluation(onTurn);
-				final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
+		private void performSearch(int horizon, int reducedHorizon) {
+			// Evaluate position
+			final int maxCheckSearchDepth = searchSettings.getMaxCheckSearchDepth();
 
-				final boolean checkSearchAllowed = reducedHorizon > -maxCheckSearchDepth;
-				isCheckSearch = isQuiescenceSearch && checkSearchAllowed && isCheck;
+			final boolean checkSearchAllowed = reducedHorizon > -maxCheckSearchDepth;
+			isCheckSearch = isQuiescenceSearch && checkSearchAllowed && isCheck;
 
-				final int positionExtension;
+			final int positionExtension;
 
-				if (reducedHorizon >= searchSettings.getMinExtensionHorizon())
-					positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, horizon);
-				else
-					positionExtension = 0;
+			if (reducedHorizon >= searchSettings.getMinExtensionHorizon())
+				positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, horizon);
+			else
+				positionExtension = 0;
 
-				final boolean isMaxDepth = (depth >= maxTotalDepth - 1);
+			final boolean isMaxDepth = (depth >= maxTotalDepth - 1);
 
-				// Use position evaluation as initial evaluation
-				if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
-					evaluation = positionEvaluation;
-					alpha = Math.max(alpha, evaluation);
+			// Use position evaluation as initial evaluation
+			if (evaluatePosition(isMaxDepth))
+				return;
 
-					nodeCount++;
+			final int maxQuiescenceDepth = searchSettings.getMaxQuiescenceDepth();
 
-					if (evaluation > beta) {
-						final int mateEvaluation = Evaluation.getMateEvaluation(depth);
-						checkMateAndStalemate(isCheck, mateEvaluation);
+			if (!isMaxDepth && reducedHorizon > -maxQuiescenceDepth) {
+				moveListBegin = moveStackTop;
+				moveListEnd = moveStackTop;
 
-						return;
-					}
+				// Null move heuristic
+				if (nullMoveHeuristic(reducedHorizon))
+					return;
+
+				// Try best move from hash table first
+				final boolean precalculatedBetaCutoff = evaluateHashBestMove(reducedHorizon, positionExtension);
+
+				// If precalculated move didn't make beta cutoff try other moves
+				if (!precalculatedBetaCutoff)
+					evaluateAllMoves(reducedHorizon, positionExtension);
+
+				if (principalVariation.getSize() > 0) {
+					principalVariation.assignToMove(0, principalMove);
+					moveEstimator.updateMove(this, currentPosition.getOnTurn(), principalMove, horizon, true);
 				}
 
-				final int maxQuiescenceDepth = searchSettings.getMaxQuiescenceDepth();
+				final int mateEvaluation = Evaluation.getMateEvaluation(depth);
+				checkMateAndStalemate(isCheck, mateEvaluation);
+			}
+		}
 
-				if (!isMaxDepth && reducedHorizon > -maxQuiescenceDepth) {
-					moveListBegin = moveStackTop;
-					moveListEnd = moveStackTop;
+		private boolean evaluatePosition(boolean isMaxDepth) {
+			final int positionEvaluation = calculatePositionEvaluation();
 
-					// Null move heuristic
-					if (!isQuiescenceSearch && isNullSearchPossible(isCheck)) {
-						final int nullReduction = Math.min(searchSettings.getNullMoveReduction(), reducedHorizon / 2);
+			if ((isQuiescenceSearch && !isCheckSearch) || isMaxDepth) {
+				evaluation = positionEvaluation;
+				alpha = Math.max(alpha, evaluation);
 
-						if (nullReduction > 0) {
-							int nullHorizon = reducedHorizon - nullReduction;
-							nullMove.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
+				nodeCount++;
 
-							final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
-							currentPosition.makeMove(nullMove);
-
-							if (beta < Evaluation.MIN) {
-								evaluateMadeMove (nullMove, nullHorizon, 0, beta, beta, beginMaterialEvaluation);
-								final int childEvaluation = -nextRecord.evaluation;
-
-								if (childEvaluation < beta) {
-									evaluateMadeMove(nullMove, nullHorizon, 0, alpha, childEvaluation, beginMaterialEvaluation);
-									final int updatedChildEvaluation = -nextRecord.evaluation;
-
-									assert (updatedChildEvaluation <= childEvaluation);
-								}
-							}
-							else
-								evaluateMadeMove(nullMove, nullHorizon, 0, alpha, beta, beginMaterialEvaluation);
-
-							currentPosition.undoMove(nullMove);
-
-							evaluation = Math.max(evaluation, -nextRecord.evaluation);
-							alpha = Math.max(alpha, evaluation);
-
-							if (evaluation > beta)
-								return;
-						}
-					}
-
-					// Try P-var move first
-					final boolean precalculatedMoveFound;
-					boolean precalculatedBetaCutoff = false;
-
-					if (isQuiescenceSearch) {
-						precalculatedMoveFound = false;
-						precalculatedMove.clear();
-					}
-					else {
-						if (hashBestMove.getMoveType() != MoveType.INVALID) {
-							precalculatedMoveFound = true;
-							precalculatedMove.assign(hashBestMove);
-						}
-						else {
-							precalculatedMoveFound = false;
-							precalculatedMove.clear();
-						}
-					}
-
-					if (precalculatedMoveFound) {
-						evaluateMove(precalculatedMove, reducedHorizon, positionExtension, alpha, beta);
-
-						if (updateCurrentRecordAfterEvaluation(precalculatedMove, reducedHorizon, nextRecord)) {
-							precalculatedBetaCutoff = true;
-						}
-					}
-
-					// If precalculated move didn't make beta cutoff try other moves
-					if (!precalculatedBetaCutoff) {
-						generateMoves(reducedHorizon);
-
-						while (moveListEnd > moveListBegin) {
-							selectBestMove();
-
-							final Move move = precreatedCurrentMove;
-							moveStack.getMove(moveListEnd - 1, move);
-
-							if (!move.equals(precalculatedMove) && shouldEvaluateMove (move)) {
-								final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
-								currentPosition.makeMove(move);
-
-								if (firstLegalMove.getMoveType() != MoveType.INVALID && alpha != beta && moveStack.getEvaluation(moveListEnd - 1) < searchSettings.getMaxEstimateForZeroWindowSearch()) {
-									evaluateMadeMove (move, reducedHorizon, positionExtension, alpha, alpha, beginMaterialEvaluation);
-									final int childEvaluation = -nextRecord.evaluation;
-
-									if (childEvaluation > alpha && childEvaluation <= beta) {
-										evaluateMadeMove(move, reducedHorizon, positionExtension, childEvaluation, beta, beginMaterialEvaluation);
-										final int updatedChildEvaluation = -nextRecord.evaluation;
-
-										assert (updatedChildEvaluation >= childEvaluation);
-									}
-								}
-								else
-									evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, beginMaterialEvaluation);
-
-								currentPosition.undoMove(move);
-
-								if (updateCurrentRecordAfterEvaluation(move, reducedHorizon, nextRecord))
-									break;
-							}
-
-							moveListEnd--;
-						}
-					}
-
-					if (principalVariation.getSize() > 0) {
-						principalVariation.assignToMove(0, principalMove);
-						moveEstimator.updateMove(this, currentPosition.getOnTurn(), principalMove, horizon, true);
-					}
-
+				if (evaluation > beta) {
 					final int mateEvaluation = Evaluation.getMateEvaluation(depth);
 					checkMateAndStalemate(isCheck, mateEvaluation);
+
+					return true;
 				}
 			}
-			finally {
-				updateHashRecord(reducedHorizon);
-				updateBestMovePerIndexCounts();
+			return false;
+		}
+
+		private boolean nullMoveHeuristic(int reducedHorizon) {
+			if (!isQuiescenceSearch && isNullSearchPossible(isCheck)) {
+				final int nullReduction = Math.min(searchSettings.getNullMoveReduction(), reducedHorizon / 2);
+
+				if (nullReduction > 0) {
+					int nullHorizon = reducedHorizon - nullReduction;
+					nullMove.createNull(currentPosition.getCastlingRights().getIndex(), currentPosition.getEpFile());
+
+					final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
+					currentPosition.makeMove(nullMove);
+
+					if (beta < Evaluation.MIN) {
+						evaluateMadeMove (nullMove, nullHorizon, 0, beta, beta, beginMaterialEvaluation);
+						final int childEvaluation = -nextRecord.evaluation;
+
+						if (childEvaluation < beta) {
+							evaluateMadeMove(nullMove, nullHorizon, 0, alpha, childEvaluation, beginMaterialEvaluation);
+							final int updatedChildEvaluation = -nextRecord.evaluation;
+
+							assert (updatedChildEvaluation <= childEvaluation);
+						}
+					}
+					else
+						evaluateMadeMove(nullMove, nullHorizon, 0, alpha, beta, beginMaterialEvaluation);
+
+					currentPosition.undoMove(nullMove);
+
+					evaluation = Math.max(evaluation, -nextRecord.evaluation);
+					alpha = Math.max(alpha, evaluation);
+
+					if (evaluation > beta)
+						return true;
+				}
+			}
+			return false;
+		}
+
+		private boolean evaluateHashBestMove(int reducedHorizon, int positionExtension) {
+			final boolean precalculatedMoveFound;
+			boolean precalculatedBetaCutoff = false;
+
+			if (!isQuiescenceSearch && hashBestMove.getMoveType() != MoveType.INVALID) {
+				precalculatedMoveFound = true;
+				precalculatedMove.assign(hashBestMove);
+			}
+			else {
+				precalculatedMoveFound = false;
+				precalculatedMove.clear();
+			}
+
+			if (precalculatedMoveFound) {
+				evaluateMove(precalculatedMove, reducedHorizon, positionExtension, alpha, beta);
+
+				if (updateCurrentRecordAfterEvaluation(precalculatedMove, reducedHorizon, nextRecord)) {
+					precalculatedBetaCutoff = true;
+				}
+			}
+			return precalculatedBetaCutoff;
+		}
+
+		private void evaluateAllMoves(final int reducedHorizon, final int positionExtension) {
+			generateMoves(reducedHorizon);
+
+			while (moveListEnd > moveListBegin) {
+				selectBestMove();
+
+				final Move move = precreatedCurrentMove;
+				moveStack.getMove(moveListEnd - 1, move);
+
+				if (!move.equals(precalculatedMove) && shouldEvaluateMove (move)) {
+					final int beginMaterialEvaluation = currentPosition.getMaterialEvaluation();
+					currentPosition.makeMove(move);
+
+					if (firstLegalMove.getMoveType() != MoveType.INVALID && alpha != beta && moveStack.getEvaluation(moveListEnd - 1) < searchSettings.getMaxEstimateForZeroWindowSearch()) {
+						evaluateMadeMove (move, reducedHorizon, positionExtension, alpha, alpha, beginMaterialEvaluation);
+						final int childEvaluation = -nextRecord.evaluation;
+
+						if (childEvaluation > alpha && childEvaluation <= beta) {
+							evaluateMadeMove(move, reducedHorizon, positionExtension, childEvaluation, beta, beginMaterialEvaluation);
+							final int updatedChildEvaluation = -nextRecord.evaluation;
+
+							assert (updatedChildEvaluation >= childEvaluation);
+						}
+					}
+					else
+						evaluateMadeMove(move, reducedHorizon, positionExtension, alpha, beta, beginMaterialEvaluation);
+
+					currentPosition.undoMove(move);
+
+					if (updateCurrentRecordAfterEvaluation(move, reducedHorizon, nextRecord))
+						break;
+				}
+
+				moveListEnd--;
 			}
 		}
 
@@ -378,7 +395,9 @@ public final class SerialSearchEngine implements ISearchEngine {
 			return sse >= 0;
 		}
 
-		private int getPositionEvaluation(int onTurn) {
+		private int calculatePositionEvaluation() {
+			final int onTurn = currentPosition.getOnTurn();
+
 			int whitePositionEvaluation = positionEvaluator.evaluateTactical(currentPosition, mobilityCalculator).getEvaluation();
 
 			final int materialEvaluation = currentPosition.getMaterialEvaluation();
@@ -398,7 +417,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 				relativeEvaluation += Evaluation.getRelative(boundedPositionalEvaluation, onTurn);
 			}
 
-			return fixDrawByRepetitionEvaluation(relativeEvaluation);
+			return relativeEvaluation;
 		}
 
 		private boolean shouldReduceHorizon(int horizon) {
@@ -541,7 +560,11 @@ public final class SerialSearchEngine implements ISearchEngine {
 			final int totalExtension = shouldExtend ? 1 : 0;
 			final int subHorizon = horizon + totalExtension - HORIZON_STEP_WITHOUT_EXTENSION;
 
-			repeatedPositionRegister.pushPosition (currentPosition, move);
+			// Store position to repeated position register only in quiescence search
+			// because positions in quiescence search are not stored to hash table.
+			// This prevents non-deterministic behaviour when the detection of move repetition depends on the search order.
+			repeatedPositionRegister.pushPosition (currentPosition, move, isQuiescenceSearch);
+
 			currentMove.assign(move);
 
 			moveStackTop = moveListEnd;
@@ -608,7 +631,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 		}
 
 		private void updateHashRecord(final int horizon) {
-			if (horizon > 0 && !Evaluation.isDrawByRepetition(evaluation)) {
+			if (horizon > 0) {
 				final HashRecord record = hashRecord;
 				record.setEvaluationAndType(evaluation, alpha, beta, depth);
 				record.setHorizon(horizon);
@@ -788,10 +811,6 @@ public final class SerialSearchEngine implements ISearchEngine {
 			
 			receiveUpdatesCounter = 0;
 		}
-	}
-
-	private int fixDrawByRepetitionEvaluation(final int evaluation) {
-		return (Evaluation.isDrawByRepetition(evaluation)) ? Evaluation.DRAW : evaluation;
 	}
 
 	public static int matePrunning(final int currentDepth, int subHorizon, final int alpha, final int beta) {

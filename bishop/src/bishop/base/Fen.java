@@ -330,4 +330,11 @@ public class Fen {
 
 		readFen(reader);
 	}
+
+	public static Position positionFromString (final String str) throws IOException {
+		final Fen fen = new Fen();
+		fen.readFenFromString(str);
+
+		return fen.getPosition();
+	}
 }
