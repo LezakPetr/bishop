@@ -1268,6 +1268,27 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		return evaluation;
 	}
 
+	public boolean isStaticExchangeEvaluationNonLosing(final int color, final Move move, final PieceTypeEvaluations pieceTypeEvaluations) {
+		final int movingPieceType = move.getMovingPieceType();
+		final int capturedPieceType = move.getCapturedPieceType();
+		final int threshold = pieceTypeEvaluations.getPieceTypeEvaluation(capturedPieceType);
+		final int signum = getStaticExchangeEvaluationSignum(color, move, pieceTypeEvaluations, movingPieceType, threshold);
+
+		return signum <= 0;
+	}
+
+	private int getStaticExchangeEvaluationSignum(final int color, final Move move, final PieceTypeEvaluations pieceTypeEvaluations, final int movingPieceType, final int threshold) {
+		return Integer.signum(
+				getStaticExchangeEvaluation(
+				Color.getOppositeColor(color),
+				move.getTargetSquare(),
+				pieceTypeEvaluations,
+				occupancy & ~BitBoard.of(move.getBeginSquare()),
+				movingPieceType
+		) - threshold
+		);
+	}
+
 	@Override
 	public int getPieceCount(final int color, final int pieceType) {
 		final long pieceMask = getPiecesMask(color, pieceType);

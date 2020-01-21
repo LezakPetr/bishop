@@ -267,6 +267,9 @@ public class PositionTest {
 
 			Assert.assertEquals(testCase.position, testCase.evaluation, evaluation);
 			Assert.assertEquals(testCase.position, beginPosition, position);
+
+			final boolean isNonLosing = position.isStaticExchangeEvaluationNonLosing(position.getOnTurn(), move, pte);
+			Assert.assertEquals(testCase.position, testCase.evaluation >= 0, isNonLosing);
 		}
 	}
 	
