@@ -1268,6 +1268,57 @@ public final class Position implements IPosition, ICopyable<Position>, IAssignab
 		return evaluation;
 	}
 
+	public boolean isStaticExchangeEvaluationNonLosing(final int color, final Move move, final PieceTypeEvaluations pieceTypeEvaluations) {
+		final int movingPieceType = move.getMovingPieceType();
+		final int capturedPieceType = move.getCapturedPieceType();
+		final int threshold = pieceTypeEvaluations.getPieceTypeEvaluation(capturedPieceType);
+
+		return !isStaticExchangeEvaluationAtLeast(
+				Color.getOppositeColor(color),
+				move.getTargetSquare(),
+				pieceTypeEvaluations,
+				threshold + 1,
+				occupancy & ~BitBoard.of(move.getBeginSquare()),
+				movingPieceType
+		);
+	}
+
+	public boolean isStaticExchangeEvaluationAtLeast(final int color, final int square, final PieceTypeEvaluations pieceTypeEvaluations, final int threshold) {
+		return isStaticExchangeEvaluationAtLeast(
+				color, square, pieceTypeEvaluations, threshold, occupancy, getPieceTypeOnSquare(square)
+		);
+	}
+
+	public boolean isStaticExchangeEvaluationAtLeast(final int color, final int square, final PieceTypeEvaluations pieceTypeEvaluations, final int threshold, final long effectiveOccupancy, final int pieceTypeOnSquare) {
+		final int attackerSquare = getCheapestAttacker (color, square, effectiveOccupancy);
+
+		if (attackerSquare != Square.NONE) {
+			if (pieceTypeOnSquare == PieceType.NONE)
+				return threshold <= 0;
+
+			if (pieceTypeOnSquare == PieceType.KING)
+				return true;
+
+			if (threshold <= 0)
+				return true;
+
+			// Now threshold > 0
+
+			final int attackerPieceType = getPieceTypeOnSquare(attackerSquare);
+
+			return !isStaticExchangeEvaluationAtLeast(
+					Color.getOppositeColor(color),
+					square,
+					pieceTypeEvaluations,
+					pieceTypeEvaluations.getPieceTypeEvaluation(pieceTypeOnSquare) - threshold + 1,
+					effectiveOccupancy & ~BitBoard.of(attackerSquare),
+					attackerPieceType
+			);
+		}
+		else
+			return threshold <= 0;
+	}
+
 	@Override
 	public int getPieceCount(final int color, final int pieceType) {
 		final long pieceMask = getPiecesMask(color, pieceType);

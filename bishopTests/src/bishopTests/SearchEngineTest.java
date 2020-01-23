@@ -35,7 +35,7 @@ public class SearchEngineTest {
 		new TestValue("2k5/8/2K1R3/8/8/8/8/8 w - - 0 1", 0, Evaluation.getMateEvaluation(1), "e6e8"),
 		new TestValue("7k/8/8/6RK/8/8/8/8 w - - 0 1", 5, Evaluation.getMateEvaluation(5), "h5g6"),
 		new TestValue("8/8/8/8/6rk/8/8/7K b - - 0 1", 5, Evaluation.getMateEvaluation(5), "h4g3"),
-		new TestValue("QR6/7k/8/8/7q/8/6P1/6K1 b - - 0 1", 4, Evaluation.DRAW_BY_REPETITION, "h4e1")
+		new TestValue("QR6/7k/8/8/7q/8/6P1/6K1 b - - 0 1", 4, Evaluation.DRAW, "h4e1")
 	};
 
 	@Test

@@ -35,6 +35,14 @@ public class PgnReader extends Pgn {
 		readPgn(pushbackReader);
 	}
 
+	public void readPgnFromString (final String str) throws IOException {
+		final StringReader stringReader = new StringReader(str);
+		final PushbackReader pushbackReader = new PushbackReader(stringReader);
+
+		readPgn(pushbackReader);
+	}
+
+
 	public Game readSingleGame (final PushbackReader reader) throws IOException {
 		try {
 			gameList.clear();

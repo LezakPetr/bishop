@@ -62,7 +62,7 @@ public final class FinitePositionEvaluator {
 		final boolean isRepetition = repeatedPositionRegister.isDrawByRepetition(position, depth);
 
 		if (isRepetition) {
-			evaluation = Evaluation.DRAW_BY_REPETITION;
+			evaluation = Evaluation.DRAW;
 
 			return true;
 		}

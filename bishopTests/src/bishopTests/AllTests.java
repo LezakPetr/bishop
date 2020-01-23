@@ -30,6 +30,7 @@ public class AllTests {
 		CastlingConstantsTest.class,
 		BitLoopTest.class,
 		MaterialHashTest.class,
+		RepeatedPositionRegisterTest.class,
 		MaxKingDistanceCalculatorTest.class,
 		ImmutableOrdinalMapTest.class,
 		IntUtilsTest.class,
