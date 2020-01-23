@@ -386,13 +386,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 
 			final int onTurn = currentPosition.getOnTurn();
 
-			final int sse =	currentPosition.getStaticExchangeEvaluation(
-					onTurn,
-					move,
-					pte
-			);
-
-			return sse >= 0;
+			return staticExchangeEvaluator.isMoveNonLosing(onTurn, move);
 		}
 
 		private int calculatePositionEvaluation() {
@@ -737,6 +731,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 	private IPositionEvaluator positionEvaluator;
 	private final HandlerRegistrarImpl<ISearchEngineHandler> handlerRegistrar;
 	private final MateFinder mateFinder;
+	private StaticExchangeEvaluator staticExchangeEvaluator;
 	
 	private static final long[] bestMovePerIndexCounts = new long[PseudoLegalMoveGenerator.MAX_MOVES_IN_POSITION];
 	
@@ -922,6 +917,8 @@ public final class SerialSearchEngine implements ISearchEngine {
 			moveExtensionEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
 			finiteEvaluator.setPieceTypeEvaluations(pieceTypeEvaluations);
 			currentPosition.setPieceTypeEvaluations(pieceTypeEvaluations);
+
+			staticExchangeEvaluator = new StaticExchangeEvaluator(currentPosition, pieceTypeEvaluations);
 		}
 	}
 

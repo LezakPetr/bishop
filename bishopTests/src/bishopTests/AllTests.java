@@ -61,6 +61,7 @@ public class AllTests {
 		OnlineLogisticModelTest.class,
 		PieceMoveTablesTest.class,
 		PositionTest.class,
+		StaticExchangeEvaluatorTest.class,
 		SearchEngineTest.class,
 		SearchManagerTest.class,
 		NotationTest.class,
