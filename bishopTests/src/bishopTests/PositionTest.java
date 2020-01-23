@@ -6,7 +6,6 @@ import java.io.PushbackReader;
 import java.io.StringReader;
 
 import bishop.base.*;
-import bishop.engine.Evaluation;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -224,6 +223,10 @@ public class PositionTest {
 			
 			Assert.assertEquals(testCase.position, testCase.evaluation, evaluation);
 			Assert.assertEquals(testCase.position, beginPosition, position);
+
+			Assert.assertTrue(testCase.position, position.isStaticExchangeEvaluationAtLeast(testCase.color, testCase.square, pte, testCase.evaluation - 1));
+			Assert.assertTrue(testCase.position, position.isStaticExchangeEvaluationAtLeast(testCase.color, testCase.square, pte, testCase.evaluation));
+			Assert.assertFalse(testCase.position, position.isStaticExchangeEvaluationAtLeast(testCase.color, testCase.square, pte, testCase.evaluation + 1));
 		}
 	}
 
