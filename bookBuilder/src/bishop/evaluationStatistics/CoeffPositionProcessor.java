@@ -86,7 +86,7 @@ public class CoeffPositionProcessor implements IPositionProcessor {
 				nonExchangeCounter >= MIN_NON_EXCHANGE_COUNTER &&
 				PROBABILITY_RIGHT_SIDES.containsKey(result) &&
 				Math.abs(defaultMaterialEvaluator.evaluateMaterial(position.calculateMaterialHash())) <= MAX_MATERIAL_EVALUATION &&
-				position.getStaticExchangeEvaluationOnTurn(PieceTypeEvaluations.DEFAULT) == 0) {
+				new StaticExchangeEvaluator(position, PieceTypeEvaluations.DEFAULT).getStaticExchangeEvaluationOnTurn() == 0) {
 			final CoeffCountPositionEvaluation evaluation = (CoeffCountPositionEvaluation) evaluationFactory.get();
 			mobilityCalculator.calculate(position);
 			
