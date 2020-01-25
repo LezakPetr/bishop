@@ -1,71 +1,99 @@
 package bishop.engine;
 
 import bishop.base.*;
-import bishop.tables.BetweenTable;
 import bishop.tables.FigureAttackTable;
 import bishop.tables.PawnAttackTable;
 
+/**
+ * Calculator of static exchange evaluation.
+ * SEE for square is calculated by considering sequence of captures of pieces on that square
+ * by cheapest attackers. There is also a variant that checks if the SEE >= some threshold.
+ * Note about negation:
+ * To calculate SEE <= threshold we must evaluate !(SEE >= threshold + 1).
+ */
 public class StaticExchangeEvaluator {
 
     private final Position position;
     private final PieceTypeEvaluations pieceTypeEvaluations;
+
+    private long cheapestAttackerMask;
+	private int cheapestAttackerPieceType;
 
     public StaticExchangeEvaluator(final Position position, final PieceTypeEvaluations pieceTypeEvaluations) {
         this.position = position;
         this.pieceTypeEvaluations = pieceTypeEvaluations;
     }
 
-    public int getCheapestAttacker (final int color, final int square, final long effectiveOccupancy) {
+    private void calculateCheapestAttacker(final int color, final int square, final long effectiveOccupancy) {
         // Pawn
         final int oppositeColor = Color.getOppositeColor(color);
         final long attackingPawnMask = position.getPiecesMask(color, PieceType.PAWN) & PawnAttackTable.getItem(oppositeColor, square) & effectiveOccupancy;
 
-        if (attackingPawnMask != 0)
-            return BitBoard.getFirstSquare(attackingPawnMask);
+        if (attackingPawnMask != 0) {
+        	cheapestAttackerMask = BitBoard.getFirstSquareMask(attackingPawnMask);
+			cheapestAttackerPieceType = PieceType.PAWN;
+
+			return;
+		}
 
         // Knight
         final long attackingKnightMask = position.getPiecesMask(color, PieceType.KNIGHT) & FigureAttackTable.getItem (PieceType.KNIGHT, square) & effectiveOccupancy;
 
-        if (attackingKnightMask != 0)
-            return BitBoard.getFirstSquare(attackingKnightMask);
+        if (attackingKnightMask != 0) {
+			cheapestAttackerMask = BitBoard.getFirstSquareMask(attackingKnightMask);
+			cheapestAttackerPieceType = PieceType.KNIGHT;
+
+			return;
+		}
 
         // Bishop
-        final long attackingBishopMask = position.getPiecesMask(color, PieceType.BISHOP) & FigureAttackTable.getItem(PieceType.BISHOP, square) & effectiveOccupancy;
+		final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, square, effectiveOccupancy);
+		final long diagonalMask = LineAttackTable.getAttackMask(diagonalIndex);
 
-        for (BitLoop loop = new BitLoop(attackingBishopMask); loop.hasNextSquare(); ) {
-            final int testSquare = loop.getNextSquare();
+        final long attackingBishopMask = position.getPiecesMask(color, PieceType.BISHOP) & effectiveOccupancy & diagonalMask;
 
-            if ((BetweenTable.getItem(square, testSquare) & effectiveOccupancy) == 0)
-                return testSquare;
-        }
+        if (attackingBishopMask != 0) {
+			cheapestAttackerMask = BitBoard.getFirstSquareMask(attackingBishopMask);
+			cheapestAttackerPieceType = PieceType.BISHOP;
+
+			return;
+		}
 
         // Rook
-        final long attackingRookMask = position.getPiecesMask(color, PieceType.ROOK) & FigureAttackTable.getItem(PieceType.ROOK, square) & effectiveOccupancy;
+		final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, square, effectiveOccupancy);
+		final long orthogonalMask = LineAttackTable.getAttackMask(orthogonalIndex);
 
-        for (BitLoop loop = new BitLoop(attackingRookMask); loop.hasNextSquare(); ) {
-            final int testSquare = loop.getNextSquare();
+		final long attackingRookMask = position.getPiecesMask(color, PieceType.ROOK) & effectiveOccupancy & orthogonalMask;
 
-            if ((BetweenTable.getItem(square, testSquare) & effectiveOccupancy) == 0)
-                return testSquare;
-        }
+		if (attackingRookMask != 0) {
+			cheapestAttackerMask = BitBoard.getFirstSquareMask(attackingRookMask);
+			cheapestAttackerPieceType = PieceType.ROOK;
+
+			return;
+		}
 
         // Queen
-        final long attackingQueenMask = position.getPiecesMask(color, PieceType.QUEEN) & FigureAttackTable.getItem(PieceType.QUEEN, square) & effectiveOccupancy;
+        final long attackingQueenMask = position.getPiecesMask(color, PieceType.QUEEN) & effectiveOccupancy & (orthogonalMask | diagonalMask);
 
-        for (BitLoop loop = new BitLoop(attackingQueenMask); loop.hasNextSquare(); ) {
-            final int testSquare = loop.getNextSquare();
+		if (attackingQueenMask != 0) {
+			cheapestAttackerMask = BitBoard.getFirstSquareMask(attackingQueenMask);
+			cheapestAttackerPieceType = PieceType.QUEEN;
 
-            if ((BetweenTable.getItem(square, testSquare) & effectiveOccupancy) == 0)
-                return testSquare;
-        }
+			return;
+		}
 
         // King
         final long attackingKingMask = position.getPiecesMask(color, PieceType.KING) & FigureAttackTable.getItem (PieceType.KING, square) & effectiveOccupancy;
 
-        if (attackingKingMask != 0)
-            return BitBoard.getFirstSquare(attackingKingMask);
+        if (attackingKingMask != 0) {
+			cheapestAttackerMask = BitBoard.getFirstSquareMask(attackingKingMask);
+			cheapestAttackerPieceType = PieceType.KING;
 
-        return Square.NONE;
+			return;
+		}
+
+		cheapestAttackerMask = BitBoard.EMPTY;
+		cheapestAttackerPieceType = PieceType.NONE;
     }
 
     public int getStaticExchangeEvaluationOfSquare(final int color, final int square) {
@@ -73,17 +101,16 @@ public class StaticExchangeEvaluator {
     }
 
     private int getStaticExchangeEvaluationOfSquare(final int color, final int square, final long effectiveOccupancy, final int pieceTypeOnSquare) {
-        final int attackerSquare = getCheapestAttacker (color, square, effectiveOccupancy);
+        calculateCheapestAttacker(color, square, effectiveOccupancy);
 
-        if (attackerSquare != Square.NONE) {
+        if (cheapestAttackerMask != BitBoard.EMPTY) {
             if (pieceTypeOnSquare == PieceType.NONE)
                 return 0;
 
             if (pieceTypeOnSquare == PieceType.KING)
                 return Evaluation.MAX;
 
-            final int attackerPieceType = position.getPieceTypeOnSquare(attackerSquare);
-            final int childEvaluation = getStaticExchangeEvaluationOfSquare(Color.getOppositeColor(color), square, effectiveOccupancy & ~BitBoard.of(attackerSquare), attackerPieceType);
+            final int childEvaluation = getStaticExchangeEvaluationOfSquare(Color.getOppositeColor(color), square, effectiveOccupancy & ~cheapestAttackerMask, cheapestAttackerPieceType);
 
             return Math.max(0, pieceTypeEvaluations.getPieceTypeEvaluation(pieceTypeOnSquare) - childEvaluation);
         }
@@ -147,9 +174,9 @@ public class StaticExchangeEvaluator {
         boolean positive = true;
 
         while (true) {
-            final int attackerSquare = getCheapestAttacker (currentColor, square, currentOccupancy);
+            calculateCheapestAttacker(currentColor, square, currentOccupancy);
 
-            if (attackerSquare == Square.NONE)
+            if (cheapestAttackerMask == BitBoard.EMPTY)
                 return (currentThreshold <= 0) == positive;
 
             if (currentPieceTypeOnSquare == PieceType.KING)
@@ -160,11 +187,11 @@ public class StaticExchangeEvaluator {
 
             // Now threshold > 0
 
-            currentOccupancy &= ~BitBoard.of(attackerSquare);
+            currentOccupancy &= ~cheapestAttackerMask;
             currentThreshold = pieceTypeEvaluations.getPieceTypeEvaluation(currentPieceTypeOnSquare) - currentThreshold + 1;
             positive = !positive;
             currentColor = Color.getOppositeColor(currentColor);
-            currentPieceTypeOnSquare = position.getPieceTypeOnSquare(attackerSquare);
+            currentPieceTypeOnSquare = cheapestAttackerPieceType;
         }
     }
 

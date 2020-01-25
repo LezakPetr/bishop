@@ -194,6 +194,21 @@ public class BitBoardTest {
 		Assert.assertEquals(Square.NONE, BitBoard.getLastSquare(BitBoard.EMPTY));
 	}
 
+	@Test
+	public void testGetFirstSquareMask() {
+		final SplittableRandom rng = new SplittableRandom(1234);
+
+		for (int firstSquare = Square.FIRST; firstSquare < Square.LAST; firstSquare++) {
+			long mask = BitBoard.of(firstSquare);
+
+			mask |= getRandomBoard(rng, firstSquare + 1, Square.LAST);
+
+			Assert.assertEquals(BitBoard.of(firstSquare), BitBoard.getFirstSquareMask(mask));
+		}
+
+		Assert.assertEquals(BitBoard.EMPTY, BitBoard.getFirstSquareMask(BitBoard.EMPTY));
+	}
+
 	private long getRandomBoard(final SplittableRandom rng, final int firstSquare, final int lastSquare) {
 		long mask = BitBoard.EMPTY;
 
