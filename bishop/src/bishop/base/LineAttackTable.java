@@ -9,7 +9,6 @@ import bishop.tables.BetweenTable;
 public class LineAttackTable {
 	
 	private static final long[] attackTable = initializeTable(0);
-	private static final long[] pinTable = initializeTable(1);
 	
 	/**
 	 * Returns mask of attacked squares.
@@ -18,15 +17,6 @@ public class LineAttackTable {
 	 */
 	public static long getAttackMask (final int index) {
 		return attackTable[index];
-	}
-
-	/**
-	 * Returns mask of squares blocked by one piece.
-	 * @param index line index
-	 * @return mask of attacked squares with one blocking piece 
-	 */
-	public static long getPinMask (final int index) {
-		return pinTable[index];
 	}
 
 	public static long getLineMask (final int square, final FileRankOffset offset) {

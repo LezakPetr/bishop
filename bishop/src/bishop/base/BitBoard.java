@@ -243,6 +243,15 @@ public class BitBoard {
 	}
 
 	/**
+	 * Returns board with just first square set.
+	 * @param board board
+	 * @return board with all squares cleared except first one
+	 */
+	public static long getFirstSquareMask (final long board) {
+		return board & ~(board - 1);
+	}
+
+	/**
 	 * Returns board with mirrored ranks.
 	 * @param board board to mirror
 	 * @return mirrored board

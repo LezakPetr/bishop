@@ -1,15 +1,14 @@
 package bishop.engine;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.stream.Collectors;
-
 import bishop.base.Move;
 import bishop.base.Position;
+import bishop.base.StandardAlgebraicNotationWriter;
 import utils.IntUtils;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class BookRecord {
 	
@@ -117,17 +116,20 @@ public class BookRecord {
 				.sorted((a, b) -> b.getRelativeMoveRepetition() - a.getRelativeMoveRepetition())
 				.collect(Collectors.toList());
 		
-		final StringBuilder moveLog = new StringBuilder();
+		final StringWriter moveLog = new StringWriter();
+		final PrintWriter moveLogWriter = new PrintWriter(moveLog);
+		final StandardAlgebraicNotationWriter notationWriter = new StandardAlgebraicNotationWriter();
 		
 		for (BookMove move: moveList) {
-			moveLog.append(move.getMove().toString());
-			moveLog.append(" ");
-			moveLog.append(move.getRelativeMoveRepetition());
-			moveLog.append("% ");
-			moveLog.append(IntUtils.intToStringWithSignum(-move.getTargetPositionBalance()));
-			moveLog.append("%; ");
+			notationWriter.writeMove(moveLogWriter, position, move.getMove());
+			moveLogWriter.print(" ");
+			moveLogWriter.print(move.getRelativeMoveRepetition());
+			moveLogWriter.print("% ");
+			moveLogWriter.print(IntUtils.intToStringWithSignum(-move.getTargetPositionBalance()));
+			moveLogWriter.print("%; ");
 		}
-		
+
+		moveLogWriter.flush();
 		additionalInfo.add(moveLog.toString());
 	}
 	
