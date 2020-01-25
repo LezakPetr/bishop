@@ -30,14 +30,17 @@ public class SearchExtensionCalculator {
 		finder.setMaxDepth(MAX_NULL_MATE_DEPTH, 0, 0);
 	}
 	
-	public int getExtension (final Position position, final boolean isCheck, final int horizon) {
+	public int getExtension (final Position position, final MobilityCalculator mobilityCalculator, final boolean isCheck, final int horizon) {
 		if (isCheck) {
+			final int onTurn = position.getOnTurn();
+			final int notOnTurn = Color.getOppositeColor(onTurn);
+			final int kingSquare = position.getKingPosition(onTurn);
 			final int freeSquareCount;
 			
-			if (isDoubleCheck(position))
+			if (mobilityCalculator.isDoubleCheck(notOnTurn, kingSquare))
 				freeSquareCount = 0;
 			else
-				freeSquareCount = getKingEscapeSquareCount(position);
+				freeSquareCount = getKingEscapeSquareCount(position, mobilityCalculator);
 			
 			return checkExtensionByEscapeSquares[freeSquareCount];
 		}
@@ -68,34 +71,15 @@ public class SearchExtensionCalculator {
 		return isWin;
 	}
 
-	private boolean isDoubleCheck(final Position position) {
-		final int onTurn = position.getOnTurn();
-		final int notOnTurn = Color.getOppositeColor(onTurn);
-		final int kingSquare = position.getKingPosition(onTurn);
-		final int attackCount = position.getCountOfAttacks(notOnTurn, kingSquare);
-		
-		return attackCount >= 2;
-	}
-
-	private int getKingEscapeSquareCount(final Position position) {
+	private int getKingEscapeSquareCount(final Position position, final MobilityCalculator mobilityCalculator) {
 		final int onTurn = position.getOnTurn();
 		final int notOnTurn = Color.getOppositeColor(onTurn);
 		final int kingSquare = position.getKingPosition(onTurn);
 		final long nearKingSquares = FigureAttackTable.getItem(PieceType.KING, kingSquare);
 		final long ownOccupancy = position.getColorOccupancy(onTurn);
-		int escapeSquareCount = 0;
-		
-		for (BitLoop loop = new BitLoop(nearKingSquares); loop.hasNextSquare(); ) {
-			final int square = loop.getNextSquare();
-			
-			if ((ownOccupancy & BitBoard.getSquareMask(square)) == 0 && !position.isSquareAttacked(notOnTurn, square))
-				escapeSquareCount++;
-			
-			if (escapeSquareCount >= MAX_KING_ESCAPE_SQUARE_COUNT)
-				break;
-		}
-		
-		return escapeSquareCount;
+		final long escapeSquares = nearKingSquares & ~(mobilityCalculator.getAllAttackedSquares(notOnTurn) | ownOccupancy);
+
+		return Math.min(BitBoard.getSquareCount(escapeSquares), MAX_KING_ESCAPE_SQUARE_COUNT);
 	}
 	
 	private boolean isRankAttack(final Position position) {

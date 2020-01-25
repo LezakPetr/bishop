@@ -218,7 +218,7 @@ public final class SerialSearchEngine implements ISearchEngine {
 			final int positionExtension;
 
 			if (reducedHorizon >= searchSettings.getMinExtensionHorizon())
-				positionExtension = extensionCalculator.getExtension(currentPosition, isCheck, horizon);
+				positionExtension = extensionCalculator.getExtension(currentPosition, mobilityCalculator, isCheck, horizon);
 			else
 				positionExtension = 0;
 

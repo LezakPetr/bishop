@@ -207,6 +207,35 @@ public class MobilityCalculator {
 		return BitBoard.containsSquare(attackedSquares[color], square);
 	}
 
+	/**
+	 * Tests if there is a double check.
+	 * This method assumes that the position preceding this position was legal (without king not on turn in check). This implies
+	 * that the two checking pieces must have different type. One of checking pieces must be sliding piece and this one
+	 * had to be blocked by piece of different type (otherwise that piece would be on the line of blocked piece and thus would check).
+	 * This method works only for testing double checks, not other double attacks.
+	 * @param color color of checking pieces
+	 * @param kingSquare king square
+	 * @return true if there is a double check, false if not
+	 */
+	public boolean isDoubleCheck(final int color, final int kingSquare) {
+		final long squareMask = BitBoard.of(kingSquare);
+
+		if ((attackedSquares[color] & squareMask) == 0)
+			return false;   // No check
+
+		// Now we know that there is one or two different checking pieces. To distinguish these situations we just XOR all
+		// attack masks. If there is a single check the result will have 1 on the king square, if there is a double check there will be 0.
+		final long xoredMask =
+				pawnAttackedSquares[color] ^
+				knightAttackedSquares[color] ^
+				bishopAttackedSquares[color] ^
+				rookAttackedSquares[color] ^
+				queenAttackedSquares[color] ^
+				kingAttackedSquares[color];
+
+		return (xoredMask & squareMask) == 0;
+	}
+
 	public boolean canBeMate(final Position position) {
 		final int onTurn = position.getOnTurn();
 		final int notOnTurn = Color.getOppositeColor(onTurn);
