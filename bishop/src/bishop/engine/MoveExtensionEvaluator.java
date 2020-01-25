@@ -46,9 +46,10 @@ public class MoveExtensionEvaluator {
 				final int materialEvaluation = targetPosition.getMaterialEvaluation();
 				final int relativeTargetEvaluation = Evaluation.getRelative(materialEvaluation, oppositeColor);
 				final int targetSquare = move.getTargetSquare();
-				final int sse = new StaticExchangeEvaluator(targetPosition, pieceTypeEvaluations).getStaticExchangeEvaluationOfSquare(onTurn, targetSquare);
-				
-				if (relativeTargetEvaluation - sse - relativeRootEvaluation >= -settings.getRecaptureTargetTreshold()) {
+				final StaticExchangeEvaluator staticExchangeEvaluator = new StaticExchangeEvaluator(targetPosition, pieceTypeEvaluations);
+				final int threshold = relativeTargetEvaluation + settings.getRecaptureTargetTreshold() - relativeRootEvaluation;
+
+				if (!staticExchangeEvaluator.isStaticExchangeEvaluationOfSquareAtLeast(onTurn, targetSquare, threshold)) {
 					isRecapture = true;
 				}
 			}
