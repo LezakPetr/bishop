@@ -95,4 +95,29 @@ public class MobilityCalculatorTest {
 				testValueArray
 		);
 	}
+
+	@Test
+	public void isSingleCheckWinningTest() throws IOException {
+		final TestCase[] testValueArray = {
+				new TestCase("8/5k2/4P3/8/8/8/8/4K3 b - - 0 1", true),
+				new TestCase("8/5k2/4P3/8/3N4/8/8/4K3 b - - 0 1", false),
+				new TestCase("8/5k2/3N4/8/8/8/8/4K3 b - - 0 1", false),
+				new TestCase("1q6/5k2/3N4/8/8/8/8/4K3 b - - 0 1", true),
+				new TestCase("5k2/8/1q6/8/8/4K3/8/8 w - - 0 1", false),
+				new TestCase("5k2/8/1q6/B7/6q1/4K3/8/8 w - - 0 1", true),
+				new TestCase("5k2/8/1b6/8/6b1/4K3/8/8 w - - 0 1", false),
+				new TestCase("5k2/8/1b6/B7/6b1/4K3/8/8 w - - 0 1", true),
+				new TestCase("5k2/8/8/5q2/8/1q2K3/8/8 w - - 0 1", false),
+				new TestCase("5k2/8/8/5q2/8/1q2K3/8/2N5 w - - 0 1", true),
+				new TestCase("5k2/8/8/5r2/8/1r2K3/8/8 w - - 0 1", false),
+				new TestCase("5k2/8/8/5r2/8/1r2K3/P7/8 w - - 0 1", true)
+
+		};
+
+		testPredicate(
+				MobilityCalculator::isSingleCheckWinning,
+				testValueArray
+		);
+	}
+
 }

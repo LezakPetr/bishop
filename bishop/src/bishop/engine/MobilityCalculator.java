@@ -2,6 +2,7 @@ package bishop.engine;
 
 import bishop.base.*;
 import bishop.tables.FigureAttackTable;
+import bishop.tables.PawnAttackTable;
 
 import java.util.Arrays;
 
@@ -258,6 +259,75 @@ public class MobilityCalculator {
 		final long attacks = attackedSquares[oppositeColor];
 
 		return (attacks & (ownFigures | unprotectedPawns)) == 0;
+	}
+
+	public long getWinningSquares(final Position position) {
+		final int onTurn = position.getOnTurn();
+		final int oppositeColor = Color.getOppositeColor(onTurn);
+		final long attacks = attackedSquares[onTurn];
+		final long defenses = attackedSquares[oppositeColor];
+
+		return attacks & ~defenses & position.getColorOccupancy(oppositeColor);
+	}
+
+	/**
+	 * This method expects that the king on turn is in single check.
+	 * The method returns true if the checking piece can be captured and is not protected.
+	 * @param position position
+	 * @return true if the checking piece can be captured and is not protected
+	 */
+	public boolean isSingleCheckWinning(final Position position) {
+		final long winningSquares = getWinningSquares(position);
+		final int onTurn = position.getOnTurn();
+		final int oppositeColor = Color.getOppositeColor(onTurn);
+		final int kingSquare = position.getKingPosition(onTurn);
+		final long kingSquareMask = BitBoard.getSquareMask(kingSquare);
+
+		final long rookAttacks = rookAttackedSquares[oppositeColor];
+		final long bishopAttacks = bishopAttackedSquares[oppositeColor];
+		final long queenAttacks = queenAttackedSquares[oppositeColor];
+
+		final long longMovePieceMask =
+				rookAttacks |
+				bishopAttacks |
+				queenAttacks;
+
+		if ((longMovePieceMask & kingSquareMask) == 0) {
+			// The check is from short move piece - pawn or knight
+			if ((pawnAttackedSquares[oppositeColor] & kingSquareMask) != 0)
+				return (position.getPiecesMask(oppositeColor, PieceType.PAWN) & PawnAttackTable.getItem(onTurn, kingSquare) & winningSquares) != 0;
+			else
+				return (position.getPiecesMask(oppositeColor, PieceType.KNIGHT) & FigureAttackTable.getItem (PieceType.KNIGHT, kingSquare) & winningSquares) != 0;
+		}
+		else {
+			// The check is from long move piece - queen, rook or bishop
+			final long occupancy = position.getOccupancy();
+
+			// Verify check from orthogonal direction
+			if (((rookAttacks | queenAttacks) & kingSquareMask) != 0) {
+				final int orthogonalIndex = LineIndexer.getLineIndex(CrossDirection.ORTHOGONAL, kingSquare, occupancy);
+				final long orthogonalMask = LineAttackTable.getAttackMask(orthogonalIndex);
+
+				final long orthogonalPieces =
+						position.getPiecesMask(oppositeColor, PieceType.ROOK) |
+						position.getPiecesMask(oppositeColor, PieceType.QUEEN);
+
+				final long orthogonalCheckingPieces = orthogonalPieces & orthogonalMask;
+
+				if (orthogonalCheckingPieces != 0)
+					return (orthogonalCheckingPieces & winningSquares) != 0;
+			}
+
+			// The check must be from diagonal direction
+			final int diagonalIndex = LineIndexer.getLineIndex(CrossDirection.DIAGONAL, kingSquare, occupancy);
+			final long diagonalMask = LineAttackTable.getAttackMask(diagonalIndex);
+
+			final long diagonalPieces =
+					position.getPiecesMask(oppositeColor, PieceType.BISHOP) |
+					position.getPiecesMask(oppositeColor, PieceType.QUEEN);
+
+			return (diagonalPieces & diagonalMask & winningSquares) != 0;
+		}
 	}
 
 }
